@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 1 Lab: Introduction to Autopsy | CSC 156</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --forest-green: #2d5016;
+            --medium-green: #4a7c2c;
+            --light-green: #6b9b47;
+            --tan: #d4a574;
+            --light-tan: #e8d4b8;
+            --cream: #f5f1e8;
+            --dark-gray: #2c2c2c;
+            --medium-gray: #666;
+            --light-gray: #e0e0e0;
+            --white: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.7;
+            color: var(--dark-gray);
+            background: linear-gradient(135deg, var(--cream) 0%, var(--light-tan) 100%);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 8px 30px var(--shadow);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--forest-green) 0%, var(--medium-green) 100%);
+            color: var(--white);
+            padding: 40px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-family: 'Crimson Pro', Georgia, serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            font-weight: 300;
+        }
+
+        .course-info {
+            background: var(--tan);
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            color: var(--dark-gray);
+        }
+
+        .course-info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .course-info-item strong {
+            font-weight: 600;
+        }
+
+        main {
+            padding: 40px;
+        }
+
+        .lab-header {
+            background: var(--forest-green);
+            color: var(--white);
+            padding: 20px 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .lab-header h2 {
+            font-family: 'Crimson Pro', Georgia, serif;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .lab-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .meta-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 15px;
+            border-radius: 6px;
+        }
+
+        .meta-item strong {
+            display: block;
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .meta-item span {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h3 {
+            font-family: 'Crimson Pro', Georgia, serif;
+            color: var(--forest-green);
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--tan);
+        }
+
+        .card {
+            background: var(--cream);
+            border: 1px solid var(--light-gray);
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px var(--shadow);
+            transform: translateY(-2px);
+        }
+
+        .card h4 {
+            color: var(--forest-green);
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+        }
+
+        .objectives-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .objectives-list li {
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            background: var(--white);
+            border-left: 4px solid var(--forest-green);
+            border-radius: 4px;
+            position: relative;
+            padding-left: 45px;
+        }
+
+        .objectives-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 15px;
+            color: var(--forest-green);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .alert {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-left-color: #17a2b8;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .steps {
+            counter-reset: step-counter;
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .steps li {
+            counter-increment: step-counter;
+            position: relative;
+            padding: 20px 20px 20px 70px;
+            margin-bottom: 15px;
+            background: var(--white);
+            border-radius: 8px;
+            border: 1px solid var(--light-gray);
+        }
+
+        .steps li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            background: var(--forest-green);
+            color: var(--white);
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .steps li strong {
+            color: var(--forest-green);
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        .tip {
+            background: var(--light-tan);
+            border-left: 4px solid var(--tan);
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .tip-title {
+            font-weight: 600;
+            color: var(--forest-green);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: var(--white);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        th {
+            background: var(--forest-green);
+            color: var(--white);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background: var(--cream);
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: var(--white);
+            border-radius: 6px;
+            border: 1px solid var(--light-gray);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .checkbox-item:hover {
+            background: var(--cream);
+            border-color: var(--forest-green);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--forest-green);
+        }
+
+        .checkbox-item label {
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .progress-section {
+            background: var(--cream);
+            padding: 25px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+
+        .progress-bar-container {
+            background: var(--light-gray);
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 15px;
+            position: relative;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--forest-green), var(--medium-green));
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: 600;
+        }
+
+        .download-section {
+            background: var(--forest-green);
+            color: var(--white);
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .download-btn {
+            display: inline-block;
+            background: var(--white);
+            color: var(--forest-green);
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 10px;
+            transition: all 0.3s ease;
+            border: 2px solid var(--white);
+        }
+
+        .download-btn:hover {
+            background: transparent;
+            color: var(--white);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        footer {
+            background: var(--forest-green);
+            color: var(--white);
+            padding: 30px 40px;
+            text-align: center;
+        }
+
+        .cslo-badge {
+            display: inline-block;
+            background: var(--tan);
+            color: var(--dark-gray);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 5px;
+        }
+
+        /* Accessibility improvements */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        /* Focus styles for keyboard navigation */
+        a:focus, button:focus, input:focus, .checkbox-item:focus-within {
+            outline: 3px solid var(--forest-green);
+            outline-offset: 2px;
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .container {
+                box-shadow: none;
+            }
+            
+            .checkbox-item input[type="checkbox"] {
+                print-color-adjust: exact;
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .course-info {
+                flex-direction: column;
+            }
+            
+            main {
+                padding: 20px;
+            }
+            
+            .steps li {
+                padding-left: 60px;
+            }
+            
+            .lab-meta {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Lab Activity 1: Introduction to Autopsy</h1>
+            <p class="subtitle">Hands-On Digital Forensics Tool Familiarization</p>
+        </header>
+
+        <div class="course-info" role="region" aria-label="Course information">
+            <div class="course-info-item">
+                <strong>Course:</strong>
+                <span>CSC 156 - Digital Forensics Fundamentals</span>
+            </div>
+            <div class="course-info-item">
+                <strong>Week:</strong>
+                <span>1 of 17</span>
+            </div>
+            <div class="course-info-item">
+                <strong>Instructor:</strong>
+                <span>David Pai</span>
+            </div>
+        </div>
+
+        <main>
+            <!-- Lab Overview -->
+            <div class="lab-header">
+                <h2>Lab Overview</h2>
+                <p>This introductory lab provides hands-on experience with Autopsy, one of the most widely-used open-source digital forensics platforms. You'll learn to navigate the interface, analyze a simple disk image, and document your findings using proper forensic procedures.</p>
+                
+                <div class="lab-meta">
+                    <div class="meta-item">
+                        <strong>Duration</strong>
+                        <span>3 hours</span>
+                    </div>
+                    <div class="meta-item">
+                        <strong>Points</strong>
+                        <span>20 points</span>
+                    </div>
+                    <div class="meta-item">
+                        <strong>Due Date</strong>
+                        <span>End of Week 1</span>
+                    </div>
+                    <div class="meta-item">
+                        <strong>Difficulty</strong>
+                        <span>Beginner</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CSLO Alignment -->
+            <section class="section" aria-labelledby="cslo-heading">
+                <h3 id="cslo-heading">Course Student Learning Outcomes</h3>
+                <div class="card">
+                    <div class="alert alert-info">
+                        <div class="alert-title">
+                            <span aria-hidden="true">🎯</span>
+                            <span>Primary CSLO Addressed</span>
+                        </div>
+                        <p><strong>CSLO 1:</strong> Describe the fundamental concepts of incident response and forensic investigation.</p>
+                        <p style="margin-top: 10px;"><em>Expected Performance: 0.75 (75% mastery)</em></p>
+                    </div>
+                    <p style="margin-top: 15px;">This lab directly supports your understanding of forensic investigation fundamentals through practical application of industry-standard tools and procedures.</p>
+                </div>
+            </section>
+
+            <!-- Learning Objectives -->
+            <section class="section" aria-labelledby="objectives-heading">
+                <h3 id="objectives-heading">Learning Objectives</h3>
+                <div class="card">
+                    <h4>
+                        <span aria-hidden="true">📚</span>
+                        By the end of this lab, you will be able to:
+                    </h4>
+                    <ul class="objectives-list" role="list">
+                        <li>Install and launch Autopsy digital forensics platform</li>
+                        <li>Create a new forensic case with proper documentation</li>
+                        <li>Add and analyze a disk image as evidence</li>
+                        <li>Navigate the Autopsy interface and understand key components</li>
+                        <li>Perform basic file system analysis and artifact examination</li>
+                        <li>Document findings in a forensic notebook</li>
+                        <li>Generate basic case reports</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Prerequisites -->
+            <section class="section" aria-labelledby="prereq-heading">
+                <h3 id="prereq-heading">Prerequisites & Required Materials</h3>
+                
+                <div class="card">
+                    <h4>
+                        <span aria-hidden="true">✅</span>
+                        What You'll Need
+                    </h4>
+                    
+                    <table role="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Item</th>
+                                <th scope="col">Requirement</th>
+                                <th scope="col">Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Computer</strong></td>
+                                <td>Windows 10/11 or Linux</td>
+                                <td>Lab workstations provided</td>
+                            </tr>
+                            <tr>
+                                <td><strong>CPU Architecture</strong></td>
+                                <td>x86/x64 (Intel/AMD)</td>
+                                <td>⚠️ Autopsy does NOT support ARM CPUs (M1/M2/M3 Macs)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>RAM</strong></td>
+                                <td>8GB minimum (16GB recommended)</td>
+                                <td>For smooth operation</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Disk Space</strong></td>
+                                <td>5GB free space</td>
+                                <td>For software and evidence files</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Software</strong></td>
+                                <td>Autopsy (latest version)</td>
+                                <td>Download from sleuthkit.org</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Sample Data</strong></td>
+                                <td>USB-Image.001 (provided)</td>
+                                <td>Available on Canvas/network share</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Lab Notebook</strong></td>
+                                <td>Digital or physical</td>
+                                <td>For documenting your work</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-info">
+                    <div class="alert-title">
+                        <span aria-hidden="true">💡</span>
+                        <span>Sample Evidence File</span>
+                    </div>
+                    <p>For this lab, we'll use a small USB drive image that contains a simulated scenario. The image should be small (approximately 128MB or less) and will process quickly, allowing you to focus on learning Autopsy rather than waiting for lengthy ingestion processes.</p>
+                </div>
+
+                <div class="download-section">
+                    <h4 style="color: var(--white); margin-bottom: 15px;">
+                        <span aria-hidden="true">⬇️</span>
+                        Download Sample Forensic Images
+                    </h4>
+                    <p style="margin-bottom: 20px;">Choose one of these educational forensic image sources for this lab:</p>
+                    
+                    <a href="https://cfreds.nist.gov/" class="download-btn" target="_blank" rel="noopener">
+                        NIST CFReDS Images
+                    </a>
+                    <a href="https://digitalcorpora.org/corpora/disk-images/" class="download-btn" target="_blank" rel="noopener">
+                        Digital Corpora Images
+                    </a>
+                    <a href="https://dftt.sourceforge.net/" class="download-btn" target="_blank" rel="noopener">
+                        DFTT Test Images
+                    </a>
+                    
+                    <p style="margin-top: 20px; font-size: 0.95rem; opacity: 0.95;">
+                        <strong>Recommended for this lab:</strong> Look for small USB or test images under 200MB. 
+                        NIST CFReDS offers small "File Carving" test images that are quick to process. 
+                        Your instructor may also provide a custom image via Canvas or the network share.
+                    </p>
+                    
+                    <p style="margin-top: 15px; font-size: 0.95rem; opacity: 0.95;">
+                        <strong>Alternative:</strong> Digital Corpora's "NPS Test Disk Images" include small, 
+                        well-documented samples perfect for learning. Look for images under 500MB for fastest results.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Part 1: Installation -->
+            <section class="section" aria-labelledby="part1-heading">
+                <h3 id="part1-heading">Part 1: Installing Autopsy (30 minutes)</h3>
+                
+                <div class="card">
+                    <h4>
+                        <span aria-hidden="true">⚙️</span>
+                        Installation Steps
+                    </h4>
+                    
+                    <ol class="steps">
+                        <li>
+                            <strong>Download Autopsy</strong>
+                            Navigate to <a href="https://www.sleuthkit.org/autopsy/" target="_blank" rel="noopener">https://www.sleuthkit.org/autopsy/</a> and download the latest version for your operating system (Windows or Linux).
+                        </li>
+                        
+                        <li>
+                            <strong>Run the Installer</strong>
+                            For Windows: Run the .exe installer with administrator privileges. For Linux: Follow the installation instructions for your distribution. Accept the default installation path unless you have specific requirements.
+                        </li>
+                        
+                        <li>
+                            <strong>Verify Installation</strong>
+                            Launch Autopsy from the Start Menu (Windows) or applications menu (Linux). You should see the Autopsy welcome screen.
+                        </li>
+                        
+                        <li>
+                            <strong>Document Version Information</strong>
+                            In your lab notebook, record:
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li>Autopsy version number</li>
+                                <li>Installation date and time</li>
+                                <li>Operating system and version</li>
+                                <li>Computer name/workstation ID</li>
+                            </ul>
+                        </li>
+                    </ol>
+
+                    <div class="tip">
+                        <div class="tip-title">
+                            <span aria-hidden="true">💡</span>
+                            <span>Pro Tip</span>
+                        </div>
+                        <p>Always document tool versions in forensic work. This information is critical for court admissibility and reproducibility of results. Include this in all case reports.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Part 2: Creating a Case -->
+            <section class="section" aria-labelledby="part2-heading">
+                <h3 id="part2-heading">Part 2: Creating Your First Case (20 minutes)</h3>
+                
+                <div class="card">
+                    <h4>
+                        <span aria-hidden="true">📁</span>
+                        Case Creation Process
+                    </h4>
+                    
+                    <ol class="steps">
+                        <li>
+                            <strong>Launch Autopsy</strong>
+                            Open Autopsy and you'll see the welcome screen with options to create a new case or open an existing one.
+                        </li>
+                        
+                        <li>
+                            <strong>Start New Case</strong>
+                            Click "New Case" and fill in the case information form:
+                            <div class="code-block">
+Case Name: Lab1_FirstName_LastName
+Base Directory: C:\ForensicCases\ (or your preferred location)
+Case Number: CSC156-W1-L1
+Examiner Name: [Your Full Name]
+Organization: Mendocino College
+Phone: [Your Phone]
+Email: [Your Email]
+Notes: Week 1 Lab - Introduction to Autopsy
+                            </div>
+                        </li>
+                        
+                        <li>
+                            <strong>Configure Case Settings</strong>
+                            On the next screen, choose "Single-user case" (recommended for this lab). Review and click "Finish."
+                        </li>
+                        
+                        <li>
+                            <strong>Add Data Source</strong>
+                            Autopsy will prompt you to add a data source:
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li>Select "Disk Image or VM File"</li>
+                                <li>Browse to your downloaded forensic image file (e.g., downloaded .dd, .E01, or .001 file)</li>
+                                <li>Click "Next"</li>
+                            </ul>
+                        </li>
+                        
+                        <li>
+                            <strong>Configure Ingest Modules</strong>
+                            For this introductory lab, we'll keep all default ingest modules enabled. These include:
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li>File Type Identification</li>
+                                <li>EXIF Parser</li>
+                                <li>Hash Lookup</li>
+                                <li>Keyword Search</li>
+                                <li>Recent Activity</li>
+                            </ul>
+                            Click "Next" and then "Finish" to begin ingestion.
+                        </li>
+                        
+                        <li>
+                            <strong>Wait for Ingestion</strong>
+                            A small forensic image (under 200MB) should complete ingestion in 2-10 minutes depending on size. Watch the progress bar in the lower-right corner. You can begin exploring the interface while ingestion continues.
+                        </li>
+                    </ol>
+
+                    <div class="alert alert-success">
+                        <div class="alert-title">
+                            <span aria-hidden="true">⏱️</span>
+                            <span>Time Expectation</span>
+                        </div>
+                        <p>Small forensic images (under 200MB) are intentionally chosen to ensure quick processing. Typical ingestion time is 2-10 minutes, allowing you to focus on analysis rather than waiting. Larger images from some sources may take longer.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Part 3: Navigating Autopsy -->
+            <section class="section" aria-labelledby="part3-heading">
+                <h3 id="part3-heading">Part 3: Navigating the Autopsy Interface (30 minutes)</h3>
+                
+                <div class="card">
+                    <h4>
+                        <span aria-hidden="true">🗺️</span>
+                        Interface Components
+                    </h4>
+                    
+                    <p>The Autopsy interface has five main areas you need to understand:</p>
+                    
+                    <table role="table" style="margin-top: 20px;">
+                        <thead>
+                            <tr>
+                                <th scope="col">Component</th>
+                                <th scope="col">Location</th>
+                                <th scope="col">Purpose</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Tree Viewer</strong></td>
+                                <td>Left panel</td>
+                                <td>Navigate data sources, file system, and results</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Result Viewer</strong></td>
+                                <td>Upper right</td>
+                                <td>Display contents of selected items (table/thumbnail view)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Content Viewer</strong></td>
+                                <td>Lower right</td>
+                                <td>View file contents, metadata, hex, strings</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Keyword Search</strong></td>
+                                <td>Upper toolbar</td>
+                                <td>Search for text strings across the image</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Status Bar</strong></td>
+                                <td>Bottom</td>
+                                <td>Shows ingestion progress and background tasks</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <ol class="steps" style="margin-top: 30px;">
+                        <li>
+                            <strong>Explore the Tree Viewer</strong>
+                            In the left panel, expand the data source tree:
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li>Expand "Data Sources"</li>
+                                <li>Expand the USB image</li>
+                                <li>Explore the file system hierarchy</li>
+                                <li>Notice the volume and partition information</li>
+                            </ul>
+                        </li>
+                        
+                        <li>
+                            <strong>Browse Files and Folders</strong>
+                            Navigate through the directory structure. Find and note:
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li>Number of allocated files</li>
+                                <li>Number of deleted files (if any)</li>
+                                <li>Types of files present</li>
+                                <li>Any interesting folder names</li>
+                            </ul>
+                        </li>
+                        
+                        <li>
+                            <strong>Examine File Metadata</strong>
+                            Select any file in the Result Viewer. In the Content Viewer (bottom right), switch between tabs:
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li><strong>File Metadata:</strong> Timestamps, size, permissions</li>
+                                <li><strong>Hex:</strong> Raw hexadecimal view</li>
+                                <li><strong>Strings:</strong> Extracted text strings</li>
+                                <li><strong>Application:</strong> Rendered view (for viewable files)</li>
+                            </ul>
+                        </li>
+                        
+                        <li>
+                            <strong>Explore Results</strong>
+                            In the Tree Viewer, expand "Results":
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li>Extracted Content (emails, documents, etc.)</li>
+                                <li>Web History (browser artifacts)</li>
+                                <li>Recent Documents</li>
+                                <li>Hash Set Hits</li>
+                            </ul>
+                        </li>
+                    </ol>
+
+                    <div class="tip">
+                        <div class="tip-title">
+                            <span aria-hidden="true">🔍</span>
+                            <span>Investigation Tip</span>
+                        </div>
+                        <p>The "Results" section in Autopsy automatically categorizes important artifacts. This is where you'll find critical evidence like web history, emails, and recently accessed documents without manually searching the entire file system.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Part 4: Analysis Exercise -->
+            <section class="section" aria-labelledby="part4-heading">
+                <h3 id="part4-heading">Part 4: Hands-On Analysis Exercise (60 minutes)</h3>
+                
+                <div class="card">
+                    <h4>
+                        <span aria-hidden="true">🔎</span>
+                        Investigation Scenario
+                    </h4>
+                    
+                    <div class="alert">
+                        <div class="alert-title">
+                            <span aria-hidden="true">📋</span>
+                            <span>Case Background</span>
+                        </div>
+                        <p>You've been provided with a USB drive image from a hypothetical investigation. Your task is to analyze the drive and answer the investigative questions below. Document all findings in your lab notebook with supporting screenshots.</p>
+                    </div>
+
+                    <h4 style="margin-top: 30px;">
+                        <span aria-hidden="true">❓</span>
+                        Investigative Questions
+                    </h4>
+                    
+                    <p>Complete the following analysis tasks and document your findings:</p>
+
+                    <ol class="steps">
+                        <li>
+                            <strong>File System Analysis</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li>What file system is used on this USB drive?</li>
+                                <li>What is the total capacity of the drive?</li>
+                                <li>How many allocated (active) files are present?</li>
+                                <li>Are there any deleted files? If so, how many?</li>
+                            </ul>
+                            <em>Hint: Look at the volume information in the tree viewer.</em>
+                        </li>
+                        
+                        <li>
+                            <strong>File Type Identification</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li>What types of files are present? (documents, images, executables, etc.)</li>
+                                <li>Navigate to "Results" → "File Types" to see a categorized breakdown</li>
+                                <li>Are there any files with mismatched extensions? (e.g., a .jpg that's actually a .txt)</li>
+                            </ul>
+                            <em>Hint: Autopsy's File Type Identification module detects files by content, not just extension.</em>
+                        </li>
+                        
+                        <li>
+                            <strong>Timeline Analysis</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li>Find the oldest file on the drive (by creation date)</li>
+                                <li>Find the most recently modified file</li>
+                                <li>What is the date range of activity on this drive?</li>
+                            </ul>
+                            <em>Hint: You can sort files by clicking column headers in the Result Viewer.</em>
+                        </li>
+                        
+                        <li>
+                            <strong>Keyword Search</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li>Use the keyword search feature (top toolbar) to search for: "password"</li>
+                                <li>How many hits did you get?</li>
+                                <li>In which files does this keyword appear?</li>
+                                <li>Try searching for other keywords: "confidential", "secret", your name</li>
+                            </ul>
+                            <em>Hint: Keyword search looks through file contents and metadata.</em>
+                        </li>
+                        
+                        <li>
+                            <strong>Web Artifacts</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li>Navigate to "Results" → "Web History"</li>
+                                <li>Are there any browser artifacts present?</li>
+                                <li>If so, what websites were visited?</li>
+                                <li>What browser was used?</li>
+                            </ul>
+                        </li>
+                        
+                        <li>
+                            <strong>Interesting Files</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li>Check "Results" → "Interesting Items"</li>
+                                <li>What has Autopsy flagged as potentially interesting?</li>
+                                <li>Why might these items be relevant to an investigation?</li>
+                            </ul>
+                        </li>
+                        
+                        <li>
+                            <strong>File Content Examination</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li>Select any text document</li>
+                                <li>View it in the "Application" tab of the Content Viewer</li>
+                                <li>Switch to "Hex" view - can you identify the file header?</li>
+                                <li>Switch to "Strings" view - what readable text appears?</li>
+                            </ul>
+                        </li>
+                        
+                        <li>
+                            <strong>Metadata Analysis</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li>Select any image file (if present)</li>
+                                <li>View the EXIF data in the Content Viewer</li>
+                                <li>What metadata is available? (camera make, GPS coordinates, etc.)</li>
+                                <li>Why is this metadata important in investigations?</li>
+                            </ul>
+                        </li>
+                    </ol>
+
+                    <div class="tip">
+                        <div class="tip-title">
+                            <span aria-hidden="true">📸</span>
+                            <span>Documentation Requirement</span>
+                        </div>
+                        <p>For each question answered, capture a screenshot showing the evidence. Use Autopsy's built-in screenshot tool or your OS screenshot utility. Annotate screenshots to highlight relevant findings.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Part 5: Generating Reports -->
+            <section class="section" aria-labelledby="part5-heading">
+                <h3 id="part5-heading">Part 5: Generating Case Reports (20 minutes)</h3>
+                
+                <div class="card">
+                    <h4>
+                        <span aria-hidden="true">📄</span>
+                        Creating Your First Forensic Report
+                    </h4>
+                    
+                    <ol class="steps">
+                        <li>
+                            <strong>Access Report Generation</strong>
+                            In Autopsy, go to: <strong>Tools</strong> → <strong>Generate Report</strong>
+                        </li>
+                        
+                        <li>
+                            <strong>Select Report Type</strong>
+                            Choose "HTML Report" for this lab (easiest to view and share). Click "Next."
+                        </li>
+                        
+                        <li>
+                            <strong>Configure Report Settings</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li>Select which data to include (all categories for comprehensive report)</li>
+                                <li>Choose output location</li>
+                                <li>Add your name as the report author</li>
+                            </ul>
+                        </li>
+                        
+                        <li>
+                            <strong>Generate and Review</strong>
+                            Click "Finish" and wait for report generation. Open the HTML report in your browser and review:
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li>Case summary information</li>
+                                <li>Data source details</li>
+                                <li>File listings and results</li>
+                                <li>Tagged items (if any)</li>
+                            </ul>
+                        </li>
+                    </ol>
+
+                    <div class="alert alert-info">
+                        <div class="alert-title">
+                            <span aria-hidden="true">ℹ️</span>
+                            <span>Report Purpose</span>
+                        </div>
+                        <p>Forensic reports document your investigation process and findings. They must be comprehensive, accurate, and reproducible. In real cases, these reports may be submitted as legal evidence.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lab Completion Checklist -->
+            <section class="section" aria-labelledby="checklist-heading">
+                <h3 id="checklist-heading">Lab Completion Checklist</h3>
+                
+                <div class="card">
+                    <h4>
+                        <span aria-hidden="true">✅</span>
+                        Verify You've Completed All Tasks
+                    </h4>
+                    
+                    <div class="progress-section">
+                        <p><strong>Track Your Progress:</strong></p>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="progressBar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                0%
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="checklistContainer">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="check1" class="progress-checkbox" aria-label="Autopsy installed and version documented">
+                            <label for="check1">Autopsy installed and version documented in notebook</label>
+                        </div>
+                        
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="check2" class="progress-checkbox" aria-label="Case created with proper information">
+                            <label for="check2">Case created with proper case information</label>
+                        </div>
+                        
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="check3" class="progress-checkbox" aria-label="USB image added and ingested successfully">
+                            <label for="check3">USB image added and ingested successfully</label>
+                        </div>
+                        
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="check4" class="progress-checkbox" aria-label="All five interface components identified">
+                            <label for="check4">All five interface components identified and explored</label>
+                        </div>
+                        
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="check5" class="progress-checkbox" aria-label="All eight investigative questions answered">
+                            <label for="check5">All eight investigative questions answered with evidence</label>
+                        </div>
+                        
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="check6" class="progress-checkbox" aria-label="Screenshots captured for key findings">
+                            <label for="check6">Screenshots captured for key findings (minimum 5)</label>
+                        </div>
+                        
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="check7" class="progress-checkbox" aria-label="Keyword searches performed">
+                            <label for="check7">Keyword searches performed and documented</label>
+                        </div>
+                        
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="check8" class="progress-checkbox" aria-label="HTML report generated">
+                            <label for="check8">HTML report generated from Autopsy</label>
+                        </div>
+                        
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="check9" class="progress-checkbox" aria-label="Lab notebook completed">
+                            <label for="check9">Lab notebook completed with all observations</label>
+                        </div>
+                        
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="check10" class="progress-checkbox" aria-label="Post-lab questions answered">
+                            <label for="check10">Post-lab questions answered (see below)</label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Post-Lab Questions -->
+            <section class="section" aria-labelledby="questions-heading">
+                <h3 id="questions-heading">Post-Lab Questions</h3>
+                
+                <div class="card">
+                    <h4>
+                        <span aria-hidden="true">💭</span>
+                        Reflection and Analysis
+                    </h4>
+                    
+                    <p>Answer the following questions in your lab report:</p>
+                    
+                    <ol style="margin-left: 20px; margin-top: 15px;">
+                        <li style="margin-bottom: 15px;">
+                            <strong>What is the purpose of creating a case in Autopsy before analyzing evidence?</strong>
+                            <p style="margin-top: 5px; color: var(--medium-gray); font-size: 0.95rem;">
+                                Think about documentation, organization, and legal requirements.
+                            </p>
+                        </li>
+                        
+                        <li style="margin-bottom: 15px;">
+                            <strong>Why is it important to use ingest modules when processing a disk image?</strong>
+                            <p style="margin-top: 5px; color: var(--medium-gray); font-size: 0.95rem;">
+                                Consider what might be missed if you only manually browsed files.
+                            </p>
+                        </li>
+                        
+                        <li style="margin-bottom: 15px;">
+                            <strong>How does Autopsy identify files differently than just looking at file extensions?</strong>
+                            <p style="margin-top: 5px; color: var(--medium-gray); font-size: 0.95rem;">
+                                Think about file headers and magic numbers.
+                            </p>
+                        </li>
+                        
+                        <li style="margin-bottom: 15px;">
+                            <strong>What advantages does Autopsy offer compared to manually browsing a mounted drive in Windows Explorer or Finder?</strong>
+                            <p style="margin-top: 5px; color: var(--medium-gray); font-size: 0.95rem;">
+                                Consider deleted files, metadata, timelines, and artifact extraction.
+                            </p>
+                        </li>
+                        
+                        <li style="margin-bottom: 15px;">
+                            <strong>Why is it critical to document the version of forensic tools used in an investigation?</strong>
+                            <p style="margin-top: 5px; color: var(--medium-gray); font-size: 0.95rem;">
+                                Think about reproducibility and legal defensibility.
+                            </p>
+                        </li>
+                    </ol>
+                </div>
+            </section>
+
+            <!-- Submission Requirements -->
+            <section class="section" aria-labelledby="submission-heading">
+                <h3 id="submission-heading">Submission Requirements</h3>
+                
+                <div class="card">
+                    <h4>
+                        <span aria-hidden="true">📤</span>
+                        What to Submit
+                    </h4>
+                    
+                    <p>Submit the following items via Canvas by <strong>Sunday, end of Week 1, 11:59 PM</strong>:</p>
+                    
+                    <table role="table" style="margin-top: 20px;">
+                        <thead>
+                            <tr>
+                                <th scope="col">Item</th>
+                                <th scope="col">Format</th>
+                                <th scope="col">Required Content</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Lab Report</strong></td>
+                                <td>PDF or DOCX</td>
+                                <td>
+                                    • Answers to all 8 investigative questions<br>
+                                    • Supporting screenshots (labeled)<br>
+                                    • Answers to post-lab questions
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Lab Notebook</strong></td>
+                                <td>PDF or DOCX</td>
+                                <td>
+                                    • Tool version documentation<br>
+                                    • Case information<br>
+                                    • Observations and notes<br>
+                                    • Challenges encountered
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Autopsy HTML Report</strong></td>
+                                <td>ZIP file</td>
+                                <td>
+                                    • Complete HTML report folder<br>
+                                    • Generated from your case
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="alert">
+                        <div class="alert-title">
+                            <span aria-hidden="true">📝</span>
+                            <span>File Naming Convention</span>
+                        </div>
+                        <p>Name your files as follows:</p>
+                        <div class="code-block" style="margin-top: 10px;">
+LastName_FirstName_Lab1_Report.pdf
+LastName_FirstName_Lab1_Notebook.pdf
+LastName_FirstName_Lab1_AutopsyReport.zip
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Grading Rubric -->
+            <section class="section" aria-labelledby="rubric-heading">
+                <h3 id="rubric-heading">Grading Rubric</h3>
+                
+                <div class="card">
+                    <h4>
+                        <span aria-hidden="true">📊</span>
+                        How Your Lab Will Be Evaluated (20 points total)
+                    </h4>
+                    
+                    <table role="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Category</th>
+                                <th scope="col">Points</th>
+                                <th scope="col">Criteria</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Installation & Setup</strong></td>
+                                <td>3</td>
+                                <td>
+                                    Autopsy properly installed, version documented, case created with complete information
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Analysis Completeness</strong></td>
+                                <td>8</td>
+                                <td>
+                                    All 8 investigative questions answered thoroughly with supporting evidence (1 point each)
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Documentation Quality</strong></td>
+                                <td>4</td>
+                                <td>
+                                    Screenshots clear and properly labeled, lab notebook complete and organized, observations detailed
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Report Generation</strong></td>
+                                <td>2</td>
+                                <td>
+                                    HTML report successfully generated and included in submission
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Post-Lab Questions</strong></td>
+                                <td>3</td>
+                                <td>
+                                    All 5 questions answered thoughtfully, demonstrating understanding of concepts
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Resources -->
+            <section class="section" aria-labelledby="resources-heading">
+                <h3 id="resources-heading">Additional Resources</h3>
+                
+                <div class="card">
+                    <h4>
+                        <span aria-hidden="true">📚</span>
+                        Helpful Links and Documentation
+                    </h4>
+                    
+                    <ul style="margin-left: 20px;">
+                        <li style="margin-bottom: 10px;">
+                            <strong>Autopsy User Documentation:</strong> 
+                            <a href="https://sleuthkit.org/autopsy/docs/user-docs/" target="_blank" rel="noopener">
+                                https://sleuthkit.org/autopsy/docs/user-docs/
+                            </a>
+                        </li>
+                        <li style="margin-bottom: 10px;">
+                            <strong>The Sleuth Kit Documentation:</strong> 
+                            <a href="https://www.sleuthkit.org/sleuthkit/docs.php" target="_blank" rel="noopener">
+                                https://www.sleuthkit.org/sleuthkit/docs.php
+                            </a>
+                        </li>
+                        <li style="margin-bottom: 10px;">
+                            <strong>Autopsy Training Videos:</strong> 
+                            <a href="https://www.youtube.com/watch?v=fEqx0MeCCHg" target="_blank" rel="noopener">
+                                DFIRScience Autopsy Tutorial
+                            </a>
+                        </li>
+                        <li style="margin-bottom: 10px;">
+                            <strong>Digital Forensics Basics:</strong> 
+                            <a href="https://www.nist.gov/publications/guide-integrating-forensic-techniques-incident-response" target="_blank" rel="noopener">
+                                NIST SP 800-86
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Tips for Success -->
+            <section class="section" aria-labelledby="tips-heading">
+                <h3 id="tips-heading">Tips for Success</h3>
+                
+                <div class="card">
+                    <h4>
+                        <span aria-hidden="true">⭐</span>
+                        Best Practices for This Lab
+                    </h4>
+                    
+                    <div class="tip">
+                        <div class="tip-title">
+                            <span aria-hidden="true">⏰</span>
+                            <span>Time Management</span>
+                        </div>
+                        <p>Allocate your 3 hours wisely: 30 min installation, 20 min case setup, 30 min interface exploration, 60 min analysis, 20 min reporting, and 20 min for documentation and questions.</p>
+                    </div>
+                    
+                    <div class="tip">
+                        <div class="tip-title">
+                            <span aria-hidden="true">📸</span>
+                            <span>Screenshot Strategy</span>
+                        </div>
+                        <p>Take screenshots as you work, not at the end. Use meaningful filenames like "FileSystemInfo.png" or "KeywordSearchResults.png" to stay organized.</p>
+                    </div>
+                    
+                    <div class="tip">
+                        <div class="tip-title">
+                            <span aria-hidden="true">📝</span>
+                            <span>Note-Taking</span>
+                        </div>
+                        <p>Document as you go. Write down observations, questions, and interesting findings immediately. Include timestamps for your activities.</p>
+                    </div>
+                    
+                    <div class="tip">
+                        <div class="tip-title">
+                            <span aria-hidden="true">🤝</span>
+                            <span>Collaboration</span>
+                        </div>
+                        <p>While you must submit your own work, discussing findings with classmates is encouraged. Forensic analysis often involves team collaboration.</p>
+                    </div>
+                    
+                    <div class="tip">
+                        <div class="tip-title">
+                            <span aria-hidden="true">❓</span>
+                            <span>Getting Help</span>
+                        </div>
+                        <p>If you encounter technical issues, ask the instructor or lab assistant. Document any problems you solve - troubleshooting skills are valuable in forensics!</p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <footer>
+            <p><strong>CSC 156 - Digital Forensics Fundamentals</strong></p>
+            <p>Mendocino College | Computer Science Department</p>
+            <p style="margin-top: 15px; opacity: 0.9;">
+                Week 1 Lab Activity | 20 points | Due: End of Week 1
+            </p>
+            <div style="margin-top: 20px;">
+                <span class="cslo-badge">CSLO 1</span>
+                <span class="cslo-badge">Hands-On Learning</span>
+                <span class="cslo-badge">Industry Tools</span>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Progress tracking functionality
+        const checkboxes = document.querySelectorAll('.progress-checkbox');
+        const progressBar = document.getElementById('progressBar');
+        const totalCheckboxes = checkboxes.length;
+
+        // Load saved progress from sessionStorage
+        function loadProgress() {
+            checkboxes.forEach((checkbox, index) => {
+                const savedState = sessionStorage.getItem(`lab1_check${index + 1}`);
+                if (savedState === 'true') {
+                    checkbox.checked = true;
+                }
+            });
+            updateProgress();
+        }
+
+        // Save progress to sessionStorage
+        function saveProgress() {
+            checkboxes.forEach((checkbox, index) => {
+                sessionStorage.setItem(`lab1_check${index + 1}`, checkbox.checked);
+            });
+        }
+
+        // Update progress bar
+        function updateProgress() {
+            const checkedCount = document.querySelectorAll('.progress-checkbox:checked').length;
+            const percentage = Math.round((checkedCount / totalCheckboxes) * 100);
+            
+            progressBar.style.width = percentage + '%';
+            progressBar.setAttribute('aria-valuenow', percentage);
+            progressBar.textContent = percentage + '%';
+        }
+
+        // Add event listeners to checkboxes
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                updateProgress();
+                saveProgress();
+            });
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProgress();
+        });
+
+        // Keyboard navigation enhancement for checkbox items
+        document.querySelectorAll('.checkbox-item').forEach(item => {
+            item.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    const checkbox = item.querySelector('input[type="checkbox"]');
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change'));
+                }
+            });
+        });
+    </script>
+</body>
+</html>
