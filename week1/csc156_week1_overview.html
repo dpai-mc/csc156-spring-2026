@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSC 156 - Week 1: Introduction to Digital Forensics</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success-color: #059669;
+            --background: #ffffff;
+            --surface: #f8fafc;
+            --surface-hover: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --border: #e2e8f0;
+            --border-hover: #cbd5e1;
+            --accent: #f0f9ff;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: var(--background);
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Skip to main content link for screen readers */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px;
+            text-decoration: none;
+            z-index: 100;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1e40af 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px var(--shadow);
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            margin-bottom: 5px;
+        }
+
+        .course-info {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            font-size: 0.95rem;
+        }
+
+        .course-info span {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 12px;
+            border-radius: 6px;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Progress Section */
+        .progress-container {
+            background: var(--accent);
+            border: 2px solid var(--primary-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .progress-header h2 {
+            font-size: 1.3rem;
+            color: var(--primary-color);
+        }
+
+        .progress-stats {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--success-color);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 2px solid var(--primary-color);
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color) 0%, var(--success-color) 100%);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* Card styles */
+        .card {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--border-hover);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .card-header {
+            background: white;
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border);
+            transition: background 0.2s ease;
+        }
+
+        .card-header:hover {
+            background: var(--surface-hover);
+        }
+
+        .card-header:focus {
+            outline: 3px solid var(--primary-color);
+            outline-offset: -3px;
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .card-number {
+            background: var(--primary-color);
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .card-header h3 {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .card-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .expand-icon {
+            width: 24px;
+            height: 24px;
+            transition: transform 0.3s ease;
+            color: var(--text-secondary);
+        }
+
+        .expand-icon.expanded {
+            transform: rotate(180deg);
+        }
+
+        .completion-checkbox {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .completion-checkbox:focus {
+            outline: 3px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        .card-content {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.4s ease;
+        }
+
+        .card-content.expanded {
+            max-height: 2000px;
+            padding: 20px;
+        }
+
+        .card-content p {
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+        }
+
+        .card-content ul, .card-content ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .card-content li {
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+        }
+
+        /* Time breakdown table */
+        .time-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .time-table th,
+        .time-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .time-table th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        .time-table tr:last-child td {
+            border-bottom: none;
+            font-weight: 600;
+            background: var(--accent);
+        }
+
+        .time-table td:last-child {
+            text-align: right;
+            font-weight: 600;
+        }
+
+        /* Badge styles */
+        .badge-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: white;
+            border: 2px solid var(--primary-color);
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            transition: all 0.2s ease;
+        }
+
+        .badge:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px var(--shadow);
+        }
+
+        .badge-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Objectives list */
+        .objectives-list {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .objectives-list li {
+            padding-left: 30px;
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+        .objectives-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--success-color);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* Alert box */
+        .alert {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-left: 6px solid #f59e0b;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert p {
+            color: #78350f;
+            margin: 0;
+        }
+
+        /* Info box */
+        .info-box {
+            background: var(--accent);
+            border: 2px solid var(--primary-color);
+            border-left: 6px solid var(--primary-color);
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .info-box-title {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-box p {
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 40px;
+            padding: 20px;
+            text-align: center;
+            background: var(--surface);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            border: 2px solid var(--border);
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            header p {
+                font-size: 1rem;
+            }
+
+            .course-info {
+                font-size: 0.85rem;
+            }
+
+            .card-header {
+                padding: 15px;
+            }
+
+            .card-content.expanded {
+                padding: 15px;
+            }
+
+            .badge-container {
+                gap: 8px;
+            }
+
+            .badge {
+                font-size: 0.85rem;
+                padding: 6px 10px;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+            }
+
+            .card {
+                page-break-inside: avoid;
+                border: 1px solid #ccc;
+            }
+
+            .card-content {
+                max-height: none !important;
+                padding: 20px !important;
+            }
+
+            .completion-checkbox,
+            .expand-icon {
+                display: none;
+            }
+        }
+
+        /* Focus styles for accessibility */
+        *:focus-visible {
+            outline: 3px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        /* Ensure sufficient color contrast */
+        a {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        a:hover {
+            color: var(--primary-hover);
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            :root {
+                --border: #000;
+                --text-secondary: #000;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header role="banner">
+        <h1>CSC 156 - Digital Forensics Fundamentals</h1>
+        <p>Week 1: Introduction to Digital Forensics</p>
+        <div class="course-info">
+            <span>📅 Week Duration: 5 Days</span>
+            <span>📚 Lecture: 2 Hours</span>
+            <span>🔬 Lab: 3 Hours</span>
+            <span>⏰ Total Time: ~9 Hours</span>
+        </div>
+    </header>
+
+    <main id="main-content" role="main">
+        <!-- Progress Tracking -->
+        <section class="progress-container" aria-label="Week 1 Progress Tracking">
+            <div class="progress-header">
+                <h2>Your Progress</h2>
+                <span class="progress-stats" id="progress-text" aria-live="polite">0 of 6 sections completed</span>
+            </div>
+            <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Course progress">
+                <div class="progress-fill" id="progress-fill">0%</div>
+            </div>
+        </section>
+
+        <!-- Week Overview -->
+        <section class="card">
+            <div class="card-header" role="button" tabindex="0" aria-expanded="false" aria-controls="overview-content">
+                <div class="card-title">
+                    <div class="card-number">1</div>
+                    <h3>Week Overview</h3>
+                </div>
+                <div class="card-controls">
+                    <input type="checkbox" class="completion-checkbox" aria-label="Mark Week Overview as complete" title="Mark as complete">
+                    <svg class="expand-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+            </div>
+            <div class="card-content" id="overview-content">
+                <p>This first week introduces students to the field of digital forensics as a profession, establishing foundational knowledge about the role of forensics in cybersecurity and incident response. Students will become familiar with the course structure, lab environment, and the various professional certifications available in the field.</p>
+                
+                <h4>Time Breakdown</h4>
+                <table class="time-table">
+                    <thead>
+                        <tr>
+                            <th>Activity</th>
+                            <th>Hours</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Lecture Hours</td>
+                            <td>2</td>
+                        </tr>
+                        <tr>
+                            <td>Lab Hours</td>
+                            <td>3</td>
+                        </tr>
+                        <tr>
+                            <td>Out-of-Class Work</td>
+                            <td>~4</td>
+                        </tr>
+                        <tr>
+                            <td>Total Student Time</td>
+                            <td>~9</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="alert">
+                    <div class="alert-title">
+                        <span aria-hidden="true">⚠️</span>
+                        <span>Important Note</span>
+                    </div>
+                    <p>Out-of-class work includes reading assignments, discussion participation, and lab report completion.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Learning Objectives -->
+        <section class="card">
+            <div class="card-header" role="button" tabindex="0" aria-expanded="false" aria-controls="objectives-content">
+                <div class="card-title">
+                    <div class="card-number">2</div>
+                    <h3>Learning Objectives</h3>
+                </div>
+                <div class="card-controls">
+                    <input type="checkbox" class="completion-checkbox" aria-label="Mark Learning Objectives as complete" title="Mark as complete">
+                    <svg class="expand-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+            </div>
+            <div class="card-content" id="objectives-content">
+                <p><strong>By the end of Week 1, students will be able to:</strong></p>
+                
+                <ol class="objectives-list">
+                    <li>Define digital forensics and explain its role in modern cybersecurity</li>
+                    <li>Identify career paths and professional certifications in digital forensics</li>
+                    <li>Describe the relationship between incident response and forensic investigation</li>
+                    <li>Navigate the course lab environment and forensic tools</li>
+                    <li>Explain the scope and expectations of the course</li>
+                </ol>
+
+                <div class="info-box">
+                    <div class="info-box-title">
+                        <span aria-hidden="true">💡</span>
+                        <span>Learning Tip</span>
+                    </div>
+                    <p>These objectives are designed to build your foundational understanding. Take notes during lectures and actively participate in lab exercises to reinforce these concepts.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Course Student Learning Outcomes -->
+        <section class="card">
+            <div class="card-header" role="button" tabindex="0" aria-expanded="false" aria-controls="cslo-content">
+                <div class="card-title">
+                    <div class="card-number">3</div>
+                    <h3>Course Student Learning Outcomes (CSLOs)</h3>
+                </div>
+                <div class="card-controls">
+                    <input type="checkbox" class="completion-checkbox" aria-label="Mark CSLOs as complete" title="Mark as complete">
+                    <svg class="expand-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+            </div>
+            <div class="card-content" id="cslo-content">
+                <p><strong>Primary CSLO Addressed This Week:</strong></p>
+                
+                <div class="info-box">
+                    <div class="info-box-title">
+                        <span aria-hidden="true">🎯</span>
+                        <span>CSLO 1</span>
+                    </div>
+                    <p><strong>Describe the fundamental concepts of incident response and forensic investigation.</strong></p>
+                    <p style="margin-top: 10px;"><em>Expected Performance: 0.75 (75% mastery)</em></p>
+                </div>
+
+                <p style="margin-top: 15px;">This week's content directly supports your ability to understand and articulate the core principles of digital forensics and how they integrate with incident response procedures. Throughout the semester, you'll build upon this foundation to achieve the expected performance level.</p>
+
+                <div class="alert">
+                    <div class="alert-title">
+                        <span aria-hidden="true">📊</span>
+                        <span>Assessment Note</span>
+                    </div>
+                    <p>Your understanding of CSLO 1 will be assessed through Week 1 lab activities, discussions, and Quiz 1 in Week 3.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Certification Alignment -->
+        <section class="card">
+            <div class="card-header" role="button" tabindex="0" aria-expanded="false" aria-controls="cert-content">
+                <div class="card-title">
+                    <div class="card-number">4</div>
+                    <h3>Professional Certification Alignment</h3>
+                </div>
+                <div class="card-controls">
+                    <input type="checkbox" class="completion-checkbox" aria-label="Mark Certification Alignment as complete" title="Mark as complete">
+                    <svg class="expand-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+            </div>
+            <div class="card-content" id="cert-content">
+                <p>Week 1 content aligns with multiple professional certification domains, helping you prepare for industry-recognized credentials:</p>
+                
+                <div class="badge-container">
+                    <div class="badge">
+                        <svg class="badge-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                        </svg>
+                        IACIS CFCE
+                    </div>
+                    <div class="badge">
+                        <svg class="badge-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                        </svg>
+                        GIAC GCFE
+                    </div>
+                    <div class="badge">
+                        <svg class="badge-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                        </svg>
+                        GIAC GCFA
+                    </div>
+                    <div class="badge">
+                        <svg class="badge-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                        </svg>
+                        EC-Council CHFI
+                    </div>
+                </div>
+
+                <h4 style="margin-top: 20px;">Certification Domain Coverage:</h4>
+                <ul>
+                    <li><strong>IACIS CFCE:</strong> Introduction to Computer Forensics</li>
+                    <li><strong>GIAC GCFE:</strong> Legal and Ethical Principles</li>
+                    <li><strong>GIAC GCFA:</strong> Forensics Fundamentals</li>
+                    <li><strong>EC-Council CHFI:</strong> Computer Forensics in Today's World</li>
+                </ul>
+
+                <div class="info-box" style="margin-top: 15px;">
+                    <div class="info-box-title">
+                        <span aria-hidden="true">🎓</span>
+                        <span>Career Advantage</span>
+                    </div>
+                    <p>This course prepares you for these industry-recognized certifications, which are highly valued by employers in cybersecurity and digital forensics fields.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Topics Covered -->
+        <section class="card">
+            <div class="card-header" role="button" tabindex="0" aria-expanded="false" aria-controls="topics-content">
+                <div class="card-title">
+                    <div class="card-number">5</div>
+                    <h3>Topics Covered This Week</h3>
+                </div>
+                <div class="card-controls">
+                    <input type="checkbox" class="completion-checkbox" aria-label="Mark Topics as complete" title="Mark as complete">
+                    <svg class="expand-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+            </div>
+            <div class="card-content" id="topics-content">
+                <h4>Lecture Topics:</h4>
+                <ul>
+                    <li><strong>Overview of Digital Forensics as a Profession</strong> - Understanding the field, its history, and its evolution</li>
+                    <li><strong>Role of Digital Forensics in Incident Response and Cybersecurity</strong> - How forensics fits into the broader security landscape</li>
+                    <li><strong>Industry Certifications Overview</strong> - IACIS CFCE, GIAC GCFE, GIAC GCFA, and EC-Council CHFI</li>
+                    <li><strong>Course Structure and Expectations</strong> - Syllabus review, grading policies, and success strategies</li>
+                </ul>
+
+                <h4 style="margin-top: 20px;">Lab Activities:</h4>
+                <ul>
+                    <li><strong>Lab Environment Setup</strong> - Installing and configuring forensic workstation tools</li>
+                    <li><strong>Tool Familiarization</strong> - Introduction to Autopsy, FTK Imager, and other core forensic tools</li>
+                    <li><strong>Navigation Exercises</strong> - Learning to navigate the lab environment efficiently</li>
+                    <li><strong>Documentation Practice</strong> - Beginning your forensic notebook and proper documentation techniques</li>
+                </ul>
+
+                <div class="alert" style="margin-top: 15px;">
+                    <div class="alert-title">
+                        <span aria-hidden="true">✏️</span>
+                        <span>Lab Reminder</span>
+                    </div>
+                    <p>Bring a USB drive or ensure you have cloud storage access for saving your lab work. Lab reports are due by the end of the week.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Assignments and Activities -->
+        <section class="card">
+            <div class="card-header" role="button" tabindex="0" aria-expanded="false" aria-controls="assignments-content">
+                <div class="card-title">
+                    <div class="card-number">6</div>
+                    <h3>Assignments &amp; Activities</h3>
+                </div>
+                <div class="card-controls">
+                    <input type="checkbox" class="completion-checkbox" aria-label="Mark Assignments as complete" title="Mark as complete">
+                    <svg class="expand-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+            </div>
+            <div class="card-content" id="assignments-content">
+                <h4>Due This Week:</h4>
+                
+                <table class="time-table">
+                    <thead>
+                        <tr>
+                            <th>Assignment</th>
+                            <th>Points</th>
+                            <th>Due Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Lab Activity 1:</strong> Forensic Workstation Setup and Tool Familiarization</td>
+                            <td>20</td>
+                            <td>End of Week 1</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Discussion Post 1:</strong> Career Paths in Digital Forensics</td>
+                            <td>3</td>
+                            <td>Day 3 &amp; Day 5</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Reading:</strong> Introduction to Digital Forensics (online resources)</td>
+                            <td>-</td>
+                            <td>Before Lab</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="info-box" style="margin-top: 15px;">
+                    <div class="info-box-title">
+                        <span aria-hidden="true">📋</span>
+                        <span>Discussion Guidelines</span>
+                    </div>
+                    <p><strong>Initial Post (2 points):</strong> Post a thoughtful response (minimum 150 words) by Day 3 (Wednesday).</p>
+                    <p><strong>Peer Responses (1 point):</strong> Respond to at least 2 classmates (minimum 50 words each) by Day 5 (Friday).</p>
+                </div>
+
+                <h4 style="margin-top: 20px;">Suggested Activities:</h4>
+                <ul>
+                    <li>Explore professional organizations like IACIS, HTCIA, and SANS</li>
+                    <li>Review job postings for digital forensics positions to understand industry requirements</li>
+                    <li>Watch introductory videos on digital forensics from trusted sources (13Cubed, SANS)</li>
+                    <li>Begin building your professional network on LinkedIn</li>
+                </ul>
+
+                <div class="alert" style="margin-top: 15px;">
+                    <div class="alert-title">
+                        <span aria-hidden="true">⏰</span>
+                        <span>Time Management Tip</span>
+                    </div>
+                    <p>Start your lab report early! Document your work as you complete each step rather than trying to write everything at the end.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer role="contentinfo">
+        <p><strong>CSC 156 - Digital Forensics Fundamentals</strong></p>
+        <p>Mendocino College | Computer Science Department</p>
+        <p style="margin-top: 10px; font-size: 0.9rem;">💾 Your progress is saved for this session only. Bookmark this page to return to it later.</p>
+    </footer>
+
+    <script>
+        // Progress tracking
+        const totalSections = 6;
+        let completedSections = 0;
+
+        // Session storage for progress persistence
+        const STORAGE_KEY = 'csc156_week1_progress';
+
+        // Load saved progress
+        function loadProgress() {
+            const saved = sessionStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    data.completed.forEach(index => {
+                        const checkbox = document.querySelectorAll('.completion-checkbox')[index];
+                        if (checkbox) {
+                            checkbox.checked = true;
+                            completedSections++;
+                        }
+                    });
+                    data.expanded.forEach(index => {
+                        const card = document.querySelectorAll('.card')[index];
+                        if (card) {
+                            expandCard(card, false);
+                        }
+                    });
+                    updateProgress();
+                } catch (e) {
+                    console.error('Error loading progress:', e);
+                }
+            }
+        }
+
+        // Save progress
+        function saveProgress() {
+            const checkboxes = document.querySelectorAll('.completion-checkbox');
+            const completed = Array.from(checkboxes)
+                .map((cb, i) => cb.checked ? i : -1)
+                .filter(i => i !== -1);
+            
+            const cards = document.querySelectorAll('.card-content');
+            const expanded = Array.from(cards)
+                .map((content, i) => content.classList.contains('expanded') ? i : -1)
+                .filter(i => i !== -1);
+            
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ completed, expanded }));
+        }
+
+        // Update progress bar
+        function updateProgress() {
+            const percentage = Math.round((completedSections / totalSections) * 100);
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+            const progressBar = document.querySelector('.progress-bar');
+            
+            progressFill.style.width = percentage + '%';
+            progressFill.textContent = percentage + '%';
+            progressText.textContent = `${completedSections} of ${totalSections} sections completed`;
+            progressBar.setAttribute('aria-valuenow', percentage);
+        }
+
+        // Expand/collapse card
+        function expandCard(card, animate = true) {
+            const content = card.querySelector('.card-content');
+            const icon = card.querySelector('.expand-icon');
+            const header = card.querySelector('.card-header');
+            const isExpanded = content.classList.contains('expanded');
+            
+            if (isExpanded) {
+                content.classList.remove('expanded');
+                icon.classList.remove('expanded');
+                header.setAttribute('aria-expanded', 'false');
+            } else {
+                content.classList.add('expanded');
+                icon.classList.add('expanded');
+                header.setAttribute('aria-expanded', 'true');
+            }
+            
+            if (animate) {
+                saveProgress();
+            }
+        }
+
+        // Handle card header clicks
+        document.querySelectorAll('.card-header').forEach(header => {
+            header.addEventListener('click', (e) => {
+                // Don't expand if clicking the checkbox
+                if (e.target.classList.contains('completion-checkbox')) {
+                    return;
+                }
+                const card = header.closest('.card');
+                expandCard(card);
+            });
+
+            // Handle keyboard navigation
+            header.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    const card = header.closest('.card');
+                    expandCard(card);
+                }
+            });
+        });
+
+        // Handle completion checkboxes
+        document.querySelectorAll('.completion-checkbox').forEach((checkbox, index) => {
+            checkbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    completedSections++;
+                } else {
+                    completedSections--;
+                }
+                updateProgress();
+                saveProgress();
+            });
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProgress();
+            
+            // Announce page load to screen readers
+            const announcement = document.createElement('div');
+            announcement.setAttribute('role', 'status');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.className = 'sr-only';
+            announcement.textContent = 'Week 1 overview page loaded. Use tab to navigate through sections.';
+            document.body.appendChild(announcement);
+        });
+
+        // Add screen reader only class for announcements
+        const style = document.createElement('style');
+        style.textContent = `
+            .sr-only {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                padding: 0;
+                margin: -1px;
+                overflow: hidden;
+                clip: rect(0, 0, 0, 0);
+                white-space: nowrap;
+                border-width: 0;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
