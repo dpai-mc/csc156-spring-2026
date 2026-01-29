@@ -1,0 +1,2173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 4: Chain of Custody & Evidence Handling | CSC 156</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2196F3;
+            --secondary-color: #1976D2;
+            --success-color: #4CAF50;
+            --warning-color: #ff9800;
+            --error-color: #f44336;
+            --info-color: #03a9f4;
+            --light-bg: #f5f5f5;
+            --card-bg: #ffffff;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-color: #dddddd;
+            --shadow: 0 2px 4px rgba(0,0,0,0.1);
+            --shadow-hover: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: var(--light-bg);
+            padding-top: 120px;
+        }
+
+        /* Sticky Navigation */
+        .sticky-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--card-bg);
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            border-bottom: 3px solid var(--primary-color);
+        }
+
+        .nav-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+        }
+
+        .nav-header h1 {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .nav-header p {
+            font-size: 0.9em;
+            opacity: 0.95;
+        }
+
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 10px;
+            gap: 10px;
+            background-color: var(--light-bg);
+        }
+
+        .nav-links a {
+            padding: 8px 16px;
+            background-color: var(--card-bg);
+            color: var(--primary-color);
+            text-decoration: none;
+            border-radius: 5px;
+            border: 2px solid var(--primary-color);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .nav-links a:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .nav-links a.active {
+            background-color: var(--secondary-color);
+            color: white;
+            border-color: var(--secondary-color);
+        }
+
+        /* Main Content Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Progress Bar */
+        .progress-section {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background-color: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success-color), #66BB6A);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Learning Objectives */
+        .objectives {
+            background-color: #e3f2fd;
+            padding: 25px;
+            border-radius: 8px;
+            border-left: 5px solid var(--primary-color);
+            margin-bottom: 30px;
+        }
+
+        .objectives h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .objectives ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .objectives li {
+            padding: 8px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .objectives li:before {
+            content: "🎯";
+            position: absolute;
+            left: 0;
+        }
+
+        /* Content Sections */
+        .content-section {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .content-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-color);
+            font-size: 1.8em;
+        }
+
+        .content-section h3 {
+            color: var(--secondary-color);
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .content-section h4 {
+            color: var(--text-primary);
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        /* Info Boxes */
+        .info-box {
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 5px solid;
+        }
+
+        .info-box.definition {
+            background-color: #e3f2fd;
+            border-color: var(--primary-color);
+        }
+
+        .info-box.warning {
+            background-color: #fff3e0;
+            border-color: var(--warning-color);
+        }
+
+        .info-box.error {
+            background-color: #ffebee;
+            border-color: var(--error-color);
+        }
+
+        .info-box.success {
+            background-color: #e8f5e9;
+            border-color: var(--success-color);
+        }
+
+        .info-box h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        /* Grid Layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-3px);
+        }
+
+        .card h4 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        /* Interactive Quiz */
+        .quiz-container {
+            background-color: var(--light-bg);
+            padding: 25px;
+            border-radius: 8px;
+            margin: 25px 0;
+            border: 2px solid var(--border-color);
+        }
+
+        .quiz-question {
+            margin-bottom: 20px;
+        }
+
+        .quiz-question h3 {
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        .quiz-option {
+            display: block;
+            padding: 12px;
+            margin: 8px 0;
+            background-color: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .quiz-option:hover {
+            background-color: #e3f2fd;
+            border-color: var(--primary-color);
+        }
+
+        .quiz-option input[type="radio"] {
+            margin-right: 10px;
+        }
+
+        .quiz-feedback {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .quiz-feedback.correct {
+            background-color: #e8f5e9;
+            border: 2px solid var(--success-color);
+            color: #2e7d32;
+        }
+
+        .quiz-feedback.incorrect {
+            background-color: #ffebee;
+            border: 2px solid var(--error-color);
+            color: #c62828;
+        }
+
+        .quiz-feedback.warning {
+            background-color: #fff3e0;
+            border: 2px solid var(--warning-color);
+            color: #ef6c00;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #388E3C;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .btn-block {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .form-group input[type="text"],
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .field-feedback {
+            margin-top: 5px;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .field-feedback.show {
+            display: block;
+        }
+
+        .field-feedback.success {
+            color: var(--success-color);
+        }
+
+        .field-feedback.error {
+            color: var(--error-color);
+        }
+
+        /* Chain of Custody Form */
+        .coc-form {
+            background-color: var(--card-bg);
+            border: 3px solid var(--text-primary);
+            padding: 30px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .coc-header {
+            text-align: center;
+            border-bottom: 2px solid var(--text-primary);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .coc-header h3 {
+            margin: 0;
+            font-size: 1.3em;
+        }
+
+        .coc-header p {
+            margin: 5px 0 0 0;
+            font-size: 0.9em;
+        }
+
+        .form-field-interactive {
+            border: 2px solid var(--primary-color);
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin: 10px 0;
+        }
+
+        .form-field-interactive:hover {
+            background-color: #f5f5f5;
+        }
+
+        .form-field-interactive strong {
+            color: var(--primary-color);
+        }
+
+        .form-field-interactive .help-text {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .field-explanation {
+            background-color: #e3f2fd;
+            padding: 20px;
+            border-left: 4px solid var(--primary-color);
+            margin-top: 20px;
+            display: none;
+            border-radius: 5px;
+        }
+
+        .field-explanation.show {
+            display: block;
+        }
+
+        .field-explanation h4 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        .field-explanation .example {
+            background-color: var(--card-bg);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        /* Error Identification Exercise */
+        .error-field {
+            border: 2px solid var(--border-color);
+            padding: 10px;
+            margin: 10px 0;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.2s ease;
+        }
+
+        .error-field:hover {
+            background-color: #fff3e0;
+            border-color: var(--warning-color);
+        }
+
+        .error-field.found {
+            background-color: #ffcdd2;
+            border-color: var(--error-color);
+        }
+
+        .error-highlight {
+            background-color: #ffeb3b;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .error-feedback {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #ffcdd2;
+            border-radius: 5px;
+            border-left: 4px solid var(--error-color);
+        }
+
+        .error-feedback.show {
+            display: block;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--light-bg);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        /* Checklist */
+        .checklist {
+            background-color: var(--light-bg);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .checklist-item {
+            display: block;
+            padding: 12px;
+            margin: 8px 0;
+            background-color: var(--card-bg);
+            border-left: 4px solid var(--success-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 5px;
+        }
+
+        .checklist-item:hover {
+            background-color: #e8f5e9;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            margin-right: 12px;
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+
+        .checklist-item.checked {
+            opacity: 0.7;
+            text-decoration: line-through;
+        }
+
+        /* Code/Example Blocks */
+        .code-block {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid var(--primary-color);
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        .code-block pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+        /* Summary Box */
+        .summary-box {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            padding: 25px;
+            border-radius: 8px;
+            border: 2px solid var(--success-color);
+            margin: 30px 0;
+        }
+
+        .summary-box h2 {
+            color: var(--success-color);
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .summary-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .summary-box li {
+            padding: 5px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .summary-box li:before {
+            content: "✅";
+            position: absolute;
+            left: 0;
+        }
+
+        /* Completion Badge */
+        .completion-badge {
+            background: linear-gradient(135deg, var(--success-color) 0%, #66BB6A 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 30px 0;
+            box-shadow: var(--shadow-hover);
+        }
+
+        .completion-badge h2 {
+            margin: 0 0 15px 0;
+            font-size: 2em;
+        }
+
+        .completion-badge p {
+            font-size: 1.1em;
+            margin: 10px 0;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding-top: 180px;
+            }
+
+            .nav-header h1 {
+                font-size: 1.2em;
+            }
+
+            .nav-links {
+                flex-direction: column;
+            }
+
+            .nav-links a {
+                width: 100%;
+                text-align: center;
+            }
+
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 10px;
+            }
+
+            .content-section {
+                padding: 20px;
+            }
+
+            .coc-form {
+                padding: 15px;
+                font-size: 0.9em;
+            }
+        }
+
+        /* Accessibility */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        /* Focus Styles */
+        *:focus {
+            outline: 3px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        button:focus,
+        a:focus,
+        input:focus,
+        textarea:focus {
+            outline: 3px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        /* Print Styles */
+        @media print {
+            .sticky-nav,
+            .nav-links,
+            .btn,
+            .quiz-container {
+                display: none;
+            }
+
+            body {
+                padding-top: 0;
+            }
+
+            .content-section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sticky Navigation -->
+    <nav class="sticky-nav" role="navigation" aria-label="Module navigation">
+        <div class="nav-header">
+            <h1>Module 4: Chain of Custody & Evidence Handling</h1>
+            <p>CSC 156 - Digital Forensics Fundamentals | Week 2</p>
+        </div>
+        <div class="nav-links">
+            <a href="#section-1">What is Chain of Custody?</a>
+            <a href="#section-2">Critical Elements</a>
+            <a href="#section-3">Annotated Form</a>
+            <a href="#section-4">Form Completion</a>
+            <a href="#section-5">Common Errors</a>
+            <a href="#section-6">Transfer Procedures</a>
+            <a href="#section-7">Digital Evidence</a>
+            <a href="#section-8">Best Practices</a>
+            <a href="#section-9">Summary</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+
+        <!-- Progress Section -->
+        <div class="progress-section" role="region" aria-label="Module progress">
+            <div class="progress-header">
+                <h2>Module 4 Progress</h2>
+                <span id="progress-percentage">0% Complete</span>
+            </div>
+            <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-fill" id="progress-fill" style="width: 0%;">
+                    <span>0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Learning Objectives -->
+        <div class="objectives">
+            <h2>🎯 Learning Objectives</h2>
+            <p>By the end of this module, you will be able to:</p>
+            <ul>
+                <li><strong>Define</strong> chain of custody and explain its legal significance</li>
+                <li><strong>Identify</strong> the critical elements required in chain of custody documentation</li>
+                <li><strong>Complete</strong> chain of custody forms accurately and professionally</li>
+                <li><strong>Recognize</strong> common errors that compromise evidence admissibility</li>
+                <li><strong>Apply</strong> proper evidence handling and transfer procedures</li>
+            </ul>
+            <p style="margin-top: 15px;"><strong>CSLO Alignment:</strong> CSLO 1, CSLO 4</p>
+            <p><strong>Estimated Completion Time:</strong> 25-30 minutes</p>
+        </div>
+
+        <!-- Section 1: What is Chain of Custody? -->
+        <section id="section-1" class="content-section">
+            <h2>📋 1. What is Chain of Custody?</h2>
+
+            <div class="info-box definition">
+                <h3>Definition</h3>
+                <p><strong>Chain of custody</strong> is the chronological documentation that records the sequence of custody, control, transfer, analysis, and disposition of physical or electronic evidence.</p>
+                <p style="margin-top: 10px;">It is a legal requirement that proves evidence integrity from collection through presentation in court.</p>
+            </div>
+
+            <h3>🔗 Why Chain of Custody Matters</h3>
+            <p>Chain of custody serves three critical legal functions:</p>
+
+            <div class="grid-3">
+                <div class="card" style="border-color: var(--warning-color);">
+                    <h4>⚖️ Legal Admissibility</h4>
+                    <p>Evidence without proper chain of custody may be <strong>excluded from court</strong>. The opposing counsel will challenge evidence integrity if custody cannot be proven.</p>
+                    <p style="margin-top: 10px; color: var(--error-color);"><strong>Real consequence:</strong> Cases dismissed, criminals go free, civil lawsuits lost.</p>
+                </div>
+
+                <div class="card" style="border-color: #9c27b0;">
+                    <h4>🔒 Evidence Integrity</h4>
+                    <p>Chain of custody proves evidence has not been:</p>
+                    <ul style="margin-top: 10px; padding-left: 20px;">
+                        <li>Tampered with</li>
+                        <li>Altered</li>
+                        <li>Contaminated</li>
+                        <li>Substituted</li>
+                        <li>Accessed by unauthorized persons</li>
+                    </ul>
+                </div>
+
+                <div class="card" style="border-color: var(--success-color);">
+                    <h4>👥 Accountability</h4>
+                    <p>Every person who handles evidence is documented. This creates:</p>
+                    <ul style="margin-top: 10px; padding-left: 20px;">
+                        <li>Clear responsibility</li>
+                        <li>Audit trail</li>
+                        <li>Deterrent against misconduct</li>
+                        <li>Professional accountability</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>📊 Legal Standard: The "Reasonable Doubt" Test</h3>
+
+            <div class="info-box error">
+                <h4>Federal Rules of Evidence - Rule 901</h4>
+                <p>Evidence must be <strong>authenticated</strong> before admission. Chain of custody documentation provides this authentication by showing:</p>
+                <ol style="margin-top: 10px; padding-left: 20px;">
+                    <li><strong>What</strong> the evidence is</li>
+                    <li><strong>When</strong> it was collected</li>
+                    <li><strong>Where</strong> it was stored</li>
+                    <li><strong>Who</strong> handled it</li>
+                    <li><strong>Why</strong> transfers occurred</li>
+                    <li><strong>How</strong> integrity was maintained</li>
+                </ol>
+                <p style="margin-top: 15px;"><strong>Legal threshold:</strong> Chain of custody must be sufficient to support a finding that the evidence is what the proponent claims it to be.</p>
+            </div>
+
+            <h3>🎮 Interactive Quiz: Legal Standards</h3>
+            <p>Test your understanding of chain of custody legal requirements.</p>
+
+            <div class="quiz-container">
+                <div class="quiz-question">
+                    <h3>Question 1 of 3</h3>
+                    <p><strong>What happens if chain of custody documentation has a gap (missing custodian information for a time period)?</strong></p>
+                    
+                    <label class="quiz-option">
+                        <input type="radio" name="q1" value="a">
+                        A) Nothing - minor gaps are acceptable
+                    </label>
+                    <label class="quiz-option">
+                        <input type="radio" name="q1" value="b">
+                        B) The evidence may be excluded from court
+                    </label>
+                    <label class="quiz-option">
+                        <input type="radio" name="q1" value="c">
+                        C) Only affects evidence weight, not admissibility
+                    </label>
+                    <label class="quiz-option">
+                        <input type="radio" name="q1" value="d">
+                        D) Can be fixed by testimony alone
+                    </label>
+
+                    <button class="btn btn-primary" onclick="checkQuizAnswer('q1', 'b')">Check Answer</button>
+                    <div id="feedback-q1" class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question" style="display: none;" id="question-2">
+                    <h3>Question 2 of 3</h3>
+                    <p><strong>Who is responsible for maintaining chain of custody?</strong></p>
+                    
+                    <label class="quiz-option">
+                        <input type="radio" name="q2" value="a">
+                        A) Only the person who initially collected the evidence
+                    </label>
+                    <label class="quiz-option">
+                        <input type="radio" name="q2" value="b">
+                        B) Only forensic examiners
+                    </label>
+                    <label class="quiz-option">
+                        <input type="radio" name="q2" value="c">
+                        C) Every person who handles the evidence
+                    </label>
+                    <label class="quiz-option">
+                        <input type="radio" name="q2" value="d">
+                        D) Only law enforcement officers
+                    </label>
+
+                    <button class="btn btn-primary" onclick="checkQuizAnswer('q2', 'c')">Check Answer</button>
+                    <div id="feedback-q2" class="quiz-feedback"></div>
+                </div>
+
+                <div class="quiz-question" style="display: none;" id="question-3">
+                    <h3>Question 3 of 3</h3>
+                    <p><strong>What is the primary purpose of chain of custody documentation?</strong></p>
+                    
+                    <label class="quiz-option">
+                        <input type="radio" name="q3" value="a">
+                        A) To create paperwork for administrative purposes
+                    </label>
+                    <label class="quiz-option">
+                        <input type="radio" name="q3" value="b">
+                        B) To prove evidence has not been altered or contaminated
+                    </label>
+                    <label class="quiz-option">
+                        <input type="radio" name="q3" value="c">
+                        C) To track evidence for inventory purposes
+                    </label>
+                    <label class="quiz-option">
+                        <input type="radio" name="q3" value="d">
+                        D) To satisfy insurance requirements
+                    </label>
+
+                    <button class="btn btn-primary" onclick="checkQuizAnswer('q3', 'b')">Check Answer</button>
+                    <div id="feedback-q3" class="quiz-feedback"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Critical Elements -->
+        <section id="section-2" class="content-section">
+            <h2>📝 2. Critical Elements of Chain of Custody Forms</h2>
+            
+            <p>Every chain of custody form must document specific information to maintain legal integrity. Missing or incomplete information can render evidence inadmissible.</p>
+
+            <h3>🔍 Required Documentation Elements</h3>
+
+            <div class="info-box success">
+                <h4>1️⃣ Evidence Description</h4>
+                <p><strong>What you must document:</strong></p>
+                <ul style="padding-left: 20px; margin-top: 10px;">
+                    <li>Item number/identifier (unique)</li>
+                    <li>Physical description (make, model, serial number)</li>
+                    <li>Condition when collected</li>
+                    <li>Location where found</li>
+                    <li>Associated case number</li>
+                </ul>
+
+                <div class="code-block" style="margin-top: 15px;">
+                    <strong>Example:</strong><br>
+                    Item #: 2024-CR-0156-001<br>
+                    Description: Dell Latitude E7470 laptop, silver, SN: 5CD8492F<br>
+                    Condition: Powered off, closed, minor scratches on lid<br>
+                    Location: Suspect's residence, 2nd floor bedroom, on desk<br>
+                    Case #: 2024-CR-0156
+                </div>
+            </div>
+
+            <div class="info-box success">
+                <h4>2️⃣ Collection Information</h4>
+                <p><strong>What you must document:</strong></p>
+                <ul style="padding-left: 20px; margin-top: 10px;">
+                    <li>Date and time of collection (precise)</li>
+                    <li>Person who collected evidence (full name, badge/ID)</li>
+                    <li>Witnesses present during collection</li>
+                    <li>Collection method used</li>
+                    <li>Packaging method</li>
+                </ul>
+
+                <div class="code-block" style="margin-top: 15px;">
+                    <strong>Example:</strong><br>
+                    Collected: 2024-01-15 at 14:35 hours<br>
+                    Collected by: Det. Sarah Martinez, Badge #4521<br>
+                    Witness: Officer James Chen, Badge #7832<br>
+                    Method: Photographed in situ, powered off, placed in anti-static bag<br>
+                    Packaging: Sealed in evidence bag #A-7721, initialed across seal
+                </div>
+            </div>
+
+            <div class="info-box success">
+                <h4>3️⃣ Custody Transfer Record</h4>
+                <p><strong>Each transfer must document:</strong></p>
+                <ul style="padding-left: 20px; margin-top: 10px;">
+                    <li>Relinquished by (name, signature, date/time)</li>
+                    <li>Received by (name, signature, date/time)</li>
+                    <li>Purpose of transfer</li>
+                    <li>Location of transfer</li>
+                    <li>Condition of evidence seals</li>
+                </ul>
+
+                <div class="code-block" style="margin-top: 15px;">
+                    <strong>Example:</strong><br>
+                    Relinquished by: Det. Sarah Martinez [signature] 2024-01-15 15:10<br>
+                    Received by: Evidence Technician Robert Kim [signature] 2024-01-15 15:10<br>
+                    Purpose: Storage in secure evidence locker<br>
+                    Location: Police Department Evidence Room<br>
+                    Seal condition: Intact, initials visible
+                </div>
+            </div>
+
+            <div class="info-box success">
+                <h4>4️⃣ Storage Information</h4>
+                <p><strong>What you must document:</strong></p>
+                <ul style="padding-left: 20px; margin-top: 10px;">
+                    <li>Storage location (specific)</li>
+                    <li>Storage conditions (temperature, humidity if relevant)</li>
+                    <li>Security measures (locked, access controlled)</li>
+                    <li>Storage duration</li>
+                    <li>Any environmental concerns</li>
+                </ul>
+
+                <div class="code-block" style="margin-top: 15px;">
+                    <strong>Example:</strong><br>
+                    Storage: Evidence Locker #23-B, Room 105<br>
+                    Conditions: Climate controlled, 68°F, 45% humidity<br>
+                    Security: Dual-lock system, keycard + key access<br>
+                    Access log: Electronic log maintained<br>
+                    Special notes: Stored separately from magnetic media
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Annotated Form -->
+        <section id="section-3" class="content-section">
+            <h2>📄 3. Annotated Chain of Custody Form</h2>
+            <p>Click on each field to learn what information is required and why it matters legally.</p>
+
+            <div class="coc-form">
+                <div class="coc-header">
+                    <h3>CHAIN OF CUSTODY FORM</h3>
+                    <p>Mendocino County Sheriff's Department</p>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-field-interactive" onclick="showFieldInfo('case-number')" tabindex="0" role="button" aria-label="Learn about case number field">
+                        <strong>Case Number:</strong> _________________
+                        <div class="help-text">Click to learn more</div>
+                    </div>
+
+                    <div class="form-field-interactive" onclick="showFieldInfo('item-number')" tabindex="0" role="button" aria-label="Learn about item number field">
+                        <strong>Item Number:</strong> _________________
+                        <div class="help-text">Click to learn more</div>
+                    </div>
+                </div>
+
+                <div class="form-field-interactive" onclick="showFieldInfo('description')" tabindex="0" role="button" aria-label="Learn about evidence description field">
+                    <strong>Description of Evidence:</strong><br>
+                    _____________________________________________<br>
+                    _____________________________________________
+                    <div class="help-text">Click to learn more</div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-field-interactive" onclick="showFieldInfo('collected-by')" tabindex="0" role="button" aria-label="Learn about collected by field">
+                        <strong>Collected By:</strong> _________________
+                        <div class="help-text">Click to learn more</div>
+                    </div>
+
+                    <div class="form-field-interactive" onclick="showFieldInfo('date-time')" tabindex="0" role="button" aria-label="Learn about date and time field">
+                        <strong>Date/Time:</strong> _________________
+                        <div class="help-text">Click to learn more</div>
+                    </div>
+                </div>
+
+                <div class="form-field-interactive" onclick="showFieldInfo('location')" tabindex="0" role="button" aria-label="Learn about location field">
+                    <strong>Location Collected:</strong> _________________
+                    <div class="help-text">Click to learn more</div>
+                </div>
+
+                <div style="border-top: 2px solid #333; padding-top: 15px; margin-top: 20px;">
+                    <strong style="display: block; margin-bottom: 10px;">CUSTODY RECORD</strong>
+
+                    <table>
+                        <tr style="background-color: #f0f0f0;">
+                            <th>Relinquished By</th>
+                            <th>Received By</th>
+                            <th>Date/Time</th>
+                            <th>Purpose</th>
+                        </tr>
+                        <tr class="form-field-interactive" onclick="showFieldInfo('custody-transfer')" style="cursor: pointer;" tabindex="0" role="button" aria-label="Learn about custody transfer">
+                            <td>________________</td>
+                            <td>________________</td>
+                            <td>________________</td>
+                            <td>________________</td>
+                        </tr>
+                        <tr>
+                            <td>________________</td>
+                            <td>________________</td>
+                            <td>________________</td>
+                            <td>________________</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div id="field-info" class="field-explanation">
+                <h4 id="field-title"></h4>
+                <p id="field-description"></p>
+                <p id="field-legal"></p>
+                <div id="field-example" class="example"></div>
+            </div>
+        </section>
+
+        <!-- Section 4: Form Completion Exercise -->
+        <section id="section-4" class="content-section">
+            <h2>✍️ 4. Interactive Form Completion Exercise</h2>
+            <p>Now it's your turn! Complete a chain of custody form based on this realistic scenario.</p>
+
+            <div class="info-box warning">
+                <h3>📖 Scenario</h3>
+                <p>You are a digital forensics investigator responding to a suspected employee data theft case at TechCorp Industries. You arrive at the company on <strong>January 29, 2026 at 10:15 AM</strong>.</p>
+                
+                <p style="margin-top: 15px;">The IT Director, Michael Stevens, leads you to the cubicle of the suspect employee, Jennifer Walsh (employee ID: TC-4892), who was terminated yesterday. On her desk, you find:</p>
+                
+                <ul style="margin-top: 10px; padding-left: 20px;">
+                    <li><strong>One laptop:</strong> HP EliteBook 840 G8, Serial Number: 5CG04217XM</li>
+                    <li><strong>One USB flash drive:</strong> SanDisk Ultra 64GB, visible label "Project Files"</li>
+                    <li><strong>One external hard drive:</strong> Seagate Backup Plus 2TB, Serial Number: NAA2K7LM</li>
+                </ul>
+
+                <p style="margin-top: 15px;">The laptop is powered on and logged in. You photograph the screen, perform a proper shutdown, and package each device separately in anti-static bags. You seal each bag with evidence tape and initial across the seal.</p>
+
+                <p style="margin-top: 15px;">Your badge number is <strong>DF-2156</strong>. The case number assigned is <strong>2026-CORP-0087</strong>. You will transport the evidence to the Digital Forensics Lab at 3:00 PM today.</p>
+            </div>
+
+            <h3>Complete the Chain of Custody Form</h3>
+
+            <div class="coc-form">
+                <div class="coc-header">
+                    <h3>CHAIN OF CUSTODY FORM</h3>
+                    <p>TechCorp Industries - Corporate Security</p>
+                </div>
+
+                <form id="custody-form">
+                    <div class="form-group">
+                        <label for="case-number">Case Number:</label>
+                        <input type="text" id="case-number" placeholder="Enter case number" aria-describedby="feedback-case-number">
+                        <div id="feedback-case-number" class="field-feedback"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="item-number">Item Number (for laptop):</label>
+                        <input type="text" id="item-number" placeholder="Format: CASE-ITEM (e.g., 2026-CORP-0087-001)" aria-describedby="feedback-item-number">
+                        <div id="feedback-item-number" class="field-feedback"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description of Evidence (laptop):</label>
+                        <textarea id="description" rows="3" placeholder="Include: make, model, serial number, condition, location found" aria-describedby="feedback-description"></textarea>
+                        <div id="feedback-description" class="field-feedback"></div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="collected-by">Collected By:</label>
+                            <input type="text" id="collected-by" placeholder="Your name and badge number" aria-describedby="feedback-collected-by">
+                            <div id="feedback-collected-by" class="field-feedback"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="date-time">Date and Time Collected:</label>
+                            <input type="text" id="date-time" placeholder="YYYY-MM-DD HH:MM" aria-describedby="feedback-date-time">
+                            <div id="feedback-date-time" class="field-feedback"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="location">Location Collected:</label>
+                        <input type="text" id="location" placeholder="Be specific - building, floor, room, exact location" aria-describedby="feedback-location">
+                        <div id="feedback-location" class="field-feedback"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="packaging">Packaging Method:</label>
+                        <textarea id="packaging" rows="2" placeholder="Describe how evidence was packaged and sealed" aria-describedby="feedback-packaging"></textarea>
+                        <div id="feedback-packaging" class="field-feedback"></div>
+                    </div>
+
+                    <button type="button" class="btn btn-success btn-block" onclick="validateForm()">Validate Form</button>
+                </form>
+
+                <div id="form-feedback" class="info-box" style="display: none; margin-top: 20px;"></div>
+            </div>
+        </section>
+
+        <!-- Section 5: Common Errors -->
+        <section id="section-5" class="content-section">
+            <h2>❌ 5. Common Chain of Custody Errors</h2>
+            <p>Learning from mistakes is crucial. Here are real-world errors that have compromised evidence in actual cases.</p>
+
+            <div class="info-box error">
+                <h3>🚨 Critical Error #1: Incomplete Descriptions</h3>
+                
+                <h4>The Error:</h4>
+                <div class="code-block">
+Item #: 001
+Description: Laptop
+Collected: 1/15/24
+                </div>
+
+                <h4>Why This Fails:</h4>
+                <ul style="padding-left: 20px; margin-top: 10px;">
+                    <li>No make, model, or serial number</li>
+                    <li>"Laptop" could describe thousands of devices</li>
+                    <li>Cannot prove THIS specific laptop is the same one examined</li>
+                    <li>Date format ambiguous (MM/DD or DD/MM?)</li>
+                </ul>
+
+                <h4 style="margin-top: 15px;">Correct Version:</h4>
+                <div class="code-block">
+Item #: 2024-CR-0156-001
+Description: Dell Latitude E7470 laptop, 14" screen, silver case, 
+Serial Number: 5CD8492F, Asset Tag: CORP-LT-2891
+Condition: Powered off, closed, minor scratches on lid, 
+Dell logo visible on cover
+Collected: 2024-01-15 at 14:35 hours
+                </div>
+            </div>
+
+            <div class="info-box error">
+                <h3>🚨 Critical Error #2: Missing Signatures</h3>
+                
+                <h4>The Error:</h4>
+                <p>A custody transfer line shows:</p>
+                <div class="code-block">
+Relinquished by: J. Smith    2/1/24
+Received by: [blank]         2/1/24
+                </div>
+
+                <h4>Why This Fails:</h4>
+                <ul style="padding-left: 20px; margin-top: 10px;">
+                    <li>No signature from receiving party</li>
+                    <li>Cannot prove who actually took custody</li>
+                    <li>Creates gap in custody chain</li>
+                    <li>Receiving party can deny receiving evidence</li>
+                </ul>
+
+                <p style="margin-top: 15px; color: var(--error-color);"><strong>Legal Consequence:</strong> Evidence may be excluded. Defense attorney will argue: "How do we know what happened to this evidence during this time period?"</p>
+            </div>
+
+            <div class="info-box error">
+                <h3>🚨 Critical Error #3: Broken Seals Not Documented</h3>
+                
+                <h4>The Error:</h4>
+                <p>Evidence bag seal is broken, but form shows no notation. Next custodian receives evidence with broken seal.</p>
+
+                <h4>Why This Fails:</h4>
+                <ul style="padding-left: 20px; margin-top: 10px;">
+                    <li>Suggests tampering</li>
+                    <li>No explanation for broken seal</li>
+                    <li>Cannot prove evidence integrity</li>
+                    <li>Creates reasonable doubt about contamination</li>
+                </ul>
+
+                <h4 style="margin-top: 15px;">Correct Procedure:</h4>
+                <div class="code-block">
+SEAL BREAK NOTATION:
+Date/Time: 2024-01-16 09:15
+Broken by: Forensic Examiner Lisa Chen, Badge #DF-4421
+Purpose: Examination of device
+Witnesses: Supervisor Det. Mark Johnson, Badge #4892
+Resealed: Yes, new seal #B-4421 applied
+Initials: LC [signature across new seal]
+                </div>
+            </div>
+
+            <div class="info-box error">
+                <h3>🚨 Critical Error #4: Time Gaps</h3>
+                
+                <h4>The Error:</h4>
+                <div class="code-block">
+Relinquished: Det. Martinez, 1/15/24 3:00 PM
+Received: Evidence Tech Kim, 1/16/24 8:00 AM
+                </div>
+
+                <h4>Why This Fails:</h4>
+                <ul style="padding-left: 20px; margin-top: 10px;">
+                    <li>17-hour gap unaccounted for</li>
+                    <li>Where was evidence overnight?</li>
+                    <li>Who had access during this time?</li>
+                    <li>Storage conditions unknown</li>
+                </ul>
+
+                <p style="margin-top: 15px; color: var(--error-color);"><strong>Defense Attorney Question:</strong> "Detective Martinez, can you tell the jury where this laptop was between 3 PM on January 15th and 8 AM on January 16th? Who had access to it during those 17 hours?"</p>
+            </div>
+
+            <h3>🎮 Interactive Error Identification Exercise</h3>
+            <p>Review this completed chain of custody form and identify ALL errors. Click on areas you think contain errors.</p>
+
+            <div class="coc-form" style="border-color: var(--error-color); position: relative;">
+                <div style="position: absolute; top: 10px; right: 10px; background-color: var(--error-color); color: white; padding: 5px 15px; border-radius: 5px; font-weight: bold;">
+                    ⚠️ This form contains 7 errors
+                </div>
+
+                <div class="coc-header" style="margin-top: 30px;">
+                    <h3>CHAIN OF CUSTODY FORM</h3>
+                    <p>Metro Police Department</p>
+                </div>
+
+                <div class="error-field" onclick="checkError('error1')" tabindex="0" role="button" aria-label="Check case number field for errors">
+                    <strong>Case Number:</strong> <span class="error-highlight">CR-2024</span>
+                    <div id="error1-feedback" class="error-feedback"></div>
+                </div>
+
+                <div class="error-field" onclick="checkError('error2')" tabindex="0" role="button" aria-label="Check item number field for errors">
+                    <strong>Item Number:</strong> <span class="error-highlight">1</span>
+                    <div id="error2-feedback" class="error-feedback"></div>
+                </div>
+
+                <div class="error-field" onclick="checkError('error3')" tabindex="0" role="button" aria-label="Check description field for errors">
+                    <strong>Description:</strong> <span class="error-highlight">Laptop computer, black</span>
+                    <div id="error3-feedback" class="error-feedback"></div>
+                </div>
+
+                <div class="error-field" onclick="checkError('error4')" tabindex="0" role="button" aria-label="Check collected by field for errors">
+                    <strong>Collected By:</strong> Officer Johnson
+                    <div id="error4-feedback" class="error-feedback"></div>
+                </div>
+
+                <div class="error-field" onclick="checkError('error5')" tabindex="0" role="button" aria-label="Check date/time field for errors">
+                    <strong>Date/Time:</strong> <span class="error-highlight">1/29/26</span>
+                    <div id="error5-feedback" class="error-feedback"></div>
+                </div>
+
+                <div class="error-field" onclick="checkError('error6')" tabindex="0" role="button" aria-label="Check location field for errors">
+                    <strong>Location:</strong> <span class="error-highlight">Suspect's house</span>
+                    <div id="error6-feedback" class="error-feedback"></div>
+                </div>
+
+                <div style="border-top: 2px solid #333; margin-top: 20px; padding-top: 15px;">
+                    <strong>CUSTODY RECORD:</strong>
+
+                    <table style="margin-top: 10px;">
+                        <tr style="background-color: #f0f0f0;">
+                            <th>Relinquished By</th>
+                            <th>Received By</th>
+                            <th>Date/Time</th>
+                            <th>Purpose</th>
+                        </tr>
+                        <tr class="error-field" onclick="checkError('error7')" style="cursor: pointer;" tabindex="0" role="button" aria-label="Check custody transfer for errors">
+                            <td>Officer Johnson</td>
+                            <td style="background-color: #ffeb3b;">[blank]</td>
+                            <td>1/29/26 2:00 PM</td>
+                            <td>Storage</td>
+                        </tr>
+                    </table>
+
+                    <div id="error7-feedback" class="error-feedback"></div>
+                </div>
+
+                <div id="errors-found" style="margin-top: 20px; padding: 15px; background-color: #e3f2fd; border-radius: 5px; text-align: center; font-weight: bold;">
+                    Errors Found: <span id="error-count">0</span> / 7
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6: Transfer Procedures -->
+        <section id="section-6" class="content-section">
+            <h2>🔄 6. Evidence Transfer Procedures</h2>
+            <p>Proper transfer procedures are critical for maintaining chain of custody. Every transfer creates a potential vulnerability.</p>
+
+            <h3>Step-by-Step Transfer Protocol</h3>
+
+            <div class="info-box success">
+                <h4>Before Transfer</h4>
+                <ul style="padding-left: 20px;">
+                    <li>✅ <strong>Verify evidence integrity</strong> - Check seals are intact, confirm item numbers match documentation, photograph evidence and packaging</li>
+                    <li>✅ <strong>Prepare documentation</strong> - Have chain of custody form ready, verify recipient identity (badge/ID), note purpose of transfer</li>
+                    <li>✅ <strong>Coordinate logistics</strong> - Schedule specific time, confirm recipient availability, plan secure transport method</li>
+                </ul>
+
+                <h4 style="margin-top: 20px;">During Transfer</h4>
+                <ul style="padding-left: 20px;">
+                    <li>✅ <strong>Physical handoff</strong> - Transfer in person when possible, both parties present simultaneously, witness transfers when feasible</li>
+                    <li>✅ <strong>Documentation completion</strong> - Relinquishing party signs/dates first, receiving party inspects evidence, receiving party signs/dates immediately, both parties initial across seals</li>
+                    <li>✅ <strong>Verification</strong> - Receiving party counts items, confirms item numbers match, notes condition of seals, documents any discrepancies immediately</li>
+                </ul>
+
+                <h4 style="margin-top: 20px;">After Transfer</h4>
+                <ul style="padding-left: 20px;">
+                    <li>✅ <strong>Storage documentation</strong> - Receiving party documents storage location, notes security measures, updates evidence tracking system, files copy of chain of custody</li>
+                    <li>✅ <strong>Access control</strong> - Evidence stored in secure location, access limited to authorized personnel, access log maintained, environmental controls noted</li>
+                </ul>
+            </div>
+
+            <h3>🚚 Special Considerations for Different Transfer Scenarios</h3>
+
+            <div class="grid-3">
+                <div class="card" style="border-color: var(--warning-color);">
+                    <h4>📦 Shipping Evidence</h4>
+                    <p><strong>Additional requirements:</strong></p>
+                    <ul style="padding-left: 20px; margin-top: 10px; font-size: 0.9em;">
+                        <li>Use tamper-evident packaging</li>
+                        <li>Obtain tracking number</li>
+                        <li>Photograph sealed package</li>
+                        <li>Note carrier and tracking info on form</li>
+                        <li>Require signature confirmation</li>
+                        <li>Ship to specific person (not general address)</li>
+                    </ul>
+
+                    <div class="code-block" style="margin-top: 10px;">
+<strong>Documentation:</strong>
+Shipped via: FedEx Priority
+Tracking: 1234-5678-9012
+Shipped to: FBI Lab, 
+  ATTN: SA Jennifer Smith
+Date shipped: 2026-01-29 10:30
+Signature required: Yes
+                    </div>
+                </div>
+
+                <div class="card" style="border-color: #9c27b0;">
+                    <h4>🔬 Laboratory Analysis</h4>
+                    <p><strong>Additional requirements:</strong></p>
+                    <ul style="padding-left: 20px; margin-top: 10px; font-size: 0.9em;">
+                        <li>Specify analysis requested</li>
+                        <li>Note if destructive testing involved</li>
+                        <li>Request return of evidence</li>
+                        <li>Specify deadline if applicable</li>
+                        <li>Request written report</li>
+                    </ul>
+
+                    <div class="code-block" style="margin-top: 10px;">
+<strong>Documentation:</strong>
+Analysis requested: Hard drive 
+  forensic imaging and analysis
+Destructive testing: No
+Return evidence: Yes, after 
+  analysis complete
+Report deadline: 2026-02-15
+Analyst assigned: [To be 
+  completed by lab]
+                    </div>
+                </div>
+
+                <div class="card" style="border-color: var(--info-color);">
+                    <h4>⚖️ Court Presentation</h4>
+                    <p><strong>Additional requirements:</strong></p>
+                    <ul style="padding-left: 20px; margin-top: 10px; font-size: 0.9em;">
+                        <li>Subpoena or court order required</li>
+                        <li>Transport in secure container</li>
+                        <li>Maintain custody until presented</li>
+                        <li>Be prepared to testify about chain</li>
+                        <li>Return evidence after proceedings</li>
+                    </ul>
+
+                    <div class="code-block" style="margin-top: 10px;">
+<strong>Documentation:</strong>
+Court: Superior Court, 
+  County of Mendocino
+Case: People v. Smith, 
+  Case #CR-2024-0156
+Hearing date: 2026-03-15
+Transported by: Det. Martinez, 
+  Badge #4521
+Purpose: Presentation as 
+  evidence in trial
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 7: Digital Evidence -->
+        <section id="section-7" class="content-section">
+            <h2>📱 7. Digital Evidence Special Considerations</h2>
+            <p>Digital evidence presents unique chain of custody challenges that differ from physical evidence.</p>
+
+            <div class="info-box definition">
+                <h3>🔐 Hash Values as Digital "Seals"</h3>
+                <p>Physical evidence uses tamper-evident seals. Digital evidence uses <strong>cryptographic hash values</strong>.</p>
+
+                <p style="margin-top: 15px;"><strong>What is a hash value?</strong><br>
+                A mathematical algorithm that creates a unique "fingerprint" of digital data. If even one bit changes, the hash value changes completely.</p>
+
+                <p style="margin-top: 15px;"><strong>Common hash algorithms:</strong></p>
+                <ul style="padding-left: 20px; margin-top: 10px;">
+                    <li><strong>MD5:</strong> 128-bit hash (older, still used for verification)</li>
+                    <li><strong>SHA-1:</strong> 160-bit hash (being phased out)</li>
+                    <li><strong>SHA-256:</strong> 256-bit hash (current standard)</li>
+                </ul>
+
+                <div class="code-block" style="margin-top: 15px;">
+<strong>Example:</strong>
+File: suspect_laptop_image.dd
+Size: 512 GB
+MD5: 5d41402abc4b2a76b9719d911017c592
+SHA-256: 2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae
+                </div>
+
+                <p style="margin-top: 15px;"><strong>Chain of custody requirement:</strong> Document hash values at:</p>
+                <ul style="padding-left: 20px; margin-top: 10px;">
+                    <li>Initial acquisition</li>
+                    <li>After transfer</li>
+                    <li>Before analysis</li>
+                    <li>After analysis</li>
+                </ul>
+
+                <p style="margin-top: 15px; font-weight: bold;">If hash values match, data integrity is proven.</p>
+            </div>
+
+            <h3>💾 Documenting Digital Evidence</h3>
+
+            <div class="info-box success">
+                <h4>Required Information for Digital Evidence</h4>
+
+                <p><strong>Physical device information:</strong></p>
+                <ul style="padding-left: 20px; margin-top: 10px;">
+                    <li>Make, model, serial number</li>
+                    <li>Physical condition</li>
+                    <li>Power state when collected</li>
+                    <li>Storage capacity</li>
+                    <li>Any visible damage</li>
+                </ul>
+
+                <p style="margin-top: 15px;"><strong>Logical information:</strong></p>
+                <ul style="padding-left: 20px; margin-top: 10px;">
+                    <li>Operating system (if known)</li>
+                    <li>User account names (if visible)</li>
+                    <li>File system type</li>
+                    <li>Encryption status</li>
+                    <li>Network connections (if active)</li>
+                </ul>
+
+                <p style="margin-top: 15px;"><strong>Acquisition information:</strong></p>
+                <ul style="padding-left: 20px; margin-top: 10px;">
+                    <li>Imaging tool used (e.g., FTK Imager, dd)</li>
+                    <li>Imaging method (physical vs. logical)</li>
+                    <li>Write blocker used (make/model/serial)</li>
+                    <li>Hash algorithms used</li>
+                    <li>Hash values generated</li>
+                    <li>Image file format (.dd, .E01, .AFF)</li>
+                    <li>Verification performed</li>
+                </ul>
+
+                <div class="code-block" style="margin-top: 15px;">
+<strong>Example documentation:</strong>
+
+DEVICE INFORMATION:
+Item: 2026-CORP-0087-001
+Device: HP EliteBook 840 G8 laptop
+Serial: 5CG04217XM
+Condition: Powered on, logged in, Windows 11 desktop visible
+Storage: 512GB NVMe SSD
+Encryption: BitLocker status unknown (requires forensic examination)
+
+ACQUISITION INFORMATION:
+Date/Time: 2026-01-29 15:45 hours
+Acquired by: Forensic Examiner Sarah Chen, Badge #DF-2156
+Tool: FTK Imager v4.7.1
+Write blocker: Tableau T8-R2 Forensic Bridge, SN: T8R2-00451
+Method: Physical acquisition (dead box imaging after proper shutdown)
+Image format: E01 (Expert Witness Format)
+Compression: Fast compression enabled
+Segment size: 2GB segments
+
+HASH VALUES:
+MD5: a3d5c8e9f2b1d4c7e6a8b9c1d2e3f4a5
+SHA-1: 1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t
+SHA-256: 9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a
+
+VERIFICATION:
+Image verified: Yes
+Verification method: FTK Imager built-in verification
+Verification date/time: 2026-01-29 18:22 hours
+Verification result: PASS - Hash values match original
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 8: Best Practices -->
+        <section id="section-8" class="content-section">
+            <h2>✅ 8. Best Practices Checklist</h2>
+            <p>Use this checklist for every evidence collection and transfer.</p>
+
+            <div class="checklist">
+                <h3>📋 Collection Checklist</h3>
+                
+                <label class="checklist-item">
+                    <input type="checkbox" onchange="toggleChecklistItem(this)">
+                    Photograph evidence in situ before collection
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" onchange="toggleChecklistItem(this)">
+                    Document exact location where evidence found
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" onchange="toggleChecklistItem(this)">
+                    Record date/time with precision (24-hour format)
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" onchange="toggleChecklistItem(this)">
+                    Complete evidence description (make, model, serial number)
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" onchange="toggleChecklistItem(this)">
+                    Note physical condition and any damage
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" onchange="toggleChecklistItem(this)">
+                    Use appropriate packaging (anti-static bags for electronics)
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" onchange="toggleChecklistItem(this)">
+                    Apply tamper-evident seals to all packages
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" onchange="toggleChecklistItem(this)">
+                    Initial across seals with permanent marker
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" onchange="toggleChecklistItem(this)">
+                    Generate hash values for digital evidence
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" onchange="toggleChecklistItem(this)">
+                    Complete chain of custody form immediately
+                </label>
+            </div>
+
+            <div class="checklist">
+                <h3>🔄 Transfer Checklist</h3>
+                
+                <label class="checklist-item">
+                    <input type="checkbox" onchange="toggleChecklistItem(this)">
+                    Verify recipient identity (badge/ID)
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" onchange="toggleChecklistItem(this)">
+                    Inspect seals before transfer
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" onchange="toggleChecklistItem(this)">
+                    Both parties present during transfer
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" onchange="toggleChecklistItem(this)">
+                    Relinquishing party signs/dates first
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" onchange="toggleChecklistItem(this)">
+                    Receiving party inspects evidence
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" onchange="toggleChecklistItem(this)">
+                    Receiving party signs/dates immediately after inspection
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" onchange="toggleChecklistItem(this)">
+                    Document purpose of transfer
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" onchange="toggleChecklistItem(this)">
+                    Note any discrepancies immediately
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" onchange="toggleChecklistItem(this)">
+                    Receiving party documents storage location
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" onchange="toggleChecklistItem(this)">
+                    Update evidence tracking system
+                </label>
+            </div>
+        </section>
+
+        <!-- Section 9: Summary -->
+        <section id="section-9" class="content-section">
+            <h2>🎓 Module 4 Summary</h2>
+            <p>You've completed Module 4: Chain of Custody & Evidence Handling! Here's what you've mastered:</p>
+
+            <div class="summary-box">
+                <h2>✅ Key Concepts Mastered</h2>
+
+                <h3 style="margin-top: 20px;">Legal Foundation:</h3>
+                <ul>
+                    <li>Chain of custody proves evidence integrity from collection through court presentation</li>
+                    <li>Federal Rules of Evidence require authentication of evidence</li>
+                    <li>Gaps or errors in chain of custody can result in evidence exclusion</li>
+                </ul>
+
+                <h3 style="margin-top: 20px;">Critical Elements:</h3>
+                <ul>
+                    <li>Evidence description (make, model, serial number, condition)</li>
+                    <li>Collection information (who, when, where, how)</li>
+                    <li>Custody transfers (complete signatures, dates, purposes)</li>
+                    <li>Storage documentation (location, security, conditions)</li>
+                </ul>
+
+                <h3 style="margin-top: 20px;">Common Errors to Avoid:</h3>
+                <ul>
+                    <li>Incomplete descriptions</li>
+                    <li>Missing signatures</li>
+                    <li>Broken seals not documented</li>
+                    <li>Time gaps in custody</li>
+                    <li>Ambiguous dates/times</li>
+                    <li>Vague locations</li>
+                </ul>
+
+                <h3 style="margin-top: 20px;">Digital Evidence Considerations:</h3>
+                <ul>
+                    <li>Hash values serve as digital "seals"</li>
+                    <li>Document hash values at multiple points</li>
+                    <li>Include acquisition tool information</li>
+                    <li>Note write blocker usage</li>
+                    <li>Verify image integrity</li>
+                </ul>
+
+                <h3 style="margin-top: 20px;">Professional Practice:</h3>
+                <ul>
+                    <li>Complete documentation immediately</li>
+                    <li>Never leave blanks in forms</li>
+                    <li>Use permanent ink</li>
+                    <li>Be specific and precise</li>
+                    <li>Maintain continuity at all times</li>
+                </ul>
+            </div>
+
+            <div class="completion-badge">
+                <h2>🎉 Module 4 Complete!</h2>
+                <p><strong>You've Mastered Chain of Custody & Evidence Handling!</strong></p>
+                
+                <div style="text-align: left; margin-top: 20px; background-color: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
+                    <p><strong>What you can now do:</strong></p>
+                    <ul style="padding-left: 20px;">
+                        <li>✅ Complete chain of custody forms accurately and professionally</li>
+                        <li>✅ Identify and avoid common documentation errors</li>
+                        <li>✅ Execute proper evidence transfer procedures</li>
+                        <li>✅ Apply special considerations for digital evidence</li>
+                        <li>✅ Maintain evidence integrity throughout investigation lifecycle</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="info-box warning">
+                <h3>🔗 Connection to Other Modules</h3>
+                <p><strong>Module 2 (Investigation Lifecycle 1-3):</strong> Chain of custody begins at Collection phase and continues through all subsequent phases.</p>
+                <p style="margin-top: 10px;"><strong>Module 3 (Investigation Lifecycle 4-6):</strong> Proper chain of custody enables defensible Examination and Analysis, supporting credible Presentation.</p>
+                <p style="margin-top: 10px;"><strong>Module 5 (Documentation):</strong> Chain of custody is one critical component of comprehensive forensic documentation.</p>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Progress tracking
+        let currentProgress = 0;
+        const totalSections = 9;
+        const sectionsCompleted = new Set();
+
+        // Intersection Observer for progress tracking
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.5
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const sectionId = entry.target.id;
+                    if (sectionId && !sectionsCompleted.has(sectionId)) {
+                        sectionsCompleted.add(sectionId);
+                        updateProgress();
+                    }
+                }
+            });
+        }, observerOptions);
+
+        // Observe all content sections
+        document.querySelectorAll('.content-section').forEach(section => {
+            observer.observe(section);
+        });
+
+        function updateProgress() {
+            const progress = Math.round((sectionsCompleted.size / totalSections) * 100);
+            const progressFill = document.getElementById('progress-fill');
+            const progressPercentage = document.getElementById('progress-percentage');
+            
+            progressFill.style.width = progress + '%';
+            progressFill.querySelector('span').textContent = progress + '%';
+            progressPercentage.textContent = progress + '% Complete';
+            
+            // Update aria attributes
+            progressFill.parentElement.setAttribute('aria-valuenow', progress);
+        }
+
+        // Quiz functionality
+        let currentQuestion = 1;
+
+        function checkQuizAnswer(questionName, correctAnswer) {
+            const selected = document.querySelector(`input[name="${questionName}"]:checked`);
+            const feedback = document.getElementById(`feedback-${questionName}`);
+            
+            if (!selected) {
+                feedback.className = 'quiz-feedback warning';
+                feedback.style.display = 'block';
+                feedback.innerHTML = '⚠️ Please select an answer.';
+                return;
+            }
+            
+            if (selected.value === correctAnswer) {
+                feedback.className = 'quiz-feedback correct';
+                feedback.style.display = 'block';
+                
+                if (questionName === 'q1') {
+                    feedback.innerHTML = '✅ <strong>Correct!</strong> Evidence with chain of custody gaps may be excluded from court because the defense can argue that evidence integrity cannot be proven. Gaps create reasonable doubt about tampering, contamination, or substitution.';
+                    setTimeout(() => {
+                        document.getElementById('question-2').style.display = 'block';
+                        document.getElementById('question-2').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 2000);
+                } else if (questionName === 'q2') {
+                    feedback.innerHTML = '✅ <strong>Correct!</strong> Every person who handles evidence is responsible for maintaining chain of custody during their period of custody. This creates accountability and ensures continuous documentation.';
+                    setTimeout(() => {
+                        document.getElementById('question-3').style.display = 'block';
+                        document.getElementById('question-3').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 2000);
+                } else if (questionName === 'q3') {
+                    feedback.innerHTML = '✅ <strong>Correct!</strong> The primary purpose is to prove evidence integrity - that it has not been altered, tampered with, or contaminated. This is essential for legal admissibility.';
+                }
+            } else {
+                feedback.className = 'quiz-feedback incorrect';
+                feedback.style.display = 'block';
+                
+                if (questionName === 'q1') {
+                    feedback.innerHTML = '❌ <strong>Incorrect.</strong> The correct answer is B. Chain of custody gaps can result in evidence exclusion because they create reasonable doubt about evidence integrity. Courts require continuous documentation to prove evidence has not been tampered with.';
+                } else if (questionName === 'q2') {
+                    feedback.innerHTML = '❌ <strong>Incorrect.</strong> The correct answer is C. Every person who handles evidence is responsible for maintaining chain of custody. This includes initial collectors, evidence technicians, forensic examiners, and anyone else in the custody chain.';
+                } else if (questionName === 'q3') {
+                    feedback.innerHTML = '❌ <strong>Incorrect.</strong> The correct answer is B. While chain of custody does help with tracking, its primary legal purpose is to prove evidence integrity - that it has not been altered, tampered with, or contaminated from collection through presentation in court.';
+                }
+            }
+        }
+
+        // Annotated form field information
+        const fieldInfo = {
+            'case-number': {
+                title: 'Case Number',
+                description: 'The unique identifier assigned to this investigation. This links all evidence items to a specific case.',
+                legal: '<strong>Legal requirement:</strong> Must be consistent across all evidence items and documentation for this case. Allows tracking of all evidence related to a single investigation.',
+                example: '<strong>Example:</strong> 2026-CR-0087 or 2026-CORP-0156<br><strong>Format:</strong> YEAR-TYPE-NUMBER<br>CR = Criminal, CORP = Corporate, CIV = Civil'
+            },
+            'item-number': {
+                title: 'Item Number',
+                description: 'Unique identifier for THIS specific piece of evidence. No two items should ever have the same number.',
+                legal: '<strong>Legal requirement:</strong> Must be unique within the case. Allows distinguishing between multiple evidence items (e.g., laptop vs. phone vs. hard drive).',
+                example: '<strong>Example:</strong> 2026-CR-0087-001 (first item)<br>2026-CR-0087-002 (second item)<br><strong>Best practice:</strong> Include case number prefix for clarity'
+            },
+            'description': {
+                title: 'Description of Evidence',
+                description: 'Detailed physical description that uniquely identifies THIS specific device. Must be detailed enough that this device cannot be confused with any other.',
+                legal: '<strong>Legal requirement:</strong> Must be specific enough to prove THIS device is the same one examined and presented in court. Vague descriptions ("laptop") are insufficient.',
+                example: '<strong>Must include:</strong><br>• Make and model (HP EliteBook 840 G8)<br>• Serial number (5CG04217XM)<br>• Physical condition (scratches, dents, stickers)<br>• Color and size<br>• Any identifying marks<br>• Storage capacity if known'
+            },
+            'collected-by': {
+                title: 'Collected By',
+                description: 'Full name and badge/ID number of the person who physically collected this evidence.',
+                legal: '<strong>Legal requirement:</strong> This person may be called to testify about collection procedures. Must be able to identify who collected evidence and verify their authority.',
+                example: '<strong>Example:</strong> Det. Sarah Martinez, Badge #4521<br>or<br>Forensic Examiner Robert Chen, ID #DF-2156<br><strong>Include:</strong> Full name, title, badge/employee ID'
+            },
+            'date-time': {
+                title: 'Date and Time Collected',
+                description: 'Precise date and time when evidence was collected. Use 24-hour format to avoid AM/PM confusion.',
+                legal: '<strong>Legal requirement:</strong> Establishes timeline of evidence collection. May be critical for alibi verification or establishing sequence of events.',
+                example: '<strong>Example:</strong> 2026-01-29 at 14:35 hours<br>or<br>2026-01-29 14:35<br><strong>Format:</strong> YYYY-MM-DD HH:MM (24-hour time)<br><strong>Avoid:</strong> 1/29/26 (ambiguous - MM/DD or DD/MM?)'
+            },
+            'location': {
+                title: 'Location Collected',
+                description: 'Specific location where evidence was found. Must be detailed enough to recreate the scene.',
+                legal: '<strong>Legal requirement:</strong> Establishes context of evidence discovery. May be relevant for search warrant scope or consent to search.',
+                example: '<strong>Example:</strong> 123 Main Street, Apartment 2B, bedroom, on desk next to window<br>or<br>TechCorp Industries, Building A, 2nd floor, cubicle #247<br><strong>Include:</strong> Address, building, floor, room, specific location within room'
+            },
+            'custody-transfer': {
+                title: 'Custody Transfer Record',
+                description: 'Documents every person who takes custody of evidence. Both parties must sign when custody changes hands.',
+                legal: '<strong>Legal requirement:</strong> Proves continuous custody. Every person in this chain may be called to testify. Missing signatures create gaps that can result in evidence exclusion.',
+                example: '<strong>Complete transfer requires:</strong><br>• Relinquished by: Name and signature<br>• Received by: Name and signature<br>• Date and time (both parties agree)<br>• Purpose of transfer<br>• Both parties initial across seals'
+            }
+        };
+
+        function showFieldInfo(fieldId) {
+            const info = fieldInfo[fieldId];
+            const container = document.getElementById('field-info');
+            
+            document.getElementById('field-title').textContent = info.title;
+            document.getElementById('field-description').textContent = info.description;
+            document.getElementById('field-legal').innerHTML = info.legal;
+            document.getElementById('field-example').innerHTML = info.example;
+            
+            container.classList.add('show');
+            container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Form validation
+        function validateForm() {
+            const fields = {
+                'case-number': {
+                    value: document.getElementById('case-number').value.trim(),
+                    correct: '2026-CORP-0087',
+                    feedback: 'Case number should be 2026-CORP-0087 (from scenario)'
+                },
+                'item-number': {
+                    value: document.getElementById('item-number').value.trim(),
+                    pattern: /2026-CORP-0087-001/i,
+                    feedback: 'Item number should be 2026-CORP-0087-001 (first item in case)'
+                },
+                'description': {
+                    value: document.getElementById('description').value.trim(),
+                    keywords: ['HP', 'EliteBook', '840', 'G8', '5CG04217XM'],
+                    feedback: 'Description must include: HP EliteBook 840 G8, Serial Number: 5CG04217XM, and other details from scenario'
+                },
+                'collected-by': {
+                    value: document.getElementById('collected-by').value.trim(),
+                    keywords: ['DF-2156'],
+                    feedback: 'Should include your name and badge number DF-2156'
+                },
+                'date-time': {
+                    value: document.getElementById('date-time').value.trim(),
+                    pattern: /2026-01-29.*10:15/,
+                    feedback: 'Date/time should be 2026-01-29 10:15 or 2026-01-29 at 10:15 hours'
+                },
+                'location': {
+                    value: document.getElementById('location').value.trim(),
+                    keywords: ['TechCorp', 'cubicle', 'Jennifer Walsh'],
+                    feedback: 'Location should specify TechCorp Industries, Jennifer Walsh\'s cubicle, desk'
+                },
+                'packaging': {
+                    value: document.getElementById('packaging').value.trim(),
+                    keywords: ['anti-static', 'bag', 'seal'],
+                    feedback: 'Should describe anti-static bag, evidence seal, and initialing across seal'
+                }
+            };
+            
+            let allCorrect = true;
+            
+            // Validate each field
+            for (const [fieldId, field] of Object.entries(fields)) {
+                const feedbackDiv = document.getElementById(`feedback-${fieldId}`);
+                
+                if (!field.value) {
+                    feedbackDiv.className = 'field-feedback error show';
+                    feedbackDiv.textContent = '❌ Required field';
+                    allCorrect = false;
+                    continue;
+                }
+                
+                let isCorrect = false;
+                
+                if (field.correct) {
+                    isCorrect = field.value.toUpperCase() === field.correct.toUpperCase();
+                } else if (field.pattern) {
+                    isCorrect = field.pattern.test(field.value);
+                } else if (field.keywords) {
+                    isCorrect = field.keywords.every(keyword => 
+                        field.value.toLowerCase().includes(keyword.toLowerCase())
+                    );
+                }
+                
+                if (isCorrect) {
+                    feedbackDiv.className = 'field-feedback success show';
+                    feedbackDiv.textContent = '✅ Correct';
+                } else {
+                    feedbackDiv.className = 'field-feedback error show';
+                    feedbackDiv.textContent = `❌ ${field.feedback}`;
+                    allCorrect = false;
+                }
+            }
+            
+            // Show overall feedback
+            const overallFeedback = document.getElementById('form-feedback');
+            overallFeedback.style.display = 'block';
+            
+            if (allCorrect) {
+                overallFeedback.className = 'info-box success';
+                overallFeedback.innerHTML = `
+                    <h3 style="color: var(--success-color); margin-top: 0;">🎉 Excellent Work!</h3>
+                    <p>You've completed the chain of custody form correctly. Your documentation includes all required elements:</p>
+                    <ul style="padding-left: 20px;">
+                        <li>✅ Correct case number format</li>
+                        <li>✅ Unique item identifier</li>
+                        <li>✅ Detailed evidence description with serial number</li>
+                        <li>✅ Complete collector information</li>
+                        <li>✅ Precise date/time in standard format</li>
+                        <li>✅ Specific location information</li>
+                        <li>✅ Proper packaging documentation</li>
+                    </ul>
+                    <p><strong>This form would withstand legal scrutiny!</strong></p>
+                `;
+            } else {
+                overallFeedback.className = 'info-box warning';
+                overallFeedback.innerHTML = `
+                    <h3 style="color: var(--warning-color); margin-top: 0;">⚠️ Form Needs Corrections</h3>
+                    <p>Review the feedback above for each field. Remember:</p>
+                    <ul style="padding-left: 20px;">
+                        <li>Use information exactly as provided in the scenario</li>
+                        <li>Include all required details (make, model, serial numbers)</li>
+                        <li>Use standard date/time formats (YYYY-MM-DD HH:MM)</li>
+                        <li>Be specific about locations</li>
+                    </ul>
+                    <p>Correct the errors and try again!</p>
+                `;
+            }
+            
+            overallFeedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Error identification exercise
+        const errors = {
+            'error1': {
+                error: 'Case number is incomplete - missing year and case type designation',
+                explanation: 'Case numbers should include full year and case type (e.g., 2024-CR-0156). "CR-2024" is ambiguous and doesn\'t follow standard format.',
+                fix: 'Correct format: 2024-CR-####'
+            },
+            'error2': {
+                error: 'Item number is not unique - just "1" could refer to any case',
+                explanation: 'Item numbers must include the case number prefix to ensure uniqueness. "1" could be item 1 from any case.',
+                fix: 'Correct format: 2024-CR-####-001'
+            },
+            'error3': {
+                error: 'Description is too vague - "laptop computer, black" could describe thousands of devices',
+                explanation: 'Description must include make, model, serial number, and distinguishing features. This description cannot prove THIS specific laptop is the one examined.',
+                fix: 'Must include: Make (Dell/HP/Lenovo), Model (specific model number), Serial Number, condition, identifying marks'
+            },
+            'error4': {
+                error: 'Missing badge number or employee ID',
+                explanation: 'Collector identification must include badge/employee ID number for verification and accountability.',
+                fix: 'Correct format: Officer Johnson, Badge #####'
+            },
+            'error5': {
+                error: 'Ambiguous date format - could be MM/DD/YY or DD/MM/YY',
+                explanation: 'Date format "1/29/26" is ambiguous internationally. Use ISO 8601 format (YYYY-MM-DD) or spell out month.',
+                fix: 'Correct format: 2026-01-29 or January 29, 2026'
+            },
+            'error6': {
+                error: 'Location too vague - "suspect\'s house" doesn\'t provide specific location',
+                explanation: 'Location must include full address, specific room, and location within room. "Suspect\'s house" is insufficient.',
+                fix: 'Must include: Full address, building/apartment, floor, room, specific location in room'
+            },
+            'error7': {
+                error: 'Missing receiving party signature - creates gap in chain of custody',
+                explanation: 'CRITICAL ERROR: Both relinquishing and receiving parties must sign. Missing signature means custody cannot be proven.',
+                fix: 'Both parties must sign, date, and initial across seals during transfer'
+            }
+        };
+
+        let errorsFound = 0;
+
+        function checkError(errorId) {
+            const error = errors[errorId];
+            const errorField = document.querySelector(`[onclick="checkError('${errorId}')"]`);
+            const feedback = document.getElementById(`${errorId}-feedback`);
+            
+            if (!errorField.classList.contains('found')) {
+                errorField.classList.add('found');
+                feedback.classList.add('show');
+                feedback.innerHTML = `
+                    <strong>❌ Error Identified:</strong> ${error.error}<br><br>
+                    <strong>Why this fails:</strong> ${error.explanation}<br><br>
+                    <strong>How to fix:</strong> ${error.fix}
+                `;
+                errorsFound++;
+                document.getElementById('error-count').textContent = errorsFound;
+                
+                if (errorsFound === 7) {
+                    const errorsFoundDiv = document.getElementById('errors-found');
+                    errorsFoundDiv.style.backgroundColor = '#e8f5e9';
+                    errorsFoundDiv.style.border = '2px solid var(--success-color)';
+                    errorsFoundDiv.innerHTML = `
+                        <strong>🎉 Excellent! You found all 7 errors!</strong><br>
+                        You now understand common chain of custody mistakes and how to avoid them.
+                    `;
+                }
+            }
+        }
+
+        // Checklist functionality
+        function toggleChecklistItem(checkbox) {
+            const item = checkbox.parentElement;
+            if (checkbox.checked) {
+                item.classList.add('checked');
+            } else {
+                item.classList.remove('checked');
+            }
+        }
+
+        // Keyboard navigation for interactive elements
+        document.querySelectorAll('[tabindex="0"]').forEach(element => {
+            element.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click();
+                }
+            });
+        });
+
+        // Smooth scroll for navigation links
+        document.querySelectorAll('.nav-links a').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Highlight active navigation link based on scroll position
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('.content-section');
+            const navLinks = document.querySelectorAll('.nav-links a');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // Initialize
+        console.log('Module 4: Chain of Custody & Evidence Handling loaded');
+    </script>
+
+</body>
+</html>
