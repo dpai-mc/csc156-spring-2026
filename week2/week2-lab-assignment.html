@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Activity 2: Chain of Custody Documentation | CSC 156</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2196F3;
+            --secondary-color: #1976D2;
+            --success-color: #4CAF50;
+            --warning-color: #ff9800;
+            --error-color: #f44336;
+            --info-color: #03a9f4;
+            --light-bg: #f5f5f5;
+            --card-bg: #ffffff;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-color: #dddddd;
+            --shadow: 0 2px 4px rgba(0,0,0,0.1);
+            --shadow-hover: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: var(--light-bg);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--card-bg);
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .assignment-info {
+            background-color: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 5px solid var(--primary-color);
+            margin-bottom: 30px;
+        }
+
+        .assignment-info h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-item strong {
+            color: var(--secondary-color);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        h3 {
+            color: var(--secondary-color);
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        .scenario-box {
+            background-color: #fff9c4;
+            border: 2px solid #fbc02d;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+
+        .scenario-box h3 {
+            color: #f57f17;
+            margin-top: 0;
+        }
+
+        .evidence-list {
+            background-color: var(--light-bg);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .evidence-item {
+            background-color: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid var(--primary-color);
+            border-radius: 5px;
+        }
+
+        .evidence-item h4 {
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        .coc-form {
+            background-color: var(--card-bg);
+            border: 3px solid var(--text-primary);
+            padding: 30px;
+            margin: 25px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .form-header {
+            text-align: center;
+            border-bottom: 2px solid var(--text-primary);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .form-group input[type="text"],
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-hint {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--light-bg);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn:focus {
+            outline: 3px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #388E3C;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .btn-block {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .requirements-box {
+            background-color: #e8f5e9;
+            border: 2px solid var(--success-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+
+        .requirements-box h3 {
+            color: var(--success-color);
+            margin-top: 0;
+        }
+
+        .requirements-box ul {
+            padding-left: 25px;
+        }
+
+        .requirements-box li {
+            margin: 8px 0;
+        }
+
+        .submission-box {
+            background-color: #fff3e0;
+            border: 2px solid var(--warning-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+
+        .submission-box h3 {
+            color: var(--warning-color);
+            margin-top: 0;
+        }
+
+        .rubric-table {
+            margin: 20px 0;
+        }
+
+        .rubric-table th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .points {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .info-box {
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 5px solid;
+        }
+
+        .info-box.warning {
+            background-color: #fff3e0;
+            border-color: var(--warning-color);
+        }
+
+        .info-box.error {
+            background-color: #ffebee;
+            border-color: var(--error-color);
+        }
+
+        .info-box.success {
+            background-color: #e8f5e9;
+            border-color: var(--success-color);
+        }
+
+        .checklist {
+            background-color: var(--light-bg);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 8px 0;
+            background-color: white;
+            border-left: 4px solid var(--success-color);
+            border-radius: 5px;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            margin-right: 12px;
+            transform: scale(1.2);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            header h1 {
+                font-size: 1.5em;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .coc-form {
+                padding: 15px;
+                font-size: 0.9em;
+            }
+        }
+
+        @media print {
+            body {
+                background-color: white;
+            }
+
+            .container {
+                box-shadow: none;
+                max-width: 100%;
+            }
+
+            .btn {
+                display: none;
+            }
+
+            .coc-form {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* Accessibility */
+        *:focus {
+            outline: 3px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>📋 Lab Activity 2</h1>
+            <p>Chain of Custody Documentation Exercise</p>
+        </header>
+
+        <div class="assignment-info">
+            <h2>Assignment Overview</h2>
+            <p><strong>Course:</strong> CSC 156 - Digital Forensics Fundamentals</p>
+            <p><strong>Week:</strong> Week 2 - Investigation Process & Documentation</p>
+            
+            <div class="info-grid">
+                <div class="info-item">
+                    <span>⏱️</span>
+                    <div><strong>Time:</strong> 60-90 minutes</div>
+                </div>
+                <div class="info-item">
+                    <span>📊</span>
+                    <div><strong>Points:</strong> 20 points</div>
+                </div>
+                <div class="info-item">
+                    <span>📅</span>
+                    <div><strong>Due:</strong> End of Week 2</div>
+                </div>
+                <div class="info-item">
+                    <span>📤</span>
+                    <div><strong>Submit:</strong> Canvas</div>
+                </div>
+            </div>
+        </div>
+
+        <section>
+            <h2>🎯 Learning Objectives</h2>
+            <p>By completing this lab activity, you will:</p>
+            <ul style="padding-left: 25px; margin-top: 10px;">
+                <li>Complete chain of custody forms accurately using realistic scenario details</li>
+                <li>Apply proper evidence description standards (make, model, serial numbers)</li>
+                <li>Document evidence collection procedures following professional standards</li>
+                <li>Maintain proper chain of custody through evidence transfers</li>
+                <li>Demonstrate understanding of legal documentation requirements</li>
+            </ul>
+            <p style="margin-top: 15px;"><strong>CSLO Alignment:</strong> CSLO 1 (Investigation Process), CSLO 4 (Professional Practice)</p>
+        </section>
+
+        <section>
+            <h2>📖 Scenario</h2>
+            
+            <div class="scenario-box">
+                <h3>🏢 Corporate Insider Threat Investigation</h3>
+                
+                <p><strong>Date:</strong> Thursday, February 6, 2026</p>
+                <p><strong>Your Role:</strong> Digital Forensics Investigator, Badge #DF-3142</p>
+                <p><strong>Case Number:</strong> 2026-CORP-0215</p>
+                
+                <p style="margin-top: 15px;">You are a digital forensics investigator for Redwood Cybersecurity Solutions. You have been called to NorthCoast Manufacturing, a company that produces proprietary industrial control systems for the timber industry.</p>
+
+                <h4 style="margin-top: 20px;">Background:</h4>
+                <p>NorthCoast Manufacturing's Chief Technology Officer, Rebecca Martinez (employee ID: NCM-CTO-001), contacted your firm yesterday evening (February 5, 2026 at 18:30) reporting a suspected intellectual property theft.</p>
+
+                <p style="margin-top: 15px;">The suspect is David Chen (employee ID: NCM-ENG-0847), a senior software engineer who resigned abruptly on February 4, 2026. Chen gave no notice and did not return company equipment. HR reported that Chen accepted a position with a direct competitor, TimberTech Industries.</p>
+
+                <p style="margin-top: 15px;">On February 5, the IT department discovered that Chen's company laptop and two external storage devices were still in his locked office. Security camera footage shows Chen accessing his office on February 3, 2026 (his last day in the building) and working at his computer from 19:45 to 22:30 (after normal business hours).</p>
+
+                <h4 style="margin-top: 20px;">Your Assignment:</h4>
+                <p>You arrive at NorthCoast Manufacturing headquarters (4567 Industrial Parkway, Ukiah, CA 95482) at 09:00 on February 6, 2026. Rebecca Martinez meets you in the main lobby and escorts you to Chen's former office (Building B, 3rd Floor, Office 312).</p>
+
+                <p style="margin-top: 15px;">Martinez provides you with authorization to collect all digital devices from Chen's office for forensic examination. She will serve as witness to the evidence collection.</p>
+            </div>
+
+            <div class="evidence-list">
+                <h3>🔍 Evidence Found in Office 312</h3>
+                <p>Upon entering the office at 09:15, you observe and document the following items on Chen's desk:</p>
+
+                <div class="evidence-item">
+                    <h4>Device 1: Laptop Computer</h4>
+                    <ul style="padding-left: 20px; margin-top: 8px;">
+                        <li><strong>Make/Model:</strong> Dell Precision 5570 Mobile Workstation</li>
+                        <li><strong>Color:</strong> Space Gray</li>
+                        <li><strong>Serial Number:</strong> DELLP5570-8KL9M2N4</li>
+                        <li><strong>Asset Tag:</strong> NCM-LT-0847 (white label on bottom)</li>
+                        <li><strong>Condition:</strong> Powered OFF, lid closed</li>
+                        <li><strong>Physical Description:</strong> 15.6" screen, minor wear on palm rest, company logo sticker on lid</li>
+                        <li><strong>Location:</strong> Center of desk, next to external monitor</li>
+                    </ul>
+                </div>
+
+                <div class="evidence-item">
+                    <h4>Device 2: External Hard Drive</h4>
+                    <ul style="padding-left: 20px; margin-top: 8px;">
+                        <li><strong>Make/Model:</strong> Western Digital My Passport 5TB</li>
+                        <li><strong>Color:</strong> Black</li>
+                        <li><strong>Serial Number:</strong> WD-5TB-WCAZL8472961</li>
+                        <li><strong>Condition:</strong> No visible damage, USB cable attached</li>
+                        <li><strong>Physical Description:</strong> Portable external drive, approximately 4.5" x 3.25"</li>
+                        <li><strong>Notable Features:</strong> Handwritten label on top: "Project Backup - 2025"</li>
+                        <li><strong>Location:</strong> Left side of desk, next to laptop</li>
+                    </ul>
+                </div>
+
+                <div class="evidence-item">
+                    <h4>Device 3: USB Flash Drive</h4>
+                    <ul style="padding-left: 20px; margin-top: 8px;">
+                        <li><strong>Make/Model:</strong> SanDisk Ultra Luxe 256GB</li>
+                        <li><strong>Color:</strong> Silver metal casing</li>
+                        <li><strong>Serial Number:</strong> No visible serial number on device</li>
+                        <li><strong>Condition:</strong> Appears new, no visible wear</li>
+                        <li><strong>Physical Description:</strong> Metal USB-A flash drive, retractable connector</li>
+                        <li><strong>Notable Features:</strong> Small blue label with handwritten text "Source Code"</li>
+                        <li><strong>Location:</strong> Inserted in laptop's USB port (right side)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="info-box warning">
+                <h3>⚠️ Collection Procedures</h3>
+                <p><strong>Timeline of your actions:</strong></p>
+                <ul style="padding-left: 20px; margin-top: 10px;">
+                    <li><strong>09:15-09:25:</strong> Photographed office and devices in situ (Photos 001-008)</li>
+                    <li><strong>09:30:</strong> Verified laptop was powered OFF (no lights, no fan noise)</li>
+                    <li><strong>09:32:</strong> Photographed USB drive in laptop port before removal (Photos 009-010)</li>
+                    <li><strong>09:35:</strong> Removed USB drive from laptop port, placed in anti-static bag #AS-2026-042</li>
+                    <li><strong>09:40:</strong> Packaged laptop in anti-static bag #AS-2026-043</li>
+                    <li><strong>09:45:</strong> Packaged external hard drive in anti-static bag #AS-2026-044</li>
+                    <li><strong>09:50:</strong> Sealed all evidence bags with tamper-evident tape, initialed across seals</li>
+                    <li><strong>10:00:</strong> Completed chain of custody forms with witness Martinez present</li>
+                    <li><strong>10:15:</strong> Departed NorthCoast Manufacturing with evidence secured in transport case #TC-089</li>
+                    <li><strong>11:45:</strong> Arrived at Redwood Cybersecurity Solutions lab (789 Forensics Drive, Ukiah, CA)</li>
+                    <li><strong>11:50:</strong> Transferred evidence to Evidence Custodian James Wilson (employee ID: RCS-EC-001)</li>
+                    <li><strong>12:00:</strong> Evidence secured in evidence locker #15-C</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>📝 Your Task</h2>
+            
+            <div class="requirements-box">
+                <h3>✅ Requirements</h3>
+                <p>Complete THREE separate chain of custody forms (one for each evidence item) using the information provided in the scenario. Each form must include:</p>
+                
+                <ol style="padding-left: 25px; margin-top: 15px;">
+                    <li><strong>Complete Evidence Description</strong>
+                        <ul style="padding-left: 20px; margin-top: 5px;">
+                            <li>Case number and item number (format: 2026-CORP-0215-001, 002, 003)</li>
+                            <li>Make, model, and serial number</li>
+                            <li>Physical description and condition</li>
+                            <li>Location where found</li>
+                        </ul>
+                    </li>
+                    
+                    <li style="margin-top: 10px;"><strong>Collection Information</strong>
+                        <ul style="padding-left: 20px; margin-top: 5px;">
+                            <li>Your name and badge number</li>
+                            <li>Date and time collected (use 24-hour format)</li>
+                            <li>Specific location (building, floor, office number)</li>
+                            <li>Packaging method and evidence bag number</li>
+                        </ul>
+                    </li>
+                    
+                    <li style="margin-top: 10px;"><strong>Witness Information</strong>
+                        <ul style="padding-left: 20px; margin-top: 5px;">
+                            <li>Witness name: Rebecca Martinez</li>
+                            <li>Witness title/ID: CTO, employee ID NCM-CTO-001</li>
+                        </ul>
+                    </li>
+                    
+                    <li style="margin-top: 10px;"><strong>Chain of Custody Record</strong>
+                        <ul style="padding-left: 20px; margin-top: 5px;">
+                            <li>Initial custody: You (investigator)</li>
+                            <li>Transfer to: James Wilson, Evidence Custodian (RCS-EC-001)</li>
+                            <li>Date/time of transfer: 2026-02-06 at 11:50</li>
+                            <li>Purpose: Secure storage in evidence locker</li>
+                            <li>Final location: Evidence Locker #15-C</li>
+                        </ul>
+                    </li>
+                </ol>
+            </div>
+        </section>
+
+        <section>
+            <h2>📋 Chain of Custody Form Template</h2>
+            <p>Use this template to complete your forms. You may download this page and fill in the forms, or recreate them in a word processor.</p>
+
+            <div class="coc-form">
+                <div class="form-header">
+                    <h3 style="margin: 0;">CHAIN OF CUSTODY FORM</h3>
+                    <p style="margin: 5px 0 0 0;">Redwood Cybersecurity Solutions</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="case-number">Case Number:</label>
+                    <input type="text" id="case-number" name="case-number" placeholder="2026-CORP-0215" aria-label="Case number">
+                </div>
+
+                <div class="form-group">
+                    <label for="item-number">Item Number:</label>
+                    <input type="text" id="item-number" name="item-number" placeholder="2026-CORP-0215-001" aria-label="Item number">
+                    <div class="form-hint">Format: CASE-NUMBER-ITEM (001, 002, 003)</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description of Evidence:</label>
+                    <textarea id="description" name="description" rows="4" placeholder="Include: Make, Model, Serial Number, Physical Description, Condition, Location Found" aria-label="Evidence description"></textarea>
+                    <div class="form-hint">Be specific and complete. Include all identifying information.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="collected-by">Collected By:</label>
+                    <input type="text" id="collected-by" name="collected-by" placeholder="Your Name, Badge #DF-3142" aria-label="Collected by">
+                </div>
+
+                <div class="form-group">
+                    <label for="date-time">Date and Time Collected:</label>
+                    <input type="text" id="date-time" name="date-time" placeholder="2026-02-06 at 09:XX hours" aria-label="Date and time collected">
+                    <div class="form-hint">Use 24-hour format. Refer to timeline in scenario for specific times.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="location">Location Collected:</label>
+                    <input type="text" id="location" name="location" placeholder="NorthCoast Manufacturing, Building B, 3rd Floor, Office 312" aria-label="Location collected">
+                    <div class="form-hint">Include full address and specific location within building.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="witness">Witness Present:</label>
+                    <input type="text" id="witness" name="witness" placeholder="Rebecca Martinez, CTO, Employee ID: NCM-CTO-001" aria-label="Witness information">
+                </div>
+
+                <div class="form-group">
+                    <label for="packaging">Packaging Method:</label>
+                    <textarea id="packaging" name="packaging" rows="2" placeholder="Describe how evidence was packaged (anti-static bag number, sealing method)" aria-label="Packaging method"></textarea>
+                </div>
+
+                <h3 style="margin-top: 30px; border-top: 2px solid #333; padding-top: 15px;">CUSTODY RECORD</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Relinquished By</th>
+                            <th scope="col">Received By</th>
+                            <th scope="col">Date/Time</th>
+                            <th scope="col">Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" style="width: 100%; border: none; font-family: inherit;" placeholder="Your Name" aria-label="Relinquished by"></td>
+                            <td><input type="text" style="width: 100%; border: none; font-family: inherit;" placeholder="James Wilson, RCS-EC-001" aria-label="Received by"></td>
+                            <td><input type="text" style="width: 100%; border: none; font-family: inherit;" placeholder="2026-02-06 11:50" aria-label="Transfer date and time"></td>
+                            <td><input type="text" style="width: 100%; border: none; font-family: inherit;" placeholder="Secure storage" aria-label="Transfer purpose"></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="form-group" style="margin-top: 20px;">
+                    <label for="storage">Final Storage Location:</label>
+                    <input type="text" id="storage" name="storage" placeholder="Evidence Locker #15-C, Redwood Cybersecurity Solutions Lab" aria-label="Storage location">
+                </div>
+            </div>
+
+            <div class="info-box success">
+                <h3>💡 Tips for Success</h3>
+                <ul style="padding-left: 20px;">
+                    <li>Create three separate forms - one for each device</li>
+                    <li>Use consistent formatting across all three forms</li>
+                    <li>Double-check all serial numbers and item numbers</li>
+                    <li>Use 24-hour time format (09:15, not 9:15 AM)</li>
+                    <li>Be specific about packaging (include bag numbers)</li>
+                    <li>Ensure each form has a unique item number (001, 002, 003)</li>
+                    <li>Review Module 4 examples if you need guidance</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>✅ Submission Checklist</h2>
+            
+            <div class="checklist">
+                <p style="margin-bottom: 15px;"><strong>Before submitting, verify you have completed:</strong></p>
+                
+                <label class="checklist-item">
+                    <input type="checkbox" aria-label="Three complete chain of custody forms">
+                    <span>Three complete chain of custody forms (one per device)</span>
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" aria-label="Unique item numbers">
+                    <span>Each form has a unique item number (001, 002, 003)</span>
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" aria-label="Complete evidence descriptions">
+                    <span>Complete evidence descriptions with make, model, serial numbers</span>
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" aria-label="Proper date and time format">
+                    <span>Dates and times in proper format (YYYY-MM-DD HH:MM)</span>
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" aria-label="Collection information">
+                    <span>Collection information (who, when, where, how)</span>
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" aria-label="Witness information">
+                    <span>Witness information (Rebecca Martinez, CTO)</span>
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" aria-label="Packaging details">
+                    <span>Packaging details (anti-static bags with numbers)</span>
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" aria-label="Custody transfer">
+                    <span>Custody transfer record (to James Wilson)</span>
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" aria-label="Storage location">
+                    <span>Final storage location (Evidence Locker #15-C)</span>
+                </label>
+
+                <label class="checklist-item">
+                    <input type="checkbox" aria-label="No blanks">
+                    <span>No blank fields (all information filled in)</span>
+                </label>
+            </div>
+        </section>
+
+        <section>
+            <h2>📊 Grading Rubric</h2>
+            
+            <table class="rubric-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Criteria</th>
+                        <th scope="col">Points</th>
+                        <th scope="col">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Form Completeness</strong></td>
+                        <td class="points">6 points</td>
+                        <td>All three forms completed with no blank fields. Each device documented on separate form.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Evidence Description</strong></td>
+                        <td class="points">5 points</td>
+                        <td>Complete descriptions including make, model, serial numbers, physical characteristics, and condition. Location where found specified.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Collection Information</strong></td>
+                        <td class="points">3 points</td>
+                        <td>Collector name/badge, date/time (proper format), specific location, packaging method documented.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Custody Transfer</strong></td>
+                        <td class="points">3 points</td>
+                        <td>Transfer from investigator to evidence custodian properly documented with date/time, purpose, and final location.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Professional Format</strong></td>
+                        <td class="points">2 points</td>
+                        <td>Consistent formatting, proper date/time format (24-hour), correct item numbering (001, 002, 003).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Accuracy</strong></td>
+                        <td class="points">1 point</td>
+                        <td>Information matches scenario details. No contradictions or errors in facts.</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="text-align: right;"><strong>Total:</strong></td>
+                        <td class="points">20 points</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>📤 Submission Instructions</h2>
+            
+            <div class="submission-box">
+                <h3>How to Submit</h3>
+                <ol style="padding-left: 25px; margin-top: 10px;">
+                    <li><strong>File Format:</strong> Submit as PDF, Word document (.docx), or image files (if handwritten)</li>
+                    <li><strong>File Naming:</strong> LastName_FirstName_Lab2_CoC.pdf (or .docx)</li>
+                    <li><strong>Submit to:</strong> Canvas → Assignments → Lab Activity 2: Chain of Custody Documentation</li>
+                    <li><strong>Deadline:</strong> End of Week 2 (check Canvas for specific date/time)</li>
+                </ol>
+
+                <div class="info-box warning" style="margin-top: 20px;">
+                    <h4 style="margin-top: 0;">⚠️ Late Submission Policy</h4>
+                    <p>Late submissions will be accepted up to 48 hours after the deadline with a 10% deduction per day. Submissions more than 48 hours late will not be accepted without prior arrangement.</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>💡 Additional Resources</h2>
+            <ul style="padding-left: 25px;">
+                <li><strong>Module 4:</strong> Chain of Custody & Evidence Handling - Review annotated form examples</li>
+                <li><strong>Module 5:</strong> Documentation & Professional Practice - Review field note examples</li>
+                <li><strong>Office Hours:</strong> Instructor available for questions (check Canvas for schedule)</li>
+                <li><strong>Discussion Forum:</strong> Post questions to Week 2 Q&A forum (do not post completed forms)</li>
+            </ul>
+        </section>
+
+        <div style="margin-top: 40px; padding: 20px; background-color: var(--light-bg); border-radius: 8px; text-align: center;">
+            <p style="font-size: 1.1em; margin-bottom: 15px;"><strong>Ready to submit?</strong></p>
+            <button class="btn btn-success btn-block" onclick="window.print()">🖨️ Print This Page</button>
+            <p style="margin-top: 15px; font-size: 0.9em; color: var(--text-secondary);">You can print this page to fill out forms by hand, or use it as a reference while completing forms digitally.</p>
+        </div>
+
+        <footer style="margin-top: 40px; padding-top: 20px; border-top: 2px solid var(--border-color); text-align: center; color: var(--text-secondary);">
+            <p><strong>CSC 156 - Digital Forensics Fundamentals</strong></p>
+            <p>Lab Activity 2: Chain of Custody Documentation Exercise</p>
+            <p>Mendocino College | Week 2</p>
+        </footer>
+    </div>
+
+    <script>
+        // Print functionality
+        console.log('Lab Activity 2: Chain of Custody Documentation loaded');
+    </script>
+
+</body>
+</html>
