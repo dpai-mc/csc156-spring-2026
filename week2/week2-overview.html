@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSC 156 - Week 2 Overview: Digital Forensics Investigation Process</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"><path d="M0,0 L1200,0 L1200,80 Q600,120 0,80 Z" fill="rgba(255,255,255,0.05)"/></svg>') no-repeat bottom;
+            background-size: cover;
+        }
+
+        header .content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .course-badge {
+            display: inline-block;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .week-subtitle {
+            font-size: 1.3em;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .meta-icon {
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3em;
+        }
+
+        .meta-info h3 {
+            font-size: 0.85em;
+            opacity: 0.8;
+            font-weight: 500;
+        }
+
+        .meta-info p {
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        /* Progress Bar */
+        .progress-section {
+            background-color: #f8f9fa;
+            padding: 25px 40px;
+            border-bottom: 3px solid #e9ecef;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .progress-header h2 {
+            font-size: 1.2em;
+            color: #2c3e50;
+        }
+
+        .progress-percentage {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #3498db;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 30px;
+            background-color: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db 0%, #2ecc71 100%);
+            width: 0%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 15px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            padding: 40px;
+        }
+
+        /* Grid Layout for Sections */
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .content-card {
+            background-color: #ffffff;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 30px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .content-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            border-color: #3498db;
+        }
+
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1.5em;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .card-description {
+            color: #7f8c8d;
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+
+        .card-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .card-list li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+            color: #555;
+        }
+
+        .card-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #2ecc71;
+            font-weight: 700;
+            font-size: 1.2em;
+        }
+
+        /* Section Headers */
+        .section-header {
+            margin: 50px 0 30px 0;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #3498db;
+        }
+
+        .section-header h2 {
+            font-size: 2em;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5em;
+        }
+
+        /* Learning Modules Grid */
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .module-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .module-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .module-card:hover::before {
+            transform: translateY(0);
+        }
+
+        .module-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .module-number {
+            font-size: 3em;
+            font-weight: 700;
+            opacity: 0.3;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+        }
+
+        .module-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .module-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .module-time {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 15px;
+        }
+
+        .module-status {
+            display: inline-block;
+            padding: 5px 12px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            font-size: 0.85em;
+            margin-top: 10px;
+        }
+
+        /* Assignments Table */
+        .assignments-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 30px 0;
+            background-color: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .assignments-table thead {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+        }
+
+        .assignments-table th {
+            padding: 18px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        .assignments-table tbody tr {
+            border-bottom: 1px solid #e9ecef;
+            transition: background-color 0.2s ease;
+        }
+
+        .assignments-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .assignments-table td {
+            padding: 18px;
+            color: #555;
+        }
+
+        .assignment-type {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .type-lab {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .type-discussion {
+            background-color: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .type-homework {
+            background-color: #fff3e0;
+            color: #e65100;
+        }
+
+        .type-reading {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .points-badge {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .cslo-badge {
+            display: inline-block;
+            background-color: #9b59b6;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-right: 5px;
+        }
+
+        /* Investigation Process Timeline */
+        .timeline {
+            position: relative;
+            padding: 30px 0;
+            margin: 40px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #3498db 0%, #2ecc71 100%);
+            transform: translateX(-50%);
+        }
+
+        .timeline-item {
+            display: flex;
+            margin-bottom: 50px;
+            position: relative;
+        }
+
+        .timeline-item:nth-child(odd) {
+            flex-direction: row;
+        }
+
+        .timeline-item:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .timeline-content {
+            width: 45%;
+            background-color: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .timeline-item:nth-child(odd) .timeline-content {
+            margin-right: auto;
+        }
+
+        .timeline-item:nth-child(even) .timeline-content {
+            margin-left: auto;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.2em;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 2;
+        }
+
+        .phase-title {
+            font-size: 1.4em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .phase-description {
+            color: #7f8c8d;
+            margin-bottom: 15px;
+        }
+
+        .phase-activities {
+            list-style: none;
+            padding: 0;
+        }
+
+        .phase-activities li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: #555;
+            font-size: 0.95em;
+        }
+
+        .phase-activities li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: #3498db;
+            font-weight: 700;
+        }
+
+        /* Info Boxes */
+        .info-box {
+            padding: 25px;
+            border-radius: 12px;
+            margin: 25px 0;
+            border-left: 5px solid;
+        }
+
+        .info-box.success {
+            background-color: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .info-box.info {
+            background-color: #d1ecf1;
+            border-color: #17a2b8;
+            color: #0c5460;
+        }
+
+        .info-box.warning {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+
+        .info-box.danger {
+            background-color: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .info-box h3 {
+            margin-bottom: 12px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-box-icon {
+            font-size: 1.5em;
+        }
+
+        /* Checklist */
+        .checklist {
+            background-color: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 25px 0;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 15px;
+            margin-bottom: 12px;
+            background-color: white;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .checklist-item:hover {
+            border-color: #3498db;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+        }
+
+        .checklist-item input[type="checkbox"] {
+            margin-right: 15px;
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .checklist-item label {
+            cursor: pointer;
+            flex: 1;
+            font-size: 1.05em;
+            color: #2c3e50;
+        }
+
+        .checklist-item.completed {
+            background-color: #d4edda;
+            border-color: #28a745;
+        }
+
+        .checklist-item.completed label {
+            text-decoration: line-through;
+            color: #155724;
+        }
+
+        /* Quick Links */
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .quick-link {
+            display: block;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .quick-link:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .quick-link-icon {
+            font-size: 2em;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        /* Footer */
+        footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 40px;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        footer p {
+            margin: 10px 0;
+            opacity: 0.9;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .timeline::before {
+                left: 30px;
+            }
+
+            .timeline-item {
+                flex-direction: column !important;
+            }
+
+            .timeline-content {
+                width: calc(100% - 80px);
+                margin-left: 80px !important;
+            }
+
+            .timeline-marker {
+                left: 30px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            header {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .week-subtitle {
+                font-size: 1.1em;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modules-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-meta {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .assignments-table {
+                font-size: 0.9em;
+            }
+
+            .assignments-table th,
+            .assignments-table td {
+                padding: 12px 8px;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+            }
+
+            .progress-section,
+            .quick-links,
+            .module-status {
+                display: none;
+            }
+
+            .content-card,
+            .module-card {
+                page-break-inside: avoid;
+            }
+
+            .timeline-item {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* Skip Link for Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #3498db;
+            color: white;
+            padding: 8px;
+            text-decoration: none;
+            z-index: 100;
+            border-radius: 0 0 8px 0;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* Focus Visible */
+        *:focus-visible {
+            outline: 3px solid #3498db;
+            outline-offset: 2px;
+        }
+
+        /* Expandable Sections */
+        .expandable-section {
+            margin: 25px 0;
+        }
+
+        .expandable-header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s ease;
+            border: 2px solid #e9ecef;
+        }
+
+        .expandable-header:hover {
+            background-color: #e9ecef;
+        }
+
+        .expandable-header h3 {
+            color: #2c3e50;
+            font-size: 1.3em;
+            margin: 0;
+        }
+
+        .expand-icon {
+            font-size: 1.5em;
+            color: #3498db;
+            transition: transform 0.3s ease;
+        }
+
+        .expandable-section.expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+
+        .expandable-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            padding: 0 20px;
+        }
+
+        .expandable-section.expanded .expandable-content {
+            max-height: 2000px;
+            padding: 20px;
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <div class="container">
+        <header>
+            <div class="content">
+                <div class="course-badge">CSC 156 - DIGITAL FORENSICS FUNDAMENTALS</div>
+                <h1>Week 2: Digital Forensics Investigation Process</h1>
+                <p class="week-subtitle">Building the Foundation for Professional Forensic Practice</p>
+                
+                <div class="header-meta">
+                    <div class="meta-item">
+                        <div class="meta-icon">📅</div>
+                        <div class="meta-info">
+                            <h3>Duration</h3>
+                            <p>5 Days</p>
+                        </div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-icon">📚</div>
+                        <div class="meta-info">
+                            <h3>Lecture Hours</h3>
+                            <p>2 Hours</p>
+                        </div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-icon">🔬</div>
+                        <div class="meta-info">
+                            <h3>Lab Hours</h3>
+                            <p>3 Hours</p>
+                        </div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-icon">⏰</div>
+                        <div class="meta-info">
+                            <h3>Total Time</h3>
+                            <p>~9 Hours</p>
+                        </div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-icon">🎯</div>
+                        <div class="meta-info">
+                            <h3>Points Available</h3>
+                            <p>43 Points</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="progress-section">
+            <div class="progress-header">
+                <h2>Your Week 2 Progress</h2>
+                <span class="progress-percentage" id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar">0 of 11 items complete</div>
+            </div>
+        </div>
+
+        <main id="main-content" class="main-content">
+            <!-- Week Overview -->
+            <section class="fade-in">
+                <div class="info-box info">
+                    <h3><span class="info-box-icon">💡</span>Week Overview</h3>
+                    <p>Week 2 builds upon your foundational understanding from Week 1 by introducing the systematic methodology used in digital forensics investigations. You'll learn the critical steps involved in conducting a professional forensic examination, from initial planning through evidence presentation. This week emphasizes the importance of <strong>forensic readiness</strong>, proper <strong>evidence handling</strong>, and meticulous <strong>documentation</strong>—skills that form the backbone of every successful investigation.</p>
+                    <p style="margin-top: 15px;"><strong>Why This Week Matters:</strong> Understanding the investigation process ensures that evidence you collect will be admissible in court, defensible under scrutiny, and reproducible by other examiners. These procedures protect both the integrity of your investigations and your professional credibility.</p>
+                </div>
+            </section>
+
+            <!-- Learning Objectives -->
+            <section class="fade-in">
+                <div class="section-header">
+                    <h2><span class="section-icon">🎯</span>Learning Objectives</h2>
+                </div>
+                
+                <div class="content-grid">
+                    <div class="content-card">
+                        <div class="card-icon">📋</div>
+                        <h3 class="card-title">Investigation Process Mastery</h3>
+                        <p class="card-description">Master the complete digital forensics investigation lifecycle</p>
+                        <ul class="card-list">
+                            <li>List steps in forensic readiness planning</li>
+                            <li>Explain the six-phase investigation process</li>
+                            <li>Apply systematic methodology to cases</li>
+                            <li>Integrate forensics with incident response</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-icon">🔗</div>
+                        <h3 class="card-title">Chain of Custody</h3>
+                        <p class="card-description">Ensure evidence integrity through proper handling procedures</p>
+                        <ul class="card-list">
+                            <li>Describe proper chain of custody procedures</li>
+                            <li>Document evidence handling accurately</li>
+                            <li>Maintain legal admissibility standards</li>
+                            <li>Identify custody weaknesses</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-icon">📝</div>
+                        <h3 class="card-title">Professional Documentation</h3>
+                        <p class="card-description">Create contemporaneous notes that withstand legal scrutiny</p>
+                        <ul class="card-list">
+                            <li>Create accurate investigation documentation</li>
+                            <li>Apply professional note-taking standards</li>
+                            <li>Recognize documentation best practices</li>
+                            <li>Maintain forensic integrity through records</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-icon">⚖️</div>
+                        <h3 class="card-title">Legal & Ethical Foundations</h3>
+                        <p class="card-description">Understand authority and responsibilities in investigations</p>
+                        <ul class="card-list">
+                            <li>Identify when to escalate investigations</li>
+                            <li>Apply evidence handling procedures</li>
+                            <li>Recognize legal and ethical boundaries</li>
+                            <li>Work within professional standards</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CSLOs -->
+            <section class="fade-in">
+                <div class="section-header">
+                    <h2><span class="section-icon">🎓</span>Course Student Learning Outcomes (CSLOs)</h2>
+                </div>
+
+                <div class="info-box success">
+                    <h3><span class="info-box-icon">🎯</span>CSLO 1: Fundamental Concepts</h3>
+                    <p><strong>Describe the fundamental concepts of incident response and forensic investigation.</strong></p>
+                    <p style="margin-top: 10px;">Expected Performance: 0.75 (75% mastery)</p>
+                    <p style="margin-top: 10px;">This week directly develops your ability to articulate the systematic approach used in professional forensic investigations. You'll understand how forensic readiness planning, the investigation lifecycle, and documentation practices form the foundation of incident response capabilities.</p>
+                </div>
+
+                <div class="info-box success" style="margin-top: 20px;">
+                    <h3><span class="info-box-icon">🎯</span>CSLO 3: Data Collection Methods</h3>
+                    <p><strong>Perform data collection using forensic technology methods in accordance with evidence handling procedures.</strong></p>
+                    <p style="margin-top: 10px;">Expected Performance: 0.75 (75% mastery)</p>
+                    <p style="margin-top: 10px;">You'll learn the procedures and documentation requirements that ensure evidence integrity throughout the investigation lifecycle. Chain of custody practices and proper evidence handling form the basis for all technical collection work in future weeks.</p>
+                </div>
+
+                <div class="info-box info" style="margin-top: 20px;">
+                    <h3><span class="info-box-icon">📊</span>Assessment Note</h3>
+                    <p>Your understanding of CSLOs 1 and 3 will be assessed through:</p>
+                    <ul style="margin-left: 25px; margin-top: 10px;">
+                        <li><strong>This Week:</strong> Lab Activity 2, Discussion Post 2, Homework 1</li>
+                        <li><strong>Week 3:</strong> Quiz 1 (covers investigation process and chain of custody)</li>
+                        <li><strong>Week 9:</strong> Midterm Exam (comprehensive investigation scenarios)</li>
+                        <li><strong>Week 17:</strong> Final Project (applying complete investigation methodology)</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Learning Modules -->
+            <section class="fade-in">
+                <div class="section-header">
+                    <h2><span class="section-icon">📚</span>Learning Modules</h2>
+                </div>
+
+                <p style="margin-bottom: 25px; color: #7f8c8d; font-size: 1.1em;">Complete all five learning modules to build comprehensive understanding of the digital forensics investigation process. Each module includes interactive elements, knowledge checks, and real-world applications.</p>
+
+                <div class="modules-grid">
+                    <div class="module-card" onclick="toggleModuleComplete(1)" role="button" tabindex="0" aria-label="Module 1: Forensic Readiness Planning">
+                        <div class="module-number">1</div>
+                        <div class="module-content">
+                            <h3 class="module-title">Forensic Readiness Planning</h3>
+                            <p class="module-time">⏱️ 15-20 minutes</p>
+                            <p>Understanding organizational preparedness, legal requirements, data retention policies, and building forensic capabilities before incidents occur.</p>
+                            <div class="module-status" id="module1-status">Not Started</div>
+                        </div>
+                    </div>
+
+                    <div class="module-card" onclick="toggleModuleComplete(2)" role="button" tabindex="0" aria-label="Module 2: Investigation Lifecycle">
+                        <div class="module-number">2</div>
+                        <div class="module-content">
+                            <h3 class="module-title">Investigation Lifecycle</h3>
+                            <p class="module-time">⏱️ 25-30 minutes</p>
+                            <p>Master the six phases: Identification, Preservation, Collection, Examination, Analysis, and Presentation. Learn systematic methodology for every investigation.</p>
+                            <div class="module-status" id="module2-status">Not Started</div>
+                        </div>
+                    </div>
+
+                    <div class="module-card" onclick="toggleModuleComplete(3)" role="button" tabindex="0" aria-label="Module 3: Order of Volatility">
+                        <div class="module-number">3</div>
+                        <div class="module-content">
+                            <h3 class="module-title">Order of Volatility & Evidence Preservation</h3>
+                            <p class="module-time">⏱️ 15-20 minutes</p>
+                            <p>Prioritize evidence collection based on data persistence. Learn to preserve volatile data (RAM, network connections) before it's lost forever.</p>
+                            <div class="module-status" id="module3-status">Not Started</div>
+                        </div>
+                    </div>
+
+                    <div class="module-card" onclick="toggleModuleComplete(4)" role="button" tabindex="0" aria-label="Module 4: Chain of Custody">
+                        <div class="module-number">4</div>
+                        <div class="module-content">
+                            <h3 class="module-title">Chain of Custody & Evidence Handling</h3>
+                            <p class="module-time">⏱️ 20-25 minutes</p>
+                            <p>Document every person who handles evidence and every action taken. Practice completing chain of custody forms with realistic scenarios and interactive exercises.</p>
+                            <div class="module-status" id="module4-status">Not Started</div>
+                        </div>
+                    </div>
+
+                    <div class="module-card" onclick="toggleModuleComplete(5)" role="button" tabindex="0" aria-label="Module 5: Documentation & Professional Practice">
+                        <div class="module-number">5</div>
+                        <div class="module-content">
+                            <h3 class="module-title">Documentation & Professional Practice</h3>
+                            <p class="module-time">⏱️ 20-25 minutes</p>
+                            <p>Create contemporaneous field notes that withstand legal scrutiny. Learn professional standards, ethical considerations, and best practices for forensic documentation.</p>
+                            <div class="module-status" id="module5-status">Not Started</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box warning" style="margin-top: 30px;">
+                    <h3><span class="info-box-icon">⚠️</span>Module Completion Requirement</h3>
+                    <p>All five learning modules must be completed before attempting Lab Activity 2. The modules provide essential background knowledge for the hands-on chain of custody exercise. Click each module card above to mark it as complete as you work through the content.</p>
+                </div>
+            </section>
+
+            <!-- Investigation Process Timeline -->
+            <section class="fade-in">
+                <div class="section-header">
+                    <h2><span class="section-icon">🔄</span>The Investigation Process</h2>
+                </div>
+
+                <p style="margin-bottom: 30px; color: #7f8c8d; font-size: 1.1em;">The digital forensics investigation process follows a systematic methodology to ensure evidence integrity and legal admissibility. Each phase builds upon the previous one, creating a comprehensive approach to forensic examination.</p>
+
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker">1</div>
+                        <div class="timeline-content">
+                            <h3 class="phase-title">🔍 Identification</h3>
+                            <p class="phase-description">Recognizing that an incident has occurred and determining the scope of investigation.</p>
+                            <ul class="phase-activities">
+                                <li>Recognize incident occurrence and severity</li>
+                                <li>Determine investigation scope and boundaries</li>
+                                <li>Identify potential evidence sources</li>
+                                <li>Assess business impact and urgency</li>
+                                <li>Notify stakeholders and determine authority</li>
+                                <li>Document initial observations</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-marker">2</div>
+                        <div class="timeline-content">
+                            <h3 class="phase-title">🛡️ Preservation</h3>
+                            <p class="phase-description">Securing evidence and preventing contamination or destruction.</p>
+                            <ul class="phase-activities">
+                                <li>Secure physical and digital scene</li>
+                                <li>Prevent evidence contamination</li>
+                                <li>Implement write protection measures</li>
+                                <li>Isolate affected systems safely</li>
+                                <li>Document evidence state at discovery</li>
+                                <li>Consider order of volatility</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-marker">3</div>
+                        <div class="timeline-content">
+                            <h3 class="phase-title">💾 Collection/Acquisition</h3>
+                            <p class="phase-description">Creating forensic images and gathering evidence using proper procedures.</p>
+                            <ul class="phase-activities">
+                                <li>Create forensic images with write blockers</li>
+                                <li>Collect volatile data (RAM, network state)</li>
+                                <li>Gather log files and system artifacts</li>
+                                <li>Compute cryptographic hashes (MD5, SHA-256)</li>
+                                <li>Document collection procedures thoroughly</li>
+                                <li>Package and transport evidence securely</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-marker">4</div>
+                        <div class="timeline-content">
+                            <h3 class="phase-title">🔬 Examination</h3>
+                            <p class="phase-description">Processing forensic images and extracting relevant artifacts.</p>
+                            <ul class="phase-activities">
+                                <li>Process images with forensic tools</li>
+                                <li>Extract relevant artifacts and data</li>
+                                <li>Recover deleted files and partitions</li>
+                                <li>Decrypt or decode protected data</li>
+                                <li>Identify files of interest</li>
+                                <li>Run automated analysis tools</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-marker">5</div>
+                        <div class="timeline-content">
+                            <h3 class="phase-title">📊 Analysis</h3>
+                            <p class="phase-description">Interpreting examination results and reconstructing events.</p>
+                            <ul class="phase-activities">
+                                <li>Interpret examination findings</li>
+                                <li>Reconstruct event timelines</li>
+                                <li>Determine significance of evidence</li>
+                                <li>Test hypotheses about what occurred</li>
+                                <li>Identify patterns and anomalies</li>
+                                <li>Draw evidence-based conclusions</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-marker">6</div>
+                        <div class="timeline-content">
+                            <h3 class="phase-title">📝 Presentation/Reporting</h3>
+                            <p class="phase-description">Documenting findings and communicating results to stakeholders.</p>
+                            <ul class="phase-activities">
+                                <li>Document findings in comprehensive reports</li>
+                                <li>Create executive summaries</li>
+                                <li>Prepare evidence for legal proceedings</li>
+                                <li>Present findings to diverse audiences</li>
+                                <li>Provide expert testimony if required</li>
+                                <li>Archive evidence and documentation</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Assignments & Activities -->
+            <section class="fade-in">
+                <div class="section-header">
+                    <h2><span class="section-icon">📋</span>Assignments & Activities</h2>
+                </div>
+
+                <div class="info-box info">
+                    <h3><span class="info-box-icon">📅</span>Due This Week: 43 Points Total</h3>
+                    <p>All assignments are due by the end of Week 2 unless otherwise specified. Start early to allow time for questions and revisions.</p>
+                </div>
+
+                <table class="assignments-table">
+                    <thead>
+                        <tr>
+                            <th>Assignment</th>
+                            <th>Type</th>
+                            <th>Points</th>
+                            <th>Due Date</th>
+                            <th>CSLO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr onclick="toggleAssignmentComplete('assign1')">
+                            <td>
+                                <input type="checkbox" id="assign1" onclick="event.stopPropagation()">
+                                <strong>Lab Activity 2:</strong> Chain of Custody Documentation Exercise
+                            </td>
+                            <td><span class="assignment-type type-lab">Lab</span></td>
+                            <td><span class="points-badge">20</span></td>
+                            <td>End of Week 2</td>
+                            <td>
+                                <span class="cslo-badge">CSLO 1</span>
+                                <span class="cslo-badge">CSLO 3</span>
+                            </td>
+                        </tr>
+                        <tr onclick="toggleAssignmentComplete('assign2')">
+                            <td>
+                                <input type="checkbox" id="assign2" onclick="event.stopPropagation()">
+                                <strong>Discussion Post 2:</strong> Investigation Process Best Practices
+                            </td>
+                            <td><span class="assignment-type type-discussion">Discussion</span></td>
+                            <td><span class="points-badge">3</span></td>
+                            <td>Day 3 & Day 5</td>
+                            <td><span class="cslo-badge">CSLO 1</span></td>
+                        </tr>
+                        <tr onclick="toggleAssignmentComplete('assign3')">
+                            <td>
+                                <input type="checkbox" id="assign3" onclick="event.stopPropagation()">
+                                <strong>Homework 1:</strong> Forensic Investigation Workflow Diagram
+                            </td>
+                            <td><span class="assignment-type type-homework">Homework</span></td>
+                            <td><span class="points-badge">20</span></td>
+                            <td>End of Week 2</td>
+                            <td><span class="cslo-badge">CSLO 1</span></td>
+                        </tr>
+                        <tr onclick="toggleAssignmentComplete('assign4')">
+                            <td>
+                                <input type="checkbox" id="assign4" onclick="event.stopPropagation()">
+                                <strong>Reading:</strong> NIST SP 800-86 (Guide to Integrating Forensic Techniques)
+                            </td>
+                            <td><span class="assignment-type type-reading">Reading</span></td>
+                            <td><span class="points-badge">-</span></td>
+                            <td>Before Lab</td>
+                            <td><span class="cslo-badge">CSLO 1</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Expandable Assignment Details -->
+            <section class="fade-in">
+                <div class="expandable-section" id="lab-details">
+                    <div class="expandable-header" onclick="toggleExpand('lab-details')" role="button" tabindex="0" aria-expanded="false">
+                        <h3>🔬 Lab Activity 2: Chain of Custody Documentation Exercise (20 points)</h3>
+                        <span class="expand-icon">▼</span>
+                    </div>
+                    <div class="expandable-content">
+                        <p><strong>Objective:</strong> Practice proper evidence handling and chain of custody documentation using a simulated investigation scenario.</p>
+                        
+                        <h4 style="margin-top: 20px; color: #2c3e50;">Scenario:</h4>
+                        <p>You're a forensic examiner at Mendocino College IT Security. On January 28, 2026, at 10:30 AM, the IT Director reports that employee Sarah Chen's laptop may contain evidence of unauthorized data access. The laptop (Dell Latitude 5420, Asset #MC-5678, Serial #ABCD1234) is currently powered off on Sarah's desk in Building B, Room 305.</p>
+                        
+                        <p style="margin-top: 15px;">You arrive at the scene at 11:00 AM with IT Director Michael Johnson (who will serve as witness). You photograph the laptop, document its condition (good condition, no damage, "Sarah's Laptop" label on lid), remove it from the desk, and place it in an anti-static evidence bag. You seal the bag with tamper-evident seal #789. You transport the laptop to the Forensic Lab (Building A, Room 150) and place it in Evidence Locker #5 at 11:30 AM.</p>
+
+                        <h4 style="margin-top: 20px; color: #2c3e50;">Tasks:</h4>
+                        <ol style="margin-left: 25px; margin-top: 10px;">
+                            <li>Review provided investigation scenario</li>
+                            <li>Complete chain of custody forms for multiple evidence items</li>
+                            <li>Document evidence collection procedures</li>
+                            <li>Create investigation timeline</li>
+                            <li>Identify potential chain of custody weaknesses</li>
+                            <li>Submit completed documentation package</li>
+                        </ol>
+
+                        <h4 style="margin-top: 20px; color: #2c3e50;">Deliverables:</h4>
+                        <ul style="margin-left: 25px; margin-top: 10px;">
+                            <li>Completed chain of custody forms (template provided)</li>
+                            <li>Evidence collection log</li>
+                            <li>Photographic documentation log</li>
+                            <li>Written reflection on challenges encountered (250-500 words)</li>
+                        </ul>
+
+                        <h4 style="margin-top: 20px; color: #2c3e50;">Grading Criteria:</h4>
+                        <ul style="margin-left: 25px; margin-top: 10px;">
+                            <li><strong>Completeness of documentation (8 points):</strong> All required fields filled in accurately</li>
+                            <li><strong>Accuracy of chain of custody forms (6 points):</strong> Correct dates, times, locations, and procedures</li>
+                            <li><strong>Proper use of forensic terminology (3 points):</strong> Professional language and correct technical terms</li>
+                            <li><strong>Quality of reflection and analysis (3 points):</strong> Thoughtful consideration of challenges and solutions</li>
+                        </ul>
+
+                        <div class="info-box warning" style="margin-top: 20px;">
+                            <h3><span class="info-box-icon">⚠️</span>Important Notes</h3>
+                            <ul style="margin-left: 25px; margin-top: 10px;">
+                                <li>Complete all five learning modules before starting this lab</li>
+                                <li>Use the chain of custody form template provided in Canvas</li>
+                                <li>Pay attention to detail—missing information can invalidate evidence</li>
+                                <li>Document times in 24-hour format or clearly mark AM/PM</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="expandable-section" id="discussion-details">
+                    <div class="expandable-header" onclick="toggleExpand('discussion-details')" role="button" tabindex="0" aria-expanded="false">
+                        <h3>💬 Discussion Post 2: Investigation Process Best Practices (3 points)</h3>
+                        <span class="expand-icon">▼</span>
+                    </div>
+                    <div class="expandable-content">
+                        <p><strong>Initial Post (2 points - Due Day 3):</strong></p>
+                        <p>Choose ONE of the following discussion prompts:</p>
+
+                        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 15px 0;">
+                            <h4 style="color: #2c3e50;">Option 1: Forensic Readiness</h4>
+                            <p>Research a real-world organization that suffered a data breach. Based on public information, assess their forensic readiness. What could they have done better to prepare? What did they do well?</p>
+                        </div>
+
+                        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 15px 0;">
+                            <h4 style="color: #2c3e50;">Option 2: Chain of Custody Challenges</h4>
+                            <p>Describe a scenario where maintaining chain of custody would be particularly challenging (e.g., cloud evidence, international investigations, multiple agencies). How would you address these challenges?</p>
+                        </div>
+
+                        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 15px 0;">
+                            <h4 style="color: #2c3e50;">Option 3: Documentation Standards</h4>
+                            <p>Why is contemporaneous note-taking so critical in forensic investigations? Provide an example of how poor documentation could undermine an investigation.</p>
+                        </div>
+
+                        <h4 style="margin-top: 20px; color: #2c3e50;">Requirements:</h4>
+                        <ul style="margin-left: 25px; margin-top: 10px;">
+                            <li>Minimum 150 words</li>
+                            <li>Cite at least one external source (news article, case study, industry publication)</li>
+                            <li>Use proper forensic terminology</li>
+                            <li>Provide specific examples</li>
+                        </ul>
+
+                        <p style="margin-top: 20px;"><strong>Peer Responses (1 point - Due Day 5):</strong></p>
+                        <ul style="margin-left: 25px; margin-top: 10px;">
+                            <li>Respond to at least 2 classmates</li>
+                            <li>Minimum 50 words per response</li>
+                            <li>Add value to the discussion (don't just agree)</li>
+                            <li>Ask questions or provide additional perspectives</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="expandable-section" id="homework-details">
+                    <div class="expandable-header" onclick="toggleExpand('homework-details')" role="button" tabindex="0" aria-expanded="false">
+                        <h3>📊 Homework 1: Forensic Investigation Workflow Diagram (20 points)</h3>
+                        <span class="expand-icon">▼</span>
+                    </div>
+                    <div class="expandable-content">
+                        <p><strong>Objective:</strong> Create a comprehensive workflow diagram showing the complete digital forensics investigation process for your organization (real or hypothetical).</p>
+
+                        <h4 style="margin-top: 20px; color: #2c3e50;">Diagram Components Required:</h4>
+                        <ul style="margin-left: 25px; margin-top: 10px;">
+                            <li>All six investigation phases (Identification → Presentation)</li>
+                            <li>Decision points and branching logic</li>
+                            <li>Roles and responsibilities at each phase</li>
+                            <li>Required documentation at each step</li>
+                            <li>Integration with incident response</li>
+                            <li>Escalation paths (legal, law enforcement, management)</li>
+                        </ul>
+
+                        <h4 style="margin-top: 20px; color: #2c3e50;">Format Requirements:</h4>
+                        <ul style="margin-left: 25px; margin-top: 10px;">
+                            <li>Use flowchart software (Lucidchart, draw.io, Visio, or similar)</li>
+                            <li>Professional appearance and clear labeling</li>
+                            <li>Include legend explaining symbols used</li>
+                            <li>1-2 pages maximum</li>
+                        </ul>
+
+                        <h4 style="margin-top: 20px; color: #2c3e50;">Written Component (500-750 words):</h4>
+                        <ul style="margin-left: 25px; margin-top: 10px;">
+                            <li>Explain your workflow design choices</li>
+                            <li>Justify key decision points</li>
+                            <li>Explain how your workflow ensures evidence integrity</li>
+                            <li>Describe how it addresses legal and ethical considerations</li>
+                            <li>Identify potential challenges and mitigation strategies</li>
+                        </ul>
+
+                        <h4 style="margin-top: 20px; color: #2c3e50;">Submission:</h4>
+                        <ul style="margin-left: 25px; margin-top: 10px;">
+                            <li>PDF of workflow diagram</li>
+                            <li>Word/PDF document with written explanation</li>
+                            <li>Name files: <code>LastName_FirstName_HW1_Diagram.pdf</code> and <code>LastName_FirstName_HW1_Explanation.pdf</code></li>
+                        </ul>
+
+                        <h4 style="margin-top: 20px; color: #2c3e50;">Grading Criteria:</h4>
+                        <ul style="margin-left: 25px; margin-top: 10px;">
+                            <li><strong>Diagram completeness and accuracy (8 points):</strong> All required components present and correct</li>
+                            <li><strong>Visual clarity and professionalism (3 points):</strong> Easy to understand, well-organized</li>
+                            <li><strong>Written explanation depth and quality (6 points):</strong> Thorough analysis and justification</li>
+                            <li><strong>Proper use of forensic terminology (3 points):</strong> Professional language throughout</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Weekly Checklist -->
+            <section class="fade-in">
+                <div class="section-header">
+                    <h2><span class="section-icon">✅</span>Week 2 Success Checklist</h2>
+                </div>
+
+                <p style="margin-bottom: 25px; color: #7f8c8d; font-size: 1.1em;">Use this checklist to track your progress through Week 2. Check off items as you complete them to stay organized and ensure you don't miss anything.</p>
+
+                <div class="checklist">
+                    <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                        <input type="checkbox" id="check1" onclick="event.stopPropagation()">
+                        <label for="check1">Complete Module 1: Forensic Readiness Planning (15-20 min)</label>
+                    </div>
+                    <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                        <input type="checkbox" id="check2" onclick="event.stopPropagation()">
+                        <label for="check2">Complete Module 2: Investigation Lifecycle (25-30 min)</label>
+                    </div>
+                    <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                        <input type="checkbox" id="check3" onclick="event.stopPropagation()">
+                        <label for="check3">Complete Module 3: Order of Volatility & Evidence Preservation (15-20 min)</label>
+                    </div>
+                    <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                        <input type="checkbox" id="check4" onclick="event.stopPropagation()">
+                        <label for="check4">Complete Module 4: Chain of Custody & Evidence Handling (20-25 min)</label>
+                    </div>
+                    <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                        <input type="checkbox" id="check5" onclick="event.stopPropagation()">
+                        <label for="check5">Complete Module 5: Documentation & Professional Practice (20-25 min)</label>
+                    </div>
+                    <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                        <input type="checkbox" id="check6" onclick="event.stopPropagation()">
+                        <label for="check6">Read NIST SP 800-86 (Sections 3 and 4)</label>
+                    </div>
+                    <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                        <input type="checkbox" id="check7" onclick="event.stopPropagation()">
+                        <label for="check7">Post initial discussion response (Day 3 - 150+ words)</label>
+                    </div>
+                    <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                        <input type="checkbox" id="check8" onclick="event.stopPropagation()">
+                        <label for="check8">Respond to 2 classmates' discussion posts (Day 5 - 50+ words each)</label>
+                    </div>
+                    <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                        <input type="checkbox" id="check9" onclick="event.stopPropagation()">
+                        <label for="check9">Complete Lab Activity 2: Chain of Custody Documentation Exercise</label>
+                    </div>
+                    <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                        <input type="checkbox" id="check10" onclick="event.stopPropagation()">
+                        <label for="check10">Complete Homework 1: Forensic Investigation Workflow Diagram</label>
+                    </div>
+                    <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                        <input type="checkbox" id="check11" onclick="event.stopPropagation()">
+                        <label for="check11">Submit all assignments by end of Week 2</label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Links -->
+            <section class="fade-in">
+                <div class="section-header">
+                    <h2><span class="section-icon">🔗</span>Quick Links & Resources</h2>
+                </div>
+
+                <div class="quick-links">
+                    <a href="#" class="quick-link" aria-label="Access Module 1">
+                        <span class="quick-link-icon">📚</span>
+                        Module 1: Forensic Readiness
+                    </a>
+                    <a href="#" class="quick-link" aria-label="Access Module 2">
+                        <span class="quick-link-icon">🔄</span>
+                        Module 2: Investigation Lifecycle
+                    </a>
+                    <a href="#" class="quick-link" aria-label="Access Module 3">
+                        <span class="quick-link-icon">⚡</span>
+                        Module 3: Order of Volatility
+                    </a>
+                    <a href="#" class="quick-link" aria-label="Access Module 4">
+                        <span class="quick-link-icon">🔗</span>
+                        Module 4: Chain of Custody
+                    </a>
+                    <a href="#" class="quick-link" aria-label="Access Module 5">
+                        <span class="quick-link-icon">📝</span>
+                        Module 5: Documentation
+                    </a>
+                    <a href="#" class="quick-link" aria-label="Submit Lab Activity 2">
+                        <span class="quick-link-icon">🔬</span>
+                        Submit Lab Activity 2
+                    </a>
+                    <a href="#" class="quick-link" aria-label="Discussion Board">
+                        <span class="quick-link-icon">💬</span>
+                        Discussion Board
+                    </a>
+                    <a href="#" class="quick-link" aria-label="Submit Homework 1">
+                        <span class="quick-link-icon">📊</span>
+                        Submit Homework 1
+                    </a>
+                    <a href="https://csrc.nist.gov/publications/detail/sp/800-86/final" class="quick-link" target="_blank" rel="noopener noreferrer" aria-label="Read NIST SP 800-86">
+                        <span class="quick-link-icon">📖</span>
+                        NIST SP 800-86
+                    </a>
+                </div>
+            </section>
+
+            <!-- Tips for Success -->
+            <section class="fade-in">
+                <div class="section-header">
+                    <h2><span class="section-icon">💡</span>Tips for Success</h2>
+                </div>
+
+                <div class="content-grid">
+                    <div class="content-card">
+                        <div class="card-icon">⏰</div>
+                        <h3 class="card-title">Time Management</h3>
+                        <ul class="card-list">
+                            <li><strong>Day 1:</strong> Complete readings and attend lecture (4 hours)</li>
+                            <li><strong>Day 2-3:</strong> Begin homework workflow diagram (2 hours)</li>
+                            <li><strong>Day 3:</strong> Post initial discussion response (1 hour)</li>
+                            <li><strong>Day 4:</strong> Complete lab activity (3 hours)</li>
+                            <li><strong>Day 5:</strong> Finish homework, respond to discussions, submit all work (2 hours)</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-icon">📝</div>
+                        <h3 class="card-title">Study Strategies</h3>
+                        <ul class="card-list">
+                            <li>Create flashcards for key terms (chain of custody, forensic readiness, order of volatility)</li>
+                            <li>Practice documentation by writing detailed notes about your daily computer use</li>
+                            <li>Discuss investigation processes with classmates—concepts make more sense when discussed</li>
+                            <li>Follow current cybersecurity news to see investigation processes in action</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-icon">⚠️</div>
+                        <h3 class="card-title">Common Pitfalls to Avoid</h3>
+                        <ul class="card-list">
+                            <li>Don't skip documentation steps thinking you'll remember later</li>
+                            <li>Don't underestimate the importance of chain of custody (it's tested on Quiz 1 in Week 3)</li>
+                            <li>Don't treat this as just theory—these procedures protect real investigations</li>
+                            <li>Don't wait until the last day to start the homework workflow diagram</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-icon">🎯</div>
+                        <h3 class="card-title">Professional Development</h3>
+                        <ul class="card-list">
+                            <li>Review real cases (BTK Killer) focusing on investigation process</li>
+                            <li>Explore SWGDE best practices documents</li>
+                            <li>Continue familiarizing yourself with Autopsy's case management features</li>
+                            <li>Join HTCIA mailing list or DFIR Discord community</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Looking Ahead -->
+            <section class="fade-in">
+                <div class="info-box warning">
+                    <h3><span class="info-box-icon">🔮</span>Looking Ahead to Week 3</h3>
+                    <p>Next week we'll dive deep into the <strong>legal and ethical considerations</strong> that govern digital forensics investigations. You'll learn about:</p>
+                    <ul style="margin-left: 25px; margin-top: 10px;">
+                        <li>Federal Rules of Evidence and the Daubert Standard</li>
+                        <li>Fourth Amendment implications for digital searches</li>
+                        <li>Privacy laws (ECPA, GDPR, CCPA, HIPAA)</li>
+                        <li>Code of ethics for forensic investigators</li>
+                        <li>Expert witness responsibilities</li>
+                    </ul>
+                    <p style="margin-top: 15px;"><strong>⚠️ Quiz 1 in Week 3</strong> covers Week 1-2 material, including investigation process and chain of custody!</p>
+                    <p style="margin-top: 10px;"><strong>Preparation:</strong> This week's investigation process knowledge provides the foundation for understanding when and how legal considerations apply at each phase.</p>
+                </div>
+            </section>
+
+            <!-- Certification Alignment -->
+            <section class="fade-in">
+                <div class="section-header">
+                    <h2><span class="section-icon">🎓</span>Professional Certification Alignment</h2>
+                </div>
+
+                <p style="margin-bottom: 25px; color: #7f8c8d; font-size: 1.1em;">Week 2 content aligns with multiple professional certification domains, helping you prepare for industry-recognized credentials:</p>
+
+                <div class="content-grid">
+                    <div class="content-card">
+                        <div class="card-icon">🏆</div>
+                        <h3 class="card-title">IACIS CFCE</h3>
+                        <p class="card-description">Certified Forensic Computer Examiner</p>
+                        <ul class="card-list">
+                            <li>Investigation Process</li>
+                            <li>Evidence Handling Procedures</li>
+                            <li>Documentation Standards</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-icon">🏆</div>
+                        <h3 class="card-title">GIAC GCFE</h3>
+                        <p class="card-description">GIAC Certified Forensic Examiner</p>
+                        <ul class="card-list">
+                            <li>Legal Issues and Investigations</li>
+                            <li>Evidence Collection Methods</li>
+                            <li>Chain of Custody</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-icon">🏆</div>
+                        <h3 class="card-title">GIAC GCFA</h3>
+                        <p class="card-description">GIAC Certified Forensic Analyst</p>
+                        <ul class="card-list">
+                            <li>Incident Response and Forensics Concepts</li>
+                            <li>Evidence Acquisition</li>
+                            <li>Forensic Process Methodology</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-icon">🏆</div>
+                        <h3 class="card-title">EC-Council CHFI</h3>
+                        <p class="card-description">Computer Hacking Forensic Investigator</p>
+                        <ul class="card-list">
+                            <li>Computer Forensics Investigation Process (Domain 2)</li>
+                            <li>Evidence Handling and Documentation</li>
+                            <li>Forensic Readiness</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Getting Help -->
+            <section class="fade-in">
+                <div class="section-header">
+                    <h2><span class="section-icon">🆘</span>Getting Help</h2>
+                </div>
+
+                <div class="content-grid">
+                    <div class="content-card">
+                        <div class="card-icon">👨‍🏫</div>
+                        <h3 class="card-title">Office Hours</h3>
+                        <p class="card-description">Meet with your instructor for personalized assistance</p>
+                        <ul class="card-list">
+                            <li>In-person office hours: [Schedule]</li>
+                            <li>Virtual office hours: By appointment</li>
+                            <li>Email: [instructor@mendocino.edu]</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-icon">🔬</div>
+                        <h3 class="card-title">Lab Assistance</h3>
+                        <p class="card-description">Get help during scheduled lab times</p>
+                        <ul class="card-list">
+                            <li>Lab assistants available during all lab sessions</li>
+                            <li>Bring specific questions about assignments</li>
+                            <li>Practice with forensic tools</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-icon">👥</div>
+                        <h3 class="card-title">Peer Collaboration</h3>
+                        <p class="card-description">Learn together with your classmates</p>
+                        <ul class="card-list">
+                            <li>Canvas discussion board for questions</li>
+                            <li>Study groups for exam preparation</li>
+                            <li>Peer review of documentation practices</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-icon">📚</div>
+                        <h3 class="card-title">Additional Resources</h3>
+                        <p class="card-description">Supplementary materials and communities</p>
+                        <ul class="card-list">
+                            <li>Course textbook and NIST publications</li>
+                            <li>DFIR Discord community</li>
+                            <li>SANS DFIR blog and resources</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p><strong>CSC 156 - Digital Forensics Fundamentals</strong></p>
+            <p>Mendocino College | Computer Science Department</p>
+            <p>Week 2 of 17 | 43 Points Available</p>
+            <p style="margin-top: 15px; font-size: 0.9em;">Version 1.0 | Spring 2026</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">💾 Your progress is automatically saved for this session</p>
+        </footer>
+    </div>
+
+    <script>
+        // Progress tracking
+        let completedModules = 0;
+        let completedAssignments = 0;
+        let completedChecklist = 0;
+        const totalItems = 11; // 5 modules + 4 assignments + 11 checklist items (but we track unique items)
+
+        function updateProgress() {
+            const total = 11; // 5 modules + 4 assignments + 2 checklist groups
+            const completed = completedModules + completedAssignments + Math.min(completedChecklist, 2);
+            const percentage = Math.round((completed / total) * 100);
+            
+            document.getElementById('progressPercent').textContent = percentage + '%';
+            document.getElementById('progressBar').textContent = completed + ' of ' + total + ' items complete';
+            document.getElementById('progressBar').style.width = percentage + '%';
+
+            // Save progress to sessionStorage
+            sessionStorage.setItem('week2_progress', JSON.stringify({
+                modules: completedModules,
+                assignments: completedAssignments,
+                checklist: completedChecklist,
+                percentage: percentage
+            }));
+        }
+
+        function toggleModuleComplete(moduleNum) {
+            const statusElement = document.getElementById('module' + moduleNum + '-status');
+            if (statusElement.textContent === 'Not Started' || statusElement.textContent === 'In Progress') {
+                statusElement.textContent = 'Complete ✓';
+                statusElement.style.backgroundColor = 'rgba(46, 204, 113, 0.3)';
+                if (statusElement.textContent === 'Complete ✓') {
+                    completedModules++;
+                }
+            } else {
+                statusElement.textContent = 'Not Started';
+                statusElement.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                completedModules--;
+            }
+            updateProgress();
+        }
+
+        function toggleAssignmentComplete(checkboxId) {
+            const checkbox = document.getElementById(checkboxId);
+            if (checkbox.checked) {
+                completedAssignments++;
+            } else {
+                completedAssignments--;
+            }
+            updateProgress();
+        }
+
+        function toggleChecklistItem(element) {
+            const checkbox = element.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+            
+            if (checkbox.checked) {
+                element.classList.add('completed');
+                completedChecklist++;
+            } else {
+                element.classList.remove('completed');
+                completedChecklist--;
+            }
+            updateProgress();
+        }
+
+        function toggleExpand(sectionId) {
+            const section = document.getElementById(sectionId);
+            section.classList.toggle('expanded');
+            
+            const header = section.querySelector('.expandable-header');
+            const isExpanded = section.classList.contains('expanded');
+            header.setAttribute('aria-expanded', isExpanded);
+        }
+
+        // Load saved progress
+        window.addEventListener('DOMContentLoaded', () => {
+            const saved = sessionStorage.getItem('week2_progress');
+            if (saved) {
+                const progress = JSON.parse(saved);
+                completedModules = progress.modules || 0;
+                completedAssignments = progress.assignments || 0;
+                completedChecklist = progress.checklist || 0;
+                updateProgress();
+            }
+
+            // Add keyboard support for expandable sections
+            document.querySelectorAll('.expandable-header').forEach(header => {
+                header.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        header.click();
+                    }
+                });
+            });
+
+            // Add keyboard support for module cards
+            document.querySelectorAll('.module-card').forEach(card => {
+                card.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        card.click();
+                    }
+                });
+            });
+
+            // Animate elements on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('fade-in');
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.fade-in').forEach(el => {
+                observer.observe(el);
+            });
+        });
+
+        // Auto-save scroll position
+        window.addEventListener('scroll', () => {
+            sessionStorage.setItem('week2_scroll', window.scrollY);
+        });
+
+        // Restore scroll position
+        window.addEventListener('load', () => {
+            const scrollPos = sessionStorage.getItem('week2_scroll');
+            if (scrollPos) {
+                window.scrollTo(0, parseInt(scrollPos));
+            }
+        });
+
+        // Print functionality
+        window.addEventListener('beforeprint', () => {
+            // Expand all sections for printing
+            document.querySelectorAll('.expandable-section').forEach(section => {
+                section.classList.add('expanded');
+            });
+        });
+
+        window.addEventListener('afterprint', () => {
+            // Collapse sections after printing
+            document.querySelectorAll('.expandable-section').forEach(section => {
+                section.classList.remove('expanded');
+            });
+        });
+    </script>
+</body>
+</html>
