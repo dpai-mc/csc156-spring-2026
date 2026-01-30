@@ -231,6 +231,81 @@
             outline-offset: 2px;
         }
 
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+
+        .btn-print, .btn-clear {
+            padding: 12px 30px;
+            font-size: 1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .btn-print {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-print:hover {
+            background-color: var(--secondary-color);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .btn-clear {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background-color: #f57c00;
+            box-shadow: var(--shadow-hover);
+        }
+
+        .btn-print:focus, .btn-clear:focus {
+            outline: 3px solid rgba(33, 150, 243, 0.4);
+            outline-offset: 2px;
+        }
+
+        /* Print styles for the form */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            
+            .coc-form, .coc-form * {
+                visibility: visible;
+            }
+            
+            .coc-form {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                border: 2px solid black;
+                page-break-after: always;
+            }
+            
+            .form-actions {
+                display: none !important;
+            }
+            
+            input, textarea {
+                border: none !important;
+                background: transparent !important;
+                font-family: 'Courier New', monospace;
+                word-wrap: break-word;
+                white-space: pre-wrap;
+            }
+        }
+
         .btn-primary {
             background-color: var(--primary-color);
             color: white;
@@ -427,7 +502,7 @@
                 </div>
                 <div class="info-item">
                     <span>📅</span>
-                    <div><strong>Due:</strong>As defined in Canvas</div>
+                    <div><strong>Due:</strong> End of Week 2</div>
                 </div>
                 <div class="info-item">
                     <span>📤</span>
@@ -665,6 +740,15 @@
                 </div>
             </div>
 
+            <div class="form-actions">
+                <button class="btn-print" onclick="printForm()" aria-label="Print chain of custody form as PDF">
+                    🖨️ Print Form as PDF
+                </button>
+                <button class="btn-clear" onclick="clearForm()" aria-label="Clear all form fields">
+                    🗑️ Clear Form
+                </button>
+            </div>
+
             <div class="info-box success">
                 <h3>💡 Tips for Success</h3>
                 <ul style="padding-left: 20px;">
@@ -830,10 +914,52 @@
     </div>
 
     <script>
-        // Print functionality
+        // Print functionality for Chain of Custody form
+        function printForm() {
+            // Trigger browser print dialog, which will use @media print styles
+            window.print();
+        }
+
+        // Clear form functionality
+        function clearForm() {
+            // Confirm before clearing
+            if (confirm('Are you sure you want to clear all form fields? This action cannot be undone.')) {
+                // Get all form inputs within the coc-form
+                const form = document.querySelector('.coc-form');
+                const inputs = form.querySelectorAll('input[type="text"], textarea');
+                
+                // Clear each input
+                inputs.forEach(input => {
+                    input.value = '';
+                });
+                
+                // Provide feedback
+                alert('Form cleared successfully. You can now complete a new form.');
+            }
+        }
+
+        // Auto-resize textareas as user types
+        function autoResizeTextarea(element) {
+            element.style.height = 'auto';
+            element.style.height = (element.scrollHeight) + 'px';
+        }
+
+        // Apply auto-resize to all textareas in the form
+        document.addEventListener('DOMContentLoaded', function() {
+            const textareas = document.querySelectorAll('.coc-form textarea');
+            textareas.forEach(textarea => {
+                // Auto-resize on input
+                textarea.addEventListener('input', function() {
+                    autoResizeTextarea(this);
+                });
+                
+                // Set initial height
+                autoResizeTextarea(textarea);
+            });
+        });
+
         console.log('Lab Activity 2: Chain of Custody Documentation loaded');
     </script>
 
 </body>
-
 </html>
