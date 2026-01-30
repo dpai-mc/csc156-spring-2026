@@ -206,6 +206,17 @@
             background-color: #229954;
         }
 
+        .btn-print {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .btn-print:hover {
+            background-color: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
         .validation-message {
             padding: 15px;
             margin-top: 20px;
@@ -333,7 +344,45 @@
             pre {
                 page-break-inside: avoid;
             }
+
+            /* When printing the form, show input values clearly */
+            input[type="text"],
+            input[type="date"],
+            input[type="time"],
+            textarea,
+            select {
+                border: 1px solid #333 !important;
+                background-color: white !important;
+                color: #000 !important;
+                font-family: 'Courier New', monospace;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            /* Hide interactive elements when printing */
+            .checklist,
+            .button-group,
+            .info-box,
+            .scenario-box,
+            .example-section,
+            .submission-box {
+                display: none !important;
+            }
+
+            /* Make form headers more prominent */
+            h3 {
+                page-break-after: avoid;
+                margin-top: 20px;
+                border-bottom: 2px solid #333;
+                padding-bottom: 5px;
+            }
+
+            /* Ensure form sections stay together */
+            .field-group {
+                page-break-inside: avoid;
+            }
         }
+
 
         @media (max-width: 768px) {
             .container {
@@ -672,6 +721,9 @@
                     <div class="button-group">
                         <button type="button" class="btn-primary" id="validateBtn" onclick="validateForm()">
                             Validate Field Notes
+                        </button>
+                        <button type="button" class="btn-print" onclick="printFieldNotes()" aria-label="Print field notes form as PDF">
+                            🖨️ Print Form as PDF
                         </button>
                         <button type="button" class="btn-success" id="downloadBtn" onclick="downloadFieldNotes()" style="display: none;">
                             Download Completed Field Notes
@@ -1033,6 +1085,12 @@ Witness: Robert Martinez (signature)
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+        
+        function printFieldNotes() {
+            // Trigger browser print dialog
+            // The @media print CSS rules will handle the formatting
+            window.print();
         }
         
         function resetForm() {
