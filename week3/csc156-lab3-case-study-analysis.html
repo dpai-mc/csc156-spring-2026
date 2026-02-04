@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Lab Activity 3: Legal Case Study Analysis - CSC 156 Week 3">
+    <title>Lab Activity 3: Legal Case Study Analysis | CSC 156</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --info-color: #16a085;
+            --light-bg: #ecf0f1;
+            --white: #ffffff;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --border-color: #bdc3c7;
+            --shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-lg: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--light-bg);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--white);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: var(--white);
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+
+        .assignment-badge {
+            display: inline-block;
+            background-color: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+            font-size: 0.95em;
+        }
+
+        .points-header {
+            background-color: var(--success-color);
+            color: var(--white);
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        main {
+            padding: 40px 30px;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--accent-color);
+        }
+
+        h3 {
+            color: var(--accent-color);
+            font-size: 1.4em;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        h4 {
+            color: var(--primary-color);
+            font-size: 1.2em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .info-card {
+            background-color: var(--light-bg);
+            border-left: 5px solid var(--secondary-color);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .info-card.warning {
+            border-left-color: var(--warning-color);
+            background-color: #fef5e7;
+        }
+
+        .info-card.success {
+            border-left-color: var(--success-color);
+            background-color: #e8f8f5;
+        }
+
+        .info-card.danger {
+            border-left-color: var(--accent-color);
+            background-color: #fadbd8;
+        }
+
+        .info-card.info {
+            border-left-color: var(--info-color);
+            background-color: #e8f6f3;
+        }
+
+        .part-section {
+            background-color: var(--white);
+            border: 3px solid var(--accent-color);
+            border-radius: 8px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+
+        .part-badge {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: var(--white);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .case-option {
+            background-color: var(--light-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+        }
+
+        .case-option:hover {
+            border-color: var(--accent-color);
+            box-shadow: var(--shadow);
+        }
+
+        .case-option h4 {
+            color: var(--accent-color);
+            margin-bottom: 8px;
+        }
+
+        .requirement-list {
+            background-color: #e8f8f5;
+            border-left: 4px solid var(--success-color);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .requirement-list h4 {
+            color: var(--success-color);
+            margin-bottom: 10px;
+        }
+
+        .scenario-box {
+            background-color: #fff9e6;
+            border: 3px solid var(--warning-color);
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+
+        .scenario-box h4 {
+            color: var(--warning-color);
+            margin-bottom: 15px;
+        }
+
+        .checklist {
+            list-style: none;
+            margin: 20px 0;
+        }
+
+        .checklist li {
+            padding: 12px 15px;
+            margin: 8px 0;
+            background-color: var(--light-bg);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .checklist li:hover {
+            background-color: #d5dbdb;
+        }
+
+        .checklist li.checked {
+            background-color: #d5f4e6;
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+
+        .checklist li::before {
+            content: '☐';
+            font-size: 1.5em;
+            margin-right: 12px;
+            color: var(--accent-color);
+        }
+
+        .checklist li.checked::before {
+            content: '☑';
+            color: var(--success-color);
+        }
+
+        .rubric-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: var(--shadow);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .rubric-table th {
+            background-color: var(--accent-color);
+            color: var(--white);
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .rubric-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .rubric-table tr:hover {
+            background-color: var(--light-bg);
+        }
+
+        .submission-box {
+            background-color: #e8f8f5;
+            border: 3px solid var(--info-color);
+            border-radius: 8px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+
+        .submission-box h3 {
+            color: var(--info-color);
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: var(--secondary-color);
+            color: var(--white);
+            text-decoration: none;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+        }
+
+        .btn-success:hover {
+            background-color: #229954;
+        }
+
+        footer {
+            background-color: var(--primary-color);
+            color: var(--white);
+            text-align: center;
+            padding: 20px;
+        }
+
+        @media print {
+            .checklist, .btn {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Lab Activity 3: Legal Case Study Analysis</h1>
+            <p>CSC 156 - Digital Forensics Fundamentals | Week 3</p>
+            <div class="assignment-badge">Worth 20 Points | Due: End of Week 3</div>
+        </header>
+
+        <div class="points-header">
+            📊 Total Points: 20 | Part 1: 10 points | Part 2: 10 points
+        </div>
+
+        <main>
+            <section>
+                <h2>📋 Assignment Overview</h2>
+                
+                <div class="info-card">
+                    <h3>🎯 Objectives</h3>
+                    <p>This lab activity requires you to analyze landmark legal cases that have shaped digital forensics practice and apply legal principles to a realistic investigation scenario. You will:</p>
+                    <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                        <li>Research and analyze TWO landmark legal cases</li>
+                        <li>Identify legal issues, holdings, and forensic implications</li>
+                        <li>Apply legal and ethical principles to a complex scenario</li>
+                        <li>Demonstrate critical thinking about legal boundaries</li>
+                        <li>Connect theory to practical forensic practice</li>
+                    </ul>
+                </div>
+
+                <div class="info-card success">
+                    <h3>✅ CSLO Alignment</h3>
+                    <p><strong>CSLO 1:</strong> Describe the fundamental concepts of incident response and forensic investigation</p>
+                    <p style="margin-top: 10px;"><strong>CSLO 4:</strong> Be able to generate reports which detail the approach and provide an audit trail that supports the integrity of the investigation process</p>
+                </div>
+
+                <div class="info-card danger">
+                    <h3>⏰ Due Date & Submission</h3>
+                    <p><strong>Due:</strong> End of Week 3 (check Canvas for specific date/time)</p>
+                    <p style="margin-top: 10px;"><strong>Submit:</strong> Upload completed document to Canvas</p>
+                    <p style="margin-top: 10px;"><strong>Format:</strong> PDF or Word document</p>
+                    <p style="margin-top: 10px;"><strong>Length:</strong> 4-6 pages total (2-3 pages for Part 1, 2-3 pages for Part 2)</p>
+                </div>
+            </section>
+
+            <section style="margin-top: 40px;">
+                <h2>📖 Part 1: Case Law Analysis (10 points)</h2>
+
+                <div class="part-section">
+                    <span class="part-badge">Part 1 | 10 Points</span>
+                    
+                    <h3>Instructions</h3>
+                    <p>Select <strong>TWO</strong> of the following landmark cases and provide a comprehensive analysis of each. Each case analysis should be 1-2 pages.</p>
+
+                    <h4 style="margin-top: 25px;">Choose TWO Cases from This List:</h4>
+
+                    <div class="case-option">
+                        <h4>Option 1: United States v. Carey (1999)</h4>
+                        <p><strong>Topic:</strong> Computer search warrant scope and plain view doctrine</p>
+                        <p style="margin-top: 8px;"><strong>Key Issue:</strong> Can evidence of crimes outside warrant scope be seized during lawful computer search?</p>
+                    </div>
+
+                    <div class="case-option">
+                        <h4>Option 2: United States v. Comprehensive Drug Testing (2009)</h4>
+                        <p><strong>Topic:</strong> Plain view doctrine limitations in digital searches</p>
+                        <p style="margin-top: 8px;"><strong>Key Issue:</strong> Does plain view doctrine justify seizing entire databases when warrant specifies limited records?</p>
+                    </div>
+
+                    <div class="case-option">
+                        <h4>Option 3: Riley v. California (2014)</h4>
+                        <p><strong>Topic:</strong> Cell phone searches incident to arrest</p>
+                        <p style="margin-top: 8px;"><strong>Key Issue:</strong> Does Fourth Amendment require warrant to search cell phones after lawful arrest?</p>
+                    </div>
+
+                    <div class="case-option">
+                        <h4>Option 4: Carpenter v. United States (2018)</h4>
+                        <p><strong>Topic:</strong> Cell site location information and privacy expectations</p>
+                        <p style="margin-top: 8px;"><strong>Key Issue:</strong> Does government need warrant to obtain historical cell site location data from carriers?</p>
+                    </div>
+
+                    <div class="requirement-list" style="margin-top: 30px;">
+                        <h4>📝 Required Analysis for Each Case (5 points each)</h4>
+                        <p>For each of your TWO selected cases, provide:</p>
+                        
+                        <ol style="margin-left: 20px; margin-top: 15px; line-height: 2;">
+                            <li><strong>Facts (0.5 points):</strong> Brief summary of what happened
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Who were the parties involved?</li>
+                                    <li>What was the criminal or civil matter?</li>
+                                    <li>What digital evidence was at issue?</li>
+                                    <li>Length: 2-3 sentences</li>
+                                </ul>
+                            </li>
+                            
+                            <li style="margin-top: 15px;"><strong>Legal Issue (1 point):</strong> What constitutional or evidentiary question was at stake?
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Frame as a specific legal question</li>
+                                    <li>Identify which amendment, statute, or rule is involved</li>
+                                    <li>Explain why this question matters</li>
+                                    <li>Length: 3-4 sentences</li>
+                                </ul>
+                            </li>
+                            
+                            <li style="margin-top: 15px;"><strong>Holding (1.5 points):</strong> How did the court rule?
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>State the court's decision clearly</li>
+                                    <li>Explain the court's reasoning</li>
+                                    <li>Include key quotes from the opinion if available</li>
+                                    <li>Note any limitations or exceptions the court mentioned</li>
+                                    <li>Length: 1 paragraph (5-7 sentences)</li>
+                                </ul>
+                            </li>
+                            
+                            <li style="margin-top: 15px;"><strong>Forensic Implications (1.5 points):</strong> How does this case affect digital forensics practice?
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>What must forensic examiners do differently because of this case?</li>
+                                    <li>What procedures or policies changed?</li>
+                                    <li>How does this affect evidence admissibility?</li>
+                                    <li>What challenges does this create for investigators?</li>
+                                    <li>Length: 1-2 paragraphs (6-10 sentences)</li>
+                                </ul>
+                            </li>
+                            
+                            <li style="margin-top: 15px;"><strong>Personal Analysis (0.5 points):</strong> Do you agree with the court's reasoning? Why or why not?
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>State your position clearly</li>
+                                    <li>Provide reasoned justification</li>
+                                    <li>Consider competing interests (privacy vs. law enforcement)</li>
+                                    <li>Length: 3-5 sentences</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div class="info-card warning">
+                        <h4>💡 Research Tips</h4>
+                        <ul style="margin-left: 20px; line-height: 1.8;">
+                            <li><strong>Primary Sources:</strong> Read the actual court opinions (available on Justia, Google Scholar, Oyez)</li>
+                            <li><strong>Secondary Sources:</strong> Legal analysis from law reviews, forensic journals, SANS reading room</li>
+                            <li><strong>Module 5:</strong> Review Module 5 for detailed analysis of some of these cases</li>
+                            <li><strong>Citations:</strong> Cite all sources using APA format</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section style="margin-top: 40px;">
+                <h2>🔍 Part 2: Scenario Analysis (10 points)</h2>
+
+                <div class="part-section">
+                    <span class="part-badge">Part 2 | 10 Points</span>
+                    
+                    <h3>Instructions</h3>
+                    <p>Analyze the following investigation scenario for legal and ethical issues. Identify problems, explain the relevant legal principles, and recommend proper procedures.</p>
+
+                    <div class="scenario-box" style="margin-top: 25px;">
+                        <h4>📁 Scenario: "The Departing Employee"</h4>
+                        
+                        <p style="margin-top: 15px;"><strong>Background:</strong></p>
+                        <p>TechCorp suspects that Sarah Martinez, a software engineer who recently resigned, has stolen proprietary source code. The company's acceptable use policy states that all data on company systems is subject to monitoring and that employees have no expectation of privacy.</p>
+                        
+                        <p style="margin-top: 15px;">On Sarah's last day, the IT director makes a forensic image of her laptop before she returns it. During examination, you discover:</p>
+                        
+                        <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                            <li><strong>Company Source Code:</strong> Multiple repositories cloned to external USB drive (confirmed by file system artifacts showing USB connection at 2:15 PM on her last day)</li>
+                            
+                            <li><strong>Personal Gmail Account:</strong> Sarah accessed her personal Gmail through the browser. You find:
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Emails to her personal account with attachments named "TechCorp_API_Documentation.pdf"</li>
+                                    <li>Draft emails to a competitor discussing employment opportunities</li>
+                                    <li>Personal medical records (emails from her doctor about a serious health condition)</li>
+                                    <li>Attorney-client communications about her upcoming divorce</li>
+                                </ul>
+                            </li>
+                            
+                            <li><strong>Encrypted Container:</strong> A VeraCrypt encrypted container (500 MB) with unknown password. File creation date: one week before resignation.</li>
+                            
+                            <li><strong>Browser History:</strong> Searches for:
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>"How to securely delete files"</li>
+                                    <li>"Can employers see personal email"</li>
+                                    <li>"Statute of limitations trade secret theft California"</li>
+                                </ul>
+                            </li>
+                        </ol>
+
+                        <p style="margin-top: 15px;"><strong>Additional Context:</strong></p>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>Sarah is a California resident</li>
+                            <li>TechCorp has customers in the European Union</li>
+                            <li>This is a corporate investigation, not law enforcement</li>
+                            <li>Sarah has not been informed of the investigation</li>
+                            <li>The laptop is company-owned</li>
+                        </ul>
+                    </div>
+
+                    <div class="requirement-list" style="margin-top: 30px;">
+                        <h4>📝 Required Analysis (10 points total)</h4>
+                        
+                        <p style="margin-top: 15px;"><strong>Your analysis must address the following:</strong></p>
+                        
+                        <ol style="margin-left: 20px; margin-top: 15px; line-height: 2;">
+                            <li><strong>Legal Authority (2 points):</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Does TechCorp have legal authority to image and examine Sarah's laptop?</li>
+                                    <li>Does the Fourth Amendment apply to this corporate search?</li>
+                                    <li>What role does the acceptable use policy play?</li>
+                                    <li>Are there any limits to TechCorp's search authority?</li>
+                                </ul>
+                            </li>
+                            
+                            <li style="margin-top: 15px;"><strong>Privacy Considerations (2 points):</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>What privacy issues arise from examining Sarah's personal Gmail?</li>
+                                    <li>How should you handle the medical records discovered?</li>
+                                    <li>What about the attorney-client communications regarding her divorce?</li>
+                                    <li>Does CCPA (California Consumer Privacy Act) apply?</li>
+                                </ul>
+                            </li>
+                            
+                            <li style="margin-top: 15px;"><strong>Ethical Issues (2 points):</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>What ethical principles are implicated? (Reference specific ethics codes)</li>
+                                    <li>How do you balance thoroughness with privacy respect?</li>
+                                    <li>Should you examine the encrypted container? Why or why not?</li>
+                                    <li>What should you include/exclude in your report?</li>
+                                </ul>
+                            </li>
+                            
+                            <li style="margin-top: 15px;"><strong>Evidence Admissibility (2 points):</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Which evidence would likely be admissible if this goes to court?</li>
+                                    <li>What FRE rules apply (relevance, authentication, hearsay)?</li>
+                                    <li>Could any evidence be excluded? On what grounds?</li>
+                                    <li>How does chain of custody factor in?</li>
+                                </ul>
+                            </li>
+                            
+                            <li style="margin-top: 15px;"><strong>Recommendations (2 points):</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>What should the forensic examiner do next?</li>
+                                    <li>What data should be included in the report?</li>
+                                    <li>What data should be excluded or handled specially?</li>
+                                    <li>Should law enforcement be contacted? When and why?</li>
+                                    <li>What safeguards should be implemented for sensitive data?</li>
+                                </ul>
+                            </li>
+                        </ol>
+
+                        <p style="margin-top: 20px;"><strong>Length:</strong> 2-3 pages for scenario analysis</p>
+                    </div>
+
+                    <div class="info-card info">
+                        <h4>💭 Critical Thinking Questions to Consider</h4>
+                        <ul style="margin-left: 20px; line-height: 1.8;">
+                            <li>What if Sarah claims she didn't know personal email would be examined?</li>
+                            <li>How does attorney-client privilege affect your examination?</li>
+                            <li>What if the encrypted container contains only personal data?</li>
+                            <li>How would your analysis change if this were a law enforcement investigation?</li>
+                            <li>What if Sarah is an EU citizen and GDPR applies?</li>
+                            <li>Should you attempt to crack the encrypted container?</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section style="margin-top: 40px;">
+                <h2>📊 Grading Rubric</h2>
+
+                <h3>Part 1: Case Law Analysis (10 points total - 5 points per case)</h3>
+                
+                <table class="rubric-table">
+                    <thead>
+                        <tr>
+                            <th>Component</th>
+                            <th>Points</th>
+                            <th>Criteria</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Facts Summary</strong></td>
+                            <td>0.5</td>
+                            <td>Accurate, concise summary of case facts</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Legal Issue</strong></td>
+                            <td>1.0</td>
+                            <td>Clearly identifies the constitutional/legal question; explains significance</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Court Holding</strong></td>
+                            <td>1.5</td>
+                            <td>Accurately states decision; explains reasoning; includes key points</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Forensic Implications</strong></td>
+                            <td>1.5</td>
+                            <td>Thoroughly explains impact on forensic practice; provides specific examples</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Personal Analysis</strong></td>
+                            <td>0.5</td>
+                            <td>Thoughtful opinion with reasoned justification</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 style="margin-top: 30px;">Part 2: Scenario Analysis (10 points)</h3>
+                
+                <table class="rubric-table">
+                    <thead>
+                        <tr>
+                            <th>Component</th>
+                            <th>Points</th>
+                            <th>Criteria</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Legal Authority</strong></td>
+                            <td>2.0</td>
+                            <td>Correctly identifies corporate search authority; addresses Fourth Amendment; explains policy role</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Privacy Considerations</strong></td>
+                            <td>2.0</td>
+                            <td>Identifies privacy issues; addresses medical records, attorney-client privilege, CCPA</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ethical Issues</strong></td>
+                            <td>2.0</td>
+                            <td>References specific ethics codes; balances competing interests; addresses confidentiality</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Evidence Admissibility</strong></td>
+                            <td>2.0</td>
+                            <td>Applies FRE rules correctly; identifies admissible/inadmissible evidence; explains reasoning</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Recommendations</strong></td>
+                            <td>2.0</td>
+                            <td>Provides specific, actionable recommendations; addresses all sensitive data types; demonstrates professional judgment</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="info-card warning" style="margin-top: 25px;">
+                    <h4>⚠️ Deductions</h4>
+                    <ul style="margin-left: 20px; line-height: 1.8;">
+                        <li><strong>-2 points:</strong> Missing citations or sources</li>
+                        <li><strong>-1 point:</strong> Significant spelling/grammar errors (more than 5)</li>
+                        <li><strong>-2 points:</strong> Does not meet minimum length requirements</li>
+                        <li><strong>-1 point:</strong> Improper formatting or organization</li>
+                        <li><strong>Late Penalty:</strong> Per course syllabus late work policy</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section style="margin-top: 40px;">
+                <h2>✅ Submission Checklist</h2>
+                
+                <p style="margin-bottom: 15px;">Check off each item before submitting:</p>
+                
+                <ul class="checklist">
+                    <li onclick="toggleCheck(this)">Selected TWO landmark cases from the provided list</li>
+                    <li onclick="toggleCheck(this)">Completed all five required components for EACH case (Facts, Legal Issue, Holding, Forensic Implications, Personal Analysis)</li>
+                    <li onclick="toggleCheck(this)">Part 1 is 2-3 pages total (1-1.5 pages per case)</li>
+                    <li onclick="toggleCheck(this)">Analyzed the "Departing Employee" scenario</li>
+                    <li onclick="toggleCheck(this)">Addressed all five required analysis areas for scenario (Legal Authority, Privacy, Ethics, Admissibility, Recommendations)</li>
+                    <li onclick="toggleCheck(this)">Part 2 is 2-3 pages</li>
+                    <li onclick="toggleCheck(this)">Total document is 4-6 pages</li>
+                    <li onclick="toggleCheck(this)">Cited all sources in APA format</li>
+                    <li onclick="toggleCheck(this)">Proofread for spelling and grammar errors</li>
+                    <li onclick="toggleCheck(this)">Document is in PDF or Word format</li>
+                    <li onclick="toggleCheck(this)">Included name, date, and assignment title on first page</li>
+                    <li onclick="toggleCheck(this)">Ready to submit to Canvas before deadline</li>
+                </ul>
+            </section>
+
+            <section style="margin-top: 40px;">
+                <div class="submission-box">
+                    <h3>📤 Submission Instructions</h3>
+                    
+                    <ol style="margin-left: 20px; margin-top: 15px; line-height: 2;">
+                        <li>Save your completed analysis as a PDF or Word document</li>
+                        <li>Name your file: <strong>LastName_FirstName_Lab3.pdf</strong> (or .docx)</li>
+                        <li>Log into Canvas and navigate to Week 3</li>
+                        <li>Find "Lab Activity 3: Legal Case Study Analysis"</li>
+                        <li>Upload your document</li>
+                        <li>Verify upload was successful before deadline</li>
+                    </ol>
+
+                    <div class="info-card danger" style="margin-top: 20px;">
+                        <h4>⏰ Important Reminders</h4>
+                        <ul style="margin-left: 20px; line-height: 1.8;">
+                            <li><strong>Due Date:</strong> End of Week 3 (check Canvas for specific time)</li>
+                            <li><strong>Late Submissions:</strong> Subject to course late work policy</li>
+                            <li><strong>Technical Issues:</strong> Contact instructor BEFORE deadline if you experience problems</li>
+                            <li><strong>Academic Integrity:</strong> This is individual work. Do not share analyses with classmates.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="info-card success" style="margin-top: 30px;">
+                    <h3>💡 Success Tips</h3>
+                    <ul style="margin-left: 20px; line-height: 1.8;">
+                        <li><strong>Start Early:</strong> Legal analysis requires careful reading and thought</li>
+                        <li><strong>Read Court Opinions:</strong> Don't rely solely on summaries—read actual decisions</li>
+                        <li><strong>Use Module Content:</strong> Modules 1-5 provide foundation for your analysis</li>
+                        <li><strong>Think Critically:</strong> Don't just describe—analyze and evaluate</li>
+                        <li><strong>Be Specific:</strong> Use concrete examples and cite specific laws/rules</li>
+                        <li><strong>Proofread:</strong> Read your work aloud to catch errors</li>
+                        <li><strong>Seek Help:</strong> Use office hours if you have questions</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section style="margin-top: 40px;">
+                <div style="text-align: center; padding: 30px; background-color: var(--light-bg); border-radius: 8px;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 15px;">Need Help?</h3>
+                    <p style="margin-bottom: 20px;">Contact your instructor if you have questions about this assignment.</p>
+                    <a href="#" class="btn btn-success">Submit to Canvas</a>
+                    <a href="#" class="btn">View Rubric in Canvas</a>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Mendocino College | CSC 156 - Digital Forensics Fundamentals</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">Lab Activity 3: Legal Case Study Analysis | Week 3</p>
+        </footer>
+    </div>
+
+    <script>
+        // Checklist functionality
+        function toggleCheck(item) {
+            item.classList.toggle('checked');
+            saveChecklistState();
+        }
+
+        function saveChecklistState() {
+            const checklistItems = document.querySelectorAll('.checklist li');
+            const checkedIndices = Array.from(document.querySelectorAll('.checklist li.checked')).map(item => 
+                Array.from(checklistItems).indexOf(item)
+            );
+            sessionStorage.setItem('lab3Checklist', JSON.stringify(checkedIndices));
+        }
+
+        function loadChecklistState() {
+            const savedChecked = sessionStorage.getItem('lab3Checklist');
+            if (savedChecked) {
+                const checkedIndices = JSON.parse(savedChecked);
+                const checklistItems = document.querySelectorAll('.checklist li');
+                checkedIndices.forEach(index => {
+                    if (checklistItems[index]) {
+                        checklistItems[index].classList.add('checked');
+                    }
+                });
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadChecklistState();
+            console.log('Lab Activity 3 loaded - Session checklist tracking active');
+        });
+    </script>
+</body>
+</html>
