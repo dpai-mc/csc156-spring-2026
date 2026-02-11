@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Week 4 Overview: Computer Hardware, Storage Media, and Boot Processes - CSC 156 Digital Forensics Fundamentals">
+    <title>Week 4 Overview | CSC 156 - Digital Forensics Fundamentals</title>
+    <style>
+        /* CSS Variables for Consistent Theming */
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --info-color: #16a085;
+            --light-bg: #ecf0f1;
+            --white: #ffffff;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --border-color: #bdc3c7;
+            --shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-hover: 0 4px 12px rgba(0,0,0,0.15);
+            --transition: all 0.3s ease;
+        }
+
+        /* Global Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--light-bg);
+        }
+
+        /* Skip to Main Content - Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 8px;
+            text-decoration: none;
+            z-index: 100;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #34495e 100%);
+            color: var(--white);
+            padding: 2rem 1rem;
+            box-shadow: var(--shadow);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .course-code {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .week-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            font-weight: normal;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            background: var(--white);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .nav-tabs-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .nav-tab {
+            padding: 1rem 1.5rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: var(--text-light);
+            transition: var(--transition);
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+        }
+
+        .nav-tab:hover {
+            color: var(--secondary-color);
+            background: var(--light-bg);
+        }
+
+        .nav-tab.active {
+            color: var(--secondary-color);
+            border-bottom-color: var(--secondary-color);
+            font-weight: 600;
+        }
+
+        .nav-tab:focus {
+            outline: 2px solid var(--secondary-color);
+            outline-offset: -2px;
+        }
+
+        /* Main Content */
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--white);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card h3 {
+            color: var(--secondary-color);
+            margin: 1.5rem 0 1rem;
+            font-size: 1.2rem;
+        }
+
+        .card h4 {
+            color: var(--text-dark);
+            margin: 1rem 0 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        /* Icons */
+        .icon {
+            font-size: 1.5rem;
+        }
+
+        /* Alert Boxes */
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-color: var(--warning-color);
+            color: #856404;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-color: var(--info-color);
+            color: #0c5460;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-color: var(--success-color);
+            color: #155724;
+        }
+
+        .alert strong {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #2980b9 100%);
+            color: var(--white);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Progress Tracking */
+        .progress-section {
+            background: var(--white);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .progress-bar-container {
+            background: var(--light-bg);
+            border-radius: 10px;
+            height: 30px;
+            overflow: hidden;
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--success-color) 0%, #2ecc71 100%);
+            height: 100%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        /* Checklist */
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            background: var(--light-bg);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .checklist-item:hover {
+            background: #d5dbdb;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            margin-right: 1rem;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checklist-item.completed {
+            opacity: 0.6;
+            text-decoration: line-through;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--white);
+            box-shadow: var(--shadow);
+        }
+
+        th {
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:hover {
+            background: var(--light-bg);
+        }
+
+        /* Module Cards */
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .module-card {
+            background: var(--white);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .module-card:hover {
+            border-color: var(--secondary-color);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .module-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .module-title {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .module-desc {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        /* Assignment Cards */
+        .assignment-card {
+            background: var(--white);
+            border-left: 4px solid var(--secondary-color);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+            box-shadow: var(--shadow);
+        }
+
+        .assignment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .assignment-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .assignment-points {
+            background: var(--success-color);
+            color: var(--white);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .assignment-meta {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .assignment-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Expandable Sections */
+        .expandable {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .expandable-header {
+            background: var(--light-bg);
+            padding: 1rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .expandable-header:hover {
+            background: #d5dbdb;
+        }
+
+        .expandable-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .expandable.open .expandable-icon {
+            transform: rotate(180deg);
+        }
+
+        .expandable-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .expandable.open .expandable-content {
+            max-height: 2000px;
+        }
+
+        .expandable-body {
+            padding: 1rem;
+        }
+
+        /* Tips Box */
+        .tips-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--white);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+        }
+
+        .tips-box h3 {
+            color: var(--white);
+            margin-top: 0;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--primary-color);
+            color: var(--white);
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 3rem;
+        }
+
+        footer p {
+            margin: 0.5rem 0;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .nav-tab {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .module-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .assignment-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .nav-tabs,
+            .progress-section,
+            .skip-link {
+                display: none;
+            }
+
+            .card {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* Focus Styles for Accessibility */
+        *:focus {
+            outline: 2px solid var(--secondary-color);
+            outline-offset: 2px;
+        }
+
+        button:focus,
+        a:focus {
+            outline: 2px solid var(--secondary-color);
+            outline-offset: 2px;
+        }
+
+        /* High Contrast Mode Support */
+        @media (prefers-contrast: high) {
+            .card {
+                border: 2px solid var(--text-dark);
+            }
+        }
+
+        /* Reduced Motion Support */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header role="banner">
+        <div class="header-content">
+            <p class="course-code">CSC 156 - Digital Forensics Fundamentals</p>
+            <h1>Week 4: Computer Hardware, Storage Media, and Boot Processes</h1>
+            <p class="week-subtitle">Mendocino College | Spring 2026</p>
+        </div>
+    </header>
+
+    <nav class="nav-tabs" role="navigation" aria-label="Week 4 content navigation">
+        <div class="nav-tabs-container">
+            <button class="nav-tab active" onclick="showTab('overview')" role="tab" aria-selected="true" aria-controls="overview-tab">📋 Overview</button>
+            <button class="nav-tab" onclick="showTab('topics')" role="tab" aria-selected="false" aria-controls="topics-tab">📚 Topics</button>
+            <button class="nav-tab" onclick="showTab('modules')" role="tab" aria-selected="false" aria-controls="modules-tab">🎓 Learning Modules</button>
+            <button class="nav-tab" onclick="showTab('assignments')" role="tab" aria-selected="false" aria-controls="assignments-tab">✏️ Assignments</button>
+            <button class="nav-tab" onclick="showTab('resources')" role="tab" aria-selected="false" aria-controls="resources-tab">🔗 Resources</button>
+        </div>
+    </nav>
+
+    <main id="main-content" role="main">
+        <!-- Progress Section -->
+        <div class="progress-section">
+            <h2>📊 Your Week 4 Progress</h2>
+            <p>Track your completion of Week 4 activities:</p>
+            <div class="progress-bar-container" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Week 4 progress">
+                <div class="progress-bar" id="progressBar">0%</div>
+            </div>
+            <p style="font-size: 0.9rem; color: var(--text-light); margin-top: 0.5rem;">
+                💾 Progress is saved for this session only
+            </p>
+        </div>
+
+        <!-- Overview Tab -->
+        <div id="overview-tab" class="tab-content active" role="tabpanel">
+            <div class="card">
+                <h2><span class="icon">⚠️</span> Why This Week Matters</h2>
+                <p>Week 4 marks a critical transition from legal and procedural foundations to the <strong>technical architecture</strong> that underlies all digital forensics work. This week focuses on understanding computer hardware components, storage technologies, and boot processes—knowledge essential for conducting thorough forensic examinations and making informed decisions during investigations.</p>
+                
+                <div class="alert alert-info">
+                    <strong>🔑 Key Insight:</strong>
+                    You cannot properly examine digital evidence without understanding how data is physically stored, how systems boot, and how different storage technologies impact forensic procedures. The differences between HDDs and SSDs, for example, fundamentally change recovery techniques and what evidence may be recoverable.
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-value">5</span>
+                    <span class="stat-label">Days</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value">2 hrs</span>
+                    <span class="stat-label">Lecture Hours</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value">3 hrs</span>
+                    <span class="stat-label">Lab Hours</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value">23</span>
+                    <span class="stat-label">Total Points</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">🎯</span> Learning Objectives</h2>
+                <p>By the end of this week, students will be able to:</p>
+                <ol>
+                    <li><strong>Describe computer hardware components and their forensic significance</strong> including CPU, RAM, motherboard, storage controllers, and peripheral interfaces</li>
+                    <li><strong>Explain differences between HDD and SSD technologies</strong> and their impact on forensic investigations, including data recovery and anti-forensic considerations</li>
+                    <li><strong>Understand operating system boot processes and disk structures</strong> including BIOS vs. UEFI firmware and MBR vs. GPT partitioning schemes</li>
+                    <li><strong>Identify various storage media types and interfaces</strong> including SATA, NVMe, USB, and their forensic implications</li>
+                    <li><strong>Recognize forensically relevant hardware artifacts</strong> such as firmware, BIOS/UEFI settings, and hardware timestamps</li>
+                    <li><strong>Assess the challenges posed by modern storage technologies</strong> including TRIM, wear leveling, and encryption</li>
+                </ol>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">✅</span> CSLO Alignment</h2>
+                <div class="alert alert-success">
+                    <strong>Primary CSLO Addressed This Week:</strong>
+                    <p><strong>CSLO 2:</strong> Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data.</p>
+                    <p><em>Expected Performance: 0.75 (75% mastery)</em></p>
+                </div>
+                <p>This week directly develops foundational knowledge required for CSLO 2. Understanding hardware architecture is prerequisite to conducting thorough examinations of storage media. This technical foundation enables you to make informed decisions about acquisition methods, understand where artifacts reside, and recognize the limitations and opportunities presented by different storage technologies.</p>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">🎓</span> Certification Alignment</h2>
+                <p>Week 4 content aligns with multiple professional certification domains:</p>
+                <ul>
+                    <li><strong>IACIS CFCE:</strong> Computer Hardware and Storage</li>
+                    <li><strong>GIAC GCFE:</strong> Computer Hardware</li>
+                    <li><strong>GIAC GCFA:</strong> Storage and Filesystems (hardware components)</li>
+                    <li><strong>EC-Council CHFI:</strong> Hard Disks and File Systems (Domain 4 - hardware components)</li>
+                </ul>
+                <div class="alert alert-info">
+                    <strong>📝 Certification Note:</strong>
+                    Understanding hardware is tested extensively on forensic certification exams. CFCE candidates must demonstrate knowledge of storage technologies, boot processes, and hardware interfaces.
+                </div>
+            </div>
+
+            <div class="tips-box">
+                <h3>⏰ Time Management Tips</h3>
+                <ul>
+                    <li><strong>Day 1:</strong> Complete readings and attend lecture (4 hours)</li>
+                    <li><strong>Day 2:</strong> Begin lab Part 1 (hardware identification) (2 hours)</li>
+                    <li><strong>Day 3:</strong> Post initial discussion response, continue lab (2 hours)</li>
+                    <li><strong>Day 4:</strong> Complete lab Parts 2-3 (boot process and comparison) (3 hours)</li>
+                    <li><strong>Day 5:</strong> Respond to peer discussions, finalize and submit lab report (2 hours)</li>
+                </ul>
+                <p><strong>Total: ~13 hours</strong> (includes lecture, lab, reading, and assignments)</p>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">💡</span> Study Strategy</h2>
+                <p>Create visual aids to help master this week's content:</p>
+                <ul>
+                    <li>Draw labeled diagrams of HDD and SSD internal components</li>
+                    <li>Create flowcharts of BIOS vs. UEFI boot processes</li>
+                    <li>Build comparison tables for storage technologies</li>
+                    <li>Practice with mnemonics: <strong>"NAND Wears Garbage TRIM"</strong> for key SSD technologies</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Topics Tab -->
+        <div id="topics-tab" class="tab-content" role="tabpanel">
+            <div class="card">
+                <h2><span class="icon">📚</span> Week 4 Topics</h2>
+                <p>This week covers the technical foundation of computer hardware and storage systems essential for digital forensics investigations.</p>
+            </div>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>🖥️ Computer Hardware Components</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <h4>Central Processing Unit (CPU)</h4>
+                        <ul>
+                            <li>Role in system operations and forensic implications</li>
+                            <li>CPU cache and volatile data considerations</li>
+                            <li>Processor architecture (x86, x64, ARM)</li>
+                        </ul>
+
+                        <h4>Random Access Memory (RAM)</h4>
+                        <ul>
+                            <li>Volatile vs. non-volatile memory</li>
+                            <li>Why RAM forensics matters (Week 10 preview)</li>
+                            <li>Memory addressing and allocation</li>
+                            <li>Order of volatility considerations</li>
+                        </ul>
+
+                        <h4>Motherboard & Chipset</h4>
+                        <ul>
+                            <li>System bus architecture</li>
+                            <li>Integrated components and firmware storage</li>
+                            <li>Real-time clock and CMOS battery</li>
+                            <li>Hardware serial numbers and identifiers</li>
+                        </ul>
+
+                        <h4>Storage Controllers & Interfaces</h4>
+                        <ul>
+                            <li>SATA, NVMe, USB controllers</li>
+                            <li>RAID controllers and configurations</li>
+                            <li>Impact on acquisition speed and methods</li>
+                        </ul>
+
+                        <h4>Network Interface Cards (NICs)</h4>
+                        <ul>
+                            <li>MAC address identification</li>
+                            <li>Network activity artifacts</li>
+                            <li>Wake-on-LAN capabilities</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>💿 Hard Disk Drives (HDD) Architecture</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <h4>Physical Structure</h4>
+                        <ul>
+                            <li><strong>Platters:</strong> Magnetic disks storing data</li>
+                            <li><strong>Read/Write Heads:</strong> Electromagnetic devices for data access</li>
+                            <li><strong>Actuator Arm:</strong> Positions heads over correct track</li>
+                            <li><strong>Spindle Motor:</strong> Rotates platters (5400-15000 RPM)</li>
+                        </ul>
+
+                        <h4>Data Organization</h4>
+                        <ul>
+                            <li><strong>Tracks:</strong> Concentric circles on platter surface</li>
+                            <li><strong>Sectors:</strong> Smallest addressable unit (512 or 4096 bytes)</li>
+                            <li><strong>Clusters:</strong> Group of sectors (file system unit)</li>
+                            <li><strong>Cylinders:</strong> Same track across multiple platters</li>
+                        </ul>
+
+                        <h4>Forensic Advantages</h4>
+                        <ul>
+                            <li>✅ Complete data recovery possible from deleted files</li>
+                            <li>✅ No automatic data destruction</li>
+                            <li>✅ Predictable behavior with mature forensic tools</li>
+                            <li>✅ Slack space contains remnants of previous data</li>
+                        </ul>
+
+                        <h4>Forensic Challenges</h4>
+                        <ul>
+                            <li>⚠️ Physical damage (head crashes, motor failures)</li>
+                            <li>⚠️ Full-disk encryption (BitLocker, FileVault)</li>
+                            <li>⚠️ Large capacities increase acquisition time</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>⚡ Solid State Drives (SSD) Architecture</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <h4>Physical Structure</h4>
+                        <ul>
+                            <li><strong>NAND Flash Memory:</strong> Electronic data storage (no moving parts)</li>
+                            <li><strong>Types:</strong> SLC (fastest), MLC, TLC, QLC (highest density)</li>
+                            <li><strong>Controller:</strong> Sophisticated processor managing operations</li>
+                            <li><strong>Over-Provisioning:</strong> Reserved space (7-28%) not visible to OS</li>
+                        </ul>
+
+                        <h4>Critical SSD Technologies</h4>
+                        <div class="alert alert-warning">
+                            <strong>⚠️ TRIM Command:</strong>
+                            <p>OS notifies SSD which blocks are no longer in use after file deletion. SSD immediately erases TRIMmed blocks, making deleted file recovery impossible. Enabled by default on Windows 7+, macOS 10.6.8+, Linux 2.6.33+.</p>
+                        </div>
+
+                        <ul>
+                            <li><strong>Wear Leveling:</strong> Distributes writes evenly across cells; data location changes unpredictably</li>
+                            <li><strong>Garbage Collection:</strong> Automatically erases deleted data in background</li>
+                            <li><strong>Hardware Encryption:</strong> Many SSDs include built-in AES encryption</li>
+                        </ul>
+
+                        <h4>Forensic Challenges</h4>
+                        <ul>
+                            <li>❌ Deleted files often unrecoverable (TRIM erases within minutes)</li>
+                            <li>❌ Unpredictable data remnants due to wear leveling</li>
+                            <li>❌ Over-provisioned area inaccessible with standard tools</li>
+                            <li>❌ Hardware encryption keys stored in controller</li>
+                        </ul>
+
+                        <h4>SSD Best Practices</h4>
+                        <ol>
+                            <li>⏱️ <strong>Immediate acquisition:</strong> Prioritize SSDs in evidence collection</li>
+                            <li>🔒 <strong>Hardware write blocking:</strong> Prevent TRIM commands</li>
+                            <li>⚡ <strong>Power management:</strong> Consider keeping drive powered with write blocker</li>
+                            <li>📊 <strong>Expect limited recovery:</strong> Adjust expectations for deleted files</li>
+                            <li>📝 <strong>Document thoroughly:</strong> Record make, model, firmware, TRIM status</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>🔄 Boot Processes & Firmware</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <h3>BIOS vs. UEFI</h3>
+                        
+                        <h4>BIOS (Basic Input/Output System)</h4>
+                        <ul>
+                            <li>Legacy firmware standard (since 1975)</li>
+                            <li>16-bit mode, limited to 2.2 TB disks</li>
+                            <li>Uses MBR (Master Boot Record) partitioning</li>
+                            <li>Boot Process: POST → Load MBR → Execute bootloader</li>
+                        </ul>
+
+                        <h4>UEFI (Unified Extensible Firmware Interface)</h4>
+                        <ul>
+                            <li>Modern firmware standard (2000s)</li>
+                            <li>32/64-bit mode, supports disks >2.2 TB</li>
+                            <li>Uses GPT (GUID Partition Table)</li>
+                            <li>Secure Boot capability prevents unauthorized bootloaders</li>
+                            <li>Network boot support and graphical interface</li>
+                        </ul>
+
+                        <h3>Partition Schemes</h3>
+
+                        <h4>MBR (Master Boot Record)</h4>
+                        <ul>
+                            <li>Located in first 512 bytes of disk</li>
+                            <li>Supports up to 4 primary partitions</li>
+                            <li>Maximum disk size: 2.2 TB</li>
+                            <li>Structure: Boot code (446B) + Partition table (64B) + Signature (2B)</li>
+                        </ul>
+
+                        <h4>GPT (GUID Partition Table)</h4>
+                        <ul>
+                            <li>Part of UEFI standard</li>
+                            <li>Supports up to 128 partitions</li>
+                            <li>Maximum disk size: 9.4 ZB (zettabytes)</li>
+                            <li>Includes backup partition table at end of disk</li>
+                            <li>CRC32 checksums for integrity verification</li>
+                        </ul>
+
+                        <h3>Forensic Artifacts in Boot Process</h3>
+                        <ul>
+                            <li>Boot order configuration reveals investigation priorities</li>
+                            <li>Hardware settings changes may indicate tampering</li>
+                            <li>Firmware timestamps (if available)</li>
+                            <li>Secure Boot status affects forensic tool booting</li>
+                            <li>EFI System Partition contains bootloader artifacts</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>🔌 Storage Interfaces & Media Types</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <h4>SATA (Serial ATA)</h4>
+                        <ul>
+                            <li><strong>Speeds:</strong> SATA I (1.5 Gbps), II (3 Gbps), III (6 Gbps)</li>
+                            <li><strong>Usage:</strong> Most common for desktop/laptop internal drives</li>
+                            <li><strong>Forensics:</strong> Well-supported by hardware write blockers</li>
+                        </ul>
+
+                        <h4>NVMe (Non-Volatile Memory Express)</h4>
+                        <ul>
+                            <li><strong>Interface:</strong> PCIe lanes (much faster than SATA)</li>
+                            <li><strong>Speeds:</strong> Up to 7000+ MB/s vs. SATA's 600 MB/s</li>
+                            <li><strong>Form Factors:</strong> M.2, U.2, PCIe add-in cards</li>
+                            <li><strong>Forensics:</strong> Write blocking more challenging, fewer compatible blockers</li>
+                        </ul>
+
+                        <h4>USB (Universal Serial Bus)</h4>
+                        <ul>
+                            <li><strong>Versions:</strong> USB 2.0 (480 Mbps), 3.x (5-40 Gbps)</li>
+                            <li><strong>Common Media:</strong> Flash drives, external drives, smartphones</li>
+                            <li><strong>Forensics:</strong> OS logs USB connections (covered in Weeks 7-8)</li>
+                        </ul>
+
+                        <h4>RAID Configurations</h4>
+                        <ul>
+                            <li><strong>RAID 0:</strong> Striping (no redundancy) - all disks required</li>
+                            <li><strong>RAID 1:</strong> Mirroring - examine any disk</li>
+                            <li><strong>RAID 5:</strong> Striping with parity - can lose 1 disk</li>
+                            <li><strong>RAID 6:</strong> Double parity - can lose 2 disks</li>
+                            <li><strong>RAID 10:</strong> Mirroring + Striping combination</li>
+                        </ul>
+
+                        <div class="alert alert-warning">
+                            <strong>⚠️ RAID Warning:</strong>
+                            Improperly handling RAID systems can result in permanent data loss. Always document RAID configuration before disassembly.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📊 HDD vs. SSD Comparison</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Characteristic</th>
+                                <th>HDD</th>
+                                <th>SSD</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Data Persistence</strong></td>
+                                <td>High - deleted data remains until overwritten</td>
+                                <td>Low - TRIM/garbage collection erase quickly</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Recovery Success</strong></td>
+                                <td>High for deleted files</td>
+                                <td>Limited after TRIM executes</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Imaging Speed</strong></td>
+                                <td>Moderate (mechanical limitations)</td>
+                                <td>Fast (no moving parts)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Forensic Complexity</strong></td>
+                                <td>Lower</td>
+                                <td>Higher (wear leveling, TRIM)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Timeline Accuracy</strong></td>
+                                <td>Reliable</td>
+                                <td>Can be affected by wear leveling</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Write Blocking</strong></td>
+                                <td>Well-supported</td>
+                                <td>More challenging (especially NVMe)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modules Tab -->
+        <div id="modules-tab" class="tab-content" role="tabpanel">
+            <div class="card">
+                <h2><span class="icon">🎓</span> Week 4 Learning Modules</h2>
+                <p>Week 4 consists of five comprehensive learning modules. Each module builds upon the previous to create a complete understanding of computer hardware and storage forensics.</p>
+                <div class="alert alert-info">
+                    <strong>📝 Note:</strong>
+                    Detailed content for each module will be provided separately. Use this overview to plan your study schedule.
+                </div>
+            </div>
+
+            <div class="module-grid">
+                <div class="module-card">
+                    <div class="module-icon">🖥️</div>
+                    <div class="module-title">Module 1</div>
+                    <div class="module-desc">Computer Hardware Fundamentals</div>
+                    <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-light);">⏱️ 45-50 minutes</p>
+                </div>
+
+                <div class="module-card">
+                    <div class="module-icon">💿</div>
+                    <div class="module-title">Module 2</div>
+                    <div class="module-desc">Storage Technologies: HDD vs. SSD</div>
+                    <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-light);">⏱️ 50-60 minutes</p>
+                </div>
+
+                <div class="module-card">
+                    <div class="module-icon">🔌</div>
+                    <div class="module-title">Module 3</div>
+                    <div class="module-desc">Storage Interfaces & Controllers</div>
+                    <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-light);">⏱️ 35-40 minutes</p>
+                </div>
+
+                <div class="module-card">
+                    <div class="module-icon">🔄</div>
+                    <div class="module-title">Module 4</div>
+                    <div class="module-desc">Boot Processes & Firmware</div>
+                    <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-light);">⏱️ 50-55 minutes</p>
+                </div>
+
+                <div class="module-card">
+                    <div class="module-icon">🔬</div>
+                    <div class="module-title">Module 5</div>
+                    <div class="module-desc">Practical Application & Lab Prep</div>
+                    <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-light);">⏱️ 40-45 minutes</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📋 Module Completion Tracking</h2>
+                <p>Check off modules as you complete them:</p>
+                <ul class="checklist" id="moduleChecklist">
+                    <li class="checklist-item">
+                        <input type="checkbox" id="module1" onchange="updateProgress()">
+                        <label for="module1">Module 1: Computer Hardware Fundamentals</label>
+                    </li>
+                    <li class="checklist-item">
+                        <input type="checkbox" id="module2" onchange="updateProgress()">
+                        <label for="module2">Module 2: Storage Technologies: HDD vs. SSD</label>
+                    </li>
+                    <li class="checklist-item">
+                        <input type="checkbox" id="module3" onchange="updateProgress()">
+                        <label for="module3">Module 3: Storage Interfaces & Controllers</label>
+                    </li>
+                    <li class="checklist-item">
+                        <input type="checkbox" id="module4" onchange="updateProgress()">
+                        <label for="module4">Module 4: Boot Processes & Firmware</label>
+                    </li>
+                    <li class="checklist-item">
+                        <input type="checkbox" id="module5" onchange="updateProgress()">
+                        <label for="module5">Module 5: Practical Application & Lab Prep</label>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>🎯 Module Learning Paths</h2>
+                <h3>Module 1: Computer Hardware Fundamentals</h3>
+                <p><strong>Topics:</strong> CPU, RAM, motherboard, expansion cards, forensic significance of each component</p>
+                <p><strong>Key Takeaway:</strong> Understanding hardware architecture affects evidence collection strategies</p>
+
+                <h3>Module 2: Storage Technologies - HDD vs. SSD</h3>
+                <p><strong>Topics:</strong> Magnetic vs. solid-state storage, TRIM command, wear leveling, forensic implications</p>
+                <p><strong>Key Takeaway:</strong> The shift from HDDs to SSDs represents one of the most significant challenges in modern digital forensics</p>
+
+                <h3>Module 3: Storage Interfaces & Controllers</h3>
+                <p><strong>Topics:</strong> SATA, NVMe, USB, RAID configurations and forensic considerations</p>
+                <p><strong>Key Takeaway:</strong> Different interfaces require different acquisition approaches and write-blocking strategies</p>
+
+                <h3>Module 4: Boot Processes & Firmware</h3>
+                <p><strong>Topics:</strong> BIOS/UEFI, MBR/GPT, boot sequence, Secure Boot, forensic artifacts</p>
+                <p><strong>Key Takeaway:</strong> Boot process artifacts provide critical timeline information and evidence of system modifications</p>
+
+                <h3>Module 5: Practical Application & Lab Prep</h3>
+                <p><strong>Topics:</strong> Hands-on identification, case studies, decision-making scenarios, lab preparation</p>
+                <p><strong>Key Takeaway:</strong> Apply hardware knowledge to real forensic scenarios and investigation planning</p>
+            </div>
+        </div>
+
+        <!-- Assignments Tab -->
+        <div id="assignments-tab" class="tab-content" role="tabpanel">
+            <div class="card">
+                <h2><span class="icon">✏️</span> Week 4 Assignments</h2>
+                <div class="alert alert-warning">
+                    <strong>⏰ Important Deadlines:</strong>
+                    All Week 4 assignments are due by the end of Week 4. Check Canvas for specific due dates and times. Late submissions may be subject to penalties as outlined in the course syllabus.
+                </div>
+            </div>
+
+            <div class="assignment-card">
+                <div class="assignment-header">
+                    <div class="assignment-title">📋 Lab Activity 4: Hardware Component Identification and Boot Process Analysis</div>
+                    <div class="assignment-points">20 points</div>
+                </div>
+                <div class="assignment-meta">
+                    <span>📅 Due: End of Week 4</span>
+                    <span>🎯 CSLO 2</span>
+                    <span>⏱️ ~5 hours</span>
+                </div>
+                <p><strong>Objective:</strong> Develop practical skills in identifying hardware components, analyzing boot configurations, and understanding their forensic significance.</p>
+                
+                <h4>Part 1: Hardware Component Identification (8 points)</h4>
+                <ul>
+                    <li>Examine provided computer system (physical or virtual)</li>
+                    <li>Document all hardware components using provided template</li>
+                    <li>Capture screenshots/photographs of system information</li>
+                    <li>Research forensic significance of each component</li>
+                </ul>
+
+                <h4>Part 2: Boot Process Analysis (8 points)</h4>
+                <ul>
+                    <li>Access and document BIOS/UEFI settings</li>
+                    <li>Examine partition structure (MBR or GPT)</li>
+                    <li>Analyze complete boot sequence</li>
+                    <li>Identify bootloader location and type</li>
+                </ul>
+
+                <h4>Part 3: Storage Technology Comparison (4 points)</h4>
+                <ul>
+                    <li>Compare HDD and SSD characteristics</li>
+                    <li>Document data persistence, TRIM behavior, wear leveling</li>
+                    <li>Explain forensic challenges for each storage type</li>
+                </ul>
+
+                <div class="alert alert-info">
+                    <strong>💡 Lab Tip:</strong>
+                    Start the lab early in the week. Document your work as you go rather than trying to write everything at the end. Take clear screenshots and photographs for your report.
+                </div>
+
+                <p><strong>Deliverable:</strong> PDF document containing all three parts with screenshots. File naming: <code>LastName_FirstName_Lab4.pdf</code></p>
+            </div>
+
+            <div class="assignment-card">
+                <div class="assignment-header">
+                    <div class="assignment-title">💬 Discussion Post 4: HDD vs. SSD Forensic Challenges</div>
+                    <div class="assignment-points">3 points</div>
+                </div>
+                <div class="assignment-meta">
+                    <span>📅 Initial Post: Day 3</span>
+                    <span>📅 Responses: Day 5</span>
+                    <span>🎯 CSLO 2</span>
+                </div>
+
+                <h4>Initial Post (2 points - Due Day 3)</h4>
+                <p>Choose ONE of the following discussion prompts:</p>
+                <ol>
+                    <li><strong>SSD Data Recovery Challenges:</strong> Research a real-world case where SSD technology complicated an investigation</li>
+                    <li><strong>TRIM and Evidence Destruction:</strong> Explain how TRIM affects investigations and discuss the trade-offs</li>
+                    <li><strong>Hardware Encryption Dilemma:</strong> Discuss legal, technical, and ethical considerations when a suspect's SED is locked</li>
+                    <li><strong>Future of Storage Forensics:</strong> How will emerging storage technologies impact digital forensics?</li>
+                </ol>
+
+                <p><strong>Requirements:</strong></p>
+                <ul>
+                    <li>Minimum 150 words</li>
+                    <li>Cite at least one external source</li>
+                    <li>Use proper forensic terminology</li>
+                    <li>Provide specific examples</li>
+                </ul>
+
+                <h4>Peer Responses (1 point - Due Day 5)</h4>
+                <ul>
+                    <li>Respond to at least 2 classmates</li>
+                    <li>Minimum 50 words per response</li>
+                    <li>Add value: ask questions, provide perspectives, share resources</li>
+                </ul>
+            </div>
+
+            <div class="assignment-card">
+                <div class="assignment-header">
+                    <div class="assignment-title">📖 Required Reading: Hardware Fundamentals and Storage Technologies</div>
+                    <div class="assignment-points">Required (0 points)</div>
+                </div>
+                <div class="assignment-meta">
+                    <span>📅 Complete: Before Lab</span>
+                    <span>🎯 CSLO 2</span>
+                </div>
+
+                <p><strong>Required Reading:</strong></p>
+                <ol>
+                    <li><strong>Your Textbook:</strong> Chapter on Computer Hardware and Storage Systems</li>
+                    <li><strong>NIST Resources:</strong> NIST SP 800-86, Section 3.1 (Data Collection)</li>
+                    <li><strong>Technical Articles (Choose 2):</strong>
+                        <ul>
+                            <li>"Forensic Analysis of Solid State Drives" - SANS Reading Room</li>
+                            <li>"Understanding TRIM and Its Impact on SSD Forensics"</li>
+                            <li>"UEFI Secure Boot and Forensic Implications"</li>
+                            <li>"Self-Encrypting Drives: Forensic Challenges and Solutions"</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <p><strong>Reading Goals:</strong></p>
+                <ul>
+                    <li>Understand physical and logical structure of storage devices</li>
+                    <li>Recognize how storage technology affects forensic methodology</li>
+                    <li>Identify boot process artifacts and their investigative value</li>
+                    <li>Prepare for lab exercises involving hardware analysis</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>📊 Total Points This Week: 23 points</h2>
+                <ul>
+                    <li>Lab Activity 4: 20 points</li>
+                    <li>Discussion Post 4: 3 points</li>
+                    <li>Required Reading: 0 points (but essential for success!)</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>✅ Assignment Checklist</h2>
+                <ul class="checklist" id="assignmentChecklist">
+                    <li class="checklist-item">
+                        <input type="checkbox" id="reading" onchange="updateProgress()">
+                        <label for="reading">Complete required reading before lab</label>
+                    </li>
+                    <li class="checklist-item">
+                        <input type="checkbox" id="lab-part1" onchange="updateProgress()">
+                        <label for="lab-part1">Lab Activity Part 1: Hardware Identification</label>
+                    </li>
+                    <li class="checklist-item">
+                        <input type="checkbox" id="lab-part2" onchange="updateProgress()">
+                        <label for="lab-part2">Lab Activity Part 2: Boot Process Analysis</label>
+                    </li>
+                    <li class="checklist-item">
+                        <input type="checkbox" id="lab-part3" onchange="updateProgress()">
+                        <label for="lab-part3">Lab Activity Part 3: Storage Comparison</label>
+                    </li>
+                    <li class="checklist-item">
+                        <input type="checkbox" id="discussion-initial" onchange="updateProgress()">
+                        <label for="discussion-initial">Discussion: Initial post (Day 3)</label>
+                    </li>
+                    <li class="checklist-item">
+                        <input type="checkbox" id="discussion-responses" onchange="updateProgress()">
+                        <label for="discussion-responses">Discussion: Peer responses (Day 5)</label>
+                    </li>
+                    <li class="checklist-item">
+                        <input type="checkbox" id="lab-submit" onchange="updateProgress()">
+                        <label for="lab-submit">Submit Lab Activity 4 PDF</label>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Resources Tab -->
+        <div id="resources-tab" class="tab-content" role="tabpanel">
+            <div class="card">
+                <h2><span class="icon">🔗</span> Week 4 Resources</h2>
+                <p>Comprehensive resources to support your learning this week.</p>
+            </div>
+
+            <div class="card">
+                <h2>📚 Required Materials</h2>
+                <ul>
+                    <li><strong>Textbook:</strong> Chapter on Computer Hardware and Storage Systems</li>
+                    <li><strong>NIST SP 800-86:</strong> Guide to Integrating Forensic Techniques into Incident Response (Section 3.1)</li>
+                    <li><strong>Hardware Documentation:</strong> Lab activity templates (available on Canvas)</li>
+                    <li><strong>Technical Articles:</strong> Assigned readings on SSD forensics and UEFI (links on Canvas)</li>
+                </ul>
+            </div>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>🛠️ Recommended Tools to Explore</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <ul>
+                            <li><strong>CrystalDiskInfo:</strong> View SMART data and drive health information</li>
+                            <li><strong>HWiNFO:</strong> Comprehensive hardware information utility</li>
+                            <li><strong>CPU-Z:</strong> Detailed CPU and motherboard information</li>
+                            <li><strong>Bootice:</strong> Examine MBR/GPT structures (use carefully in VMs only!)</li>
+                            <li><strong>Rufus:</strong> Create bootable USB drives and understand boot processes</li>
+                        </ul>
+                        <div class="alert alert-warning">
+                            <strong>⚠️ Safety Note:</strong>
+                            Only use partition tools like Bootice in virtual machines. Never modify partitions on evidence drives or your main system.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>📖 Supplementary Reading</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <h4>Books:</h4>
+                        <ul>
+                            <li><strong>"File System Forensic Analysis" by Brian Carrier:</strong> Chapters on volume systems and physical storage</li>
+                            <li><strong>"Digital Forensics with Open Source Tools" by Cory Altheide:</strong> Hardware chapters</li>
+                        </ul>
+
+                        <h4>Online Resources:</h4>
+                        <ul>
+                            <li><strong>SANS Reading Room:</strong> Search for papers on SSD forensics, UEFI forensics</li>
+                            <li><strong>SWGDE Best Practices:</strong> "Best Practices for Computer Forensics" (hardware sections)</li>
+                            <li><strong>Forensic Focus:</strong> Articles on emerging storage technologies</li>
+                        </ul>
+
+                        <h4>Manufacturer Resources:</h4>
+                        <ul>
+                            <li><strong>Seagate:</strong> Technical documentation on HDD technology</li>
+                            <li><strong>Samsung, Intel, Western Digital:</strong> SSD technical specifications and white papers</li>
+                            <li><strong>UEFI Forum:</strong> Official UEFI specifications and documentation</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>🎥 Video Resources</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <ul>
+                            <li><strong>13Cubed YouTube Channel:</strong> Excellent visual explanations of hardware concepts and forensic techniques</li>
+                            <li><strong>SANS DFIR Webinars:</strong> Hardware and storage technology presentations</li>
+                            <li><strong>Manufacturer Teardowns:</strong> Search for HDD and SSD disassembly videos to see internal components</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>💬 Getting Help</h2>
+                
+                <h3>Office Hours</h3>
+                <ul>
+                    <li>Check Canvas for instructor availability</li>
+                    <li>Virtual office hours available by appointment</li>
+                    <li>Best times to discuss hardware questions: [specific times]</li>
+                </ul>
+
+                <h3>Lab Assistance</h3>
+                <ul>
+                    <li>Lab assistants available during scheduled lab times</li>
+                    <li>Bring specific questions about hardware identification or boot process analysis</li>
+                    <li>Extra help sessions available [day/time] for students needing additional support</li>
+                </ul>
+
+                <h3>Online Support</h3>
+                <ul>
+                    <li><strong>Canvas Discussion Board:</strong> Post questions and collaborate with peers</li>
+                    <li><strong>DFIR Discord Community:</strong> Hardware-forensics channels for broader field questions</li>
+                    <li><strong>Course Email:</strong> Contact instructor for specific concerns</li>
+                </ul>
+
+                <h3>Technical Issues</h3>
+                <ul>
+                    <li>If unable to access BIOS/UEFI in lab, notify instructor immediately</li>
+                    <li>Virtual machine alternatives available if physical hardware unavailable</li>
+                    <li>Contact IT support for hardware access issues in computer lab</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>📝 Key Terminology to Master</h2>
+                <p>Make sure you understand and can explain these terms by the end of the week:</p>
+
+                <h3>Hardware Components:</h3>
+                <p>CPU, RAM, motherboard, chipset, controller, NIC, MAC address</p>
+
+                <h3>Storage Technologies:</h3>
+                <p>HDD, SSD, NAND flash, SLC/MLC/TLC/QLC, platter, sector, track, cluster, cylinder</p>
+
+                <h3>SSD-Specific:</h3>
+                <p>Wear leveling, garbage collection, TRIM, over-provisioning, controller</p>
+
+                <h3>Boot Process:</h3>
+                <p>BIOS, UEFI, POST, MBR, GPT, bootloader, EFI System Partition (ESP), Secure Boot</p>
+
+                <h3>Partitioning:</h3>
+                <p>Primary partition, extended partition, logical partition, partition table, protective MBR</p>
+
+                <h3>Interfaces:</h3>
+                <p>SATA, NVMe, PCIe, USB, M.2, U.2</p>
+
+                <h3>Encryption:</h3>
+                <p>Self-Encrypting Drive (SED), Opal, hardware encryption, TPM</p>
+            </div>
+        </div>
+    </main>
+
+    <footer role="contentinfo">
+        <p>© 2026 Mendocino College | CSC 156 - Digital Forensics Fundamentals</p>
+        <p>Week 4: Computer Hardware, Storage Media, and Boot Processes</p>
+        <p>Instructor: David Pai | Spring 2026</p>
+        <p style="margin-top: 1rem; font-size: 0.9rem;">
+            💾 Your progress is saved for this session only. Bookmark this page to return to it later.
+        </p>
+    </footer>
+
+    <script>
+        // Tab Navigation
+        function showTab(tabName) {
+            // Hide all tab content
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+                tab.setAttribute('aria-selected', 'false');
+            });
+
+            // Show selected tab content
+            const selectedContent = document.getElementById(tabName + '-tab');
+            if (selectedContent) {
+                selectedContent.classList.add('active');
+            }
+
+            // Add active class to clicked tab
+            const clickedTab = event.target;
+            clickedTab.classList.add('active');
+            clickedTab.setAttribute('aria-selected', 'true');
+
+            // Save current tab to session storage
+            sessionStorage.setItem('currentTab', tabName);
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Expandable Sections
+        function toggleExpandable(header) {
+            const expandable = header.parentElement;
+            expandable.classList.toggle('open');
+            
+            const isExpanded = expandable.classList.contains('open');
+            header.setAttribute('aria-expanded', isExpanded);
+        }
+
+        // Keyboard support for expandables
+        document.addEventListener('keydown', function(e) {
+            if (e.target.classList.contains('expandable-header')) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleExpandable(e.target);
+                }
+            }
+        });
+
+        // Progress Tracking
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const checked = document.querySelectorAll('input[type="checkbox"]:checked').length;
+            const total = checkboxes.length;
+            const percentage = total > 0 ? Math.round((checked / total) * 100) : 0;
+
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = percentage + '%';
+            progressBar.textContent = percentage + '%';
+            progressBar.parentElement.setAttribute('aria-valuenow', percentage);
+
+            // Update checklist item styling
+            checkboxes.forEach(checkbox => {
+                const listItem = checkbox.closest('.checklist-item');
+                if (checkbox.checked) {
+                    listItem.classList.add('completed');
+                } else {
+                    listItem.classList.remove('completed');
+                }
+            });
+
+            // Save progress to session storage
+            const progressData = {};
+            checkboxes.forEach(checkbox => {
+                progressData[checkbox.id] = checkbox.checked;
+            });
+            sessionStorage.setItem('week4Progress', JSON.stringify(progressData));
+        }
+
+        // Load Progress from Session Storage
+        function loadProgress() {
+            const savedProgress = sessionStorage.getItem('week4Progress');
+            if (savedProgress) {
+                const progressData = JSON.parse(savedProgress);
+                Object.keys(progressData).forEach(id => {
+                    const checkbox = document.getElementById(id);
+                    if (checkbox) {
+                        checkbox.checked = progressData[id];
+                    }
+                });
+                updateProgress();
+            }
+
+            // Load saved tab
+            const savedTab = sessionStorage.getItem('currentTab');
+            if (savedTab) {
+                const tabButton = document.querySelector(`[onclick="showTab('${savedTab}')"]`);
+                if (tabButton) {
+                    tabButton.click();
+                }
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+            
+            // Add ARIA labels
+            document.querySelectorAll('.expandable-header').forEach(header => {
+                header.setAttribute('role', 'button');
+                header.setAttribute('tabindex', '0');
+                header.setAttribute('aria-expanded', 'false');
+            });
+
+            // Announce page load to screen readers
+            const announcement = document.createElement('div');
+            announcement.setAttribute('role', 'status');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.className = 'sr-only';
+            announcement.textContent = 'Week 4 overview page loaded. Use tab to navigate through sections.';
+            document.body.appendChild(announcement);
+        });
+
+        // Add screen reader only class for accessibility
+        const style = document.createElement('style');
+        style.textContent = `
+            .sr-only {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                padding: 0;
+                margin: -1px;
+                overflow: hidden;
+                clip: rect(0, 0, 0, 0);
+                white-space: nowrap;
+                border-width: 0;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
