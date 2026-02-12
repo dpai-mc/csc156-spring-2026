@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CSC 156 Week 4 Discussion Post: HDD vs. SSD Forensic Challenges. Share your insights and engage with peers.">
+    <title>Discussion Post 4 | CSC 156 - Digital Forensics Fundamentals</title>
+    <style>
+        /* ===== CSS VARIABLES ===== */
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --info-color: #16a085;
+            --light-bg: #ecf0f1;
+            --white: #ffffff;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --border-color: #bdc3c7;
+            --shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-hover: 0 4px 12px rgba(0,0,0,0.15);
+            --transition: all 0.3s ease;
+            --border-radius: 8px;
+        }
+
+        /* ===== GLOBAL STYLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--light-bg);
+        }
+
+        /* ===== ACCESSIBILITY ===== */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 8px 16px;
+            text-decoration: none;
+            z-index: 100;
+            border-radius: 0 0 4px 0;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        /* ===== HEADER ===== */
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #34495e 100%);
+            color: var(--white);
+            padding: 2rem 1rem;
+            box-shadow: var(--shadow);
+        }
+
+        .header-content {
+            max-width: 800px; /* Max width for single column */
+            margin: 0 auto;
+        }
+
+        .course-code {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .assignment-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            font-weight: normal;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        main {
+            max-width: 800px; /* Max width for single column */
+            margin: 2rem auto;
+            padding: 0 1rem;
+            min-height: 60vh;
+        }
+
+        /* ===== PROGRESS SECTION ===== */
+        .progress-section {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .progress-bar-container {
+            background: var(--light-bg);
+            border-radius: 10px;
+            height: 30px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--success-color) 0%, #2ecc71 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .time-estimate {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* ===== CONTENT SECTIONS ===== */
+        .content-section {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .content-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .content-section h3 {
+            color: var(--secondary-color);
+            margin: 2rem 0 1rem;
+            font-size: 1.4rem;
+        }
+
+        .content-section h4 {
+            color: var(--text-dark);
+            margin: 1.5rem 0 0.75rem;
+            font-size: 1.2rem;
+        }
+
+        .content-section h5 {
+            color: var(--text-dark);
+            margin: 1rem 0 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .content-section p {
+            margin-bottom: 1rem;
+            line-height: 1.8;
+        }
+
+        .content-section ul, .content-section ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .content-section li {
+            margin-bottom: 0.5rem;
+            line-height: 1.8;
+        }
+
+        /* ===== ALERT BOXES ===== */
+        .alert {
+            padding: 1.25rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+            border-left: 4px solid;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .alert-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert strong {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-color: var(--info-color);
+            color: #0c5460;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-color: var(--warning-color);
+            color: #856404;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-color: var(--success-color);
+            color: #155724;
+        }
+
+        .alert-forensic {
+            background: #e8f4f8;
+            border-color: var(--secondary-color);
+            color: #004085;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            border-color: var(--accent-color);
+            color: #721c24;
+        }
+
+        /* ===== CHECKLISTS ===== */
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            background: var(--light-bg);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .checklist-item:hover {
+            background: #d5dbdb;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            margin-right: 1rem;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .checklist-item.completed {
+            opacity: 0.6;
+            text-decoration: line-through;
+        }
+
+        /* ===== OPTION CARDS ===== */
+        .option-card {
+            background: var(--light-bg);
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .option-card:hover {
+            border-color: var(--secondary-color);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .option-card.selected {
+            border-color: var(--info-color);
+            background: #e3f2fd;
+        }
+
+        .option-card h4 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        /* ===== COMPLETION BADGE ===== */
+        .completion-badge {
+            background: linear-gradient(135deg, var(--success-color) 0%, #2ecc71 100%);
+            color: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            margin: 2rem 0;
+            display: none;
+        }
+
+        .completion-badge.show {
+            display: block;
+            animation: fadeInScale 0.5s ease;
+        }
+
+        .completion-badge h3 {
+            color: var(--white);
+            margin-bottom: 1rem;
+        }
+
+        .completion-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            background: var(--primary-color);
+            color: var(--white);
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 3rem;
+        }
+
+        footer p {
+            margin: 0.5rem 0;
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+        }
+
+        /* ===== PRINT STYLES ===== */
+        @media print {
+            .progress-section,
+            .skip-link {
+                display: none;
+            }
+
+            .content-section {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* ===== HIGH CONTRAST MODE ===== */
+        @media (prefers-contrast: high) {
+            .content-section {
+                border: 2px solid var(--text-dark);
+            }
+        }
+
+        /* ===== REDUCED MOTION ===== */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header role="banner">
+        <div class="header-content">
+            <p class="course-code">
+                <span>📚</span>
+                <span>CSC 156 - Digital Forensics Fundamentals | Week 4</span>
+            </p>
+            <h1>Discussion Post 4: HDD vs. SSD Forensic Challenges</h1>
+            <p class="assignment-subtitle">Share Your Insights and Engage with Peers (3 points)</p>
+        </div>
+    </header>
+
+    <main id="main-content" role="main">
+        <!-- Progress Section -->
+        <div class="progress-section">
+            <div class="progress-header">
+                <h2>📊 Your Discussion Progress</h2>
+                <div class="time-estimate">
+                    <span>⏱️</span>
+                    <span>Estimated Time: ~2 hours</span>
+                </div>
+            </div>
+            <div class="progress-bar-container" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Discussion Post 4 progress">
+                <div class="progress-bar" id="progressBar">0%</div>
+            </div>
+            <p style="font-size: 0.9rem; color: var(--text-light); margin-top: 0.5rem;">
+                💾 Progress is saved for this session only
+            </p>
+        </div>
+
+        <!-- Discussion Overview -->
+        <section class="content-section">
+            <h2><span class="alert-icon">💬</span> Discussion Overview</h2>
+            <p>This week's discussion focuses on the critical differences between Hard Disk Drives (HDDs) and Solid State Drives (SSDs) and their profound impact on digital forensic investigations. This is an opportunity to apply your knowledge from Modules 4.1-4.4 and engage with your classmates on these evolving challenges.</p>
+            
+            <div class="alert alert-info">
+                <strong>Objective:</strong>
+                <p>To demonstrate understanding of HDD and SSD technologies and their forensic implications, and to engage in thoughtful peer discussion.</p>
+            </div>
+
+            <h3>Total Points: 3 points</h3>
+            <h3>CSLO Alignment: CSLO 2</h3>
+            <p>This discussion supports <strong>CSLO 2: Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data.</strong> Your ability to articulate the challenges posed by different storage media is key to conducting effective examinations.</p>
+        </section>
+
+        <!-- Initial Post -->
+        <section class="content-section">
+            <h2><span class="alert-icon">📝</span> Part 1: Initial Post (2 points)</h2>
+            <p>Choose **ONE** of the following discussion prompts. Your initial post should be a well-researched and thoughtful response.</p>
+
+            <div class="option-card" onclick="selectPrompt(this, 'prompt1')" role="button" tabindex="0">
+                <h4>Option 1: SSD Data Recovery Challenges</h4>
+                <p>Research a real-world case where SSD technology significantly complicated a digital forensic investigation, particularly regarding deleted file recovery. Describe the case briefly, explain *how* SSD characteristics (TRIM, wear leveling, garbage collection) impacted the investigation, and what the ultimate outcome was for evidence recovery.</p>
+            </div>
+
+            <div class="option-card" onclick="selectPrompt(this, 'prompt2')" role="button" tabindex="0">
+                <h4>Option 2: TRIM and Evidence Destruction</h4>
+                <p>Explain the technical function of the TRIM command and how it affects digital forensic investigations, especially concerning deleted data. Discuss the ethical and legal trade-offs forensic examiners face when dealing with TRIM-enabled SSDs (e.g., balancing evidence preservation with data destruction for performance).</p>
+            </div>
+
+            <div class="option-card" onclick="selectPrompt(this, 'prompt3')" role="button" tabindex="0">
+                <h4>Option 3: Hardware Encryption Dilemma</h4>
+                <p>Many modern SSDs are Self-Encrypting Drives (SEDs) with hardware encryption. Discuss the legal, technical, and ethical considerations when a suspect's SED is locked and the password is unknown. How does this compare to software encryption on an HDD?</p>
+            </div>
+
+            <div class="option-card" onclick="selectPrompt(this, 'prompt4')" role="button" tabindex="0">
+                <h4>Option 4: Future of Storage Forensics</h4>
+                <p>Based on current trends (e.g., persistent memory, cloud storage, new NAND technologies), how do you anticipate storage technologies will continue to impact digital forensics in the next 5-10 years? What new challenges and opportunities do you foresee?</p>
+            </div>
+
+            <h4>Requirements for Initial Post:</h4>
+            <ul class="checklist" id="initialPostChecklist">
+                <li class="checklist-item">
+                    <input type="checkbox" id="ip-wordcount" onchange="updateProgress()">
+                    <label for="ip-wordcount"><strong>Minimum 150 words.</strong></label>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="ip-source" onchange="updateProgress()">
+                    <label for="ip-source"><strong>Cite at least one external source</strong> (e.g., academic article, industry whitepaper, news report). Use proper citation format (e.g., APA, MLA, Chicago).</label>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="ip-terminology" onchange="updateProgress()">
+                    <label for="ip-terminology"><strong>Use proper forensic terminology</strong> (e.g., TRIM, wear leveling, unallocated space, write blocker).</label>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="ip-examples" onchange="updateProgress()">
+                    <label for="ip-examples"><strong>Provide specific examples</strong> to illustrate your points.</label>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="ip-post" onchange="updateProgress()">
+                    <label for="ip-post"><strong>Post your initial response</strong> on the Canvas discussion board.</label>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Peer Responses -->
+        <section class="content-section">
+            <h2><span class="alert-icon">👥</span> Part 2: Peer Responses (1 point)</h2>
+            <p>Engage with your classmates by responding to their initial posts. Aim for responses that add value to the discussion.</p>
+
+            <h4>Requirements for Peer Responses:</h4>
+            <ul class="checklist" id="peerResponsesChecklist">
+                <li class="checklist-item">
+                    <input type="checkbox" id="pr-count" onchange="updateProgress()">
+                    <label for="pr-count"><strong>Respond to at least 2 classmates.</strong></label>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="pr-wordcount" onchange="updateProgress()">
+                    <label for="pr-wordcount"><strong>Minimum 50 words per response.</strong></label>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="pr-value" onchange="updateProgress()">
+                    <label for="pr-value"><strong>Add value to the discussion:</strong> Ask clarifying questions, offer alternative perspectives, share additional resources, or connect their post to other course material.</label>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Grading Rubric -->
+        <section class="content-section">
+            <h2><span class="alert-icon">💯</span> Grading Rubric</h2>
+            <p>Your discussion post will be graded based on the following criteria:</p>
+            <ul>
+                <li><strong>Initial Post (2 points):</strong>
+                    <ul>
+                        <li>**1 point:** Content quality, depth of research, and accuracy of forensic concepts.</li>
+                        <li>**0.5 points:** Adherence to word count, use of proper terminology, and inclusion of examples.</li>
+                        <li>**0.5 points:** Proper citation of external source.</li>
+                    </ul>
+                </li>
+                <li><strong>Peer Responses (1 point):</strong>
+                    <ul>
+                        <li>**0.5 points:** Quantity of responses (at least 2).</li>
+                        <li>**0.5 points:** Quality of responses (adding value, meeting word count).</li>
+                    </ul>
+                </li>
+            </ul>
+            <div class="alert alert-success">
+                <strong>Pro-Tip:</strong>
+                <p>A high-quality discussion post demonstrates not only what you know but also your ability to critically think about complex forensic challenges and communicate effectively with your peers.</p>
+            </div>
+        </section>
+
+        <!-- Completion Badge -->
+        <div class="completion-badge" id="completionBadge">
+            <div class="completion-icon">🎉</div>
+            <h3>Discussion Post 4 Complete!</h3>
+            <p>Congratulations! You've completed your Week 4 Discussion Post.</p>
+            <p>Keep engaging with your classmates!</p>
+        </div>
+    </main>
+
+    <footer role="contentinfo">
+        <p>© 2026 Mendocino College | CSC 156 - Digital Forensics Fundamentals</p>
+        <p>Week 4: Discussion Post 4</p>
+        <p>Instructor: David Pai | Spring 2026</p>
+        <p style="margin-top: 1rem; font-size: 0.9rem;">
+            💾 Your progress is saved for this session only. Bookmark this page to return to it later.
+        </p>
+    </footer>
+
+    <script>
+        // ===== SESSION STORAGE KEY =====
+        const STORAGE_KEY = 'csc156_week4_discussion4_progress';
+
+        // ===== PROGRESS TRACKING =====
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('.checklist-item input[type="checkbox"]');
+            let completedTasks = 0;
+            const totalTasks = checkboxes.length;
+            const progressData = {};
+
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    completedTasks++;
+                    checkbox.closest('.checklist-item').classList.add('completed');
+                } else {
+                    checkbox.closest('.checklist-item').classList.remove('completed');
+                }
+                progressData[checkbox.id] = checkbox.checked;
+            });
+
+            const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = percentage + '%';
+            progressBar.textContent = percentage + '%';
+            progressBar.parentElement.setAttribute('aria-valuenow', percentage);
+
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(progressData));
+
+            if (percentage >= 100) {
+                document.getElementById('completionBadge').classList.add('show');
+            } else {
+                document.getElementById('completionBadge').classList.remove('show');
+            }
+        }
+
+        // Load progress from session storage
+        function loadProgress() {
+            const savedProgress = sessionStorage.getItem(STORAGE_KEY);
+            if (savedProgress) {
+                const progressData = JSON.parse(savedProgress);
+                Object.keys(progressData).forEach(id => {
+                    const checkbox = document.getElementById(id);
+                    if (checkbox) {
+                        checkbox.checked = progressData[id];
+                    }
+                });
+            }
+            updateProgress(); // Update UI based on loaded data
+        }
+
+        // ===== PROMPT SELECTION =====
+        function selectPrompt(card, promptId) {
+            const allPromptCards = document.querySelectorAll('.option-card');
+            allPromptCards.forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+
+            // Optionally, you could save the selected prompt to session storage too
+            sessionStorage.setItem('selectedPrompt', promptId);
+        }
+
+        // ===== INITIALIZE ON PAGE LOAD =====
+        window.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+
+            // Load selected prompt
+            const savedPrompt = sessionStorage.getItem('selectedPrompt');
+            if (savedPrompt) {
+                const promptCard = document.querySelector(`[onclick="selectPrompt(this, '${savedPrompt}')"]`);
+                if (promptCard) {
+                    promptCard.classList.add('selected');
+                }
+            }
+
+            // Announce page load to screen readers
+            const announcement = document.createElement('div');
+            announcement.setAttribute('role', 'status');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.className = 'sr-only';
+            announcement.textContent = 'Discussion Post 4 page loaded. Use tab to navigate through sections and options.';
+            document.body.appendChild(announcement);
+
+            // Remove announcement after screen readers process it
+            setTimeout(() => {
+                announcement.remove();
+            }, 3000);
+        });
+
+        // Periodic progress save
+        setInterval(updateProgress, 30000); // Save every 30 seconds
+    </script>
+</body>
+</html>
