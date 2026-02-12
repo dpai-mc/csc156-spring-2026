@@ -1,0 +1,3162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Module 4.3: Storage Interfaces & Controllers - Understanding storage connection technologies and their forensic implications">
+    <title>Module 4.3: Storage Interfaces & Controllers | CSC 156</title>
+    <style>
+        /* ===== CSS VARIABLES ===== */
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --info-color: #16a085;
+            --light-bg: #ecf0f1;
+            --white: #ffffff;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --border-color: #bdc3c7;
+            --shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-hover: 0 4px 12px rgba(0,0,0,0.15);
+            --transition: all 0.3s ease;
+            --border-radius: 8px;
+        }
+
+        /* ===== GLOBAL STYLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--light-bg);
+        }
+
+        /* ===== ACCESSIBILITY ===== */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 8px 16px;
+            text-decoration: none;
+            z-index: 100;
+            border-radius: 0 0 4px 0;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        /* ===== HEADER ===== */
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #34495e 100%);
+            color: var(--white);
+            padding: 2rem 1rem;
+            box-shadow: var(--shadow);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .course-code {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .module-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            font-weight: normal;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            min-height: 60vh;
+        }
+
+        /* ===== PROGRESS SECTION ===== */
+        .progress-section {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .progress-bar-container {
+            background: var(--light-bg);
+            border-radius: 10px;
+            height: 30px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--success-color) 0%, #2ecc71 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .time-estimate {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* ===== SECTION NAVIGATION ===== */
+        .section-nav {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .section-nav h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .section-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .section-link {
+            padding: 1rem;
+            background: var(--light-bg);
+            border-left: 4px solid var(--secondary-color);
+            border-radius: 4px;
+            text-decoration: none;
+            color: var(--text-dark);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-link:hover {
+            background: var(--secondary-color);
+            color: var(--white);
+            transform: translateX(4px);
+        }
+
+        .section-link:focus {
+            outline: 2px solid var(--secondary-color);
+            outline-offset: 2px;
+        }
+
+        .section-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* ===== CONTENT SECTIONS ===== */
+        .content-section {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            scroll-margin-top: 80px;
+        }
+
+        .content-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .content-section h3 {
+            color: var(--secondary-color);
+            margin: 2rem 0 1rem;
+            font-size: 1.4rem;
+        }
+
+        .content-section h4 {
+            color: var(--text-dark);
+            margin: 1.5rem 0 0.75rem;
+            font-size: 1.2rem;
+        }
+
+        .content-section h5 {
+            color: var(--text-dark);
+            margin: 1rem 0 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .content-section p {
+            margin-bottom: 1rem;
+            line-height: 1.8;
+        }
+
+        .content-section ul, .content-section ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .content-section li {
+            margin-bottom: 0.5rem;
+            line-height: 1.8;
+        }
+
+        /* ===== ALERT BOXES ===== */
+        .alert {
+            padding: 1.25rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+            border-left: 4px solid;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .alert-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert strong {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-color: var(--info-color);
+            color: #0c5460;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-color: var(--warning-color);
+            color: #856404;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-color: var(--success-color);
+            color: #155724;
+        }
+
+        .alert-forensic {
+            background: #e8f4f8;
+            border-color: var(--secondary-color);
+            color: #004085;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            border-color: var(--accent-color);
+            color: #721c24;
+        }
+
+        /* ===== INTERFACE CARDS ===== */
+        .interface-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .interface-card {
+            background: var(--white);
+            border: 3px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .interface-card:hover {
+            border-color: var(--secondary-color);
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-4px);
+        }
+
+        .interface-card.active {
+            border-color: var(--success-color);
+            background: #f0f9f4;
+        }
+
+        .interface-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .interface-icon {
+            font-size: 2.5rem;
+        }
+
+        .interface-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .interface-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-top: 0.25rem;
+        }
+
+        .interface-specs {
+            background: var(--light-bg);
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+
+        .interface-specs h5 {
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .spec-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .spec-item:last-child {
+            border-bottom: none;
+        }
+
+        .spec-label {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .spec-value {
+            color: var(--text-light);
+        }
+
+        .forensic-impact {
+            background: #e8f4f8;
+            padding: 1rem;
+            border-left: 4px solid var(--secondary-color);
+            border-radius: 4px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .interface-card.active .forensic-impact {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .forensic-impact h5 {
+            color: var(--secondary-color);
+            margin-bottom: 0.75rem;
+            font-size: 1rem;
+        }
+
+        /* ===== COMPARISON TABLE ===== */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            border-radius: var(--border-radius);
+        }
+
+        .comparison-table thead {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+
+        .comparison-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comparison-table tbody tr:hover {
+            background: var(--light-bg);
+        }
+
+        .comparison-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ===== RAID VISUAL ===== */
+        .raid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .raid-card {
+            background: var(--white);
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .raid-card:hover {
+            border-color: var(--secondary-color);
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-4px);
+        }
+
+        .raid-card.active {
+            border-color: var(--success-color);
+            background: #f0f9f4;
+        }
+
+        .raid-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .raid-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .raid-badge {
+            background: var(--secondary-color);
+            color: var(--white);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .raid-visual {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+
+        .raid-disk {
+            width: 40px;
+            height: 60px;
+            background: var(--secondary-color);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .raid-disk.parity {
+            background: var(--warning-color);
+        }
+
+        .raid-disk.mirror {
+            background: var(--info-color);
+        }
+
+        .raid-description {
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .raid-forensics {
+            background: var(--light-bg);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .raid-card.active .raid-forensics {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        /* ===== SPEED COMPARISON CHART ===== */
+        .speed-chart {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: var(--light-bg);
+            border-radius: var(--border-radius);
+        }
+
+        .speed-chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .speed-bar-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .speed-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .speed-bar {
+            background: var(--white);
+            height: 40px;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: var(--shadow);
+        }
+
+        .speed-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-color) 0%, #5dade2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 1rem;
+            color: var(--white);
+            font-weight: bold;
+            transition: width 1s ease;
+        }
+
+        /* ===== INTERACTIVE MATCHING GAME ===== */
+        .matching-game {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            margin: 2rem 0;
+        }
+
+        .matching-game h3 {
+            color: var(--white);
+            margin-top: 0;
+            margin-bottom: 1rem;
+        }
+
+        .matching-instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+        }
+
+        .matching-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .matching-column h4 {
+            color: var(--white);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .matching-item {
+            background: var(--white);
+            color: var(--text-dark);
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 3px solid transparent;
+        }
+
+        .matching-item:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .matching-item.selected {
+            border-color: var(--warning-color);
+            background: #fff3cd;
+        }
+
+        .matching-item.matched {
+            border-color: var(--success-color);
+            background: #d4edda;
+            cursor: default;
+        }
+
+        .matching-item.matched:hover {
+            transform: none;
+        }
+
+        .game-feedback {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            text-align: center;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ===== SCENARIO BUILDER ===== */
+        .scenario-builder {
+            background: var(--white);
+            border: 2px solid var(--secondary-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .scenario-builder h3 {
+            color: var(--secondary-color);
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .scenario-step {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--light-bg);
+            border-radius: var(--border-radius);
+        }
+
+        .scenario-step h4 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .scenario-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .scenario-option {
+            padding: 1rem;
+            background: var(--white);
+            border: 2px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .scenario-option:hover {
+            background: #d5dbdb;
+        }
+
+        .scenario-option.selected {
+            border-color: var(--secondary-color);
+            background: #d1ecf1;
+        }
+
+        .scenario-result {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            display: none;
+        }
+
+        .scenario-result.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .scenario-result.optimal {
+            background: #d4edda;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .scenario-result.suboptimal {
+            background: #fff3cd;
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .scenario-result.poor {
+            background: #f8d7da;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .analyze-btn {
+            background: var(--secondary-color);
+            color: var(--white);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: var(--transition);
+            margin-top: 1rem;
+        }
+
+        .analyze-btn:hover {
+            background: #2980b9;
+        }
+
+        .analyze-btn:disabled {
+            background: var(--text-light);
+            cursor: not-allowed;
+        }
+
+        /* ===== KNOWLEDGE CHECK ===== */
+        .knowledge-check {
+            background: var(--white);
+            border: 2px solid var(--secondary-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .knowledge-check h3 {
+            color: var(--secondary-color);
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .quiz-question {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .quiz-question:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .question-text {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .quiz-option {
+            padding: 1rem;
+            background: var(--light-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .quiz-option:hover {
+            background: #d5dbdb;
+        }
+
+        .quiz-option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .quiz-option.correct {
+            background: #d4edda;
+            border-color: var(--success-color);
+        }
+
+        .quiz-option.incorrect {
+            background: #f8d7da;
+            border-color: var(--accent-color);
+        }
+
+        .quiz-feedback {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .quiz-feedback.show {
+            display: block;
+        }
+
+        .quiz-feedback.correct {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .quiz-feedback.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .check-answer-btn {
+            background: var(--secondary-color);
+            color: var(--white);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: var(--transition);
+            margin-top: 1rem;
+        }
+
+        .check-answer-btn:hover {
+            background: #2980b9;
+        }
+
+        .check-answer-btn:disabled {
+            background: var(--text-light);
+            cursor: not-allowed;
+        }
+
+        /* ===== EXPANDABLE SECTIONS ===== */
+        .expandable {
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+
+        .expandable-header {
+            background: var(--light-bg);
+            padding: 1.25rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .expandable-header:hover {
+            background: #d5dbdb;
+        }
+
+        .expandable-icon {
+            transition: transform 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .expandable.open .expandable-icon {
+            transform: rotate(180deg);
+        }
+
+        .expandable-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .expandable.open .expandable-content {
+            max-height: 3000px;
+        }
+
+        .expandable-body {
+            padding: 1.5rem;
+        }
+
+        /* ===== WRITE BLOCKER SHOWCASE ===== */
+        .blocker-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .blocker-card {
+            background: var(--white);
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .blocker-card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-4px);
+        }
+
+        .blocker-type {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .blocker-description {
+            color: var(--text-light);
+            margin-bottom: 1rem;
+        }
+
+        .blocker-pros {
+            background: #d4edda;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 0.75rem;
+        }
+
+        .blocker-cons {
+            background: #f8d7da;
+            padding: 1rem;
+            border-radius: 4px;
+        }
+
+        .blocker-pros h5,
+        .blocker-cons h5 {
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .blocker-pros ul,
+        .blocker-cons ul {
+            margin-left: 1.5rem;
+            margin-bottom: 0;
+        }
+
+        /* ===== COMPLETION BADGE ===== */
+        .completion-badge {
+            background: linear-gradient(135deg, var(--success-color) 0%, #2ecc71 100%);
+            color: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            margin: 2rem 0;
+            display: none;
+        }
+
+        .completion-badge.show {
+            display: block;
+            animation: fadeInScale 0.5s ease;
+        }
+
+        .completion-badge h3 {
+            color: var(--white);
+            margin-bottom: 1rem;
+        }
+
+        .completion-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            background: var(--primary-color);
+            color: var(--white);
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 3rem;
+        }
+
+        footer p {
+            margin: 0.5rem 0;
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+
+            .interface-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .matching-container {
+                grid-template-columns: 1fr;
+            }
+
+            .section-links {
+                grid-template-columns: 1fr;
+            }
+
+            .raid-container {
+                grid-template-columns: 1fr;
+            }
+
+            .blocker-showcase {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ===== PRINT STYLES ===== */
+        @media print {
+            .progress-section,
+            .skip-link,
+            .matching-game,
+            .scenario-builder,
+            .knowledge-check {
+                display: none;
+            }
+
+            .content-section {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* ===== HIGH CONTRAST MODE ===== */
+        @media (prefers-contrast: high) {
+            .interface-card,
+            .content-section {
+                border: 2px solid var(--text-dark);
+            }
+        }
+
+        /* ===== REDUCED MOTION ===== */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header role="banner">
+        <div class="header-content">
+            <p class="course-code">
+                <span>📚</span>
+                <span>CSC 156 - Digital Forensics Fundamentals | Week 4</span>
+            </p>
+            <h1>Module 4.3: Storage Interfaces & Controllers</h1>
+            <p class="module-subtitle">Understanding Connection Technologies and RAID Configurations</p>
+        </div>
+    </header>
+
+    <main id="main-content" role="main">
+        <!-- Progress Section -->
+        <div class="progress-section">
+            <div class="progress-header">
+                <h2>📊 Module 4.3 Progress</h2>
+                <div class="time-estimate">
+                    <span>⏱️</span>
+                    <span>Estimated Time: 35-40 minutes</span>
+                </div>
+            </div>
+            <div class="progress-bar-container" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Module 4.3 progress">
+                <div class="progress-bar" id="progressBar">0%</div>
+            </div>
+            <p style="font-size: 0.9rem; color: var(--text-light); margin-top: 0.5rem;">
+                💾 Progress is saved for this session only
+            </p>
+        </div>
+
+        <!-- Section Navigation -->
+        <div class="section-nav">
+            <h2>📑 Module Sections</h2>
+            <div class="section-links">
+                <a href="#section-overview" class="section-link">
+                    <span class="section-icon">🎯</span>
+                    <span>Overview & Objectives</span>
+                </a>
+                <a href="#section-sata" class="section-link">
+                    <span class="section-icon">💿</span>
+                    <span>SATA Interface</span>
+                </a>
+                <a href="#section-nvme" class="section-link">
+                    <span class="section-icon">⚡</span>
+                    <span>NVMe Interface</span>
+                </a>
+                <a href="#section-usb" class="section-link">
+                    <span class="section-icon">🔌</span>
+                    <span>USB Interface</span>
+                </a>
+                <a href="#section-raid" class="section-link">
+                    <span class="section-icon">🗄️</span>
+                    <span>RAID Configurations</span>
+                </a>
+                <a href="#section-blockers" class="section-link">
+                    <span class="section-icon">🔒</span>
+                    <span>Write Blockers</span>
+                </a>
+                <a href="#section-activity" class="section-link">
+                    <span class="section-icon">🎮</span>
+                    <span>Interactive Activities</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Overview Section -->
+        <section id="section-overview" class="content-section">
+            <h2><span>🎯</span> Module Overview & Learning Objectives</h2>
+            
+            <div class="alert alert-info">
+                <span class="alert-icon">💡</span>
+                <div class="alert-content">
+                    <strong>Why Storage Interfaces Matter in Digital Forensics</strong>
+                    <p>Storage interfaces are the communication pathways between storage devices and the rest of the computer system. Understanding these interfaces is essential because they directly impact acquisition speed, write-blocking strategies, and tool compatibility. The interface you're working with determines which write blockers you can use, how fast you can image evidence, and what challenges you'll face during acquisition.</p>
+                </div>
+            </div>
+
+            <h3>Learning Objectives</h3>
+            <p>By the end of this module, you will be able to:</p>
+            <ol>
+                <li><strong>Identify common storage interfaces</strong> including SATA, NVMe, and USB, and explain their technical characteristics</li>
+                <li><strong>Explain how different interfaces affect forensic acquisition</strong> including speed limitations, write-blocking requirements, and tool compatibility</li>
+                <li><strong>Describe RAID configurations</strong> and their forensic implications, including documentation requirements and reconstruction challenges</li>
+                <li><strong>Select appropriate write blockers</strong> based on interface type and investigation requirements</li>
+                <li><strong>Apply interface knowledge</strong> to make informed decisions about evidence collection strategies</li>
+                <li><strong>Document RAID configurations properly</strong> to prevent data loss during evidence collection</li>
+            </ol>
+
+            <div class="alert alert-forensic">
+                <span class="alert-icon">🔍</span>
+                <div class="alert-content">
+                    <strong>Connection to CSLO 2 and CSLO 3</strong>
+                    <p>This module supports <strong>CSLO 2: Conduct thorough examinations of computer hard disk drives and other electronic data storage media</strong> and <strong>CSLO 3: Perform data collection using forensic technology methods in accordance with evidence handling procedures</strong>. You cannot properly collect evidence without understanding how storage devices connect to systems and how to prevent writes during acquisition.</p>
+                </div>
+            </div>
+
+            <h3>Module Structure</h3>
+            <p>This module explores storage interfaces through five major sections:</p>
+            <ul>
+                <li><strong>SATA (Serial ATA):</strong> The most common interface for internal drives</li>
+                <li><strong>NVMe (Non-Volatile Memory Express):</strong> High-speed PCIe-based interface for modern SSDs</li>
+                <li><strong>USB (Universal Serial Bus):</strong> Ubiquitous interface for external storage</li>
+                <li><strong>RAID Configurations:</strong> Multiple-disk arrays and their forensic challenges</li>
+                <li><strong>Write Blockers:</strong> Essential tools for forensically sound acquisition</li>
+            </ul>
+
+            <div class="alert alert-warning">
+                <span class="alert-icon">⚠️</span>
+                <div class="alert-content">
+                    <strong>Critical Concept</strong>
+                    <p>The interface determines your acquisition strategy. A SATA HDD and an NVMe SSD require different write blockers, have vastly different acquisition speeds, and present different challenges. Understanding interfaces is not just academic—it's practical knowledge you'll use in every investigation.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SATA Section -->
+        <section id="section-sata" class="content-section">
+            <h2><span>💿</span> SATA (Serial ATA) Interface</h2>
+
+            <h3>What is SATA?</h3>
+            <p><strong>Serial ATA (SATA)</strong> is the most common interface for connecting internal storage devices (HDDs and SSDs) in desktop computers and laptops. Introduced in 2003 to replace the older parallel ATA (PATA/IDE) interface, SATA uses serial communication for faster, more reliable data transfer with simpler cabling.</p>
+
+            <h3>SATA Generations & Speeds</h3>
+
+            <div class="interface-grid">
+                <div class="interface-card" onclick="toggleInterface(this)" role="button" tabindex="0">
+                    <div class="interface-header">
+                        <div>
+                            <span class="interface-icon">💿</span>
+                        </div>
+                        <div>
+                            <div class="interface-title">SATA I</div>
+                            <div class="interface-subtitle">First Generation (2003)</div>
+                        </div>
+                    </div>
+                    <div class="interface-specs">
+                        <h5>Technical Specifications</h5>
+                        <div class="spec-item">
+                            <span class="spec-label">Speed:</span>
+                            <span class="spec-value">1.5 Gbps</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Throughput:</span>
+                            <span class="spec-value">~150 MB/s</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Common Use:</span>
+                            <span class="spec-value">Legacy systems</span>
+                        </div>
+                    </div>
+                    <div class="forensic-impact">
+                        <h5>🔍 Forensic Implications</h5>
+                        <ul>
+                            <li><strong>Acquisition Time:</strong> Slower imaging (500GB ≈ 1 hour)</li>
+                            <li><strong>Compatibility:</strong> All write blockers support SATA I</li>
+                            <li><strong>Prevalence:</strong> Rare in modern systems but found in older evidence</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="interface-card" onclick="toggleInterface(this)" role="button" tabindex="0">
+                    <div class="interface-header">
+                        <div>
+                            <span class="interface-icon">💿</span>
+                        </div>
+                        <div>
+                            <div class="interface-title">SATA II</div>
+                            <div class="interface-subtitle">Second Generation (2004)</div>
+                        </div>
+                    </div>
+                    <div class="interface-specs">
+                        <h5>Technical Specifications</h5>
+                        <div class="spec-item">
+                            <span class="spec-label">Speed:</span>
+                            <span class="spec-value">3 Gbps</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Throughput:</span>
+                            <span class="spec-value">~300 MB/s</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Common Use:</span>
+                            <span class="spec-value">2005-2010 systems</span>
+                        </div>
+                    </div>
+                    <div class="forensic-impact">
+                        <h5>🔍 Forensic Implications</h5>
+                        <ul>
+                            <li><strong>Acquisition Time:</strong> Moderate (500GB ≈ 30 minutes)</li>
+                            <li><strong>Compatibility:</strong> Excellent write blocker support</li>
+                            <li><strong>Prevalence:</strong> Still found in older corporate systems</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="interface-card" onclick="toggleInterface(this)" role="button" tabindex="0">
+                    <div class="interface-header">
+                        <div>
+                            <span class="interface-icon">💿</span>
+                        </div>
+                        <div>
+                            <div class="interface-title">SATA III</div>
+                            <div class="interface-subtitle">Third Generation (2009)</div>
+                        </div>
+                    </div>
+                    <div class="interface-specs">
+                        <h5>Technical Specifications</h5>
+                        <div class="spec-item">
+                            <span class="spec-label">Speed:</span>
+                            <span class="spec-value">6 Gbps</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Throughput:</span>
+                            <span class="spec-value">~600 MB/s</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Common Use:</span>
+                            <span class="spec-value">Most current systems</span>
+                        </div>
+                    </div>
+                    <div class="forensic-impact">
+                        <h5>🔍 Forensic Implications</h5>
+                        <ul>
+                            <li><strong>Acquisition Time:</strong> Fast (500GB ≈ 15 minutes)</li>
+                            <li><strong>Compatibility:</strong> Universal write blocker support</li>
+                            <li><strong>Prevalence:</strong> Most common interface in investigations</li>
+                            <li><strong>Note:</strong> SATA III is backward compatible with SATA I/II</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <h3>SATA Physical Characteristics</h3>
+            <ul>
+                <li><strong>Cable Type:</strong> 7-pin data cable (thin, flexible, red or black typically)</li>
+                <li><strong>Power Connector:</strong> 15-pin SATA power connector</li>
+                <li><strong>Cable Length:</strong> Maximum 1 meter (3.3 feet)</li>
+                <li><strong>Hot-Swappable:</strong> Yes, when AHCI mode is enabled in BIOS</li>
+            </ul>
+
+            <div class="alert alert-info">
+                <span class="alert-icon">💡</span>
+                <div class="alert-content">
+                    <strong>AHCI (Advanced Host Controller Interface)</strong>
+                    <p>AHCI is a mode that enables advanced SATA features including hot-swapping (connecting/disconnecting drives without shutdown) and Native Command Queuing (NCQ) for better performance. Most modern systems use AHCI mode by default.</p>
+                    <p><strong>Forensic Note:</strong> AHCI mode is beneficial for forensics as it enables easier drive connection/disconnection during examination.</p>
+                </div>
+            </div>
+
+            <h3>Forensic Advantages of SATA</h3>
+            <div class="alert alert-success">
+                <span class="alert-icon">✅</span>
+                <div class="alert-content">
+                    <strong>Why SATA is "Forensically Friendly"</strong>
+                    <ul>
+                        <li>✅ <strong>Universal Write Blocker Support:</strong> Every hardware write blocker supports SATA</li>
+                        <li>✅ <strong>Predictable Performance:</strong> Known speeds enable accurate acquisition time estimates</li>
+                        <li>✅ <strong>Simple Connection:</strong> Standard cables and connectors, no adapters needed</li>
+                        <li>✅ <strong>Mature Technology:</strong> Well-understood behavior, extensive tool support</li>
+                        <li>✅ <strong>Hot-Swap Capability:</strong> Easy to connect/disconnect during examination</li>
+                        <li>✅ <strong>Backward Compatible:</strong> SATA III ports work with SATA I/II drives</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h4>SATA Acquisition Time Estimates</h4>
+            <p>Based on SATA III maximum throughput (~600 MB/s) in ideal conditions:</p>
+            <ul>
+                <li><strong>250 GB drive:</strong> ~7-10 minutes</li>
+                <li><strong>500 GB drive:</strong> ~15-20 minutes</li>
+                <li><strong>1 TB drive:</strong> ~30-35 minutes</li>
+                <li><strong>2 TB drive:</strong> ~60-70 minutes</li>
+                <li><strong>4 TB drive:</strong> ~2-2.5 hours</li>
+            </ul>
+
+            <div class="alert alert-warning">
+                <span class="alert-icon">⚠️</span>
+                <div class="alert-content">
+                    <strong>Real-World Performance Note</strong>
+                    <p>These are theoretical maximums. Actual acquisition speeds depend on:</p>
+                    <ul>
+                        <li>Drive health and condition</li>
+                        <li>Source drive speed (HDD vs. SSD)</li>
+                        <li>Destination drive speed</li>
+                        <li>Write blocker overhead</li>
+                        <li>USB-to-SATA adapter limitations (if used)</li>
+                        <li>Bad sectors requiring retries</li>
+                    </ul>
+                    <p>Expect 50-80% of theoretical maximum in practice (e.g., 300-480 MB/s for SATA III).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- NVMe Section -->
+        <section id="section-nvme" class="content-section">
+            <h2><span>⚡</span> NVMe (Non-Volatile Memory Express) Interface</h2>
+
+            <h3>What is NVMe?</h3>
+            <p><strong>NVMe (Non-Volatile Memory Express)</strong> is a modern storage interface protocol designed specifically for SSDs, utilizing PCIe (Peripheral Component Interconnect Express) lanes for extremely high-speed data transfer. NVMe represents a fundamental departure from SATA, bypassing legacy interfaces to communicate directly with the CPU through PCIe.</p>
+
+            <div class="alert alert-info">
+                <span class="alert-icon">💡</span>
+                <div class="alert-content">
+                    <strong>Why NVMe Exists</strong>
+                    <p>SATA was designed for mechanical hard drives with millisecond access times. SSDs have microsecond access times—SATA became a bottleneck. NVMe was purpose-built for flash storage, enabling SSDs to reach their full performance potential.</p>
+                </div>
+            </div>
+
+            <h3>NVMe Technical Characteristics</h3>
+
+            <div class="interface-grid">
+                <div class="interface-card" onclick="toggleInterface(this)" role="button" tabindex="0">
+                    <div class="interface-header">
+                        <div>
+                            <span class="interface-icon">⚡</span>
+                        </div>
+                        <div>
+                            <div class="interface-title">NVMe Gen 3</div>
+                            <div class="interface-subtitle">PCIe 3.0 x4</div>
+                        </div>
+                    </div>
+                    <div class="interface-specs">
+                        <h5>Technical Specifications</h5>
+                        <div class="spec-item">
+                            <span class="spec-label">Speed:</span>
+                            <span class="spec-value">32 Gbps (PCIe 3.0 x4)</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Throughput:</span>
+                            <span class="spec-value">~3500 MB/s</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Common Use:</span>
+                            <span class="spec-value">2015-2020 systems</span>
+                        </div>
+                    </div>
+                    <div class="forensic-impact">
+                        <h5>🔍 Forensic Implications</h5>
+                        <ul>
+                            <li><strong>Acquisition Speed:</strong> 5-6x faster than SATA III</li>
+                            <li><strong>Write Blockers:</strong> Limited but growing support</li>
+                            <li><strong>Prevalence:</strong> Common in laptops and desktops from 2016+</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="interface-card" onclick="toggleInterface(this)" role="button" tabindex="0">
+                    <div class="interface-header">
+                        <div>
+                            <span class="interface-icon">⚡</span>
+                        </div>
+                        <div>
+                            <div class="interface-title">NVMe Gen 4</div>
+                            <div class="interface-subtitle">PCIe 4.0 x4</div>
+                        </div>
+                    </div>
+                    <div class="interface-specs">
+                        <h5>Technical Specifications</h5>
+                        <div class="spec-item">
+                            <span class="spec-label">Speed:</span>
+                            <span class="spec-value">64 Gbps (PCIe 4.0 x4)</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Throughput:</span>
+                            <span class="spec-value">~7000 MB/s</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Common Use:</span>
+                            <span class="spec-value">2020+ high-end systems</span>
+                        </div>
+                    </div>
+                    <div class="forensic-impact">
+                        <h5>🔍 Forensic Implications</h5>
+                        <ul>
+                            <li><strong>Acquisition Speed:</strong> 10x+ faster than SATA III</li>
+                            <li><strong>Write Blockers:</strong> Very limited support currently</li>
+                            <li><strong>Prevalence:</strong> Increasingly common in new systems</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="interface-card" onclick="toggleInterface(this)" role="button" tabindex="0">
+                    <div class="interface-header">
+                        <div>
+                            <span class="interface-icon">⚡</span>
+                        </div>
+                        <div>
+                            <div class="interface-title">NVMe Gen 5</div>
+                            <div class="interface-subtitle">PCIe 5.0 x4</div>
+                        </div>
+                    </div>
+                    <div class="interface-specs">
+                        <h5>Technical Specifications</h5>
+                        <div class="spec-item">
+                            <span class="spec-label">Speed:</span>
+                            <span class="spec-value">128 Gbps (PCIe 5.0 x4)</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Throughput:</span>
+                            <span class="spec-value">~14000 MB/s</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Common Use:</span>
+                            <span class="spec-value">2023+ cutting-edge systems</span>
+                        </div>
+                    </div>
+                    <div class="forensic-impact">
+                        <h5>🔍 Forensic Implications</h5>
+                        <ul>
+                            <li><strong>Acquisition Speed:</strong> Extremely fast (1TB in ~1-2 minutes)</li>
+                            <li><strong>Write Blockers:</strong> Minimal support, emerging technology</li>
+                            <li><strong>Prevalence:</strong> Rare currently, will increase</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <h3>NVMe Form Factors</h3>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>📐 M.2 Form Factor</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <p><strong>M.2</strong> is the most common form factor for NVMe SSDs, especially in laptops and compact desktops.</p>
+                        
+                        <h5>Physical Characteristics:</h5>
+                        <ul>
+                            <li><strong>Size:</strong> Small stick-like format (22mm wide, various lengths: 2230, 2242, 2260, 2280, 22110)</li>
+                            <li><strong>Most Common:</strong> M.2 2280 (22mm x 80mm)</li>
+                            <li><strong>Connection:</strong> Inserts directly into M.2 slot on motherboard</li>
+                            <li><strong>Keying:</strong> M-key or B+M-key notches prevent incorrect insertion</li>
+                        </ul>
+
+                        <h5>Forensic Considerations:</h5>
+                        <ul>
+                            <li><strong>Removal:</strong> Usually requires removing a small screw</li>
+                            <li><strong>Adapter Required:</strong> M.2 to USB or M.2 to SATA adapters needed for forensic workstation</li>
+                            <li><strong>Write Blocking:</strong> Software write blockers often necessary (hardware blockers rare)</li>
+                            <li><strong>Documentation:</strong> Photograph M.2 slot location before removal</li>
+                        </ul>
+
+                        <div class="alert alert-warning">
+                            <span class="alert-icon">⚠️</span>
+                            <div class="alert-content">
+                                <strong>M.2 Confusion Alert</strong>
+                                <p>Not all M.2 drives are NVMe! M.2 is a form factor, not an interface. M.2 slots can support:</p>
+                                <ul>
+                                    <li><strong>M.2 NVMe:</strong> Uses PCIe lanes (very fast)</li>
+                                    <li><strong>M.2 SATA:</strong> Uses SATA protocol (same speed as 2.5" SATA SSD)</li>
+                                </ul>
+                                <p>Check drive specifications to confirm interface type!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>🔌 U.2 Form Factor</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <p><strong>U.2</strong> (formerly SFF-8639) is an enterprise-focused form factor that looks similar to a 2.5" SATA drive but uses NVMe protocol.</p>
+                        
+                        <h5>Physical Characteristics:</h5>
+                        <ul>
+                            <li><strong>Size:</strong> 2.5" drive form factor (same as laptop SATA drives)</li>
+                            <li><strong>Connection:</strong> Special U.2 cable and connector</li>
+                            <li><strong>Hot-Swappable:</strong> Yes, designed for server environments</li>
+                        </ul>
+
+                        <h5>Forensic Considerations:</h5>
+                        <ul>
+                            <li><strong>Prevalence:</strong> Rare in consumer devices, more common in enterprise servers</li>
+                            <li><strong>Adapter Required:</strong> U.2 to M.2 or U.2 to PCIe adapters available</li>
+                            <li><strong>Write Blocking:</strong> Similar challenges to M.2 NVMe</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>🎴 PCIe Add-in Card</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <p><strong>PCIe Add-in Card</strong> NVMe drives plug directly into PCIe expansion slots on the motherboard.</p>
+                        
+                        <h5>Physical Characteristics:</h5>
+                        <ul>
+                            <li><strong>Form:</strong> Full-height or half-height PCIe card</li>
+                            <li><strong>Slot:</strong> Typically uses x4 or x8 PCIe slot</li>
+                            <li><strong>Cooling:</strong> Often includes heatsink</li>
+                        </ul>
+
+                        <h5>Forensic Considerations:</h5>
+                        <ul>
+                            <li><strong>Removal:</strong> Unscrew card from case bracket</li>
+                            <li><strong>Connection:</strong> May require PCIe to M.2 adapter for forensic workstation</li>
+                            <li><strong>Prevalence:</strong> Less common, typically in workstations or gaming PCs</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <h3>NVMe Forensic Challenges</h3>
+
+            <div class="alert alert-danger">
+                <span class="alert-icon">⚠️</span>
+                <div class="alert-content">
+                    <strong>Critical NVMe Challenges for Forensic Examiners</strong>
+                    <ul>
+                        <li>❌ <strong>Limited Write Blocker Support:</strong> Few hardware write blockers support NVMe (as of 2026)</li>
+                        <li>❌ <strong>Adapter Complications:</strong> May require M.2 to USB or M.2 to SATA adapters</li>
+                        <li>⚠️ <strong>Software Write Blocking:</strong> Often must rely on software write blockers (less trusted legally)</li>
+                        <li>⚠️ <strong>Power State Management:</strong> NVMe drives have complex power states that can affect acquisition</li>
+                        <li>⚠️ <strong>Extremely Fast TRIM:</strong> NVMe SSDs execute TRIM commands even faster than SATA SSDs</li>
+                        <li>⚠️ <strong>Driver Dependencies:</strong> May require specific NVMe drivers on forensic workstation</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h4>NVMe Acquisition Strategies</h4>
+            <p>Given the challenges, forensic examiners use these strategies for NVMe drives:</p>
+
+            <ol>
+                <li><strong>Software Write Blockers:</strong> Use trusted software write blocking solutions (FTK Imager, Arsenal Image Mounter)</li>
+                <li><strong>Specialized Hardware:</strong> Invest in NVMe-capable hardware write blockers (expensive but increasingly necessary)</li>
+                <li><strong>Live Acquisition:</strong> In some cases, image the drive while system is running (if encrypted or time-critical)</li>
+                <li><strong>Document Thoroughly:</strong> Explain write-blocking method used and justify approach in reports</li>
+                <li><strong>Verify Integrity:</strong> Multiple hash verifications to ensure no modifications occurred</li>
+            </ol>
+
+            <div class="alert alert-forensic">
+                <span class="alert-icon">🔍</span>
+                <div class="alert-content">
+                    <strong>Case Example: NVMe Acquisition Challenge</strong>
+                    <p>In a 2024 corporate espionage investigation, the suspect's laptop contained a Samsung 980 Pro NVMe SSD (1TB, PCIe 4.0). The forensic lab's hardware write blockers only supported SATA.</p>
+                    <p><strong>Solution:</strong> Examiner used FTK Imager's software write blocking with verification. The report explicitly documented the write-blocking method, explained why hardware blocking wasn't available, and provided multiple hash verifications to demonstrate integrity.</p>
+                    <p><strong>Outcome:</strong> Evidence was admitted. The examiner's thorough documentation and transparency about limitations enhanced credibility rather than undermining it.</p>
+                </div>
+            </div>
+
+            <h3>Speed Comparison: SATA vs. NVMe</h3>
+
+            <div class="speed-chart">
+                <div class="speed-chart-title">Interface Speed Comparison (Maximum Throughput)</div>
+                
+                <div class="speed-bar-container">
+                    <div class="speed-label">
+                        <span>SATA III</span>
+                        <span>600 MB/s</span>
+                    </div>
+                    <div class="speed-bar">
+                        <div class="speed-fill" style="width: 8.6%;" data-speed="8.6">600 MB/s</div>
+                    </div>
+                </div>
+
+                <div class="speed-bar-container">
+                    <div class="speed-label">
+                        <span>NVMe Gen 3 (PCIe 3.0 x4)</span>
+                        <span>3,500 MB/s</span>
+                    </div>
+                    <div class="speed-bar">
+                        <div class="speed-fill" style="width: 50%;" data-speed="50">3,500 MB/s</div>
+                    </div>
+                </div>
+
+                <div class="speed-bar-container">
+                    <div class="speed-label">
+                        <span>NVMe Gen 4 (PCIe 4.0 x4)</span>
+                        <span>7,000 MB/s</span>
+                    </div>
+                    <div class="speed-bar">
+                        <div class="speed-fill" style="width: 100%;" data-speed="100">7,000 MB/s</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-success">
+                <span class="alert-icon">✅</span>
+                <div class="alert-content">
+                    <strong>Practical Impact: Acquisition Time</strong>
+                    <p>A 1TB drive acquisition time comparison:</p>
+                    <ul>
+                        <li><strong>SATA III HDD:</strong> ~30-45 minutes (depending on drive speed)</li>
+                        <li><strong>SATA III SSD:</strong> ~30-35 minutes (interface bottleneck)</li>
+                        <li><strong>NVMe Gen 3:</strong> ~5-7 minutes</li>
+                        <li><strong>NVMe Gen 4:</strong> ~2-3 minutes</li>
+                    </ul>
+                    <p>NVMe dramatically reduces acquisition time, which is critical when dealing with SSDs where time is evidence!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- USB Section -->
+        <section id="section-usb" class="content-section">
+            <h2><span>🔌</span> USB (Universal Serial Bus) Interface</h2>
+
+            <h3>What is USB?</h3>
+            <p><strong>Universal Serial Bus (USB)</strong> is the most ubiquitous interface for connecting external devices, including storage devices, to computers. USB is found in virtually every investigation because of its universal adoption for flash drives, external hard drives, smartphones, and countless other devices.</p>
+
+            <h3>USB Generations & Speeds</h3>
+
+            <div class="comparison-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>USB Version</th>
+                            <th>Marketing Name</th>
+                            <th>Speed</th>
+                            <th>Throughput</th>
+                            <th>Year Introduced</th>
+                            <th>Forensic Prevalence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>USB 2.0</strong></td>
+                            <td>Hi-Speed USB</td>
+                            <td>480 Mbps</td>
+                            <td>~60 MB/s</td>
+                            <td>2000</td>
+                            <td>Still very common in flash drives</td>
+                        </tr>
+                        <tr>
+                            <td><strong>USB 3.0</strong></td>
+                            <td>SuperSpeed USB</td>
+                            <td>5 Gbps</td>
+                            <td>~625 MB/s</td>
+                            <td>2008</td>
+                            <td>Common in external drives</td>
+                        </tr>
+                        <tr>
+                            <td><strong>USB 3.1 Gen 2</strong></td>
+                            <td>SuperSpeed USB 10Gbps</td>
+                            <td>10 Gbps</td>
+                            <td>~1,250 MB/s</td>
+                            <td>2013</td>
+                            <td>Common in modern systems</td>
+                        </tr>
+                        <tr>
+                            <td><strong>USB 3.2</strong></td>
+                            <td>SuperSpeed USB 20Gbps</td>
+                            <td>20 Gbps</td>
+                            <td>~2,500 MB/s</td>
+                            <td>2017</td>
+                            <td>Increasingly common</td>
+                        </tr>
+                        <tr>
+                            <td><strong>USB4</strong></td>
+                            <td>USB4</td>
+                            <td>40 Gbps</td>
+                            <td>~5,000 MB/s</td>
+                            <td>2019</td>
+                            <td>Emerging in newest devices</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="alert alert-info">
+                <span class="alert-icon">💡</span>
+                <div class="alert-content">
+                    <strong>USB Naming Confusion</strong>
+                    <p>USB naming has become confusing over the years. USB 3.0, USB 3.1 Gen 1, and USB 3.2 Gen 1 are all the same thing (5 Gbps). Always check actual speed specifications rather than relying on version numbers alone.</p>
+                </div>
+            </div>
+
+            <h3>USB Connector Types</h3>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>🔌 Common USB Connectors</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <h5>USB-A (Type-A)</h5>
+                        <ul>
+                            <li><strong>Description:</strong> Rectangular connector, most common on computers</li>
+                            <li><strong>Usage:</strong> Flash drives, external drives, keyboards, mice</li>
+                            <li><strong>Color Coding:</strong> Black (USB 2.0), Blue (USB 3.0), Red/Yellow (always-on power)</li>
+                        </ul>
+
+                        <h5>USB-B (Type-B)</h5>
+                        <ul>
+                            <li><strong>Description:</strong> Square connector with beveled corners</li>
+                            <li><strong>Usage:</strong> Printers, scanners, external drive enclosures</li>
+                            <li><strong>Variants:</strong> Mini-B and Micro-B for smaller devices</li>
+                        </ul>
+
+                        <h5>USB-C (Type-C)</h5>
+                        <ul>
+                            <li><strong>Description:</strong> Oval, reversible connector (can be inserted either way)</li>
+                            <li><strong>Usage:</strong> Modern laptops, smartphones, tablets, external SSDs</li>
+                            <li><strong>Capabilities:</strong> Supports USB 3.x, USB4, Thunderbolt 3/4, power delivery</li>
+                            <li><strong>Forensic Note:</strong> Increasingly common in evidence, supports highest speeds</li>
+                        </ul>
+
+                        <h5>Micro-USB</h5>
+                        <ul>
+                            <li><strong>Description:</strong> Small connector, asymmetric</li>
+                            <li><strong>Usage:</strong> Older Android phones, cameras, small electronics</li>
+                            <li><strong>Forensic Note:</strong> Still very common in evidence from 2015-2020 era devices</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Forensic Significance of USB</h3>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>🔍 USB Connection Artifacts</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <p>Operating systems log extensive information about USB device connections, creating valuable forensic artifacts covered in detail in Weeks 7-8 (Windows Forensics).</p>
+
+                        <h5>Windows USB Artifacts:</h5>
+                        <ul>
+                            <li><strong>Registry Keys:</strong> USBSTOR, USB, MountedDevices keys track all connected USB devices</li>
+                            <li><strong>Information Captured:</strong> Vendor ID, Product ID, Serial Number, Device Name, First/Last Connection Times</li>
+                            <li><strong>Setupapi.dev.log:</strong> Detailed log of device driver installations</li>
+                            <li><strong>LNK Files:</strong> Shortcuts created when files opened from USB devices</li>
+                        </ul>
+
+                        <h5>Forensic Value:</h5>
+                        <ul>
+                            <li>Proves a specific USB device was connected to the computer</li>
+                            <li>Establishes timeline of when device was connected/disconnected</li>
+                            <li>Identifies what files were accessed from the device</li>
+                            <li>Can reveal data exfiltration to external storage</li>
+                        </ul>
+
+                        <div class="alert alert-forensic">
+                            <span class="alert-icon">🔍</span>
+                            <div class="alert-content">
+                                <strong>Case Example: USB Data Exfiltration</strong>
+                                <p>In a 2023 intellectual property theft case, the suspect denied ever using USB drives. Windows Registry analysis revealed:</p>
+                                <ul>
+                                    <li>A SanDisk 32GB USB drive (Serial: 123456789ABC) was connected 47 times over 3 months</li>
+                                    <li>Last connection was 2 days before suspect's resignation</li>
+                                    <li>LNK files showed proprietary CAD files were opened from the USB drive</li>
+                                </ul>
+                                <p><strong>Outcome:</strong> Confronted with this evidence, the suspect admitted to the theft. The USB drive was later recovered from suspect's home.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>USB Forensic Best Practices</h3>
+
+            <div class="alert alert-success">
+                <span class="alert-icon">✅</span>
+                <div class="alert-content">
+                    <strong>Acquiring USB Storage Devices</strong>
+                    <ol>
+                        <li>✅ <strong>Document Before Connection:</strong> Photograph device, record make/model/serial</li>
+                        <li>✅ <strong>Use Hardware Write Blocker:</strong> USB write blockers are readily available and affordable</li>
+                        <li>✅ <strong>Check Write Protection:</strong> Some USB drives have physical write-protect switches</li>
+                        <li>✅ <strong>Image Completely:</strong> Create bit-for-bit forensic image, not just logical copy</li>
+                        <li>✅ <strong>Verify with Hashes:</strong> Calculate and verify MD5/SHA-256 hashes</li>
+                        <li>✅ <strong>Document Connection Artifacts:</strong> Note that USB artifacts will be examined in OS analysis</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <!-- RAID Section -->
+        <section id="section-raid" class="content-section">
+            <h2><span>🗄️</span> RAID Configurations</h2>
+
+            <h3>What is RAID?</h3>
+            <p><strong>RAID (Redundant Array of Independent Disks)</strong> is a technology that combines multiple physical drives into a single logical unit to provide redundancy (data protection), improved performance, or both. RAID is common in servers, workstations, and NAS (Network Attached Storage) devices.</p>
+
+            <div class="alert alert-danger">
+                <span class="alert-icon">⚠️</span>
+                <div class="alert-content">
+                    <strong>CRITICAL WARNING: RAID and Data Loss</strong>
+                    <p>Improperly handling RAID arrays can result in <strong>permanent, unrecoverable data loss</strong>. RAID configurations must be meticulously documented before disassembling any array. This is not optional—it's absolutely critical.</p>
+                    <p><strong>Never</strong> remove drives from a RAID array without first documenting:</p>
+                    <ul>
+                        <li>RAID level (0, 1, 5, 6, 10, etc.)</li>
+                        <li>Disk order and position</li>
+                        <li>Stripe size and configuration</li>
+                        <li>Controller settings</li>
+                        <li>Physical cable connections (photograph!)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Common RAID Levels</h3>
+
+            <div class="raid-container">
+                <div class="raid-card" onclick="toggleRaid(this)" role="button" tabindex="0">
+                    <div class="raid-header">
+                        <div class="raid-title">RAID 0</div>
+                        <div class="raid-badge">Striping</div>
+                    </div>
+                    <div class="raid-visual">
+                        <div class="raid-disk">D1</div>
+                        <div class="raid-disk">D2</div>
+                        <div class="raid-disk">D3</div>
+                        <div class="raid-disk">D4</div>
+                    </div>
+                    <div class="raid-description">
+                        Data is split (striped) across all disks. No redundancy—all disks required for data access.
+                    </div>
+                    <div class="raid-forensics">
+                        <h5>🔍 Forensic Implications:</h5>
+                        <ul>
+                            <li><strong>Redundancy:</strong> None - losing any disk = total data loss</li>
+                            <li><strong>Acquisition:</strong> Must acquire ALL disks</li>
+                            <li><strong>Reconstruction:</strong> Requires exact disk order and stripe size</li>
+                            <li><strong>Risk Level:</strong> ⚠️ EXTREME - one mistake = permanent loss</li>
+                            <li><strong>Best Practice:</strong> Image all disks individually, then reconstruct array in forensic environment</li>
+                        </ul>
+                        <div class="alert alert-warning">
+                            <span class="alert-icon">⚠️</span>
+                            <div class="alert-content">
+                                <strong>RAID 0 Warning:</strong> If even one disk is missing, damaged, or incorrectly ordered, all data is lost. Document everything!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="raid-card" onclick="toggleRaid(this)" role="button" tabindex="0">
+                    <div class="raid-header">
+                        <div class="raid-title">RAID 1</div>
+                        <div class="raid-badge">Mirroring</div>
+                    </div>
+                    <div class="raid-visual">
+                        <div class="raid-disk mirror">D1</div>
+                        <div class="raid-disk mirror">D2</div>
+                    </div>
+                    <div class="raid-description">
+                        Data is duplicated (mirrored) across all disks. Each disk contains complete copy of data.
+                    </div>
+                    <div class="raid-forensics">
+                        <h5>🔍 Forensic Implications:</h5>
+                        <ul>
+                            <li><strong>Redundancy:</strong> Complete - any disk contains all data</li>
+                            <li><strong>Acquisition:</strong> Can image any single disk (all are identical)</li>
+                            <li><strong>Verification:</strong> Can verify by checking multiple disks match</li>
+                            <li><strong>Risk Level:</strong> ✅ LOW - very forgiving for forensics</li>
+                            <li><strong>Best Practice:</strong> Image one disk, optionally verify against others</li>
+                        </ul>
+                        <div class="alert alert-success">
+                            <span class="alert-icon">✅</span>
+                            <div class="alert-content">
+                                <strong>RAID 1 Advantage:</strong> Easiest RAID level for forensics. Any disk contains complete data, so acquisition is straightforward.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="raid-card" onclick="toggleRaid(this)" role="button" tabindex="0">
+                    <div class="raid-header">
+                        <div class="raid-title">RAID 5</div>
+                        <div class="raid-badge">Striping + Parity</div>
+                    </div>
+                    <div class="raid-visual">
+                        <div class="raid-disk">D1</div>
+                        <div class="raid-disk">D2</div>
+                        <div class="raid-disk">D3</div>
+                        <div class="raid-disk parity">P</div>
+                    </div>
+                    <div class="raid-description">
+                        Data striped across disks with distributed parity. Can tolerate loss of one disk.
+                    </div>
+                    <div class="raid-forensics">
+                        <h5>🔍 Forensic Implications:</h5>
+                        <ul>
+                            <li><strong>Redundancy:</strong> Can lose 1 disk and still recover data</li>
+                            <li><strong>Minimum Disks:</strong> 3 disks required</li>
+                            <li><strong>Acquisition:</strong> Image all available disks</li>
+                            <li><strong>Reconstruction:</strong> Requires disk order, stripe size, parity algorithm</li>
+                            <li><strong>Risk Level:</strong> ⚠️ MODERATE - can tolerate one failure but order matters</li>
+                            <li><strong>Best Practice:</strong> Document configuration before disassembly, image all disks</li>
+                        </ul>
+                        <div class="alert alert-warning">
+                            <span class="alert-icon">⚠️</span>
+                            <div class="alert-content">
+                                <strong>RAID 5 Challenge:</strong> If one disk already failed and you lose another during acquisition, all data is lost. Handle with extreme care!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="raid-card" onclick="toggleRaid(this)" role="button" tabindex="0">
+                    <div class="raid-header">
+                        <div class="raid-title">RAID 6</div>
+                        <div class="raid-badge">Double Parity</div>
+                    </div>
+                    <div class="raid-visual">
+                        <div class="raid-disk">D1</div>
+                        <div class="raid-disk">D2</div>
+                        <div class="raid-disk parity">P1</div>
+                        <div class="raid-disk parity">P2</div>
+                    </div>
+                    <div class="raid-description">
+                        Similar to RAID 5 but with two parity blocks. Can tolerate loss of two disks.
+                    </div>
+                    <div class="raid-forensics">
+                        <h5>🔍 Forensic Implications:</h5>
+                        <ul>
+                            <li><strong>Redundancy:</strong> Can lose 2 disks and still recover data</li>
+                            <li><strong>Minimum Disks:</strong> 4 disks required</li>
+                            <li><strong>Acquisition:</strong> More forgiving than RAID 5</li>
+                            <li><strong>Reconstruction:</strong> Complex parity calculation</li>
+                            <li><strong>Risk Level:</strong> ✅ MODERATE-LOW - better fault tolerance</li>
+                            <li><strong>Best Practice:</strong> Still document everything, but more resilient to issues</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="raid-card" onclick="toggleRaid(this)" role="button" tabindex="0">
+                    <div class="raid-header">
+                        <div class="raid-title">RAID 10</div>
+                        <div class="raid-badge">Mirror + Stripe</div>
+                    </div>
+                    <div class="raid-visual">
+                        <div class="raid-disk mirror">D1</div>
+                        <div class="raid-disk mirror">D2</div>
+                        <div class="raid-disk mirror">D3</div>
+                        <div class="raid-disk mirror">D4</div>
+                    </div>
+                    <div class="raid-description">
+                        Combines mirroring and striping. Disks paired as mirrors, then striped across pairs.
+                    </div>
+                    <div class="raid-forensics">
+                        <h5>🔍 Forensic Implications:</h5>
+                        <ul>
+                            <li><strong>Redundancy:</strong> Can lose one disk from each mirror pair</li>
+                            <li><strong>Minimum Disks:</strong> 4 disks (2 mirror pairs)</li>
+                            <li><strong>Acquisition:</strong> Can image one disk from each pair</li>
+                            <li><strong>Reconstruction:</strong> Simpler than RAID 5/6</li>
+                            <li><strong>Risk Level:</strong> ✅ LOW-MODERATE - good fault tolerance</li>
+                            <li><strong>Best Practice:</strong> Document mirror pairs, image at least one from each</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Hardware RAID vs. Software RAID</h3>
+
+            <div class="comparison-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Characteristic</th>
+                            <th>Hardware RAID</th>
+                            <th>Software RAID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Implementation</strong></td>
+                            <td>Dedicated RAID controller card</td>
+                            <td>Operating system manages RAID</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Performance</strong></td>
+                            <td>Better (dedicated processor)</td>
+                            <td>Uses main CPU resources</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Configuration Storage</strong></td>
+                            <td>Stored on controller card</td>
+                            <td>Stored in OS configuration</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Forensic Acquisition</strong></td>
+                            <td>Must document controller settings</td>
+                            <td>Must understand OS RAID implementation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Reconstruction</strong></td>
+                            <td>May require same controller model</td>
+                            <td>Can reconstruct with software tools</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cost</strong></td>
+                            <td>Higher (dedicated hardware)</td>
+                            <td>Lower (software only)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>RAID Documentation Checklist</h3>
+
+            <div class="alert alert-danger">
+                <span class="alert-icon">⚠️</span>
+                <div class="alert-content">
+                    <strong>Before Touching ANY RAID Array, Document:</strong>
+                    <ol>
+                        <li>📸 <strong>Photograph Everything:</strong> Physical drive arrangement, cable connections, labels</li>
+                        <li>📝 <strong>RAID Level:</strong> Access RAID controller BIOS to confirm (0, 1, 5, 6, 10, etc.)</li>
+                        <li>🔢 <strong>Disk Order:</strong> Number each disk before removal (use labels or tape)</li>
+                        <li>📏 <strong>Stripe Size:</strong> Record stripe/chunk size from controller (typically 64KB or 128KB)</li>
+                        <li>💾 <strong>Array Capacity:</strong> Document total array size and individual disk sizes</li>
+                        <li>🔧 <strong>Controller Settings:</strong> Screenshot or write down all RAID controller configuration</li>
+                        <li>⚠️ <strong>Failed Disks:</strong> Note any disks already failed or showing errors</li>
+                        <li>🖥️ <strong>Controller Model:</strong> Record RAID controller make/model/firmware version</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="alert alert-forensic">
+                <span class="alert-icon">🔍</span>
+                <div class="alert-content">
+                    <strong>Real Case: The 3-Day RAID Reconstruction</strong>
+                    <p>Investigators seized a file server with a 6-disk RAID 5 array. One disk had already failed (RAID 5 tolerates one failure). However, the technician who disassembled the server didn't document disk order or take photographs.</p>
+                    <p><strong>Problem:</strong> With 5 remaining disks, there were 5! = 120 possible disk orders. The forensic team had to attempt reconstruction with each permutation.</p>
+                    <p><strong>Result:</strong> After 3 days of processing, the correct disk order was identified and data recovered. This delay could have been avoided with 5 minutes of documentation.</p>
+                    <p><strong>Lesson:</strong> Documentation is not bureaucracy—it's essential risk management. Those 5 minutes of documentation would have saved 3 days of work and prevented potential data loss.</p>
+                </div>
+            </div>
+
+            <h3>RAID Acquisition Strategies</h3>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>📋 Step-by-Step RAID Acquisition</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <h5>Phase 1: Documentation (Before Touching Anything)</h5>
+                        <ol>
+                            <li>Access RAID controller BIOS or management interface</li>
+                            <li>Screenshot or photograph all configuration screens</li>
+                            <li>Document RAID level, disk order, stripe size, array capacity</li>
+                            <li>Photograph physical drive arrangement and cable connections</li>
+                            <li>Label each drive clearly (Disk 1, Disk 2, etc.)</li>
+                            <li>Note any failed or degraded disks</li>
+                        </ol>
+
+                        <h5>Phase 2: Individual Disk Imaging</h5>
+                        <ol>
+                            <li>Remove one disk at a time (maintaining labels)</li>
+                            <li>Connect via hardware write blocker</li>
+                            <li>Create forensic image of individual disk</li>
+                            <li>Calculate and verify hash</li>
+                            <li>Repeat for all disks in array</li>
+                        </ol>
+
+                        <h5>Phase 3: Array Reconstruction (Forensic Environment)</h5>
+                        <ol>
+                            <li>Use forensic RAID reconstruction tools (X-Ways, EnCase RAID, R-Studio)</li>
+                            <li>Input documented configuration (RAID level, stripe size, disk order)</li>
+                            <li>Reconstruct array from individual disk images</li>
+                            <li>Verify reconstruction succeeded (check file system integrity)</li>
+                            <li>Analyze reconstructed array</li>
+                        </ol>
+
+                        <div class="alert alert-success">
+                            <span class="alert-icon">✅</span>
+                            <div class="alert-content">
+                                <strong>Why Image Individual Disks?</strong>
+                                <p>Imaging individual disks before reconstruction provides multiple benefits:</p>
+                                <ul>
+                                    <li>Preserves original disks (can be stored as evidence)</li>
+                                    <li>Enables multiple reconstruction attempts without risk</li>
+                                    <li>Allows trying different configurations if documentation was incomplete</li>
+                                    <li>Creates verified copies for court presentation</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h4>RAID Reconstruction Tools</h4>
+            <p>Several forensic tools can reconstruct RAID arrays from individual disk images:</p>
+            <ul>
+                <li><strong>X-Ways Forensics:</strong> Excellent RAID reconstruction capabilities, supports all common levels</li>
+                <li><strong>EnCase:</strong> RAID reconstruction module available</li>
+                <li><strong>R-Studio:</strong> Specialized in RAID recovery, user-friendly interface</li>
+                <li><strong>mdadm (Linux):</strong> Command-line tool for software RAID reconstruction</li>
+                <li><strong>Runtime RAID Reconstructor:</strong> Free tool for RAID analysis</li>
+            </ul>
+        </section>
+
+        <!-- Write Blockers Section -->
+        <section id="section-blockers" class="content-section">
+            <h2><span>🔒</span> Write Blockers & Forensic Acquisition</h2>
+
+            <h3>What are Write Blockers?</h3>
+            <p><strong>Write blockers</strong> are devices or software that allow read-only access to storage media, preventing any write operations that could alter evidence. Write blocking is a fundamental requirement for forensically sound evidence acquisition.</p>
+
+            <div class="alert alert-forensic">
+                <span class="alert-icon">🔍</span>
+                <div class="alert-content">
+                    <strong>Why Write Blocking is Non-Negotiable</strong>
+                    <p>When you connect a storage device to a computer, the operating system automatically:</p>
+                    <ul>
+                        <li>Updates file access timestamps</li>
+                        <li>Creates temporary files</li>
+                        <li>Writes to log files</li>
+                        <li>May trigger TRIM on SSDs</li>
+                        <li>Modifies file system metadata</li>
+                    </ul>
+                    <p><strong>Any modification</strong> can be challenged in court as evidence tampering. Write blockers prevent all writes, ensuring evidence integrity.</p>
+                </div>
+            </div>
+
+            <h3>Types of Write Blockers</h3>
+
+            <div class="blocker-showcase">
+                <div class="blocker-card">
+                    <div class="blocker-type">🔧 Hardware Write Blockers</div>
+                    <div class="blocker-description">
+                        Physical devices that sit between storage media and forensic workstation
+                    </div>
+                    <div class="blocker-pros">
+                        <h5>✅ Advantages:</h5>
+                        <ul>
+                            <li>OS-independent (works with any OS)</li>
+                            <li>More trusted in legal proceedings</li>
+                            <li>Cannot be bypassed by software</li>
+                            <li>Often include additional features (hashing, imaging)</li>
+                            <li>Widely accepted forensic standard</li>
+                        </ul>
+                    </div>
+                    <div class="blocker-cons">
+                        <h5>❌ Disadvantages:</h5>
+                        <ul>
+                            <li>Expensive ($200-$2000+ per unit)</li>
+                            <li>Limited interface support (especially NVMe)</li>
+                            <li>Requires physical device for each interface type</li>
+                            <li>Can introduce slight performance overhead</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="blocker-card">
+                    <div class="blocker-type">💻 Software Write Blockers</div>
+                    <div class="blocker-description">
+                        Software-based write protection through OS-level filtering
+                    </div>
+                    <div class="blocker-pros">
+                        <h5>✅ Advantages:</h5>
+                        <ul>
+                            <li>Free or low cost</li>
+                            <li>Support for newer interfaces (NVMe)</li>
+                            <li>No additional hardware required</li>
+                            <li>Can be updated for new technologies</li>
+                            <li>Convenient for field work</li>
+                        </ul>
+                    </div>
+                    <div class="blocker-cons">
+                        <h5>❌ Disadvantages:</h5>
+                        <ul>
+                            <li>Less trusted in legal proceedings</li>
+                            <li>OS-dependent (Windows, Linux specific)</li>
+                            <li>Potential for software bugs</li>
+                            <li>Can be bypassed if not properly configured</li>
+                            <li>Requires validation and testing</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Common Hardware Write Blockers</h3>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>🔧 Popular Hardware Write Blocker Models</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <h5>Tableau Forensic Bridges</h5>
+                        <ul>
+                            <li><strong>Models:</strong> T8, T35u, T9, TX1</li>
+                            <li><strong>Interfaces:</strong> SATA, IDE, USB, FireWire, SAS</li>
+                            <li><strong>Features:</strong> DCO/HPA detection, multiple interface support</li>
+                            <li><strong>Cost:</strong> $400-$1500 depending on model</li>
+                            <li><strong>Industry Standard:</strong> Widely used and accepted</li>
+                        </ul>
+
+                        <h5>CRU WiebeTech Forensic Devices</h5>
+                        <ul>
+                            <li><strong>Models:</strong> WriteBlocker, UltraBlock, Forensic DriveDock</li>
+                            <li><strong>Interfaces:</strong> SATA, USB, IDE</li>
+                            <li><strong>Features:</strong> Some models include built-in imaging</li>
+                            <li><strong>Cost:</strong> $300-$800</li>
+                        </ul>
+
+                        <h5>Logicube Forensic Falcon</h5>
+                        <ul>
+                            <li><strong>Type:</strong> Portable forensic duplicator with write blocking</li>
+                            <li><strong>Interfaces:</strong> SATA, USB, IDE</li>
+                            <li><strong>Features:</strong> Built-in imaging, hashing, wiping capabilities</li>
+                            <li><strong>Cost:</strong> $2000-$4000</li>
+                        </ul>
+
+                        <h5>Newer NVMe Write Blockers (Emerging)</h5>
+                        <ul>
+                            <li><strong>Tableau T9:</strong> Supports NVMe via M.2</li>
+                            <li><strong>CRU WiebeTech DriveDock:</strong> Some models support M.2 NVMe</li>
+                            <li><strong>Note:</strong> NVMe hardware write blocker market still developing</li>
+                        </ul>
+
+                        <div class="alert alert-info">
+                            <span class="alert-icon">💡</span>
+                            <div class="alert-content">
+                                <strong>Purchasing Recommendation</strong>
+                                <p>For a forensic lab starting out, prioritize:</p>
+                                <ol>
+                                    <li><strong>SATA/USB combo write blocker</strong> (covers 90% of cases)</li>
+                                    <li><strong>USB-only write blocker</strong> (portable, for field work)</li>
+                                    <li><strong>NVMe-capable device</strong> (as budget allows, increasingly necessary)</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Software Write Blocker Options</h3>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>💻 Software Write Blocking Solutions</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <h5>Windows Software Write Blockers:</h5>
+                        <ul>
+                            <li><strong>Arsenal Image Mounter:</strong> Free, mounts images as read-only volumes</li>
+                            <li><strong>FTK Imager:</strong> Includes write-blocking when previewing drives</li>
+                            <li><strong>Registry Modification:</strong> Can disable write access via registry (requires expertise)</li>
+                        </ul>
+
+                        <h5>Linux Software Write Blockers:</h5>
+                        <ul>
+                            <li><strong>hdparm:</strong> Set drive to read-only mode</li>
+                            <li><strong>blockdev --setro:</strong> Set block device read-only</li>
+                            <li><strong>Mount with ro flag:</strong> Mount file systems read-only</li>
+                            <li><strong>Write-blocking distributions:</strong> SIFT, CAINE include built-in write blocking</li>
+                        </ul>
+
+                        <h5>Validation & Testing:</h5>
+                        <p>When using software write blockers, you MUST validate they work:</p>
+                        <ol>
+                            <li>Connect test drive with known hash</li>
+                            <li>Enable software write blocker</li>
+                            <li>Attempt to write to drive</li>
+                            <li>Verify write was blocked</li>
+                            <li>Re-hash drive to confirm no changes</li>
+                            <li>Document validation process</li>
+                        </ol>
+
+                        <div class="alert alert-warning">
+                            <span class="alert-icon">⚠️</span>
+                            <div class="alert-content">
+                                <strong>Legal Considerations</strong>
+                                <p>Some jurisdictions or courts may be skeptical of software write blockers. Be prepared to:</p>
+                                <ul>
+                                    <li>Explain why software write blocking was necessary (e.g., NVMe interface)</li>
+                                    <li>Demonstrate validation and testing procedures</li>
+                                    <li>Provide multiple hash verifications</li>
+                                    <li>Show that no modifications occurred</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Activity Section -->
+        <section id="section-activity" class="content-section">
+            <h2><span>🎮</span> Interactive Activities</h2>
+
+            <!-- Matching Game -->
+            <div class="matching-game">
+                <h3>🎯 Interface Matching Challenge</h3>
+                <div class="matching-instructions">
+                    <p><strong>Instructions:</strong> Match each storage interface with its primary forensic consideration. Click one item from the left column, then click the matching item from the right column. Correct matches will turn green!</p>
+                </div>
+
+                <div class="matching-container">
+                    <div class="matching-column">
+                        <h4>Storage Interface</h4>
+                        <div class="matching-item" data-id="sata" onclick="selectMatching(this, 'interface')">
+                            <strong>SATA III</strong>
+                        </div>
+                        <div class="matching-item" data-id="nvme" onclick="selectMatching(this, 'interface')">
+                            <strong>NVMe (PCIe)</strong>
+                        </div>
+                        <div class="matching-item" data-id="usb2" onclick="selectMatching(this, 'interface')">
+                            <strong>USB 2.0</strong>
+                        </div>
+                        <div class="matching-item" data-id="usb3" onclick="selectMatching(this, 'interface')">
+                            <strong>USB 3.x</strong>
+                        </div>
+                        <div class="matching-item" data-id="raid5" onclick="selectMatching(this, 'interface')">
+                            <strong>RAID 5 Array</strong>
+                        </div>
+                    </div>
+
+                    <div class="matching-column">
+                        <h4>Primary Forensic Consideration</h4>
+                        <div class="matching-item" data-id="sata" onclick="selectMatching(this, 'consideration')">
+                            Universal write blocker support, predictable 600 MB/s speed
+                        </div>
+                        <div class="matching-item" data-id="nvme" onclick="selectMatching(this, 'consideration')">
+                            Extremely fast but limited write blocker availability
+                        </div>
+                        <div class="matching-item" data-id="usb2" onclick="selectMatching(this, 'consideration')">
+                            Slow speed (~60 MB/s) but ubiquitous in flash drives
+                        </div>
+                        <div class="matching-item" data-id="usb3" onclick="selectMatching(this, 'consideration')">
+                            OS logs connection artifacts revealing device usage history
+                        </div>
+                        <div class="matching-item" data-id="raid5" onclick="selectMatching(this, 'consideration')">
+                            Must document configuration before disassembly to prevent data loss
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game-feedback" id="matchingFeedback">
+                    Select an interface and its matching consideration to begin!
+                </div>
+            </div>
+
+            <!-- Scenario Builder -->
+            <div class="scenario-builder">
+                <h3>🎯 Acquisition Strategy Builder</h3>
+                <p>You're at a crime scene with multiple storage devices. Build an optimal acquisition strategy by selecting appropriate tools and methods for each device.</p>
+
+                <div class="scenario-step">
+                    <h4>Device 1: Internal 2TB SATA III HDD</h4>
+                    <p><strong>Context:</strong> Desktop computer, drive is primary system drive, not encrypted</p>
+                    <div class="scenario-options">
+                        <div class="scenario-option" onclick="selectScenarioOption(this, 'device1', 'a')">
+                            <strong>A)</strong> Connect via Tableau T8 hardware write blocker, image with FTK Imager
+                        </div>
+                        <div class="scenario-option" onclick="selectScenarioOption(this, 'device1', 'b')">
+                            <strong>B)</strong> Use software write blocker only (no hardware available)
+                        </div>
+                        <div class="scenario-option" onclick="selectScenarioOption(this, 'device1', 'c')">
+                            <strong>C)</strong> Live acquisition while system is running
+                        </div>
+                    </div>
+                </div>
+
+                <div class="scenario-step">
+                    <h4>Device 2: 512GB M.2 NVMe SSD</h4>
+                    <p><strong>Context:</strong> Laptop, drive contains BitLocker encryption, system is powered on and unlocked</p>
+                    <div class="scenario-options">
+                        <div class="scenario-option" onclick="selectScenarioOption(this, 'device2', 'a')">
+                            <strong>A)</strong> Shut down immediately, remove M.2 drive, use hardware write blocker
+                        </div>
+                        <div class="scenario-option" onclick="selectScenarioOption(this, 'device2', 'b')">
+                            <strong>B)</strong> Perform live acquisition while system is running and unlocked
+                        </div>
+                        <div class="scenario-option" onclick="selectScenarioOption(this, 'device2', 'c')">
+                            <strong>C)</strong> Remove M.2 drive, use M.2 to USB adapter with USB write blocker
+                        </div>
+                    </div>
+                </div>
+
+                <div class="scenario-step">
+                    <h4>Device 3: Four-disk RAID 5 Array</h4>
+                    <p><strong>Context:</strong> File server, array is healthy, system can be taken offline</p>
+                    <div class="scenario-options">
+                        <div class="scenario-option" onclick="selectScenarioOption(this, 'device3', 'a')">
+                            <strong>A)</strong> Image the array as a single logical volume while running
+                        </div>
+                        <div class="scenario-option" onclick="selectScenarioOption(this, 'device3', 'b')">
+                            <strong>B)</strong> Document configuration, remove and image each disk individually, reconstruct later
+                        </div>
+                        <div class="scenario-option" onclick="selectScenarioOption(this, 'device3', 'c')">
+                            <strong>C)</strong> Remove one disk to image, leave others in place for business continuity
+                        </div>
+                    </div>
+                </div>
+
+                <button class="analyze-btn" onclick="analyzeStrategy()">Analyze My Strategy</button>
+
+                <div class="scenario-result" id="scenarioResult"></div>
+            </div>
+        </section>
+
+        <!-- Knowledge Check Section -->
+        <section class="content-section">
+            <div class="knowledge-check">
+                <h3>🎯 Knowledge Check</h3>
+                <p>Test your understanding of storage interfaces and controllers:</p>
+
+                <div class="quiz-question">
+                    <p class="question-text">1. What is the maximum theoretical throughput of SATA III?</p>
+                    <div class="quiz-options">
+                        <label class="quiz-option">
+                            <input type="radio" name="q1" value="a">
+                            <span>150 MB/s</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q1" value="b">
+                            <span>300 MB/s</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q1" value="c" data-correct="true">
+                            <span>600 MB/s</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q1" value="d">
+                            <span>3500 MB/s</span>
+                        </label>
+                    </div>
+                    <button class="check-answer-btn" onclick="checkAnswer('q1', this)">Check Answer</button>
+                    <div class="quiz-feedback" id="feedback-q1"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p class="question-text">2. What is the PRIMARY challenge when acquiring evidence from NVMe drives?</p>
+                    <div class="quiz-options">
+                        <label class="quiz-option">
+                            <input type="radio" name="q2" value="a">
+                            <span>NVMe drives are always encrypted</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q2" value="b" data-correct="true">
+                            <span>Limited hardware write blocker support for NVMe interfaces</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q2" value="c">
+                            <span>NVMe drives are too slow for practical acquisition</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q2" value="d">
+                            <span>NVMe drives cannot be removed from systems</span>
+                        </label>
+                    </div>
+                    <button class="check-answer-btn" onclick="checkAnswer('q2', this)">Check Answer</button>
+                    <div class="quiz-feedback" id="feedback-q2"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p class="question-text">3. In a RAID 5 array with 4 disks, how many disks can fail before data is lost?</p>
+                    <div class="quiz-options">
+                        <label class="quiz-option">
+                            <input type="radio" name="q3" value="a">
+                            <span>None - any disk failure causes total data loss</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q3" value="b" data-correct="true">
+                            <span>One disk - RAID 5 can tolerate a single disk failure</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q3" value="c">
+                            <span>Two disks - RAID 5 has double parity protection</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q3" value="d">
+                            <span>Three disks - only one disk is needed for recovery</span>
+                        </label>
+                    </div>
+                    <button class="check-answer-btn" onclick="checkAnswer('q3', this)">Check Answer</button>
+                    <div class="quiz-feedback" id="feedback-q3"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p class="question-text">4. Why is USB device connection information forensically valuable?</p>
+                    <div class="quiz-options">
+                        <label class="quiz-option">
+                            <input type="radio" name="q4" value="a">
+                            <span>USB devices store encryption keys</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q4" value="b" data-correct="true">
+                            <span>OS logs reveal which USB devices were connected and when, proving device usage</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q4" value="c">
+                            <span>USB connections automatically create backups of all data</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q4" value="d">
+                            <span>USB devices contain GPS location data</span>
+                        </label>
+                    </div>
+                    <button class="check-answer-btn" onclick="checkAnswer('q4', this)">Check Answer</button>
+                    <div class="quiz-feedback" id="feedback-q4"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p class="question-text">5. What is the MOST important action before disassembling a RAID array?</p>
+                    <div class="quiz-options">
+                        <label class="quiz-option">
+                            <input type="radio" name="q5" value="a">
+                            <span>Calculate the total storage capacity</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q5" value="b" data-correct="true">
+                            <span>Document RAID level, disk order, and configuration parameters with photographs</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q5" value="c">
+                            <span>Run diagnostic tests on each disk</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q5" value="d">
+                            <span>Determine which disk contains the most data</span>
+                        </label>
+                    </div>
+                    <button class="check-answer-btn" onclick="checkAnswer('q5', this)">Check Answer</button>
+                    <div class="quiz-feedback" id="feedback-q5"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Completion Badge -->
+        <div class="completion-badge" id="completionBadge">
+            <div class="completion-icon">🎉</div>
+            <h3>Module 4.3 Complete!</h3>
+            <p>Excellent work! You now understand storage interfaces, their forensic implications, and how to properly handle RAID configurations.</p>
+            <p><strong>Key Takeaways:</strong></p>
+            <ul style="text-align: left; display: inline-block; margin-top: 1rem;">
+                <li>SATA is the most forensically friendly interface with universal write blocker support</li>
+                <li>NVMe provides extreme speed but presents write-blocking challenges</li>
+                <li>USB devices are ubiquitous and create valuable connection artifacts</li>
+                <li>RAID documentation is absolutely critical—never skip this step</li>
+                <li>Interface selection determines acquisition strategy and tool requirements</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer role="contentinfo">
+        <p>© 2026 Mendocino College | CSC 156 - Digital Forensics Fundamentals</p>
+        <p>Week 4, Module 4.3: Storage Interfaces & Controllers</p>
+        <p>Instructor: David Pai | Spring 2026</p>
+        <p style="margin-top: 1rem; font-size: 0.9rem;">
+            💾 Your progress is saved for this session only. Bookmark this page to return to it later.
+        </p>
+    </footer>
+
+    <script>
+        // ===== SESSION STORAGE KEYS =====
+        const STORAGE_KEY = 'csc156_week4_module43_progress';
+        
+        // ===== PROGRESS TRACKING =====
+        let progress = {
+            sectionsVisited: new Set(),
+            interfacesExplored: new Set(),
+            raidsExplored: new Set(),
+            quizAnswers: {},
+            matchingComplete: false,
+            scenarioComplete: false,
+            expandablesOpened: new Set(),
+            startTime: Date.now()
+        };
+
+        // Scenario selections
+        let scenarioSelections = {
+            device1: null,
+            device2: null,
+            device3: null
+        };
+
+        // Load saved progress
+        function loadProgress() {
+            const saved = sessionStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                progress.sectionsVisited = new Set(parsed.sectionsVisited || []);
+                progress.interfacesExplored = new Set(parsed.interfacesExplored || []);
+                progress.raidsExplored = new Set(parsed.raidsExplored || []);
+                progress.quizAnswers = parsed.quizAnswers || {};
+                progress.matchingComplete = parsed.matchingComplete || false;
+                progress.scenarioComplete = parsed.scenarioComplete || false;
+                progress.expandablesOpened = new Set(parsed.expandablesOpened || []);
+                progress.startTime = parsed.startTime || Date.now();
+            }
+            updateProgressBar();
+        }
+
+        // Save progress
+        function saveProgress() {
+            const toSave = {
+                sectionsVisited: Array.from(progress.sectionsVisited),
+                interfacesExplored: Array.from(progress.interfacesExplored),
+                raidsExplored: Array.from(progress.raidsExplored),
+                quizAnswers: progress.quizAnswers,
+                matchingComplete: progress.matchingComplete,
+                scenarioComplete: progress.scenarioComplete,
+                expandablesOpened: Array.from(progress.expandablesOpened),
+                startTime: progress.startTime
+            };
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+        }
+
+        // Update progress bar
+        function updateProgressBar() {
+            const totalItems = 6 + 9 + 5 + 5 + 5 + 6; // sections + interfaces + raids + quiz + matching + expandables
+            const completedItems = progress.sectionsVisited.size + 
+                                  progress.interfacesExplored.size +
+                                  progress.raidsExplored.size +
+                                  Object.keys(progress.quizAnswers).length +
+                                  (progress.matchingComplete ? 5 : 0) +
+                                  (progress.scenarioComplete ? 3 : 0) +
+                                  progress.expandablesOpened.size;
+            
+            const percentage = Math.round((completedItems / totalItems) * 100);
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = percentage + '%';
+            progressBar.textContent = percentage + '%';
+            progressBar.parentElement.setAttribute('aria-valuenow', percentage);
+
+            // Show completion badge at 100%
+            if (percentage >= 100) {
+                document.getElementById('completionBadge').classList.add('show');
+            }
+
+            saveProgress();
+        }
+
+        // ===== INTERSECTION OBSERVER FOR SECTIONS =====
+        const sectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const sectionId = entry.target.id;
+                    if (sectionId && !progress.sectionsVisited.has(sectionId)) {
+                        progress.sectionsVisited.add(sectionId);
+                        updateProgressBar();
+                    }
+                }
+            });
+        }, { threshold: 0.5 });
+
+        // Observe all content sections
+        document.querySelectorAll('.content-section').forEach(section => {
+            sectionObserver.observe(section);
+        });
+
+        // ===== INTERFACE CARDS =====
+        function toggleInterface(card) {
+            const wasActive = card.classList.contains('active');
+            
+            // Close all cards in the same grid
+            const grid = card.closest('.interface-grid');
+            if (grid) {
+                grid.querySelectorAll('.interface-card').forEach(c => {
+                    c.classList.remove('active');
+                });
+            }
+
+            // Toggle this card
+            if (!wasActive) {
+                card.classList.add('active');
+                const interfaceTitle = card.querySelector('.interface-title').textContent;
+                if (!progress.interfacesExplored.has(interfaceTitle)) {
+                    progress.interfacesExplored.add(interfaceTitle);
+                    updateProgressBar();
+                }
+            }
+        }
+
+        // Keyboard support for interface cards
+        document.querySelectorAll('.interface-card').forEach(card => {
+            card.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleInterface(card);
+                }
+            });
+        });
+
+        // ===== RAID CARDS =====
+        function toggleRaid(card) {
+            const wasActive = card.classList.contains('active');
+            
+            // Close all cards in the same container
+            const container = card.closest('.raid-container');
+            if (container) {
+                container.querySelectorAll('.raid-card').forEach(c => {
+                    c.classList.remove('active');
+                });
+            }
+
+            // Toggle this card
+            if (!wasActive) {
+                card.classList.add('active');
+                const raidTitle = card.querySelector('.raid-title').textContent;
+                if (!progress.raidsExplored.has(raidTitle)) {
+                    progress.raidsExplored.add(raidTitle);
+                    updateProgressBar();
+                }
+            }
+        }
+
+        // Keyboard support for RAID cards
+        document.querySelectorAll('.raid-card').forEach(card => {
+            card.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleRaid(card);
+                }
+            });
+        });
+
+        // ===== EXPANDABLE SECTIONS =====
+        function toggleExpandable(header) {
+            const expandable = header.parentElement;
+            expandable.classList.toggle('open');
+            
+            const isExpanded = expandable.classList.contains('open');
+            header.setAttribute('aria-expanded', isExpanded);
+
+            // Track expandable opened
+            if (isExpanded) {
+                const expandableText = header.querySelector('span').textContent;
+                if (!progress.expandablesOpened.has(expandableText)) {
+                    progress.expandablesOpened.add(expandableText);
+                    updateProgressBar();
+                }
+            }
+        }
+
+        // Keyboard support for expandables
+        document.addEventListener('keydown', function(e) {
+            if (e.target.classList.contains('expandable-header')) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleExpandable(e.target);
+                }
+            }
+        });
+
+        // ===== MATCHING GAME =====
+        let matchingGame = {
+            selectedInterface: null,
+            selectedConsideration: null,
+            matches: new Set()
+        };
+
+        function selectMatching(item, type) {
+            // Ignore if already matched
+            if (item.classList.contains('matched')) return;
+
+            if (type === 'interface') {
+                // Deselect previous interface
+                document.querySelectorAll('.matching-column:first-child .matching-item').forEach(i => {
+                    i.classList.remove('selected');
+                });
+                item.classList.add('selected');
+                matchingGame.selectedInterface = item;
+            } else {
+                // Deselect previous consideration
+                document.querySelectorAll('.matching-column:last-child .matching-item').forEach(i => {
+                    i.classList.remove('selected');
+                });
+                item.classList.add('selected');
+                matchingGame.selectedConsideration = item;
+            }
+
+            // Check for match if both selected
+            if (matchingGame.selectedInterface && matchingGame.selectedConsideration) {
+                checkMatching();
+            }
+        }
+
+        function checkMatching() {
+            const interfaceId = matchingGame.selectedInterface.dataset.id;
+            const considerationId = matchingGame.selectedConsideration.dataset.id;
+            const feedback = document.getElementById('matchingFeedback');
+
+            if (interfaceId === considerationId) {
+                // Correct match!
+                matchingGame.selectedInterface.classList.remove('selected');
+                matchingGame.selectedInterface.classList.add('matched');
+                matchingGame.selectedConsideration.classList.remove('selected');
+                matchingGame.selectedConsideration.classList.add('matched');
+                matchingGame.matches.add(interfaceId);
+
+                feedback.textContent = '✅ Correct match! ' + matchingGame.matches.size + ' of 5 complete.';
+                feedback.style.background = 'rgba(46, 204, 113, 0.2)';
+
+                if (matchingGame.matches.size === 5) {
+                    feedback.textContent = '🎉 Perfect! All matches complete!';
+                    if (!progress.matchingComplete) {
+                        progress.matchingComplete = true;
+                        updateProgressBar();
+                    }
+                }
+            } else {
+                // Incorrect match
+                feedback.textContent = '❌ Not quite. Try again!';
+                feedback.style.background = 'rgba(231, 76, 60, 0.2)';
+
+                // Deselect after a moment
+                setTimeout(() => {
+                    matchingGame.selectedInterface.classList.remove('selected');
+                    matchingGame.selectedConsideration.classList.remove('selected');
+                    feedback.textContent = 'Select an interface and its matching consideration.';
+                    feedback.style.background = 'rgba(255, 255, 255, 0.1)';
+                }, 1500);
+            }
+
+            matchingGame.selectedInterface = null;
+            matchingGame.selectedConsideration = null;
+        }
+
+        // ===== SCENARIO BUILDER =====
+        function selectScenarioOption(element, device, choice) {
+            // Deselect all options in this scenario step
+            const step = element.closest('.scenario-step');
+            step.querySelectorAll('.scenario-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+
+            // Select this option
+            element.classList.add('selected');
+            scenarioSelections[device] = choice;
+        }
+
+        function analyzeStrategy() {
+            // Check if all selections made
+            if (!scenarioSelections.device1 || !scenarioSelections.device2 || !scenarioSelections.device3) {
+                alert('Please make a selection for all three devices before analyzing.');
+                return;
+            }
+
+            // Optimal answers
+            const optimal = {
+                device1: 'a', // SATA HDD with hardware write blocker
+                device2: 'b', // NVMe encrypted - live acquisition
+                device3: 'b'  // RAID 5 - document and image individually
+            };
+
+            let score = 0;
+            let feedback = [];
+
+            // Evaluate Device 1
+            if (scenarioSelections.device1 === optimal.device1) {
+                score++;
+                feedback.push('✅ <strong>Device 1 (SATA HDD):</strong> Excellent choice! Hardware write blocker is the gold standard for SATA drives. This ensures forensic integrity and is widely accepted in legal proceedings.');
+            } else if (scenarioSelections.device1 === 'b') {
+                feedback.push('⚠️ <strong>Device 1 (SATA HDD):</strong> Suboptimal. While software write blocking can work, hardware write blockers are readily available for SATA and provide better legal defensibility. Why not use the better option?');
+            } else {
+                feedback.push('❌ <strong>Device 1 (SATA HDD):</strong> Poor choice. Live acquisition is unnecessary for an unencrypted drive and introduces unnecessary risk. Standard imaging with hardware write blocker is appropriate here.');
+            }
+
+            // Evaluate Device 2
+            if (scenarioSelections.device2 === optimal.device2) {
+                score++;
+                feedback.push('✅ <strong>Device 2 (NVMe Encrypted):</strong> Excellent decision! With BitLocker encryption and the system unlocked, live acquisition is critical. Once powered off, the drive locks and data becomes inaccessible without the password. Time is critical with encrypted SSDs.');
+            } else if (scenarioSelections.device2 === 'a') {
+                feedback.push('❌ <strong>Device 2 (NVMe Encrypted):</strong> Critical error! Shutting down an encrypted drive that\'s currently unlocked will lock it permanently. You\'ll lose access to all data unless you have the BitLocker password. Always perform live acquisition on encrypted drives while they\'re unlocked.');
+            } else {
+                feedback.push('⚠️ <strong>Device 2 (NVMe Encrypted):</strong> Problematic approach. While technically possible, removing the drive and using an adapter risks triggering the BitLocker lock. Live acquisition while unlocked is safer and faster.');
+            }
+
+            // Evaluate Device 3
+            if (scenarioSelections.device3 === optimal.device3) {
+                score++;
+                feedback.push('✅ <strong>Device 3 (RAID 5):</strong> Perfect approach! Documenting configuration, imaging individual disks, and reconstructing later is the safest method. This preserves original disks, enables multiple reconstruction attempts, and prevents data loss from configuration errors.');
+            } else if (scenarioSelections.device3 === 'a') {
+                feedback.push('⚠️ <strong>Device 3 (RAID 5):</strong> Acceptable but not optimal. Imaging the logical volume works but doesn\'t preserve individual disk images. If reconstruction is needed later or if there are disk errors, you won\'t have the raw disk images to work with.');
+            } else {
+                feedback.push('❌ <strong>Device 3 (RAID 5):</strong> Dangerous choice! Removing one disk from a RAID 5 array that already has no failures puts the array in degraded mode. If another disk fails during operation, all data is lost. Never remove disks from a running RAID array without imaging first.');
+            }
+
+            // Display results
+            const resultDiv = document.getElementById('scenarioResult');
+            let resultClass = 'optimal';
+            let resultTitle = '🎉 Excellent Strategy!';
+            
+            if (score === 3) {
+                resultClass = 'optimal';
+                resultTitle = '🎉 Perfect Strategy! (3/3 Optimal)';
+            } else if (score === 2) {
+                resultClass = 'suboptimal';
+                resultTitle = '⚠️ Good Strategy with Room for Improvement (2/3 Optimal)';
+            } else {
+                resultClass = 'poor';
+                resultTitle = '❌ Strategy Needs Significant Revision (1/3 or 0/3 Optimal)';
+            }
+
+            resultDiv.className = `scenario-result show ${resultClass}`;
+            resultDiv.innerHTML = `
+                <h4>${resultTitle}</h4>
+                ${feedback.join('<br><br>')}
+                <p style="margin-top: 1.5rem;"><strong>Overall Assessment:</strong> Your strategy scored ${score} out of 3 optimal choices. ${score === 3 ? 'You demonstrated excellent understanding of interface-specific acquisition strategies!' : 'Review the feedback above to understand better approaches for each scenario.'}</p>
+            `;
+
+            if (!progress.scenarioComplete) {
+                progress.scenarioComplete = true;
+                updateProgressBar();
+            }
+
+            // Scroll to results
+            resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // ===== KNOWLEDGE CHECK QUIZ =====
+        function checkAnswer(questionName, button) {
+            const options = document.querySelectorAll(`input[name="${questionName}"]`);
+            const feedback = document.getElementById(`feedback-${questionName}`);
+            let selectedOption = null;
+            let correctOption = null;
+
+            options.forEach(option => {
+                const label = option.closest('.quiz-option');
+                if (option.checked) {
+                    selectedOption = option;
+                }
+                if (option.dataset.correct) {
+                    correctOption = option;
+                }
+            });
+
+            if (!selectedOption) {
+                feedback.textContent = 'Please select an answer first.';
+                feedback.className = 'quiz-feedback show incorrect';
+                return;
+            }
+
+            button.disabled = true;
+
+            if (selectedOption === correctOption) {
+                selectedOption.closest('.quiz-option').classList.add('correct');
+                feedback.innerHTML = '<strong>✅ Correct!</strong> ' + getCorrectFeedback(questionName);
+                feedback.className = 'quiz-feedback show correct';
+                
+                if (!progress.quizAnswers[questionName]) {
+                    progress.quizAnswers[questionName] = true;
+                    updateProgressBar();
+                }
+            } else {
+                selectedOption.closest('.quiz-option').classList.add('incorrect');
+                correctOption.closest('.quiz-option').classList.add('correct');
+                feedback.innerHTML = '<strong>❌ Incorrect.</strong> ' + getIncorrectFeedback(questionName);
+                feedback.className = 'quiz-feedback show incorrect';
+            }
+        }
+
+        function getCorrectFeedback(questionName) {
+            const feedbacks = {
+                'q1': 'SATA III has a maximum speed of 6 Gbps, which translates to approximately 600 MB/s throughput. This is the bottleneck for SATA SSDs—they can\'t go faster than the interface allows.',
+                'q2': 'The primary challenge with NVMe is limited hardware write blocker support. As of 2026, fewer write blockers support NVMe compared to SATA, often requiring software write blocking or specialized (expensive) hardware.',
+                'q3': 'RAID 5 uses distributed parity to provide fault tolerance. It can tolerate the loss of one disk—data can be reconstructed from the remaining disks and parity information. Losing two disks results in total data loss.',
+                'q4': 'Operating systems log extensive information about USB device connections including vendor, model, serial number, and connection timestamps. This proves which devices were connected and when, valuable for proving data exfiltration or unauthorized device usage.',
+                'q5': 'Documentation is absolutely critical before disassembling RAID arrays. Without proper documentation of RAID level, disk order, and configuration, data can be permanently lost. Photographs and detailed notes are essential.'
+            };
+            return feedbacks[questionName] || 'Great job!';
+        }
+
+        function getIncorrectFeedback(questionName) {
+            const feedbacks = {
+                'q1': 'Review the SATA section. SATA I is 1.5 Gbps (~150 MB/s), SATA II is 3 Gbps (~300 MB/s), and SATA III is 6 Gbps (~600 MB/s). The 3500 MB/s speed is for NVMe.',
+                'q2': 'Review the NVMe section on forensic challenges. While NVMe is fast and complex, the primary practical challenge for forensic examiners is the lack of compatible hardware write blockers.',
+                'q3': 'Review the RAID section, specifically RAID 5. RAID 5 uses single parity, allowing one disk failure. RAID 6 uses double parity for two disk failures. RAID 0 has no redundancy.',
+                'q4': 'Review the USB section on forensic significance. USB connection artifacts are logged by the OS and provide valuable timeline and device identification information.',
+                'q5': 'Review the RAID section and the critical warning about documentation. RAID configuration documentation is the most important step—without it, data can be permanently lost.'
+            };
+            return feedbacks[questionName] || 'Review the relevant section and try again.';
+        }
+
+        // ===== SMOOTH SCROLLING FOR SECTION LINKS =====
+        document.querySelectorAll('.section-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetSection = document.querySelector(targetId);
+                if (targetSection) {
+                    targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // ===== INITIALIZE ON PAGE LOAD =====
+        window.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+
+            // Animate speed bars
+            setTimeout(() => {
+                document.querySelectorAll('.speed-fill').forEach(fill => {
+                    const width = fill.dataset.speed;
+                    fill.style.width = width + '%';
+                });
+            }, 500);
+
+            // Announce page load to screen readers
+            const announcement = document.createElement('div');
+            announcement.setAttribute('role', 'status');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.className = 'sr-only';
+            announcement.textContent = 'Module 4.3: Storage Interfaces and Controllers loaded. Use tab to navigate through sections.';
+            document.body.appendChild(announcement);
+
+            // Remove announcement after screen readers process it
+            setTimeout(() => {
+                announcement.remove();
+            }, 3000);
+        });
+
+        // ===== SAVE PROGRESS BEFORE UNLOAD =====
+        window.addEventListener('beforeunload', function() {
+            saveProgress();
+        });
+
+        // Periodic progress save
+        setInterval(saveProgress, 30000); // Save every 30 seconds
+    </script>
+</body>
+</html>

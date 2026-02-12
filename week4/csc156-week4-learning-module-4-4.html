@@ -1,0 +1,2078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Module 4.4: Boot Processes and Firmware - Understanding how computers start up and organize storage, and their critical forensic significance.">
+    <title>Module 4.4: Boot Processes & Firmware | CSC 156</title>
+    <style>
+        /* ===== CSS VARIABLES ===== */
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --info-color: #16a085;
+            --light-bg: #ecf0f1;
+            --white: #ffffff;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --border-color: #bdc3c7;
+            --shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-hover: 0 4px 12px rgba(0,0,0,0.15);
+            --transition: all 0.3s ease;
+            --border-radius: 8px;
+        }
+
+        /* ===== GLOBAL STYLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--light-bg);
+        }
+
+        /* ===== ACCESSIBILITY ===== */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 8px 16px;
+            text-decoration: none;
+            z-index: 100;
+            border-radius: 0 0 4px 0;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        /* ===== HEADER ===== */
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #34495e 100%);
+            color: var(--white);
+            padding: 2rem 1rem;
+            box-shadow: var(--shadow);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .course-code {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .module-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            font-weight: normal;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            min-height: 60vh;
+        }
+
+        /* ===== PROGRESS SECTION ===== */
+        .progress-section {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .progress-bar-container {
+            background: var(--light-bg);
+            border-radius: 10px;
+            height: 30px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--success-color) 0%, #2ecc71 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .time-estimate {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* ===== SECTION NAVIGATION ===== */
+        .section-nav {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .section-nav h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .section-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .section-link {
+            padding: 1rem;
+            background: var(--light-bg);
+            border-left: 4px solid var(--secondary-color);
+            border-radius: 4px;
+            text-decoration: none;
+            color: var(--text-dark);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-link:hover {
+            background: var(--secondary-color);
+            color: var(--white);
+            transform: translateX(4px);
+        }
+
+        .section-link:focus {
+            outline: 2px solid var(--secondary-color);
+            outline-offset: 2px;
+        }
+
+        .section-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* ===== CONTENT SECTIONS ===== */
+        .content-section {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            scroll-margin-top: 80px; /* Adjust for sticky header */
+        }
+
+        .content-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .content-section h3 {
+            color: var(--secondary-color);
+            margin: 2rem 0 1rem;
+            font-size: 1.4rem;
+        }
+
+        .content-section h4 {
+            color: var(--text-dark);
+            margin: 1.5rem 0 0.75rem;
+            font-size: 1.2rem;
+        }
+
+        .content-section h5 {
+            color: var(--text-dark);
+            margin: 1rem 0 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .content-section p {
+            margin-bottom: 1rem;
+            line-height: 1.8;
+        }
+
+        .content-section ul, .content-section ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .content-section li {
+            margin-bottom: 0.5rem;
+            line-height: 1.8;
+        }
+
+        /* ===== ALERT BOXES ===== */
+        .alert {
+            padding: 1.25rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+            border-left: 4px solid;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .alert-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert strong {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-color: var(--info-color);
+            color: #0c5460;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-color: var(--warning-color);
+            color: #856404;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-color: var(--success-color);
+            color: #155724;
+        }
+
+        .alert-forensic {
+            background: #e8f4f8;
+            border-color: var(--secondary-color);
+            color: #004085;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            border-color: var(--accent-color);
+            color: #721c24;
+        }
+
+        /* ===== EXPANDABLE SECTIONS ===== */
+        .expandable {
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+
+        .expandable-header {
+            background: var(--light-bg);
+            padding: 1.25rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .expandable-header:hover {
+            background: #d5dbdb;
+        }
+
+        .expandable-icon {
+            transition: transform 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .expandable.open .expandable-icon {
+            transform: rotate(180deg);
+        }
+
+        .expandable-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .expandable.open .expandable-content {
+            max-height: 3000px; /* Large enough for content */
+        }
+
+        .expandable-body {
+            padding: 1.5rem;
+        }
+
+        /* ===== FLOWCHART STYLES ===== */
+        .flowchart-container {
+            background: var(--light-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .flowchart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .flowchart {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .flow-step {
+            background: var(--white);
+            border: 2px solid var(--secondary-color);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            width: 80%;
+            max-width: 350px;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .flow-step:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--info-color);
+        }
+
+        .flow-step.active {
+            background: var(--info-color);
+            color: var(--white);
+            border-color: var(--info-color);
+        }
+        .flow-step.active .flow-step-title,
+        .flow-step.active .flow-step-icon {
+            color: var(--white);
+        }
+
+        .flow-step-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .flow-step-icon {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+        }
+
+        .flow-step-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--primary-color);
+        }
+
+        .flow-step-details {
+            display: none;
+            margin-top: 0.75rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            text-align: left;
+        }
+
+        .flow-step.active .flow-step-details {
+            display: block;
+        }
+
+        .flow-arrow {
+            font-size: 2rem;
+            color: var(--text-light);
+        }
+        
+        /* ===== PARTITION TABLE STYLES ===== */
+        .partition-table-container {
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+
+        .partition-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--white);
+            box-shadow: var(--shadow);
+        }
+
+        .partition-table th {
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .partition-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .partition-table tbody tr:hover {
+            background: var(--light-bg);
+        }
+
+        .partition-code {
+            font-family: monospace;
+            background-color: var(--light-bg);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        .partition-code-block {
+            background-color: var(--light-bg);
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin: 1rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        /* ===== INTERACTIVE QUIZ STYLES ===== */
+        .interactive-quiz {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            margin: 2rem 0;
+        }
+
+        .interactive-quiz h3 {
+            color: var(--white);
+            margin-top: 0;
+            margin-bottom: 1rem;
+        }
+
+        .quiz-instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+        }
+
+        .quiz-question-interactive {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px dashed rgba(255,255,255,0.3);
+        }
+
+        .question-text-interactive {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--white);
+        }
+
+        .quiz-options-interactive {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .quiz-option-interactive {
+            padding: 1rem;
+            background: var(--white);
+            border: 2px solid transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-dark);
+        }
+
+        .quiz-option-interactive:hover {
+            background: #f0f0f0;
+        }
+
+        .quiz-option-interactive input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .quiz-option-interactive.correct {
+            background: #d4edda;
+            border-color: var(--success-color);
+        }
+
+        .quiz-option-interactive.incorrect {
+            background: #f8d7da;
+            border-color: var(--accent-color);
+        }
+
+        .quiz-feedback-interactive {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .quiz-feedback-interactive.show {
+            display: block;
+        }
+
+        .quiz-feedback-interactive.correct {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .quiz-feedback-interactive.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .check-answer-btn-interactive {
+            background: var(--white);
+            color: var(--primary-color);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: var(--transition);
+            margin-top: 1rem;
+        }
+
+        .check-answer-btn-interactive:hover {
+            background: var(--light-bg);
+        }
+
+        .check-answer-btn-interactive:disabled {
+            background: var(--text-light);
+            cursor: not-allowed;
+        }
+
+        /* ===== COMPONENT CARDS ===== */
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .component-card {
+            background: var(--white);
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .component-card:hover {
+            border-color: var(--secondary-color);
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-4px);
+        }
+
+        .component-card.active {
+            border-color: var(--success-color);
+            background: #f0f9f4;
+        }
+
+        .component-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .component-icon-large {
+            font-size: 2.5rem;
+        }
+
+        .component-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .component-description {
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .component-details {
+            background: var(--light-bg);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .component-card.active .component-details {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .forensic-relevance {
+            background: #e8f4f8;
+            padding: 1rem;
+            border-left: 4px solid var(--secondary-color);
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+
+        .forensic-relevance h5 {
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        /* ===== COMPLETION BADGE ===== */
+        .completion-badge {
+            background: linear-gradient(135deg, var(--success-color) 0%, #2ecc71 100%);
+            color: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            margin: 2rem 0;
+            display: none;
+        }
+
+        .completion-badge.show {
+            display: block;
+            animation: fadeInScale 0.5s ease;
+        }
+
+        .completion-badge h3 {
+            color: var(--white);
+            margin-bottom: 1rem;
+        }
+
+        .completion-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            background: var(--primary-color);
+            color: var(--white);
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 3rem;
+        }
+
+        footer p {
+            margin: 0.5rem 0;
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+
+            .flow-step {
+                width: 100%;
+            }
+
+            .section-links {
+                grid-template-columns: 1fr;
+            }
+
+            .component-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ===== PRINT STYLES ===== */
+        @media print {
+            .progress-section,
+            .skip-link,
+            .flowchart-container,
+            .interactive-quiz {
+                display: none;
+            }
+
+            .content-section {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* ===== HIGH CONTRAST MODE ===== */
+        @media (prefers-contrast: high) {
+            .flow-step,
+            .content-section {
+                border: 2px solid var(--text-dark);
+            }
+        }
+
+        /* ===== REDUCED MOTION ===== */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header role="banner">
+        <div class="header-content">
+            <p class="course-code">
+                <span>📚</span>
+                <span>CSC 156 - Digital Forensics Fundamentals | Week 4</span>
+            </p>
+            <h1>Module 4.4: Boot Processes & Firmware</h1>
+            <p class="module-subtitle">Understanding How Computers Start and Organize Storage for Forensics</p>
+        </div>
+    </header>
+
+    <main id="main-content" role="main">
+        <!-- Progress Section -->
+        <div class="progress-section">
+            <div class="progress-header">
+                <h2>📊 Module 4.4 Progress</h2>
+                <div class="time-estimate">
+                    <span>⏱️</span>
+                    <span>Estimated Time: 50-55 minutes</span>
+                </div>
+            </div>
+            <div class="progress-bar-container" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Module 4.4 progress">
+                <div class="progress-bar" id="progressBar">0%</div>
+            </div>
+            <p style="font-size: 0.9rem; color: var(--text-light); margin-top: 0.5rem;">
+                💾 Progress is saved for this session only
+            </p>
+        </div>
+
+        <!-- Section Navigation -->
+        <div class="section-nav">
+            <h2>📑 Module Sections</h2>
+            <div class="section-links">
+                <a href="#section-overview" class="section-link">
+                    <span class="section-icon">🎯</span>
+                    <span>Overview & Objectives</span>
+                </a>
+                <a href="#section-bios" class="section-link">
+                    <span class="section-icon">⚙️</span>
+                    <span>BIOS & Traditional Boot</span>
+                </a>
+                <a href="#section-uefi" class="section-link">
+                    <span class="section-icon">🚀</span>
+                    <span>UEFI & Modern Boot</span>
+                </a>
+                <a href="#section-mbr" class="section-link">
+                    <span class="section-icon">🧱</span>
+                    <span>MBR Partitioning</span>
+                </a>
+                <a href="#section-gpt" class="section-link">
+                    <span class="section-icon">🌐</span>
+                    <span>GPT Partitioning</span>
+                </a>
+                <a href="#section-artifacts" class="section-link">
+                    <span class="section-icon">🔍</span>
+                    <span>Forensic Artifacts & Challenges</span>
+                </a>
+                <a href="#section-activities" class="section-link">
+                    <span class="section-icon">🎮</span>
+                    <span>Interactive Activities</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Overview Section -->
+        <section id="section-overview" class="content-section">
+            <h2><span>🎯</span> Module Overview & Learning Objectives</h2>
+            
+            <div class="alert alert-info">
+                <span class="alert-icon">💡</span>
+                <div class="alert-content">
+                    <strong>Why Boot Processes Matter in Digital Forensics</strong>
+                    <p>The moment a computer is powered on, a complex sequence of events unfolds, managed by firmware and bootloaders, before the operating system even begins to load. This "boot process" is a critical source of forensic evidence. Understanding it helps you uncover: <strong>how a system was configured, if it was tampered with, what operating systems were installed, and even if malware was present at the lowest level.</strong> This is often an area students know the least about, but it's foundational to understanding data access and system integrity.</p>
+                </div>
+            </div>
+
+            <h3>Learning Objectives</h3>
+            <p>By the end of this module, you will be able to:</p>
+            <ol>
+                <li><strong>Describe the functions and limitations of BIOS</strong> and its traditional boot process</li>
+                <li><strong>Explain the advantages of UEFI</strong> and its modern boot process, including the role of the EFI System Partition (ESP)</li>
+                <li><strong>Understand the structure and limitations of MBR</strong> (Master Boot Record) partitioning</li>
+                <li><strong>Identify the advantages and structure of GPT</strong> (GUID Partition Table) partitioning</li>
+                <li><strong>Recognize forensically relevant artifacts</strong> found in firmware, boot sectors, and partition tables</li>
+                <li><strong>Assess the challenges</strong> posed by modern boot technologies like Secure Boot and UEFI rootkits</li>
+            </ol>
+
+            <div class="alert alert-forensic">
+                <span class="alert-icon">🔍</span>
+                <div class="alert-content">
+                    <strong>Connection to CSLO 2</strong>
+                    <p>This module directly supports <strong>CSLO 2: Conduct thorough examinations of computer hard disk drives and other electronic data storage media</strong>. The boot process defines how the operating system interacts with storage media. Without understanding these foundational concepts, you cannot fully comprehend how data is accessed, managed, or potentially manipulated at the lowest level of a computer system.</p>
+                </div>
+            </div>
+
+            <h3>Module Structure</h3>
+            <p>This module provides a deep dive into boot processes and firmware:</p>
+            <ul>
+                <li><strong>BIOS & Traditional Boot:</strong> The legacy approach to system startup.</li>
+                <li><strong>UEFI & Modern Boot:</strong> The current standard for powerful and secure system initialization.</li>
+                <li><strong>MBR Partitioning:</strong> The traditional way disks are divided.</li>
+                <li><strong>GPT Partitioning:</strong> The modern, flexible partitioning scheme.</li>
+                <li><strong>Forensic Artifacts & Challenges:</strong> What evidence to look for and what difficulties to expect.</li>
+            </ul>
+
+            <div class="alert alert-warning">
+                <span class="alert-icon">⚠️</span>
+                <div class="alert-content">
+                    <strong>Critical Insight: Firmware is NOT the OS</strong>
+                    <p>Many students confuse firmware (BIOS/UEFI) with the operating system. Firmware is the foundational software that initializes hardware *before* the OS loads. Think of it as the "pre-OS" environment. Malware can hide in firmware, making it extremely difficult to detect and remove, even after an OS reinstallation.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- BIOS Section -->
+        <section id="section-bios" class="content-section">
+            <h2><span>⚙️</span> BIOS (Basic Input/Output System) & Traditional Boot</h2>
+
+            <h3>What is BIOS?</h3>
+            <p>The <strong>Basic Input/Output System (BIOS)</strong> is the traditional firmware interface for x86-based computers, dating back to the 1970s. It's the first software that runs when a computer is powered on, responsible for initializing hardware and starting the operating system.</p>
+
+            <h4>BIOS Functions</h4>
+            <ul>
+                <li><strong>POST (Power-On Self-Test):</strong> Checks essential hardware components (CPU, RAM, video card) for proper function.</li>
+                <li><strong>Bootstrap Loader:</strong> Locates and executes the operating system's bootloader.</li>
+                <li><strong>CMOS Setup:</strong> Provides an interface for configuring hardware settings (boot order, date/time, passwords).</li>
+                <li><strong>Hardware Abstraction:</strong> Provides basic services for the OS to interact with hardware.</li>
+            </ul>
+
+            <h4>Limitations of BIOS</h4>
+            <ul>
+                <li><strong>16-bit Code:</strong> Limited to addressing 1MB of memory, making it slow and inefficient for modern hardware.</li>
+                <li><strong>2.2 TB Drive Limit:</strong> Cannot boot from or fully utilize drives larger than 2.2 terabytes.</li>
+                <li><strong>Limited Security:</strong> Lacks modern security features like Secure Boot.</li>
+                <li><strong>Text-Based Interface:</strong> Typically a simple, text-only menu.</li>
+            </ul>
+
+            <h3>BIOS Boot Process Flowchart</h3>
+            <p>The BIOS boot process is a sequential chain of events. Click each step to learn more:</p>
+            <div class="flowchart-container">
+                <div class="flowchart-title">BIOS Boot Sequence</div>
+                <div class="flowchart" id="biosFlowchart">
+                    <div class="flow-step" data-step="1" role="button" tabindex="0">
+                        <div class="flow-step-header">
+                            <span class="flow-step-icon">🔌</span>
+                            <span class="flow-step-title">1. Power On</span>
+                        </div>
+                        <div class="flow-step-details">
+                            <p>The user presses the power button, sending power to the motherboard and components.</p>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step" data-step="2" role="button" tabindex="0">
+                        <div class="flow-step-header">
+                            <span class="flow-step-icon">🩺</span>
+                            <span class="flow-step-title">2. Power-On Self-Test (POST)</span>
+                        </div>
+                        <div class="flow-step-details">
+                            <p>BIOS runs diagnostic tests on hardware (CPU, RAM, GPU, keyboard) to ensure they are functioning correctly. Any critical errors result in beep codes or error messages.</p>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step" data-step="3" role="button" tabindex="0">
+                        <div class="flow-step-header">
+                            <span class="flow-step-icon">🔍</span>
+                            <span class="flow-step-title">3. Locate Boot Device</span>
+                        </div>
+                        <div class="flow-step-details">
+                            <p>BIOS checks the configured boot order (e.g., USB, CD-ROM, Hard Drive) to find a bootable device. This order is set in the BIOS/CMOS setup.</p>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step" data-step="4" role="button" tabindex="0">
+                        <div class="flow-step-header">
+                            <span class="flow-step-icon">💾</span>
+                            <span class="flow-step-title">4. Load Master Boot Record (MBR)</span>
+                        </div>
+                        <div class="flow-step-details">
+                            <p>Once a bootable device (like a hard drive) is found, BIOS reads the first 512 bytes (Sector 0) of that drive. This is the Master Boot Record (MBR).</p>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step" data-step="5" role="button" tabindex="0">
+                        <div class="flow-step-header">
+                            <span class="flow-step-icon">➡️</span>
+                            <span class="flow-step-title">5. Execute Bootloader</span>
+                        </div>
+                        <div class="flow-step-details">
+                            <p>The MBR contains a small program (the bootloader) and the partition table. BIOS executes this bootloader, which then takes over the boot process.</p>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step" data-step="6" role="button" tabindex="0">
+                        <div class="flow-step-header">
+                            <span class="flow-step-icon">💻</span>
+                            <span class="flow-step-title">6. Load Operating System</span>
+                        </div>
+                        <div class="flow-step-details">
+                            <p>The bootloader (e.g., GRUB for Linux, BOOTMGR for Windows) then locates the operating system kernel on a partition and loads it into memory, starting the OS.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Forensic Relevance of BIOS</h3>
+            <div class="forensic-relevance">
+                <h5>🔍 What BIOS Tells Investigators</h5>
+                <ul>
+                    <li><strong>Boot Order:</strong> Reveals which devices the system tried to boot from, indicating if external media (USB, CD) was used.</li>
+                    <li><strong>BIOS Passwords:</strong> Can prevent access to system settings, potentially an anti-forensic measure.</li>
+                    <li><strong>System Date/Time:</strong> The BIOS clock provides the initial system time, which can differ from the OS time and actual time.</li>
+                    <li><strong>Hardware Configuration:</strong> Settings like CPU features, virtualization status, and integrated peripherals.</li>
+                    <li><strong>Legacy Systems:</strong> Presence of BIOS indicates an older system (pre-2010 typically), which might contain different types of artifacts.</li>
+                </ul>
+            </div>
+
+            <div class="alert alert-forensic">
+                <span class="alert-icon">🔍</span>
+                <div class="alert-content">
+                    <strong>Example: Altered Boot Order</strong>
+                    <p>During an investigation, you find a BIOS system where the boot order has been changed to prioritize USB drives before the internal hard drive. This could indicate the user attempted to boot from a forensic live CD (anti-forensics) or a malicious USB drive. Documenting this change is crucial for your report.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- UEFI Section -->
+        <section id="section-uefi" class="content-section">
+            <h2><span>🚀</span> UEFI (Unified Extensible Firmware Interface) & Modern Boot</h2>
+
+            <h3>What is UEFI?</h3>
+            <p>The <strong>Unified Extensible Firmware Interface (UEFI)</strong> is the modern replacement for BIOS, designed to overcome its limitations. UEFI offers a more advanced and flexible environment for system initialization, with support for larger drives, richer graphics, and enhanced security features.</p>
+
+            <h4>Advantages of UEFI over BIOS</h4>
+            <ul>
+                <li><strong>Supports >2.2 TB Drives:</strong> Can boot from and utilize large storage devices (up to 9.4 ZB) with GPT partitioning.</li>
+                <li><strong>32/64-bit Architecture:</strong> Faster processing and access to more memory during boot.</li>
+                <li><strong>Graphical Interface:</strong> Often features a mouse-enabled, graphical setup utility.</li>
+                <li><strong>Secure Boot:</strong> A critical security feature that prevents unauthorized operating systems or bootloaders from loading.</li>
+                <li><strong>Network Capabilities:</strong> Can initialize network connections during boot for remote management or network booting.</li>
+                <li><strong>Modular Design:</strong> More flexible and extensible than BIOS.</li>
+            </ul>
+
+            <h3>UEFI Boot Process Flowchart</h3>
+            <p>The UEFI boot process is more modular and secure than BIOS. Click each step to learn more:</p>
+            <div class="flowchart-container">
+                <div class="flowchart-title">UEFI Boot Sequence</div>
+                <div class="flowchart" id="uefiFlowchart">
+                    <div class="flow-step" data-step="1" role="button" tabindex="0">
+                        <div class="flow-step-header">
+                            <span class="flow-step-icon">🔌</span>
+                            <span class="flow-step-title">1. Power On</span>
+                        </div>
+                        <div class="flow-step-details">
+                            <p>System receives power. UEFI firmware starts initialization.</p>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step" data-step="2" role="button" tabindex="0">
+                        <div class="flow-step-header">
+                            <span class="flow-step-icon">🛡️</span>
+                            <span class="flow-step-title">2. Secure Boot Verification</span>
+                        </div>
+                        <div class="flow-step-details">
+                            <p>If enabled, UEFI checks digital signatures of boot components. If any unsigned or untrusted components are detected, Secure Boot prevents them from loading.</p>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step" data-step="3" role="button" tabindex="0">
+                        <div class="flow-step-header">
+                            <span class="flow-step-icon">💾</span>
+                            <span class="flow-step-title">3. Locate EFI System Partition (ESP)</span>
+                        </div>
+                        <div class="flow-step-details">
+                            <p>UEFI scans for the EFI System Partition (ESP), a dedicated FAT32 partition on the boot drive. The ESP contains bootloaders and drivers.</p>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step" data-step="4" role="button" tabindex="0">
+                        <div class="flow-step-header">
+                            <span class="flow-step-icon">➡️</span>
+                            <span class="flow-step-title">4. Load Boot Manager</span>
+                        </div>
+                        <div class="flow-step-details">
+                            <p>UEFI loads the boot manager from the ESP (e.g., <span class="partition-code">\EFI\Microsoft\Boot\bootmgfw.efi</span> for Windows). The boot manager presents boot options from NVRAM.</p>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step" data-step="5" role="button" tabindex="0">
+                        <div class="flow-step-header">
+                            <span class="flow-step-icon">💻</span>
+                            <span class="flow-step-title">5. Load Operating System</span>
+                        </div>
+                        <div class="flow-step-details">
+                            <p>The selected OS bootloader is loaded, which then initializes the operating system kernel and completes the boot process.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>EFI System Partition (ESP)</h3>
+            <p>The <strong>EFI System Partition (ESP)</strong> is a small, dedicated partition (typically 100-500 MB) formatted with FAT32, found on all drives that boot in UEFI mode. It contains crucial boot files, drivers, and utilities.</p>
+            <ul>
+                <li><strong>Location:</strong> Usually the first or second partition on a GPT disk.</li>
+                <li><strong>Contents:</strong> Bootloaders for all installed operating systems, device drivers, and system utilities.</li>
+                <li><strong>Forensic Access:</strong> Can be mounted and examined by forensic tools.</li>
+            </ul>
+
+            <div class="alert alert-warning">
+                <span class="alert-icon">⚠️</span>
+                <div class="alert-content">
+                    <strong>Secure Boot Implications for Forensics</strong>
+                    <p><strong>Secure Boot</strong> is a UEFI feature that prevents unauthorized bootloaders from running. While good for security, it complicates forensic live booting if you're trying to boot a forensic operating system (like a Linux live CD) that isn't signed or trusted by the UEFI firmware. You may need to disable Secure Boot in UEFI settings to boot your forensic tools.</p>
+                </div>
+            </div>
+
+            <h3>Forensic Relevance of UEFI</h3>
+            <div class="forensic-relevance">
+                <h5>🔍 What UEFI Tells Investigators</h5>
+                <ul>
+                    <li><strong>EFI System Partition (ESP) Artifacts:</strong> Contains bootloaders, logs, and configuration files that can reveal boot history, installed OSes, and potential tampering.</li>
+                    <li><strong>Secure Boot Status:</strong> Indicates if unauthorized bootloaders are prevented. A disabled Secure Boot might suggest an attempt to install alternative OSes or malicious bootloaders.</li>
+                    <li><strong>UEFI Variables (NVRAM):</strong> Stores boot order, hardware configuration, and other settings. Can be a source of forensic artifacts, though harder to access.</li>
+                    <li><strong>UEFI Rootkits:</strong> Sophisticated malware (like LoJax) can infect UEFI firmware, persisting even after OS reinstallation. Detection requires specialized tools.</li>
+                    <li><strong>Network Boot Capabilities:</strong> UEFI supports network booting, which could be used for remote evidence destruction or system compromise.</li>
+                </ul>
+            </div>
+
+            <div class="alert alert-forensic">
+                <span class="alert-icon">🔍</span>
+                <div class="alert-content">
+                    <strong>Case Example: UEFI Rootkit (LoJax)</strong>
+                    <p>In 2018, ESET researchers discovered <strong>LoJax</strong>, a UEFI rootkit used by the Sednit/APT28 group. This malware infected the motherboard's UEFI firmware, allowing it to persist across OS reinstalls and even hard drive replacements. Traditional disk forensics entirely missed the malware. Only specialized firmware-level analysis could detect its presence, highlighting the need to examine firmware in advanced investigations.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- MBR Section -->
+        <section id="section-mbr" class="content-section">
+            <h2><span>🧱</span> MBR (Master Boot Record) Partitioning</h2>
+
+            <h3>What is MBR?</h3>
+            <p>The <strong>Master Boot Record (MBR)</strong> is a traditional partitioning scheme used for organizing data on storage devices. It's found in the very first sector of a hard drive and is integral to the BIOS boot process.</p>
+
+            <h4>MBR Location and Structure</h4>
+            <p>The MBR is located in the **first 512-byte sector** (Logical Block Address 0) of a storage device.</p>
+            <div class="component-grid">
+                <div class="component-card active" onclick="toggleComponent(this)" role="button" tabindex="0">
+                    <div class="component-header">
+                        <span class="component-icon-large">💻</span>
+                        <span class="component-title">Bootstrap Code (446 bytes)</span>
+                    </div>
+                    <div class="component-description">
+                        Small program that initiates the boot process
+                    </div>
+                    <div class="component-details">
+                        <p>This executable code is the very first program run by the BIOS when the computer starts. Its primary job is to scan the partition table, find the active (bootable) partition, and load its Volume Boot Record (VBR) into memory, which then continues the boot process for the operating system.</p>
+                        <p><strong>Forensic Significance:</strong> This is a prime target for bootkit malware (e.g., Rootkit.Win32.Sinowal) which can replace the legitimate bootstrap code to load malicious software before the OS even starts.</p>
+                    </div>
+                </div>
+
+                <div class="component-card" onclick="toggleComponent(this)" role="button" tabindex="0">
+                    <div class="component-header">
+                        <span class="component-icon-large">📋</span>
+                        <span class="component-title">Partition Table (64 bytes)</span>
+                    </div>
+                    <div class="component-description">
+                        Defines up to 4 primary partitions
+                    </div>
+                    <div class="component-details">
+                        <p>The partition table contains up to four 16-byte entries, each describing a primary partition on the disk. Each entry specifies the partition's start and end sectors, its size, and its type (e.g., NTFS, FAT32, Linux Ext4).</p>
+                        <p><strong>Forensic Significance:</strong> Deleted or hidden partitions can be identified by analyzing the raw MBR, even if the operating system doesn't display them. Attackers might use this area to hide data or additional operating systems.</p>
+                    </div>
+                </div>
+
+                <div class="component-card" onclick="toggleComponent(this)" role="button" tabindex="0">
+                    <div class="component-header">
+                        <span class="component-icon-large">✍️</span>
+                        <span class="component-title">Boot Signature (2 bytes)</span>
+                    </div>
+                    <div class="component-description">
+                        Magic number 0x55AA
+                    </div>
+                    <div class="component-details">
+                        <p>The last two bytes of the MBR form the boot signature, always <span class="partition-code">0x55AA</span>. This value tells the BIOS that the sector contains a valid MBR and is bootable.</p>
+                        <p><strong>Forensic Significance:</strong> If this signature is missing or corrupted, the BIOS will report a "No boot device found" error. Forensic tools can check this signature to quickly validate a potential MBR.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h4>Limitations of MBR</h4>
+            <ul>
+                <li><strong>Maximum 4 Primary Partitions:</strong> To have more, one primary partition must be designated as an "extended partition" which can then contain multiple "logical partitions." This adds complexity.</li>
+                <li><strong>Maximum 2 TB Disk Size:</strong> MBR cannot address more than 2.2 terabytes of disk space. Any space beyond this limit is unusable.</li>
+                <li><strong>Single Point of Failure:</strong> The MBR is stored in a single location. If it becomes corrupted, the entire disk may become unbootable and data inaccessible without recovery tools.</li>
+                <li><strong>No Error Checking:</strong> MBR lacks integrity checks to detect corruption.</li>
+            </ul>
+
+            <h3>Forensic Relevance of MBR</h3>
+            <div class="forensic-relevance">
+                <h5>🔍 What MBR Tells Investigators</h5>
+                <ul>
+                    <li><strong>Partition Structure:</strong> Reveals the layout of partitions, including deleted, hidden, or unallocated space.</li>
+                    <li><strong>Bootkit Detection:</strong> The bootstrap code is a common target for bootkit malware. Analyzing the MBR's code can reveal malicious modifications.</li>
+                    <li><strong>Partition Table Manipulation:</strong> Attackers can modify partition entries to hide data or operating systems. Forensic tools can parse the raw MBR to uncover these.</li>
+                    <li><strong>Historical Context:</strong> MBR is typically associated with older systems or systems running legacy operating systems.</li>
+                </ul>
+            </div>
+
+            <div class="alert alert-forensic">
+                <span class="alert-icon">🔍</span>
+                <div class="alert-content">
+                    <strong>Example: `diskpart` (Windows) for MBR Analysis</strong>
+                    <p>On a Windows system (in a VM or with write blocker!), you can use `diskpart` to see partition information:</p>
+                    <div class="partition-code-block">
+                        C:\> diskpart<br>
+                        DISKPART> list disk<br>
+                        DISKPART> select disk 0<br>
+                        DISKPART> list partition<br>
+                        <br>
+                        Partition ###  Type              Size     Offset<br>
+                        -------------  ----------------  -------  -------<br>
+                        Partition 1    Primary            100 MB    1024 KB<br>
+                        Partition 2    Primary            465 GB    101 MB<br>
+                        Partition 3    Extended           30 GB    465 GB<br>
+                        Partition 4    Logical            30 GB    465 GB<br>
+                    </div>
+                    <p>This output clearly shows a primary partition, an extended partition, and a logical partition, characteristic of an MBR-partitioned drive.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- GPT Section -->
+        <section id="section-gpt" class="content-section">
+            <h2><span>🌐</span> GPT (GUID Partition Table) Partitioning</h2>
+
+            <h3>What is GPT?</h3>
+            <p>The <strong>GUID Partition Table (GPT)</strong> is the modern partitioning scheme that replaces MBR, designed to overcome its limitations. GPT is an integral part of the UEFI standard and is required for booting from drives larger than 2.2 TB.</p>
+
+            <h4>Advantages of GPT over MBR</h4>
+            <ul>
+                <li><strong>Supports >2.2 TB Drives:</strong> Can address extremely large storage devices (up to 9.4 ZB).</li>
+                <li><strong>Supports up to 128 Partitions:</strong> Allows for many primary partitions without needing extended/logical partitions.</li>
+                <li><strong>Redundancy:</strong> Stores a backup copy of the partition table at the end of the disk, making it more resilient to corruption.</li>
+                <li><strong>CRC32 Checksums:</strong> Includes error checking for the partition table, detecting corruption.</li>
+                <li><strong>Unique GUIDs:</strong> Each partition has a globally unique identifier (GUID), enabling precise tracking.</li>
+            </ul>
+
+            <h3>GPT Location and Structure</h3>
+            <p>GPT spreads its critical data across multiple locations on the disk, making it more robust. Click each component to explore its role:</p>
+            <div class="component-grid">
+                <div class="component-card active" onclick="toggleComponent(this)" role="button" tabindex="0">
+                    <div class="component-header">
+                        <span class="component-icon-large">🛡️</span>
+                        <span class="component-title">Protective MBR (LBA 0)</span>
+                    </div>
+                    <div class="component-description">
+                        Legacy compatibility and prevents MBR tools from overwriting GPT
+                    </div>
+                    <div class="component-details">
+                        <p>The very first sector of a GPT disk contains a "Protective MBR." This MBR is not used for booting an OS in UEFI mode, but it serves two purposes:</p>
+                        <ul>
+                            <li><strong>Legacy Compatibility:</strong> Allows older, MBR-only tools to recognize the disk as a single, occupied partition, preventing them from accidentally overwriting the GPT.</li>
+                            <li><strong>Protection:</strong> It makes the GPT disk appear as one large MBR partition, safeguarding the actual GPT data.</li>
+                        </ul>
+                        <p><strong>Forensic Significance:</strong> If the Protective MBR has been tampered with (e.g., replaced with a malicious MBR), it can indicate an attempt to trick legacy systems or forensic tools.</p>
+                    </div>
+                </div>
+
+                <div class="component-card" onclick="toggleComponent(this)" role="button" tabindex="0">
+                    <div class="component-header">
+                        <span class="component-icon-large">📋</span>
+                        <span class="component-title">Primary GPT Header (LBA 1)</span>
+                    </div>
+                    <div class="component-description">
+                        Defines location and size of partition entries
+                    </div>
+                    <div class="component-details">
+                        <p>Located immediately after the Protective MBR, the Primary GPT Header contains crucial information about the GPT, including:</p>
+                        <ul>
+                            <li>The GUID for the disk</li>
+                            <li>The location and size of the Partition Entry Array</li>
+                            <li>A CRC32 checksum to verify its integrity</li>
+                            <li>A pointer to the Backup GPT Header.</li>
+                        </ul>
+                        <p><strong>Forensic Significance:</strong> This header is the roadmap to the disk's partitions. Corruption here can render the disk inaccessible. The CRC32 checksum is a key forensic integrity check.</p>
+                    </div>
+                </div>
+
+                <div class="component-card" onclick="toggleComponent(this)" role="button" tabindex="0">
+                    <div class="component-header">
+                        <span class="component-icon-large">🔢</span>
+                        <span class="component-title">Partition Entry Array (LBA 2-33)</span>
+                    </div>
+                    <div class="component-description">
+                        Detailed information for up to 128 partitions
+                    </div>
+                    <div class="component-details">
+                        <p>This area (typically 32 sectors) contains the actual partition entries. Each entry is 128 bytes long and describes a partition, including:</p>
+                        <ul>
+                            <li>A unique GUID for the partition itself</li>
+                            <li>The partition type GUID (e.g., Windows Basic Data Partition, EFI System Partition)</li>
+                            <li>Start and end LBA of the partition</li>
+                            <li>A human-readable partition name (e.g., "Windows OS", "Recovery")</li>
+                        </ul>
+                        <p><strong>Forensic Significance:</strong> More detailed than MBR entries. The GUIDs can track partitions across systems. The human-readable names provide quick context. Deleted partitions might still exist in this array until overwritten.</p>
+                    </div>
+                </div>
+
+                <div class="component-card" onclick="toggleComponent(this)" role="button" tabindex="0">
+                    <div class="component-header">
+                        <span class="component-icon-large">🔄</span>
+                        <span class="component-title">Backup GPT (End of Disk)</span>
+                    </div>
+                    <div class="component-description">
+                        Redundant copy of header and partition entries
+                    </div>
+                    <div class="component-details">
+                        <p>GPT stores a duplicate copy of the GPT Header and Partition Entry Array at the very end of the disk. This redundancy is a major advantage over MBR.</p>
+                        <p><strong>Forensic Significance:</strong> If the primary GPT is corrupted, the backup can be used to repair the partition table, potentially recovering access to data. This backup can also reveal discrepancies if an attacker modified only the primary GPT to hide partitions.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Forensic Relevance of GPT</h3>
+            <div class="forensic-relevance">
+                <h5>🔍 What GPT Tells Investigators</h5>
+                <ul>
+                    <li><strong>Redundancy for Recovery:</strong> The backup GPT can be invaluable for repairing corrupted partition tables or recovering deleted partitions.</li>
+                    <li><strong>Unique Partition GUIDs:</strong> These GUIDs allow forensic tools to track specific partitions, even if their position or name changes.</li>
+                    <li><strong>EFI System Partition (ESP):</strong> As discussed, the ESP contains critical boot artifacts.</li>
+                    <li><strong>Complexity:</strong> While more robust, GPT is more complex than MBR, requiring modern forensic tools for proper parsing and analysis. Manual analysis is more involved.</li>
+                    <li><strong>Associated with UEFI:</strong> GPT is almost always used with UEFI systems, which means you should also consider Secure Boot and UEFI rootkit possibilities.</li>
+                </ul>
+            </div>
+
+            <div class="alert alert-forensic">
+                <span class="alert-icon">🔍</span>
+                <div class="alert-content">
+                    <strong>Example: `gdisk` (Linux) for GPT Analysis</strong>
+                    <p>On a Linux system (in a VM or with write blocker!), `gdisk` is commonly used for GPT analysis:</p>
+                    <div class="partition-code-block">
+                        investigator@forensics:~$ sudo gdisk -l /dev/sda<br>
+                        GPT fdisk (gdisk) version 1.0.8<br>
+                        <br>
+                        Partition table scan: <br>
+                          MBR: protective<br>
+                          BSD: not present<br>
+                          APM: not present<br>
+                          GPT: present<br>
+                        <br>
+                        Found valid GPT with protective MBR; using GPT.<br>
+                        Disk /dev/sda: 1000215216 sectors, 476.9 GiB<br>
+                        Sector size (logical): 512 bytes<br>
+                        Partition table holds up to 128 entries<br>
+                        Main partition table begins at LBA 2 and ends at LBA 33<br>
+                        First usable LBA is 34, last usable LBA is 1000215182<br>
+                        Partitions: <br>
+                        Num  Start (LBA)    End (LBA)  Size        Code  Name<br>
+                          1         2048       206847   100.0 MiB   EF00  EFI system partition<br>
+                          2       206848       239615    16.0 MiB   0C01  Microsoft reserved ...<br>
+                          3       239616    999958527   476.7 GiB   0700  Basic data partition<br>
+                    </div>
+                    <p>This output shows the "protective MBR," the "EFI system partition (ESP)" with code `EF00`, and a "Basic data partition," all characteristic of a GPT disk.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Forensic Artifacts & Challenges Section -->
+        <section id="section-artifacts" class="content-section">
+            <h2><span>🔍</span> Forensic Artifacts & Challenges</h2>
+
+            <h3>Key Forensic Artifacts</h3>
+            <p>Boot processes and firmware provide numerous artifacts valuable for reconstructing events and detecting tampering:</p>
+            <ul>
+                <li><strong>Boot Order Settings:</strong> Changes can indicate attempts to boot from external media or forensic tools.</li>
+                <li><strong>BIOS/UEFI Passwords:</strong> Suggests an attempt to secure the system or prevent access to settings.</li>
+                <li><strong>System Date/Time:</strong> The CMOS/RTC battery maintains time. Discrepancies between this, OS time, and actual time are critical.</li>
+                <li><strong>EFI System Partition (ESP) Contents:</strong> Bootloaders, logs, and other files in the ESP can show what OSes were installed/removed.</li>
+                <li><strong>MBR/GPT Structure:</strong> Analysis of these structures can reveal hidden or deleted partitions.</li>
+                <li><strong>Firmware Version & Date:</strong> Outdated firmware might indicate lack of security updates or a deliberate decision to avoid patches.</li>
+                <li><strong>Secure Boot Status:</strong> Enabled or disabled status has implications for security and forensic booting.</li>
+            </ul>
+
+            <h3>Challenges in Boot Process Forensics</h3>
+            <p>While rich in artifacts, this area also presents significant challenges:</p>
+            <div class="alert alert-danger">
+                <span class="alert-icon">⚠️</span>
+                <div class="alert-content">
+                    <strong>Common Challenges</strong>
+                    <ul>
+                        <li><strong>Firmware Rootkits/Bootkits:</strong> Malware residing in BIOS/UEFI is extremely difficult to detect and remove, persisting across OS reinstalls.</li>
+                        <li><strong>Encrypted Boot Volumes:</strong> Full-disk encryption (BitLocker, FileVault) encrypts the boot sector, making it harder to analyze or boot from.</li>
+                        <li><strong>Physical Access Required:</strong> Accessing BIOS/UEFI settings often requires physical access and the ability to restart the system.</li>
+                        <li><strong>Time Synchronization Issues:</strong> Discrepancies between hardware clock, OS clock, and network time (NTP) can complicate timeline reconstruction.</li>
+                        <li><strong>Vendor-Specific Implementations:</strong> BIOS/UEFI interfaces and features vary significantly between manufacturers (Dell, HP, ASUS, Lenovo).</li>
+                        <li><strong>Secure Boot Obstacles:</strong> Prevents booting unsigned forensic tools, requiring manual disablement.</li>
+                        <li><strong>Advanced Anti-Forensics:</strong> Attackers can deliberately corrupt boot sectors, modify firmware, or use other techniques to hinder investigations.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h4>Mitigation Strategies</h4>
+            <ol>
+                <li><strong>Document Everything:</strong> Photograph BIOS/UEFI settings, record boot order, firmware versions.</li>
+                <li><strong>Use Specialized Tools:</strong> Forensic tools like `HxD` (hex editor), `diskpart`/`fdisk`/`gdisk`, and specialized firmware analysis tools are essential.</li>
+                <li><strong>Virtual Machines:</strong> Practice boot process analysis in VMs to safely experiment with different configurations.</li>
+                <li><strong>Live Acquisition (if encrypted):</strong> For encrypted boot volumes, perform live memory acquisition before shutdown to capture encryption keys.</li>
+                <li><strong>Verify Timestamps:</strong> Always cross-reference system time with actual time and other logs.</li>
+                <li><strong>Beware of UEFI Rootkits:</strong> Stay informed about new threats targeting firmware.</li>
+            </ol>
+
+            <div class="alert alert-forensic">
+                <span class="alert-icon">🔍</span>
+                <div class="alert-content">
+                    <strong>Example: Timeline Discrepancies</strong>
+                    <p>An investigator found a system with a BIOS date of 2015, but the operating system logs showed activity from 2026. This significant discrepancy prompted further investigation, revealing that the CMOS battery had died, causing the BIOS clock to reset to its default date every time the system was powered off. The OS was syncing its time from a network time server. Documenting both the BIOS time and the OS time was critical to explaining the timeline accurately.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Activities Section -->
+        <section id="section-activities" class="content-section">
+            <h2><span>🎮</span> Interactive Activities</h2>
+
+            <div class="interactive-quiz">
+                <h3>🎯 Boot Process Order Challenge</h3>
+                <div class="quiz-instructions">
+                    <p><strong>Instructions:</strong> For each boot process, select the steps in the correct chronological order. Click on the steps to mark them as selected. If you get it wrong, try again!</p>
+                </div>
+
+                <!-- BIOS Boot Order Quiz -->
+                <div class="quiz-question-interactive" id="biosBootQuiz">
+                    <p class="question-text-interactive"><strong>BIOS Boot Process:</strong> Select the steps in order (1st to 6th)</p>
+                    <div class="quiz-options-interactive">
+                        <label class="quiz-option-interactive" data-order="3" onclick="selectQuizOption(this, 'bios')">
+                            <input type="radio" name="bios_q_order_1">
+                            <span>BIOS locates boot device</span>
+                        </label>
+                        <label class="quiz-option-interactive" data-order="5" onclick="selectQuizOption(this, 'bios')">
+                            <input type="radio" name="bios_q_order_2">
+                            <span>BIOS executes bootloader from MBR</span>
+                        </label>
+                        <label class="quiz-option-interactive" data-order="1" onclick="selectQuizOption(this, 'bios')">
+                            <input type="radio" name="bios_q_order_3">
+                            <span>System powers on</span>
+                        </label>
+                        <label class="quiz-option-interactive" data-order="6" onclick="selectQuizOption(this, 'bios')">
+                            <input type="radio" name="bios_q_order_4">
+                            <span>Operating system loads</span>
+                        </label>
+                        <label class="quiz-option-interactive" data-order="2" onclick="selectQuizOption(this, 'bios')">
+                            <input type="radio" name="bios_q_order_5">
+                            <span>BIOS performs POST</span>
+                        </label>
+                        <label class="quiz-option-interactive" data-order="4" onclick="selectQuizOption(this, 'bios')">
+                            <input type="radio" name="bios_q_order_6">
+                            <span>BIOS loads MBR from boot device</span>
+                        </label>
+                    </div>
+                    <button class="check-answer-btn-interactive" onclick="checkBootOrder('bios')">Check BIOS Order</button>
+                    <div class="quiz-feedback-interactive" id="biosBootFeedback"></div>
+                </div>
+
+                <!-- UEFI Boot Order Quiz -->
+                <div class="quiz-question-interactive" id="uefiBootQuiz">
+                    <p class="question-text-interactive"><strong>UEFI Boot Process:</strong> Select the steps in order (1st to 5th)</p>
+                    <div class="quiz-options-interactive">
+                        <label class="quiz-option-interactive" data-order="3" onclick="selectQuizOption(this, 'uefi')">
+                            <input type="radio" name="uefi_q_order_1">
+                            <span>UEFI locates EFI System Partition (ESP)</span>
+                        </label>
+                        <label class="quiz-option-interactive" data-order="5" onclick="selectQuizOption(this, 'uefi')">
+                            <input type="radio" name="uefi_q_order_2">
+                            <span>Operating system loads</span>
+                        </label>
+                        <label class="quiz-option-interactive" data-order="1" onclick="selectQuizOption(this, 'uefi')">
+                            <input type="radio" name="uefi_q_order_3">
+                            <span>System powers on (UEFI initialization)</span>
+                        </label>
+                        <label class="quiz-option-interactive" data-order="4" onclick="selectQuizOption(this, 'uefi')">
+                            <input type="radio" name="uefi_q_order_4">
+                            <span>UEFI loads boot manager from ESP</span>
+                        </label>
+                        <label class="quiz-option-interactive" data-order="2" onclick="selectQuizOption(this, 'uefi')">
+                            <input type="radio" name="uefi_q_order_5">
+                            <span>UEFI performs Secure Boot verification (if enabled)</span>
+                        </label>
+                    </div>
+                    <button class="check-answer-btn-interactive" onclick="checkBootOrder('uefi')">Check UEFI Order</button>
+                    <div class="quiz-feedback-interactive" id="uefiBootFeedback"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Knowledge Check Section -->
+        <section class="content-section">
+            <div class="knowledge-check">
+                <h3>🎯 Knowledge Check</h3>
+                <p>Test your understanding of boot processes and firmware:</p>
+
+                <div class="quiz-question">
+                    <p class="question-text">1. Which component is responsible for loading the Master Boot Record (MBR) during a traditional boot process?</p>
+                    <div class="quiz-options">
+                        <label class="quiz-option">
+                            <input type="radio" name="q1" value="a">
+                            <span>Operating System</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q1" value="b" data-correct="true">
+                            <span>BIOS</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q1" value="c">
+                            <span>UEFI</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q1" value="d">
+                            <span>Bootloader</span>
+                        </label>
+                    </div>
+                    <button class="check-answer-btn" onclick="checkAnswer('q1', this)">Check Answer</button>
+                    <div class="quiz-feedback" id="feedback-q1"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p class="question-text">2. What is a key advantage of GPT partitioning over MBR partitioning?</p>
+                    <div class="quiz-options">
+                        <label class="quiz-option">
+                            <input type="radio" name="q2" value="a">
+                            <span>GPT supports only 4 primary partitions</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q2" value="b">
+                            <span>GPT has a 2.2 TB disk size limit</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q2" value="c" data-correct="true">
+                            <span>GPT includes redundant partition tables and CRC32 checksums for integrity</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q2" value="d">
+                            <span>GPT uses a text-based interface for configuration</span>
+                        </label>
+                    </div>
+                    <button class="check-answer-btn" onclick="checkAnswer('q2', this)">Check Answer</button>
+                    <div class="quiz-feedback" id="feedback-q2"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p class="question-text">3. Which UEFI feature prevents unauthorized bootloaders from running, potentially complicating forensic live booting?</p>
+                    <div class="quiz-options">
+                        <label class="quiz-option">
+                            <input type="radio" name="q3" value="a">
+                            <span>EFI System Partition (ESP)</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q3" value="b">
+                            <span>UEFI Variables</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q3" value="c" data-correct="true">
+                            <span>Secure Boot</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q3" value="d">
+                            <span>Network Boot</span>
+                        </label>
+                    </div>
+                    <button class="check-answer-btn" onclick="checkAnswer('q3', this)">Check Answer</button>
+                    <div class="quiz-feedback" id="feedback-q3"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p class="question-text">4. Where would you typically find the operating system's bootloaders and drivers on a UEFI system?</p>
+                    <div class="quiz-options">
+                        <label class="quiz-option">
+                            <input type="radio" name="q4" value="a">
+                            <span>Master Boot Record (MBR)</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q4" value="b">
+                            <span>CMOS Battery</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q4" value="c" data-correct="true">
+                            <span>EFI System Partition (ESP)</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q4" value="d">
+                            <span>CPU Cache</span>
+                        </label>
+                    </div>
+                    <button class="check-answer-btn" onclick="checkAnswer('q4', this)">Check Answer</button>
+                    <div class="quiz-feedback" id="feedback-q4"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p class="question-text">5. What is the primary forensic significance of an altered boot order in BIOS/UEFI settings?</p>
+                    <div class="quiz-options">
+                        <label class="quiz-option">
+                            <input type="radio" name="q5" value="a">
+                            <span>It permanently corrupts the operating system</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q5" value="b">
+                            <span>It guarantees the presence of a firmware rootkit</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q5" value="c" data-correct="true">
+                            <span>It can indicate an attempt to boot from external media (e.g., live CD, malicious USB)</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q5" value="d">
+                            <span>It only affects system performance, not forensic evidence</span>
+                        </label>
+                    </div>
+                    <button class="check-answer-btn" onclick="checkAnswer('q5', this)">Check Answer</button>
+                    <div class="quiz-feedback" id="feedback-q5"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Completion Badge -->
+        <div class="completion-badge" id="completionBadge">
+            <div class="completion-icon">🎉</div>
+            <h3>Module 4.4 Complete!</h3>
+            <p>Congratulations! You've navigated the complexities of boot processes and firmware.</p>
+            <p><strong>Key Takeaways:</strong></p>
+            <ul style="text-align: left; display: inline-block; margin-top: 1rem;">
+                <li>BIOS is legacy, UEFI is modern and more secure.</li>
+                <li>MBR is traditional, GPT is modern with redundancy.</li>
+                <li>Firmware (BIOS/UEFI) runs *before* the OS and can hide malware.</li>
+                <li>The EFI System Partition (ESP) is critical for UEFI boot.</li>
+                <li>Boot order, passwords, and timestamps are vital forensic artifacts.</li>
+                <li>Always document firmware settings and be aware of Secure Boot.</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer role="contentinfo">
+        <p>© 2026 Mendocino College | CSC 156 - Digital Forensics Fundamentals</p>
+        <p>Week 4, Module 4.4: Boot Processes & Firmware</p>
+        <p>Instructor: David Pai | Spring 2026</p>
+        <p style="margin-top: 1rem; font-size: 0.9rem;">
+            💾 Your progress is saved for this session only. Bookmark this page to return to it later.
+        </p>
+    </footer>
+
+    <script>
+        // ===== SESSION STORAGE KEYS =====
+        const STORAGE_KEY = 'csc156_week4_module44_progress';
+        
+        // ===== PROGRESS TRACKING =====
+        let progress = {
+            sectionsVisited: new Set(),
+            biosFlowSteps: new Set(),
+            uefiFlowSteps: new Set(),
+            mbrComponentsExplored: new Set(),
+            gptComponentsExplored: new Set(),
+            biosBootQuizComplete: false,
+            uefiBootQuizComplete: false,
+            quizAnswers: {},
+            expandablesOpened: new Set(),
+            startTime: Date.now()
+        };
+
+        // Load saved progress
+        function loadProgress() {
+            const saved = sessionStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                progress.sectionsVisited = new Set(parsed.sectionsVisited || []);
+                progress.biosFlowSteps = new Set(parsed.biosFlowSteps || []);
+                progress.uefiFlowSteps = new Set(parsed.uefiFlowSteps || []);
+                progress.mbrComponentsExplored = new Set(parsed.mbrComponentsExplored || []);
+                progress.gptComponentsExplored = new Set(parsed.gptComponentsExplored || []);
+                progress.biosBootQuizComplete = parsed.biosBootQuizComplete || false;
+                progress.uefiBootQuizComplete = parsed.uefiBootQuizComplete || false;
+                progress.quizAnswers = parsed.quizAnswers || {};
+                progress.expandablesOpened = new Set(parsed.expandablesOpened || []);
+                progress.startTime = parsed.startTime || Date.now();
+            }
+            updateProgressBar();
+        }
+
+        // Save progress
+        function saveProgress() {
+            const toSave = {
+                sectionsVisited: Array.from(progress.sectionsVisited),
+                biosFlowSteps: Array.from(progress.biosFlowSteps),
+                uefiFlowSteps: Array.from(progress.uefiFlowSteps),
+                mbrComponentsExplored: Array.from(progress.mbrComponentsExplored),
+                gptComponentsExplored: Array.from(progress.gptComponentsExplored),
+                biosBootQuizComplete: progress.biosBootQuizComplete,
+                uefiBootQuizComplete: progress.uefiBootQuizComplete,
+                quizAnswers: progress.quizAnswers,
+                expandablesOpened: Array.from(progress.expandablesOpened),
+                startTime: progress.startTime
+            };
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+        }
+
+        // Update progress bar
+        function updateProgressBar() {
+            // Total items:
+            // 6 sections + 6 BIOS flow steps + 5 UEFI flow steps + 3 MBR components + 4 GPT components + 2 boot order quizzes + 5 knowledge check questions + 14 expandables
+            const totalItems = 6 + 6 + 5 + 3 + 4 + 2 + 5 + 14; 
+            
+            const completedItems = progress.sectionsVisited.size + 
+                                  progress.biosFlowSteps.size +
+                                  progress.uefiFlowSteps.size +
+                                  progress.mbrComponentsExplored.size +
+                                  progress.gptComponentsExplored.size +
+                                  (progress.biosBootQuizComplete ? 1 : 0) +
+                                  (progress.uefiBootQuizComplete ? 1 : 0) +
+                                  Object.keys(progress.quizAnswers).length +
+                                  progress.expandablesOpened.size;
+            
+            const percentage = Math.round((completedItems / totalItems) * 100);
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = percentage + '%';
+            progressBar.textContent = percentage + '%';
+            progressBar.parentElement.setAttribute('aria-valuenow', percentage);
+
+            // Show completion badge at 100%
+            if (percentage >= 100) {
+                document.getElementById('completionBadge').classList.add('show');
+            }
+
+            saveProgress();
+        }
+
+        // ===== INTERSECTION OBSERVER FOR SECTIONS =====
+        const sectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const sectionId = entry.target.id;
+                    if (sectionId && !progress.sectionsVisited.has(sectionId)) {
+                        progress.sectionsVisited.add(sectionId);
+                        updateProgressBar();
+                    }
+                }
+            });
+        }, { threshold: 0.5 });
+
+        // Observe all content sections
+        document.querySelectorAll('.content-section').forEach(section => {
+            sectionObserver.observe(section);
+        });
+
+        // ===== FLOWCHART INTERACTION =====
+        function toggleFlowStep(element, flowchartId) {
+            const stepNumber = element.dataset.step;
+            const flowSteps = document.querySelectorAll(`#${flowchartId} .flow-step`);
+            
+            flowSteps.forEach(step => {
+                if (step !== element) {
+                    step.classList.remove('active');
+                    // Reset radio buttons if they exist
+                    const radio = step.querySelector('input[type="radio"]');
+                    if (radio) radio.checked = false;
+                }
+            });
+            
+            element.classList.toggle('active');
+
+            if (element.classList.contains('active')) {
+                if (flowchartId === 'biosFlowchart') {
+                    if (!progress.biosFlowSteps.has(stepNumber)) {
+                        progress.biosFlowSteps.add(stepNumber);
+                        updateProgressBar();
+                    }
+                } else if (flowchartId === 'uefiFlowchart') {
+                    if (!progress.uefiFlowSteps.has(stepNumber)) {
+                        progress.uefiFlowSteps.add(stepNumber);
+                        updateProgressBar();
+                    }
+                }
+            }
+        }
+
+        // Keyboard support for flowchart steps
+        document.querySelectorAll('.flow-step').forEach(step => {
+            step.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    const flowchartId = step.closest('.flowchart').id;
+                    toggleFlowStep(step, flowchartId);
+                }
+            });
+        });
+
+        // ===== COMPONENT CARDS (MBR/GPT Structure) =====
+        function toggleComponent(card) {
+            const wasActive = card.classList.contains('active');
+            
+            // Close all cards in the same grid
+            const grid = card.closest('.component-grid');
+            if (grid) {
+                grid.querySelectorAll('.component-card').forEach(c => {
+                    c.classList.remove('active');
+                });
+            }
+
+            // Toggle this card
+            if (!wasActive) {
+                card.classList.add('active');
+                const componentTitle = card.querySelector('.component-title').textContent;
+                const sectionId = card.closest('section').id;
+                if (sectionId === 'section-mbr') {
+                    if (!progress.mbrComponentsExplored.has(componentTitle)) {
+                        progress.mbrComponentsExplored.add(componentTitle);
+                        updateProgressBar();
+                    }
+                } else if (sectionId === 'section-gpt') {
+                    if (!progress.gptComponentsExplored.has(componentTitle)) {
+                        progress.gptComponentsExplored.add(componentTitle);
+                        updateProgressBar();
+                    }
+                }
+            }
+        }
+
+        // Keyboard support for component cards
+        document.querySelectorAll('.component-card').forEach(card => {
+            card.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleComponent(card);
+                }
+            });
+        });
+
+        // ===== EXPANDABLE SECTIONS =====
+        function toggleExpandable(header) {
+            const expandable = header.parentElement;
+            expandable.classList.toggle('open');
+            
+            const isExpanded = expandable.classList.contains('open');
+            header.setAttribute('aria-expanded', isExpanded);
+
+            // Track expandable opened
+            if (isExpanded) {
+                const expandableText = header.querySelector('span').textContent;
+                if (!progress.expandablesOpened.has(expandableText)) {
+                    progress.expandablesOpened.add(expandableText);
+                    updateProgressBar();
+                }
+            }
+        }
+
+        // Keyboard support for expandables
+        document.addEventListener('keydown', function(e) {
+            if (e.target.classList.contains('expandable-header')) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleExpandable(e.target);
+                }
+            }
+        });
+
+        // ===== INTERACTIVE BOOT ORDER QUIZZES =====
+        let selectedOrder = {
+            bios: [],
+            uefi: []
+        };
+
+        function selectQuizOption(element, quizType) {
+            const radio = element.querySelector('input[type="radio"]');
+            if (radio) {
+                // Deselect other radios in the same group
+                document.querySelectorAll(`input[name="${radio.name}"]`).forEach(r => {
+                    r.closest('.quiz-option-interactive').classList.remove('selected');
+                });
+                element.classList.add('selected');
+                radio.checked = true;
+
+                // Add to selected order array, maintaining order of clicks
+                const orderValue = parseInt(element.dataset.order);
+                const currentName = radio.name;
+                
+                // Find existing entry for this radio group
+                const existingIndex = selectedOrder[quizType].findIndex(item => item.name === currentName);
+
+                if (existingIndex > -1) {
+                    selectedOrder[quizType][existingIndex].order = orderValue;
+                } else {
+                    selectedOrder[quizType].push({ name: currentName, order: orderValue });
+                }
+            }
+        }
+
+        function checkBootOrder(quizType) {
+            const feedbackDiv = document.getElementById(`${quizType}BootFeedback`);
+            const optionsContainer = document.querySelector(`#${quizType}BootQuiz .quiz-options-interactive`);
+            const allOptions = optionsContainer.querySelectorAll('.quiz-option-interactive');
+            const button = document.querySelector(`#${quizType}BootQuiz .check-answer-btn-interactive`);
+
+            let correctOrder = [];
+            if (quizType === 'bios') {
+                correctOrder = [1, 2, 3, 4, 5, 6]; // Power On, POST, Locate Boot Device, Load MBR, Execute Bootloader, Load OS
+            } else if (quizType === 'uefi') {
+                correctOrder = [1, 2, 3, 4, 5]; // Power On, Secure Boot, Locate ESP, Load Boot Manager, Load OS
+            }
+
+            // Get selected order and sort by original `data-order`
+            const chosenOrder = Array.from(allOptions)
+                                .filter(opt => opt.querySelector('input[type="radio"]').checked)
+                                .map(opt => parseInt(opt.dataset.order))
+                                .sort((a,b) => a - b); // Sort numerically
+
+            if (chosenOrder.length !== correctOrder.length) {
+                feedbackDiv.textContent = 'Please select all steps in the correct order.';
+                feedbackDiv.className = 'quiz-feedback-interactive show incorrect';
+                return;
+            }
+
+            let isCorrect = true;
+            for (let i = 0; i < correctOrder.length; i++) {
+                if (chosenOrder[i] !== correctOrder[i]) {
+                    isCorrect = false;
+                    break;
+                }
+            }
+            
+            allOptions.forEach(opt => {
+                const orderValue = parseInt(opt.dataset.order);
+                opt.classList.remove('selected'); // Remove selected class
+                if (orderValue === correctOrder[orderValue - 1]) { // This logic assumes data-order is 1-indexed
+                    opt.classList.add('correct');
+                } else {
+                    opt.classList.add('incorrect');
+                }
+            });
+
+
+            if (isCorrect) {
+                feedbackDiv.innerHTML = '<strong>✅ Correct!</strong> You\'ve successfully ordered the steps.';
+                feedbackDiv.className = 'quiz-feedback-interactive show correct';
+                if (quizType === 'bios' && !progress.biosBootQuizComplete) {
+                    progress.biosBootQuizComplete = true;
+                    updateProgressBar();
+                } else if (quizType === 'uefi' && !progress.uefiBootQuizComplete) {
+                    progress.uefiBootQuizComplete = true;
+                    updateProgressBar();
+                }
+            } else {
+                feedbackDiv.innerHTML = '<strong>❌ Incorrect.</strong> Review the flowcharts and try again!';
+                feedbackDiv.className = 'quiz-feedback-interactive show incorrect';
+            }
+            button.disabled = true; // Disable button after checking
+        }
+
+
+        // ===== KNOWLEDGE CHECK QUIZ =====
+        function checkAnswer(questionName, button) {
+            const options = document.querySelectorAll(`input[name="${questionName}"]`);
+            const feedback = document.getElementById(`feedback-${questionName}`);
+            let selectedOption = null;
+            let correctOption = null;
+
+            options.forEach(option => {
+                const label = option.closest('.quiz-option');
+                if (option.checked) {
+                    selectedOption = option;
+                }
+                if (option.dataset.correct) {
+                    correctOption = option;
+                }
+            });
+
+            if (!selectedOption) {
+                feedback.textContent = 'Please select an answer first.';
+                feedback.className = 'quiz-feedback show incorrect';
+                return;
+            }
+
+            button.disabled = true;
+
+            if (selectedOption === correctOption) {
+                selectedOption.closest('.quiz-option').classList.add('correct');
+                feedback.innerHTML = '<strong>✅ Correct!</strong> ' + getCorrectFeedback(questionName);
+                feedback.className = 'quiz-feedback show correct';
+                
+                if (!progress.quizAnswers[questionName]) {
+                    progress.quizAnswers[questionName] = true;
+                    updateProgressBar();
+                }
+            } else {
+                selectedOption.closest('.quiz-option').classList.add('incorrect');
+                correctOption.closest('.quiz-option').classList.add('correct');
+                feedback.innerHTML = '<strong>❌ Incorrect.</strong> ' + getIncorrectFeedback(questionName);
+                feedback.className = 'quiz-feedback show incorrect';
+            }
+        }
+
+        function getCorrectFeedback(questionName) {
+            const feedbacks = {
+                'q1': 'The BIOS is the firmware that initiates the traditional boot process, including loading the MBR from the boot device.',
+                'q2': 'GPT\'s redundancy (backup partition table) and integrity checks (CRC32 checksums) make it much more robust than MBR, which has a single point of failure.',
+                'q3': 'Secure Boot is a UEFI feature designed to prevent malicious bootloaders from running by verifying digital signatures of boot components.',
+                'q4': 'The EFI System Partition (ESP) is a dedicated FAT32 partition on a GPT disk that stores UEFI bootloaders, drivers, and utilities.',
+                'q5': 'An altered boot order can be a significant forensic artifact, indicating that the system may have been booted from an external device, possibly for malicious purposes or to use anti-forensic tools.'
+            };
+            return feedbacks[questionName] || 'Great job!';
+        }
+
+        function getIncorrectFeedback(questionName) {
+            const feedbacks = {
+                'q1': 'Review the BIOS & Traditional Boot section. The BIOS is the very first software to run and is responsible for loading the MBR.',
+                'q2': 'Review the GPT Partitioning section. GPT offers significant advantages over MBR, especially in terms of disk size, partition count, and data integrity.',
+                'q3': 'Review the UEFI & Modern Boot section, focusing on Secure Boot. The ESP is a partition, not a security feature itself.',
+                'q4': 'Review the UEFI & Modern Boot section, particularly the EFI System Partition (ESP). MBR is for legacy BIOS systems.',
+                'q5': 'Review the Forensic Artifacts section. An altered boot order is a strong indicator of external activity, not necessarily permanent corruption or a rootkit, and it is definitely forensically relevant.'
+            };
+            return feedbacks[questionName] || 'Review the relevant section and try again.';
+        }
+
+        // ===== SMOOTH SCROLLING FOR SECTION LINKS =====
+        document.querySelectorAll('.section-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetSection = document.querySelector(targetId);
+                if (targetSection) {
+                    targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // ===== INITIALIZE ON PAGE LOAD =====
+        window.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+
+            // Set up flowchart click handlers
+            document.querySelectorAll('#biosFlowchart .flow-step').forEach(step => {
+                step.addEventListener('click', () => toggleFlowStep(step, 'biosFlowchart'));
+            });
+            document.querySelectorAll('#uefiFlowchart .flow-step').forEach(step => {
+                step.addEventListener('click', () => toggleFlowStep(step, 'uefiFlowchart'));
+            });
+
+            // Announce page load to screen readers
+            const announcement = document.createElement('div');
+            announcement.setAttribute('role', 'status');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.className = 'sr-only';
+            announcement.textContent = 'Module 4.4: Boot Processes and Firmware loaded. Use tab to navigate through sections.';
+            document.body.appendChild(announcement);
+
+            // Remove announcement after screen readers process it
+            setTimeout(() => {
+                announcement.remove();
+            }, 3000);
+        });
+
+        // ===== SAVE PROGRESS BEFORE UNLOAD =====
+        window.addEventListener('beforeunload', function() {
+            saveProgress();
+        });
+
+        // Periodic progress save
+        setInterval(saveProgress, 30000); // Save every 30 seconds
+    </script>
+</body>
+</html>
