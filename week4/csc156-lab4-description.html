@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CSC 156 Week 4 Lab Activity 4: Hardware Component Identification and Boot Process Analysis. Hands-on application of Week 4 concepts.">
+    <title>Lab Activity 4 | CSC 156 - Digital Forensics Fundamentals</title>
+    <style>
+        /* ===== CSS VARIABLES ===== */
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --info-color: #16a085;
+            --light-bg: #ecf0f1;
+            --white: #ffffff;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --border-color: #bdc3c7;
+            --shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-hover: 0 4px 12px rgba(0,0,0,0.15);
+            --transition: all 0.3s ease;
+            --border-radius: 8px;
+        }
+
+        /* ===== GLOBAL STYLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--light-bg);
+        }
+
+        /* ===== ACCESSIBILITY ===== */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 8px 16px;
+            text-decoration: none;
+            z-index: 100;
+            border-radius: 0 0 4px 0;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        /* ===== HEADER ===== */
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #34495e 100%);
+            color: var(--white);
+            padding: 2rem 1rem;
+            box-shadow: var(--shadow);
+        }
+
+        .header-content {
+            max-width: 800px; /* Max width for single column */
+            margin: 0 auto;
+        }
+
+        .course-code {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .assignment-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            font-weight: normal;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        main {
+            max-width: 800px; /* Max width for single column */
+            margin: 2rem auto;
+            padding: 0 1rem;
+            min-height: 60vh;
+        }
+
+        /* ===== PROGRESS SECTION ===== */
+        .progress-section {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .progress-bar-container {
+            background: var(--light-bg);
+            border-radius: 10px;
+            height: 30px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--success-color) 0%, #2ecc71 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .time-estimate {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* ===== CONTENT SECTIONS ===== */
+        .content-section {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .content-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .content-section h3 {
+            color: var(--secondary-color);
+            margin: 2rem 0 1rem;
+            font-size: 1.4rem;
+        }
+
+        .content-section h4 {
+            color: var(--text-dark);
+            margin: 1.5rem 0 0.75rem;
+            font-size: 1.2rem;
+        }
+
+        .content-section h5 {
+            color: var(--text-dark);
+            margin: 1rem 0 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .content-section p {
+            margin-bottom: 1rem;
+            line-height: 1.8;
+        }
+
+        .content-section ul, .content-section ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .content-section li {
+            margin-bottom: 0.5rem;
+            line-height: 1.8;
+        }
+
+        /* ===== ALERT BOXES ===== */
+        .alert {
+            padding: 1.25rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+            border-left: 4px solid;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .alert-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert strong {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-color: var(--info-color);
+            color: #0c5460;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-color: var(--warning-color);
+            color: #856404;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-color: var(--success-color);
+            color: #155724;
+        }
+
+        .alert-forensic {
+            background: #e8f4f8;
+            border-color: var(--secondary-color);
+            color: #004085;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            border-color: var(--accent-color);
+            color: #721c24;
+        }
+
+        /* ===== CHECKLISTS ===== */
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            background: var(--light-bg);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .checklist-item:hover {
+            background: #d5dbdb;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            margin-right: 1rem;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .checklist-item.completed {
+            opacity: 0.6;
+            text-decoration: line-through;
+        }
+        
+        /* ===== CODE BLOCKS ===== */
+        .code-block {
+            background-color: #e0e0e0;
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin: 1rem 0;
+            border: 1px solid var(--border-color);
+            font-size: 0.9em;
+        }
+
+        /* ===== COMPLETION BADGE ===== */
+        .completion-badge {
+            background: linear-gradient(135deg, var(--success-color) 0%, #2ecc71 100%);
+            color: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            margin: 2rem 0;
+            display: none;
+        }
+
+        .completion-badge.show {
+            display: block;
+            animation: fadeInScale 0.5s ease;
+        }
+
+        .completion-badge h3 {
+            color: var(--white);
+            margin-bottom: 1rem;
+        }
+
+        .completion-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            background: var(--primary-color);
+            color: var(--white);
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 3rem;
+        }
+
+        footer p {
+            margin: 0.5rem 0;
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+        }
+
+        /* ===== PRINT STYLES ===== */
+        @media print {
+            .progress-section,
+            .skip-link {
+                display: none;
+            }
+
+            .content-section {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* ===== HIGH CONTRAST MODE ===== */
+        @media (prefers-contrast: high) {
+            .content-section {
+                border: 2px solid var(--text-dark);
+            }
+        }
+
+        /* ===== REDUCED MOTION ===== */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header role="banner">
+        <div class="header-content">
+            <p class="course-code">
+                <span>📚</span>
+                <span>CSC 156 - Digital Forensics Fundamentals | Week 4</span>
+            </p>
+            <h1>Lab Activity 4: Hardware Component Identification and Boot Process Analysis</h1>
+            <p class="assignment-subtitle">Hands-on Application of Week 4 Concepts (20 points)</p>
+        </div>
+    </header>
+
+    <main id="main-content" role="main">
+        <!-- Progress Section -->
+        <div class="progress-section">
+            <div class="progress-header">
+                <h2>📊 Your Lab Progress</h2>
+                <div class="time-estimate">
+                    <span>⏱️</span>
+                    <span>Estimated Time: ~5 hours</span>
+                </div>
+            </div>
+            <div class="progress-bar-container" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Lab Activity 4 progress">
+                <div class="progress-bar" id="progressBar">0%</div>
+            </div>
+            <p style="font-size: 0.9rem; color: var(--text-light); margin-top: 0.5rem;">
+                💾 Progress is saved for this session only
+            </p>
+        </div>
+
+        <!-- Lab Overview -->
+        <section class="content-section">
+            <h2><span class="alert-icon">🧪</span> Lab Overview</h2>
+            <p>This lab activity is designed to provide you with practical, hands-on experience applying the theoretical knowledge gained in Week 4 modules (Computer Hardware Fundamentals, Storage Technologies, Storage Interfaces, and Boot Processes & Firmware).</p>
+            
+            <div class="alert alert-info">
+                <strong>Objective:</strong>
+                <p>Develop practical skills in identifying hardware components, analyzing boot configurations, and understanding their forensic significance.</p>
+            </div>
+
+            <h3>Total Points: 20 points</h3>
+            <h3>CSLO Alignment: CSLO 2</h3>
+            <p>This lab directly supports <strong>CSLO 2: Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data.</strong> By identifying and analyzing the foundational hardware and boot processes, you are building essential skills for future data examination.</p>
+
+            <h3>Deliverable</h3>
+            <p>You will submit a **single PDF document** containing all three parts of this lab. Ensure your document is well-organized, clearly labeled, and includes all required screenshots and forensic observations.</p>
+            <p><strong>File Naming Convention:</strong> <code>LastName_FirstName_Lab4.pdf</code></p>
+        </section>
+
+        <!-- Part 1: Hardware Component Identification -->
+        <section class="content-section">
+            <h2><span class="alert-icon">🔎</span> Part 1: Hardware Component Identification (8 points)</h2>
+            <p>Examine a provided computer system (physical or virtual) and document all major hardware components. For each component, you will identify its specifications and explain its forensic significance.</p>
+
+            <h4>Instructions:</h4>
+            <ol>
+                <li>Obtain access to a computer system (e.g., your personal computer, a lab computer, or a virtual machine).</li>
+                <li>For each component listed below, use appropriate tools (software and/or physical inspection) to identify its specifications.</li>
+                <li>Capture **screenshots** of software tool output and/or **photographs** of physical labels.</li>
+                <li>Document your findings in your lab report, including the forensic significance of each identified detail.</li>
+            </ol>
+
+            <h4>Components to Identify & Document:</h4>
+            <ul class="checklist" id="part1Checklist">
+                <li class="checklist-item">
+                    <input type="checkbox" id="p1-cpu" onchange="updateProgress()">
+                    <label for="p1-cpu"><strong>CPU (Central Processing Unit):</strong> Model, specifications (e.g., core count, architecture - x64/ARM), virtualization features.</label>
+                    <p style="margin-left: 2.5rem; font-size: 0.9em; color: var(--text-light);"><em>Example Tools: Task Manager (Windows), `msinfo32` (Windows), `CPU-Z` (Windows), `lscpu` (Linux), `cat /proc/cpuinfo` (Linux).</em></p>
+                    <p style="margin-left: 2.5rem; font-size: 0.9em; font-style: italic;">**Forensic Significance:** CPU architecture impacts malware analysis and memory forensics tool selection. CPU cache contains volatile data.</p>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="p1-ram" onchange="updateProgress()">
+                    <label for="p1-ram"><strong>RAM (Random Access Memory):</strong> Type (e.g., DDR4), total size (GB), speed (MHz), configuration (number of sticks/slots).</label>
+                    <p style="margin-left: 2.5rem; font-size: 0.9em; color: var(--text-light);"><em>Example Tools: Task Manager (Windows), `msinfo32` (Windows), `HWiNFO` (Windows), `sudo dmidecode --type memory` (Linux), `free -h` (Linux).</em></p>
+                    <p style="margin-left: 2.5rem; font-size: 0.9em; font-style: italic;">**Forensic Significance:** RAM holds critical volatile evidence (encryption keys, running processes) that is lost on power loss.</p>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="p1-storage" onchange="updateProgress()">
+                    <label for="p1-storage"><strong>Storage Devices:</strong> For EACH drive: Type (HDD/SSD), interface (SATA/NVMe/USB), capacity, manufacturer, model, serial number.</label>
+                    <p style="margin-left: 2.5rem; font-size: 0.9em; color: var(--text-light);"><em>Example Tools: Disk Management (Windows), Device Manager (Windows), `CrystalDiskInfo` (Windows), `lsblk` (Linux), `fdisk -l` (Linux), `smartctl` (Linux).</em></p>
+                    <p style="margin-left: 2.5rem; font-size: 0.9em; font-style: italic;">**Forensic Significance:** Drive type (HDD vs. SSD) impacts deleted file recovery. Interface (SATA/NVMe) determines write blocker needs and acquisition speed.</p>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="p1-mobo" onchange="updateProgress()">
+                    <label for="p1-mobo"><strong>Motherboard & Chipset:</strong> Manufacturer, model, chipset, BIOS/UEFI version.</label>
+                    <p style="margin-left: 2.5rem; font-size: 0.9em; color: var(--text-light);"><em>Example Tools: `msinfo32` (Windows), `wmic baseboard get product,manufacturer` (Windows), `CPU-Z` (Windows), `HWiNFO` (Windows), `sudo dmidecode -t baseboard` (Linux).</em></p>
+                    <p style="margin-left: 2.5rem; font-size: 0.9em; font-style: italic;">**Forensic Significance:** Firmware (BIOS/UEFI) stores boot order, system time, and can be a target for persistent malware (rootkits).</p>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="p1-nic" onchange="updateProgress()">
+                    <label for="p1-nic"><strong>NIC (Network Interface Card):</strong> MAC address for each network adapter (wired/wireless).</label>
+                    <p style="margin-left: 2.5rem; font-size: 0.9em; color: var(--text-light);"><em>Example Tools: `ipconfig /all` (Windows), `ip a` (Linux), `ifconfig -a` (Linux).</em></p>
+                    <p style="margin-left: 2.5rem; font-size: 0.9em; font-style: italic;">**Forensic Significance:** MAC addresses uniquely identify devices in network logs, helping to reconstruct network activity.</p>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="p1-other" onchange="updateProgress()">
+                    <label for="p1-other"><strong>Any Additional Hardware:</strong> E.g., USB devices (if connected), expansion cards (e.g., discrete GPU).</label>
+                    <p style="margin-left: 2.5rem; font-size: 0.9em; font-style: italic;">**Forensic Significance:** USB devices leave connection artifacts. Specialized cards might indicate specific user activities.</p>
+                </li>
+            </ul>
+            <div class="alert alert-warning">
+                <strong>Safety Note:</strong> When performing physical inspection, ensure the system is **powered off and unplugged**. Discharge static electricity. For your lab, prioritize software tools and screenshots/photos of labels.
+            </div>
+        </section>
+
+        <!-- Part 2: Boot Process Analysis -->
+        <section class="content-section">
+            <h2><span class="alert-icon">🔄</span> Part 2: Boot Process Analysis (8 points)</h2>
+            <p>Access and document the system's BIOS/UEFI settings, analyze the partition structure, and identify the bootloader.</p>
+
+            <h4>Instructions:</h4>
+            <ol>
+                <li>Access the system's BIOS/UEFI setup utility.</li>
+                <li>Document the relevant settings as specified below.</li>
+                <li>Analyze the disk's partition structure.</li>
+                <li>Identify the bootloader.</li>
+            </ol>
+
+            <h4>Elements to Analyze & Document:</h4>
+            <ul class="checklist" id="part2Checklist">
+                <li class="checklist-item">
+                    <input type="checkbox" id="p2-bios-access" onchange="updateProgress()">
+                    <label for="p2-bios-access"><strong>BIOS/UEFI Access:</strong> Describe the method used to access (e.g., "Pressed F2 repeatedly after power on").</label>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="p2-firmware-info" onchange="updateProgress()">
+                    <label for="p2-firmware-info"><strong>Firmware Information:</strong> Type (BIOS/UEFI), version, date.</label>
+                    <p style="margin-left: 2.5rem; font-size: 0.9em; font-style: italic;">**Forensic Significance:** Helps identify system age and potential for firmware-based malware.</p>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="p2-boot-order" onchange="updateProgress()">
+                    <label for="p2-boot-order"><strong>Boot Order/Priority:</strong> List the boot device order. Include a screenshot/photo.</label>
+                    <p style="margin-left: 2.5rem; font-size: 0.9em; font-style: italic;">**Forensic Significance:** Altered boot order can indicate attempts to boot from external media (e.g., live OS, malicious USB).</p>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="p2-secure-boot" onchange="updateProgress()">
+                    <label for="p2-secure-boot"><strong>Secure Boot Status (UEFI only):</strong> Is it Enabled or Disabled? (If BIOS, state N/A).</label>
+                    <p style="margin-left: 2.5rem; font-size: 0.9em; font-style: italic;">**Forensic Significance:** Disabled Secure Boot might suggest attempts to install unauthorized OS or bootloaders.</p>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="p2-system-time" onchange="updateProgress()">
+                    <label for="p2-system-time"><strong>System Date/Time:</strong> Record the date/time shown in BIOS/UEFI. Compare with actual time and note any discrepancies.</label>
+                    <p style="margin-left: 2.5rem; font-size: 0.9em; font-style: italic;">**Forensic Significance:** Time discrepancies can impact timeline reconstruction; may indicate dead CMOS battery or deliberate alteration.</p>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="p2-partition-scheme" onchange="updateProgress()">
+                    <label for="p2-partition-scheme"><strong>Partitioning Scheme:</strong> Identify if the primary boot drive uses MBR or GPT partitioning. Include screenshot of tool output.</label>
+                    <p style="margin-left: 2.5rem; font-size: 0.9em; color: var(--text-light);"><em>Example Tools: `diskpart` (`list disk` command) (Windows), `fdisk -l` or `gdisk -l` (Linux).</em></p>
+                    <p style="margin-left: 2.5rem; font-size: 0.9em; font-style: italic;">**Forensic Significance:** Dictates how partitions are structured and where bootloaders are located. Affects tool choice for parsing.</p>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="p2-partitions" onchange="updateProgress()">
+                    <label for="p2-partitions"><strong>List Partitions:</strong> For the primary boot drive, list ALL visible partitions (type, size, file system). Identify the EFI System Partition (ESP) if present.</label>
+                    <p style="margin-left: 2.5rem; font-size: 0.9em; color: var(--text-light);"><em>Example Tools: `diskpart` (`list partition` command) (Windows), `fdisk -l` or `gdisk -l` (Linux).</em></p>
+                    <p style="margin-left: 2.5rem; font-size: 0.9em; font-style: italic;">**Forensic Significance:** Reveals OS installations, recovery partitions, and potential hidden areas.</p>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="p2-bootloader" onchange="updateProgress()">
+                    <label for="p2-bootloader"><strong>Bootloader Identification:</strong> Identify the bootloader (e.g., "Windows Boot Manager," "GRUB") and its approximate location (e.g., "in MBR," "on ESP").</label>
+                    <p style="margin-left: 2.5rem; font-size: 0.9em; font-style: italic;">**Forensic Significance:** Bootloaders can be targeted by malware (bootkits). Identifies the primary boot mechanism.</p>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Part 3: Storage Technology Comparison -->
+        <section class="content-section">
+            <h2><span class="alert-icon">💾</span> Part 3: Storage Technology Comparison (4 points)</h2>
+            <p>Based on your learning from Module 4.2 and 4.3, compare and contrast Hard Disk Drives (HDDs) and Solid State Drives (SSDs) from a digital forensic perspective.</p>
+
+            <h4>Instructions:</h4>
+            <ol>
+                <li>Create a comparison table (you may use a template or create your own).</li>
+                <li>For each storage type (HDD & SSD), document the characteristics listed below.</li>
+                <li>Conclude with a paragraph explaining which storage type presents greater forensic challenges and why, drawing on specific concepts learned.</li>
+            </ol>
+
+            <h4>Characteristics to Compare:</h4>
+            <ul class="checklist" id="part3Checklist">
+                <li class="checklist-item">
+                    <input type="checkbox" id="p3-persistence" onchange="updateProgress()">
+                    <label for="p3-persistence"><strong>Data Persistence After Deletion:</strong> Explain what happens to deleted data on each drive type.</label>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="p3-trim" onchange="updateProgress()">
+                    <label for="p3-trim"><strong>TRIM Support and Behavior:</strong> Does it apply? How does it affect data?</label>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="p3-wear" onchange="updateProgress()">
+                    <label for="p3-wear"><strong>Wear Leveling Impact:</strong> Does it apply? How does it affect data location?</label>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="p3-recovery" onchange="updateProgress()">
+                    <label for="p3-recovery"><strong>Expected Deleted File Recovery Success Rate:</strong> High, Low, or None?</label>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="p3-acquisition" onchange="updateProgress()">
+                    <label for="p3-acquisition"><strong>Key Acquisition Considerations:</strong> E.g., time sensitivity, primary write blocker type (hardware/software).</label>
+                </li>
+                <li class="checklist-item">
+                    <input type="checkbox" id="p3-conclusion" onchange="updateProgress()">
+                    <label for="p3-conclusion"><strong>Conclusion:</strong> Which storage type presents greater forensic challenges and why?</label>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Lab Tips -->
+        <section class="content-section">
+            <h2><span class="alert-icon">💡</span> Tips for Success</h2>
+            <ul>
+                <li><strong>Start Early:</strong> This lab requires time for exploration and documentation. Don't wait until the last minute.</li>
+                <li><strong>Document as You Go:</strong> Take screenshots and notes immediately as you identify components or settings. This saves time and ensures accuracy.</li>
+                <li><strong>Explain Forensic Significance:</strong> For each piece of information you document, explain *why* it is important to a digital forensic investigator. This demonstrates your understanding.</li>
+                <li><strong>Review Modules:</strong> Refer back to Modules 4.1-4.4 if you get stuck or need to clarify concepts.</li>
+                <li><strong>Use the Template:</strong> If a lab template is provided on Canvas, use it. It will guide your documentation.</li>
+                <li><strong>Ask Questions:</strong> If you encounter issues or have questions, reach out to your instructor or lab assistant.</li>
+            </ul>
+            <div class="alert alert-forensic">
+                <strong>Remember the Core Principles:</strong>
+                <p>Throughout this lab, keep in mind the core principles of digital forensics (Week 1, Module 1): minimize data alteration, document everything, and maintain objectivity.</p>
+            </div>
+        </section>
+
+        <!-- Completion Badge -->
+        <div class="completion-badge" id="completionBadge">
+            <div class="completion-icon">🎉</div>
+            <h3>Lab Activity 4 Complete!</h3>
+            <p>Congratulations! You've completed all tasks for Lab Activity 4.</p>
+            <p>Ensure your PDF report is thoroughly documented and submitted via Canvas.</p>
+        </div>
+    </main>
+
+    <footer role="contentinfo">
+        <p>© 2026 Mendocino College | CSC 156 - Digital Forensics Fundamentals</p>
+        <p>Week 4: Lab Activity 4</p>
+        <p>Instructor: David Pai | Spring 2026</p>
+        <p style="margin-top: 1rem; font-size: 0.9rem;">
+            💾 Your progress is saved for this session only. Bookmark this page to return to it later.
+        </p>
+    </footer>
+
+    <script>
+        // ===== SESSION STORAGE KEY =====
+        const STORAGE_KEY = 'csc156_week4_lab4_progress';
+
+        // ===== PROGRESS TRACKING =====
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('.checklist-item input[type="checkbox"]');
+            let completedTasks = 0;
+            const totalTasks = checkboxes.length;
+            const progressData = {};
+
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    completedTasks++;
+                    checkbox.closest('.checklist-item').classList.add('completed');
+                } else {
+                    checkbox.closest('.checklist-item').classList.remove('completed');
+                }
+                progressData[checkbox.id] = checkbox.checked;
+            });
+
+            const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = percentage + '%';
+            progressBar.textContent = percentage + '%';
+            progressBar.parentElement.setAttribute('aria-valuenow', percentage);
+
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(progressData));
+
+            if (percentage >= 100) {
+                document.getElementById('completionBadge').classList.add('show');
+            } else {
+                document.getElementById('completionBadge').classList.remove('show');
+            }
+        }
+
+        // Load progress from session storage
+        function loadProgress() {
+            const savedProgress = sessionStorage.getItem(STORAGE_KEY);
+            if (savedProgress) {
+                const progressData = JSON.parse(savedProgress);
+                Object.keys(progressData).forEach(id => {
+                    const checkbox = document.getElementById(id);
+                    if (checkbox) {
+                        checkbox.checked = progressData[id];
+                    }
+                });
+            }
+            updateProgress(); // Update UI based on loaded data
+        }
+
+        // ===== INITIALIZE ON PAGE LOAD =====
+        window.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+
+            // Announce page load to screen readers
+            const announcement = document.createElement('div');
+            announcement.setAttribute('role', 'status');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.className = 'sr-only';
+            announcement.textContent = 'Lab Activity 4 page loaded. Use tab to navigate through sections and checklist items.';
+            document.body.appendChild(announcement);
+
+            // Remove announcement after screen readers process it
+            setTimeout(() => {
+                announcement.remove();
+            }, 3000);
+        });
+
+        // Periodic progress save
+        setInterval(updateProgress, 30000); // Save every 30 seconds
+    </script>
+</body>
+</html>
