@@ -1,0 +1,2779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Module 4.2: Storage Technologies - Understanding HDD and SSD architectures and their forensic implications">
+    <title>Module 4.2: Storage Technologies | CSC 156</title>
+    <style>
+        /* ===== CSS VARIABLES ===== */
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --info-color: #16a085;
+            --light-bg: #ecf0f1;
+            --white: #ffffff;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --border-color: #bdc3c7;
+            --shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-hover: 0 4px 12px rgba(0,0,0,0.15);
+            --transition: all 0.3s ease;
+            --border-radius: 8px;
+        }
+
+        /* ===== GLOBAL STYLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--light-bg);
+        }
+
+        /* ===== ACCESSIBILITY ===== */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 8px 16px;
+            text-decoration: none;
+            z-index: 100;
+            border-radius: 0 0 4px 0;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        /* ===== HEADER ===== */
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #34495e 100%);
+            color: var(--white);
+            padding: 2rem 1rem;
+            box-shadow: var(--shadow);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .course-code {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .module-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            font-weight: normal;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            min-height: 60vh;
+        }
+
+        /* ===== PROGRESS SECTION ===== */
+        .progress-section {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .progress-bar-container {
+            background: var(--light-bg);
+            border-radius: 10px;
+            height: 30px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--success-color) 0%, #2ecc71 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .time-estimate {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* ===== SECTION NAVIGATION ===== */
+        .section-nav {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .section-nav h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .section-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .section-link {
+            padding: 1rem;
+            background: var(--light-bg);
+            border-left: 4px solid var(--secondary-color);
+            border-radius: 4px;
+            text-decoration: none;
+            color: var(--text-dark);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-link:hover {
+            background: var(--secondary-color);
+            color: var(--white);
+            transform: translateX(4px);
+        }
+
+        .section-link:focus {
+            outline: 2px solid var(--secondary-color);
+            outline-offset: 2px;
+        }
+
+        .section-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* ===== CONTENT SECTIONS ===== */
+        .content-section {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            scroll-margin-top: 80px;
+        }
+
+        .content-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .content-section h3 {
+            color: var(--secondary-color);
+            margin: 2rem 0 1rem;
+            font-size: 1.4rem;
+        }
+
+        .content-section h4 {
+            color: var(--text-dark);
+            margin: 1.5rem 0 0.75rem;
+            font-size: 1.2rem;
+        }
+
+        .content-section h5 {
+            color: var(--text-dark);
+            margin: 1rem 0 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .content-section p {
+            margin-bottom: 1rem;
+            line-height: 1.8;
+        }
+
+        .content-section ul, .content-section ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .content-section li {
+            margin-bottom: 0.5rem;
+            line-height: 1.8;
+        }
+
+        /* ===== ALERT BOXES ===== */
+        .alert {
+            padding: 1.25rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+            border-left: 4px solid;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .alert-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert strong {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-color: var(--info-color);
+            color: #0c5460;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-color: var(--warning-color);
+            color: #856404;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-color: var(--success-color);
+            color: #155724;
+        }
+
+        .alert-forensic {
+            background: #e8f4f8;
+            border-color: var(--secondary-color);
+            color: #004085;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            border-color: var(--accent-color);
+            color: #721c24;
+        }
+
+        /* ===== COMPARISON CARDS ===== */
+        .comparison-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .comparison-card {
+            background: var(--white);
+            border: 3px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .comparison-card.hdd {
+            border-color: #3498db;
+        }
+
+        .comparison-card.ssd {
+            border-color: #e74c3c;
+        }
+
+        .comparison-card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-4px);
+        }
+
+        .comparison-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .comparison-icon {
+            font-size: 3rem;
+        }
+
+        .comparison-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .comparison-content h4 {
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--secondary-color);
+            font-size: 1.1rem;
+        }
+
+        /* ===== VISUAL DIAGRAM ===== */
+        .diagram-container {
+            background: var(--light-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .diagram-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .diagram-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .diagram-item {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .diagram-item-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .diagram-item-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .diagram-item-desc {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        /* ===== INTERACTIVE TABS ===== */
+        .tab-container {
+            margin: 2rem 0;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            background: var(--light-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .tab-button:hover {
+            background: #d5dbdb;
+        }
+
+        .tab-button.active {
+            background: var(--white);
+            border-bottom-color: var(--white);
+            color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .tab-button:focus {
+            outline: 2px solid var(--secondary-color);
+            outline-offset: 2px;
+        }
+
+        .tab-content {
+            display: none;
+            background: var(--white);
+            border: 2px solid var(--secondary-color);
+            border-radius: 0 var(--border-radius) var(--border-radius) var(--border-radius);
+            padding: 1.5rem;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== COMPARISON TABLE ===== */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            border-radius: var(--border-radius);
+        }
+
+        .comparison-table thead {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+
+        .comparison-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comparison-table tbody tr:hover {
+            background: var(--light-bg);
+        }
+
+        .comparison-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table .hdd-col {
+            background: #e3f2fd;
+        }
+
+        .comparison-table .ssd-col {
+            background: #ffebee;
+        }
+
+        /* ===== FEATURE CARDS ===== */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: var(--white);
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .feature-card:hover {
+            border-color: var(--secondary-color);
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-4px);
+        }
+
+        .feature-card.active {
+            border-color: var(--success-color);
+            background: #f0f9f4;
+        }
+
+        .feature-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+        }
+
+        .feature-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .feature-description {
+            color: var(--text-dark);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .feature-details {
+            background: var(--light-bg);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .feature-card.active .feature-details {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== INTERACTIVE SCENARIO ===== */
+        .scenario-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            margin: 2rem 0;
+        }
+
+        .scenario-container h3 {
+            color: var(--white);
+            margin-top: 0;
+            margin-bottom: 1rem;
+        }
+
+        .scenario-question {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+
+        .scenario-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .scenario-option {
+            background: var(--white);
+            color: var(--text-dark);
+            padding: 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 3px solid transparent;
+        }
+
+        .scenario-option:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .scenario-option.selected {
+            border-color: var(--warning-color);
+            background: #fff3cd;
+        }
+
+        .scenario-option.correct {
+            border-color: var(--success-color);
+            background: #d4edda;
+        }
+
+        .scenario-option.incorrect {
+            border-color: var(--accent-color);
+            background: #f8d7da;
+        }
+
+        .scenario-feedback {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            display: none;
+        }
+
+        .scenario-feedback.show {
+            display: block;
+        }
+
+        .check-scenario-btn {
+            background: var(--white);
+            color: var(--primary-color);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: var(--transition);
+            margin-top: 1rem;
+        }
+
+        .check-scenario-btn:hover {
+            background: var(--light-bg);
+        }
+
+        .check-scenario-btn:disabled {
+            background: var(--text-light);
+            cursor: not-allowed;
+        }
+
+        /* ===== KNOWLEDGE CHECK ===== */
+        .knowledge-check {
+            background: var(--white);
+            border: 2px solid var(--secondary-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .knowledge-check h3 {
+            color: var(--secondary-color);
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .quiz-question {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .quiz-question:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .question-text {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .quiz-option {
+            padding: 1rem;
+            background: var(--light-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .quiz-option:hover {
+            background: #d5dbdb;
+        }
+
+        .quiz-option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .quiz-option.correct {
+            background: #d4edda;
+            border-color: var(--success-color);
+        }
+
+        .quiz-option.incorrect {
+            background: #f8d7da;
+            border-color: var(--accent-color);
+        }
+
+        .quiz-feedback {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .quiz-feedback.show {
+            display: block;
+        }
+
+        .quiz-feedback.correct {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .quiz-feedback.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .check-answer-btn {
+            background: var(--secondary-color);
+            color: var(--white);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: var(--transition);
+            margin-top: 1rem;
+        }
+
+        .check-answer-btn:hover {
+            background: #2980b9;
+        }
+
+        .check-answer-btn:disabled {
+            background: var(--text-light);
+            cursor: not-allowed;
+        }
+
+        /* ===== EXPANDABLE SECTIONS ===== */
+        .expandable {
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+
+        .expandable-header {
+            background: var(--light-bg);
+            padding: 1.25rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .expandable-header:hover {
+            background: #d5dbdb;
+        }
+
+        .expandable-icon {
+            transition: transform 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .expandable.open .expandable-icon {
+            transform: rotate(180deg);
+        }
+
+        .expandable-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .expandable.open .expandable-content {
+            max-height: 3000px;
+        }
+
+        .expandable-body {
+            padding: 1.5rem;
+        }
+
+        /* ===== COMPLETION BADGE ===== */
+        .completion-badge {
+            background: linear-gradient(135deg, var(--success-color) 0%, #2ecc71 100%);
+            color: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            margin: 2rem 0;
+            display: none;
+        }
+
+        .completion-badge.show {
+            display: block;
+            animation: fadeInScale 0.5s ease;
+        }
+
+        .completion-badge h3 {
+            color: var(--white);
+            margin-bottom: 1rem;
+        }
+
+        .completion-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            background: var(--primary-color);
+            color: var(--white);
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 3rem;
+        }
+
+        footer p {
+            margin: 0.5rem 0;
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+
+            .comparison-container {
+                grid-template-columns: 1fr;
+            }
+
+            .section-links {
+                grid-template-columns: 1fr;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tab-buttons {
+                flex-direction: column;
+            }
+
+            .tab-button {
+                border-radius: 4px;
+            }
+        }
+
+        /* ===== PRINT STYLES ===== */
+        @media print {
+            .progress-section,
+            .skip-link,
+            .scenario-container,
+            .knowledge-check {
+                display: none;
+            }
+
+            .content-section {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* ===== HIGH CONTRAST MODE ===== */
+        @media (prefers-contrast: high) {
+            .comparison-card,
+            .content-section {
+                border: 2px solid var(--text-dark);
+            }
+        }
+
+        /* ===== REDUCED MOTION ===== */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header role="banner">
+        <div class="header-content">
+            <p class="course-code">
+                <span>📚</span>
+                <span>CSC 156 - Digital Forensics Fundamentals | Week 4</span>
+            </p>
+            <h1>Module 4.2: Storage Technologies (HDD vs. SSD)</h1>
+            <p class="module-subtitle">Understanding Storage Architectures and Their Forensic Implications</p>
+        </div>
+    </header>
+
+    <main id="main-content" role="main">
+        <!-- Progress Section -->
+        <div class="progress-section">
+            <div class="progress-header">
+                <h2>📊 Module 4.2 Progress</h2>
+                <div class="time-estimate">
+                    <span>⏱️</span>
+                    <span>Estimated Time: 50-60 minutes</span>
+                </div>
+            </div>
+            <div class="progress-bar-container" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Module 4.2 progress">
+                <div class="progress-bar" id="progressBar">0%</div>
+            </div>
+            <p style="font-size: 0.9rem; color: var(--text-light); margin-top: 0.5rem;">
+                💾 Progress is saved for this session only
+            </p>
+        </div>
+
+        <!-- Section Navigation -->
+        <div class="section-nav">
+            <h2>📑 Module Sections</h2>
+            <div class="section-links">
+                <a href="#section-overview" class="section-link">
+                    <span class="section-icon">🎯</span>
+                    <span>Overview & Objectives</span>
+                </a>
+                <a href="#section-hdd" class="section-link">
+                    <span class="section-icon">💿</span>
+                    <span>Hard Disk Drives (HDD)</span>
+                </a>
+                <a href="#section-ssd" class="section-link">
+                    <span class="section-icon">⚡</span>
+                    <span>Solid State Drives (SSD)</span>
+                </a>
+                <a href="#section-comparison" class="section-link">
+                    <span class="section-icon">⚖️</span>
+                    <span>HDD vs. SSD Comparison</span>
+                </a>
+                <a href="#section-forensics" class="section-link">
+                    <span class="section-icon">🔍</span>
+                    <span>Forensic Implications</span>
+                </a>
+                <a href="#section-scenarios" class="section-link">
+                    <span class="section-icon">🎮</span>
+                    <span>Interactive Scenarios</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Overview Section -->
+        <section id="section-overview" class="content-section">
+            <h2><span>🎯</span> Module Overview & Learning Objectives</h2>
+            
+            <div class="alert alert-info">
+                <span class="alert-icon">💡</span>
+                <div class="alert-content">
+                    <strong>Why Storage Technologies Matter in Digital Forensics</strong>
+                    <p>The shift from Hard Disk Drives (HDDs) to Solid State Drives (SSDs) represents one of the most significant challenges in modern digital forensics. Techniques that worked reliably for decades—such as deleted file recovery—are increasingly ineffective with SSD technology. Understanding how these storage technologies work at a fundamental level is essential for making informed forensic decisions and setting realistic expectations for evidence recovery.</p>
+                </div>
+            </div>
+
+            <h3>Learning Objectives</h3>
+            <p>By the end of this module, you will be able to:</p>
+            <ol>
+                <li><strong>Explain the physical architecture</strong> of HDDs and SSDs and how data is stored in each technology</li>
+                <li><strong>Describe the forensic advantages</strong> of HDDs including data persistence and recovery capabilities</li>
+                <li><strong>Identify the forensic challenges</strong> posed by SSDs including TRIM, wear leveling, and garbage collection</li>
+                <li><strong>Compare and contrast</strong> HDD and SSD technologies from a forensic examination perspective</li>
+                <li><strong>Apply best practices</strong> for evidence collection and preservation based on storage technology type</li>
+                <li><strong>Assess the impact</strong> of modern storage technologies on investigative strategies and expectations</li>
+            </ol>
+
+            <div class="alert alert-forensic">
+                <span class="alert-icon">🔍</span>
+                <div class="alert-content">
+                    <strong>Connection to CSLO 2</strong>
+                    <p>This module directly supports <strong>CSLO 2: Conduct thorough examinations of computer hard disk drives and other electronic data storage media</strong>. You cannot conduct thorough examinations without understanding the fundamental differences between storage technologies. The techniques you use to examine an HDD may be completely ineffective—or even counterproductive—when applied to an SSD.</p>
+                </div>
+            </div>
+
+            <h3>Module Structure</h3>
+            <p>This module explores storage technologies through four major sections:</p>
+            <ul>
+                <li><strong>Hard Disk Drives (HDDs):</strong> Magnetic storage, physical structure, forensic advantages</li>
+                <li><strong>Solid State Drives (SSDs):</strong> Flash memory, controller functions, forensic challenges</li>
+                <li><strong>Comparative Analysis:</strong> Side-by-side comparison of forensic characteristics</li>
+                <li><strong>Forensic Best Practices:</strong> Evidence collection strategies for each technology</li>
+            </ul>
+
+            <div class="alert alert-warning">
+                <span class="alert-icon">⚠️</span>
+                <div class="alert-content">
+                    <strong>Critical Insight</strong>
+                    <p>The most important takeaway from this module: <strong>Time is evidence</strong> when dealing with SSDs. Every minute that passes after a file is deleted increases the likelihood that TRIM and garbage collection will permanently erase it. This fundamentally changes how we prioritize evidence collection in modern investigations.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- HDD Section -->
+        <section id="section-hdd" class="content-section">
+            <h2><span>💿</span> Hard Disk Drives (HDD)</h2>
+
+            <h3>What is a Hard Disk Drive?</h3>
+            <p>A <strong>Hard Disk Drive (HDD)</strong> uses magnetic storage on rotating platters to store data. HDDs have been the primary storage technology since the 1950s and remain common in desktop computers, servers, and external storage devices due to their large capacity and low cost per gigabyte.</p>
+
+            <h3>Physical Structure & Components</h3>
+            
+            <div class="diagram-container">
+                <div class="diagram-title">HDD Internal Components</div>
+                <div class="diagram-content">
+                    <div class="diagram-item">
+                        <div class="diagram-item-icon">💿</div>
+                        <div class="diagram-item-label">Platters</div>
+                        <div class="diagram-item-desc">Magnetic disks storing data</div>
+                    </div>
+                    <div class="diagram-item">
+                        <div class="diagram-item-icon">📍</div>
+                        <div class="diagram-item-label">Read/Write Heads</div>
+                        <div class="diagram-item-desc">Electromagnetic devices</div>
+                    </div>
+                    <div class="diagram-item">
+                        <div class="diagram-item-icon">🔧</div>
+                        <div class="diagram-item-label">Actuator Arm</div>
+                        <div class="diagram-item-desc">Positions heads precisely</div>
+                    </div>
+                    <div class="diagram-item">
+                        <div class="diagram-item-icon">🔄</div>
+                        <div class="diagram-item-label">Spindle Motor</div>
+                        <div class="diagram-item-desc">Rotates platters (5400-15000 RPM)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>🔍 Detailed Component Breakdown</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <h4>Platters</h4>
+                        <ul>
+                            <li><strong>Material:</strong> Aluminum or glass substrate coated with magnetic material</li>
+                            <li><strong>Quantity:</strong> Typically 1-5 platters per drive</li>
+                            <li><strong>Surfaces:</strong> Both sides of each platter store data</li>
+                            <li><strong>Capacity:</strong> Modern platters store 1-2 TB per platter</li>
+                        </ul>
+
+                        <h4>Read/Write Heads</h4>
+                        <ul>
+                            <li><strong>Function:</strong> Electromagnetically read and write data to platter surfaces</li>
+                            <li><strong>Quantity:</strong> One head per platter surface (2 heads per platter)</li>
+                            <li><strong>Height:</strong> Float 3-6 nanometers above platter surface</li>
+                            <li><strong>Vulnerability:</strong> Head crashes occur if heads contact platters (often fatal to drive)</li>
+                        </ul>
+
+                        <h4>Actuator Arm</h4>
+                        <ul>
+                            <li><strong>Function:</strong> Positions read/write heads over correct track</li>
+                            <li><strong>Movement:</strong> Pivots on central axis using voice coil motor</li>
+                            <li><strong>Speed:</strong> Can reposition in milliseconds</li>
+                            <li><strong>Precision:</strong> Must position heads with nanometer accuracy</li>
+                        </ul>
+
+                        <h4>Spindle Motor</h4>
+                        <ul>
+                            <li><strong>Function:</strong> Rotates platters at constant speed</li>
+                            <li><strong>Speeds:</strong> 5400 RPM (laptop), 7200 RPM (desktop), 10000/15000 RPM (enterprise)</li>
+                            <li><strong>Impact:</strong> Higher RPM = faster data access but more heat and noise</li>
+                        </ul>
+
+                        <h4>Controller Board</h4>
+                        <ul>
+                            <li><strong>Function:</strong> Manages drive operations, cache, and interface</li>
+                            <li><strong>Cache:</strong> 8-256 MB DRAM buffer for frequently accessed data</li>
+                            <li><strong>Firmware:</strong> Software controlling drive operations</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Data Organization on HDDs</h3>
+            
+            <div class="tab-container">
+                <div class="tab-buttons">
+                    <button class="tab-button active" onclick="switchTab(event, 'tracks')">Tracks</button>
+                    <button class="tab-button" onclick="switchTab(event, 'sectors')">Sectors</button>
+                    <button class="tab-button" onclick="switchTab(event, 'clusters')">Clusters</button>
+                    <button class="tab-button" onclick="switchTab(event, 'cylinders')">Cylinders</button>
+                </div>
+
+                <div id="tracks" class="tab-content active">
+                    <h4>Tracks</h4>
+                    <p><strong>Tracks</strong> are concentric circles on the platter surface where data is written. Think of them like grooves on a vinyl record.</p>
+                    <ul>
+                        <li><strong>Quantity:</strong> Thousands of tracks per platter surface</li>
+                        <li><strong>Numbering:</strong> Track 0 is outermost, highest number is innermost</li>
+                        <li><strong>Density:</strong> Modern drives have tracks spaced just nanometers apart</li>
+                        <li><strong>Access:</strong> Actuator arm moves heads to correct track</li>
+                    </ul>
+                    <div class="alert alert-info">
+                        <span class="alert-icon">💡</span>
+                        <div class="alert-content">
+                            <strong>Analogy:</strong> Tracks are like lanes on a circular race track. The actuator arm moves the read/write head to the correct "lane" to access data.
+                        </div>
+                    </div>
+                </div>
+
+                <div id="sectors" class="tab-content">
+                    <h4>Sectors</h4>
+                    <p><strong>Sectors</strong> are the smallest addressable unit on an HDD. Each track is divided into sectors.</p>
+                    <ul>
+                        <li><strong>Traditional Size:</strong> 512 bytes per sector</li>
+                        <li><strong>Advanced Format:</strong> 4096 bytes (4K) per sector (modern drives)</li>
+                        <li><strong>Addressing:</strong> Each sector has unique Logical Block Address (LBA)</li>
+                        <li><strong>Error Correction:</strong> Each sector includes error correction codes (ECC)</li>
+                    </ul>
+                    <div class="alert alert-forensic">
+                        <span class="alert-icon">🔍</span>
+                        <div class="alert-content">
+                            <strong>Forensic Significance:</strong> Sectors are the fundamental unit for forensic imaging. Tools like <code>dd</code> read and write at the sector level. Understanding sector size is crucial for proper acquisition.
+                        </div>
+                    </div>
+                </div>
+
+                <div id="clusters" class="tab-content">
+                    <h4>Clusters</h4>
+                    <p><strong>Clusters</strong> (also called allocation units) are groups of sectors treated as a single unit by the file system.</p>
+                    <ul>
+                        <li><strong>Size:</strong> Typically 4-64 KB (multiple sectors)</li>
+                        <li><strong>File System Unit:</strong> File systems allocate space in whole clusters</li>
+                        <li><strong>Slack Space:</strong> Unused space in final cluster of file</li>
+                        <li><strong>Efficiency:</strong> Larger clusters = less overhead but more wasted space</li>
+                    </ul>
+                    <div class="alert alert-forensic">
+                        <span class="alert-icon">🔍</span>
+                        <div class="alert-content">
+                            <strong>Forensic Significance:</strong> Slack space (unused portion of final cluster) may contain remnants of previous files. This is a valuable source of evidence in HDD forensics.
+                        </div>
+                    </div>
+                </div>
+
+                <div id="cylinders" class="tab-content">
+                    <h4>Cylinders</h4>
+                    <p><strong>Cylinders</strong> are the same track number across all platter surfaces in the drive.</p>
+                    <ul>
+                        <li><strong>Definition:</strong> All tracks with same number form a cylinder</li>
+                        <li><strong>Efficiency:</strong> Data on same cylinder accessed without moving actuator arm</li>
+                        <li><strong>Optimization:</strong> Operating systems try to store related data on same cylinder</li>
+                        <li><strong>Legacy Addressing:</strong> Old CHS (Cylinder-Head-Sector) addressing scheme</li>
+                    </ul>
+                    <div class="alert alert-info">
+                        <span class="alert-icon">💡</span>
+                        <div class="alert-content">
+                            <strong>Analogy:</strong> If you stack multiple platters and draw a line through the same track position on each, you've drawn a cylinder. It's a 3D concept in the drive's geometry.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Forensic Advantages of HDDs</h3>
+
+            <div class="feature-grid">
+                <div class="feature-card" onclick="toggleFeature(this)" role="button" tabindex="0">
+                    <div class="feature-header">
+                        <span class="feature-icon">✅</span>
+                        <span class="feature-title">Complete Data Recovery</span>
+                    </div>
+                    <div class="feature-description">
+                        Deleted files remain on disk until overwritten by new data
+                    </div>
+                    <div class="feature-details">
+                        <p><strong>Why This Matters:</strong></p>
+                        <p>When a file is deleted on an HDD, only the file system entry is removed. The actual data remains intact in the sectors until those sectors are reused for new files. This can take weeks, months, or even years depending on disk usage.</p>
+                        <p><strong>Forensic Technique:</strong> File carving and deleted file recovery tools can reconstruct entire files from unallocated space with high success rates.</p>
+                    </div>
+                </div>
+
+                <div class="feature-card" onclick="toggleFeature(this)" role="button" tabindex="0">
+                    <div class="feature-header">
+                        <span class="feature-icon">✅</span>
+                        <span class="feature-title">No Automatic Destruction</span>
+                    </div>
+                    <div class="feature-description">
+                        Data persists indefinitely without power or maintenance
+                    </div>
+                    <div class="feature-details">
+                        <p><strong>Why This Matters:</strong></p>
+                        <p>HDDs have no background processes that automatically erase deleted data. Unlike SSDs with TRIM and garbage collection, HDDs passively retain all data until explicitly overwritten.</p>
+                        <p><strong>Forensic Impact:</strong> Evidence can be recovered from HDDs that have been powered off for years. Time is not a critical factor in HDD forensics (though prompt collection is still best practice).</p>
+                    </div>
+                </div>
+
+                <div class="feature-card" onclick="toggleFeature(this)" role="button" tabindex="0">
+                    <div class="feature-header">
+                        <span class="feature-icon">✅</span>
+                        <span class="feature-title">Predictable Behavior</span>
+                    </div>
+                    <div class="feature-description">
+                        Well-understood technology with mature forensic tools
+                    </div>
+                    <div class="feature-details">
+                        <p><strong>Why This Matters:</strong></p>
+                        <p>HDDs have been the primary storage technology for decades. Forensic examiners have extensive experience with HDD analysis, and tools are highly refined and reliable.</p>
+                        <p><strong>Tool Support:</strong> Every major forensic tool (Autopsy, EnCase, FTK, X-Ways) has excellent HDD support. Techniques are well-documented and court-tested.</p>
+                    </div>
+                </div>
+
+                <div class="feature-card" onclick="toggleFeature(this)" role="button" tabindex="0">
+                    <div class="feature-header">
+                        <span class="feature-icon">✅</span>
+                        <span class="feature-title">Slack Space Evidence</span>
+                    </div>
+                    <div class="feature-description">
+                        Unused cluster space contains remnants of previous data
+                    </div>
+                    <div class="feature-details">
+                        <p><strong>Why This Matters:</strong></p>
+                        <p>When a file doesn't completely fill its final cluster, the remaining space (slack space) is not zeroed out. It contains whatever data was previously in those sectors.</p>
+                        <p><strong>Forensic Value:</strong> Slack space analysis can reveal fragments of deleted files, passwords, email snippets, and other valuable evidence that users never intended to preserve.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Forensic Challenges with HDDs</h3>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>⚠️ Physical Damage</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <p><strong>Challenge:</strong> HDDs are mechanical devices with moving parts that can fail.</p>
+                        <h5>Common Failure Modes:</h5>
+                        <ul>
+                            <li><strong>Head Crashes:</strong> Read/write heads contact platter surface, causing physical damage</li>
+                            <li><strong>Motor Failures:</strong> Spindle motor stops working, preventing platter rotation</li>
+                            <li><strong>Controller Board Failures:</strong> Electronics fail, drive becomes unresponsive</li>
+                            <li><strong>Firmware Corruption:</strong> Drive firmware becomes corrupted, preventing access</li>
+                        </ul>
+                        <h5>Forensic Solutions:</h5>
+                        <ul>
+                            <li>Clean room data recovery services (expensive, $500-$5000+)</li>
+                            <li>Controller board replacement (if board failed but platters intact)</li>
+                            <li>Platter transplantation to working drive (extremely delicate)</li>
+                            <li>Specialized forensic hardware for damaged drives</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>🔒 Full-Disk Encryption</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <p><strong>Challenge:</strong> Encrypted HDDs render data inaccessible without decryption keys.</p>
+                        <h5>Common Encryption Technologies:</h5>
+                        <ul>
+                            <li><strong>BitLocker:</strong> Windows full-disk encryption</li>
+                            <li><strong>FileVault:</strong> macOS full-disk encryption</li>
+                            <li><strong>LUKS:</strong> Linux disk encryption</li>
+                            <li><strong>VeraCrypt:</strong> Third-party encryption tool</li>
+                        </ul>
+                        <h5>Forensic Approaches:</h5>
+                        <ul>
+                            <li><strong>Live acquisition:</strong> Image drive while system is running and unlocked</li>
+                            <li><strong>Memory analysis:</strong> Extract encryption keys from RAM (Week 10)</li>
+                            <li><strong>Key recovery:</strong> Find keys in hibernation files, registry, or user directories</li>
+                            <li><strong>Legal compulsion:</strong> Court order requiring suspect to provide password</li>
+                        </ul>
+                        <div class="alert alert-warning">
+                            <span class="alert-icon">⚠️</span>
+                            <div class="alert-content">
+                                <strong>Important:</strong> Once an encrypted drive is powered off, data may be permanently inaccessible without the password. Live acquisition is critical for encrypted systems.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>⏱️ Large Capacity = Long Acquisition Times</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <p><strong>Challenge:</strong> Modern HDDs can be 10-20 TB, requiring many hours to image.</p>
+                        <h5>Acquisition Time Estimates:</h5>
+                        <ul>
+                            <li><strong>500 GB HDD:</strong> ~1-2 hours at 100 MB/s</li>
+                            <li><strong>2 TB HDD:</strong> ~6-8 hours at 100 MB/s</li>
+                            <li><strong>10 TB HDD:</strong> ~30-35 hours at 100 MB/s</li>
+                        </ul>
+                        <h5>Mitigation Strategies:</h5>
+                        <ul>
+                            <li><strong>Faster interfaces:</strong> Use SATA III or USB 3.x for maximum speed</li>
+                            <li><strong>Parallel imaging:</strong> Image multiple drives simultaneously</li>
+                            <li><strong>Triage:</strong> Prioritize critical evidence, image less urgent drives later</li>
+                            <li><strong>Logical acquisition:</strong> In some cases, copy only relevant files instead of full image</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-success">
+                <span class="alert-icon">✅</span>
+                <div class="alert-content">
+                    <strong>HDD Forensic Best Practice Summary</strong>
+                    <ul>
+                        <li>✅ HDDs are "forensically friendly" - deleted data persists</li>
+                        <li>✅ Use hardware write blockers to prevent any modifications</li>
+                        <li>✅ Create bit-for-bit forensic images with hash verification</li>
+                        <li>✅ Document physical condition before and after acquisition</li>
+                        <li>✅ Expect high success rates for deleted file recovery</li>
+                        <li>⚠️ Be prepared for encryption (requires different strategy)</li>
+                        <li>⚠️ Handle carefully to avoid physical damage</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SSD Section -->
+        <section id="section-ssd" class="content-section">
+            <h2><span>⚡</span> Solid State Drives (SSD)</h2>
+
+            <h3>What is a Solid State Drive?</h3>
+            <p>A <strong>Solid State Drive (SSD)</strong> uses flash memory chips to store data electronically, with no moving parts. SSDs are increasingly common in laptops, desktops, and mobile devices due to their speed, durability, and decreasing cost. However, their forensic characteristics are fundamentally different—and more challenging—than HDDs.</p>
+
+            <div class="alert alert-danger">
+                <span class="alert-icon">⚠️</span>
+                <div class="alert-content">
+                    <strong>Critical Warning</strong>
+                    <p>SSDs actively destroy deleted data through TRIM and garbage collection. Time is literally evidence with SSDs. Deleted files may be unrecoverable within minutes to hours after deletion. This fundamentally changes forensic priorities and strategies.</p>
+                </div>
+            </div>
+
+            <h3>Physical Structure & Components</h3>
+
+            <div class="diagram-container">
+                <div class="diagram-title">SSD Internal Components</div>
+                <div class="diagram-content">
+                    <div class="diagram-item">
+                        <div class="diagram-item-icon">💾</div>
+                        <div class="diagram-item-label">NAND Flash Chips</div>
+                        <div class="diagram-item-desc">Electronic data storage</div>
+                    </div>
+                    <div class="diagram-item">
+                        <div class="diagram-item-icon">🧠</div>
+                        <div class="diagram-item-label">Controller</div>
+                        <div class="diagram-item-desc">Sophisticated processor</div>
+                    </div>
+                    <div class="diagram-item">
+                        <div class="diagram-item-icon">⚡</div>
+                        <div class="diagram-item-label">DRAM Cache</div>
+                        <div class="diagram-item-desc">High-speed buffer</div>
+                    </div>
+                    <div class="diagram-item">
+                        <div class="diagram-item-icon">🔒</div>
+                        <div class="diagram-item-label">Over-Provisioning</div>
+                        <div class="diagram-item-desc">Reserved space (7-28%)</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>NAND Flash Memory Types</h3>
+
+            <div class="comparison-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>NAND Type</th>
+                            <th>Bits per Cell</th>
+                            <th>Speed</th>
+                            <th>Endurance</th>
+                            <th>Cost</th>
+                            <th>Common Use</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>SLC</strong> (Single-Level Cell)</td>
+                            <td>1 bit</td>
+                            <td>Fastest</td>
+                            <td>Highest (100K cycles)</td>
+                            <td>Most expensive</td>
+                            <td>Enterprise, high-performance</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MLC</strong> (Multi-Level Cell)</td>
+                            <td>2 bits</td>
+                            <td>Fast</td>
+                            <td>High (10K cycles)</td>
+                            <td>Moderate</td>
+                            <td>Consumer, prosumer</td>
+                        </tr>
+                        <tr>
+                            <td><strong>TLC</strong> (Triple-Level Cell)</td>
+                            <td>3 bits</td>
+                            <td>Moderate</td>
+                            <td>Moderate (3K cycles)</td>
+                            <td>Low</td>
+                            <td>Most common consumer SSDs</td>
+                        </tr>
+                        <tr>
+                            <td><strong>QLC</strong> (Quad-Level Cell)</td>
+                            <td>4 bits</td>
+                            <td>Slower</td>
+                            <td>Lower (1K cycles)</td>
+                            <td>Lowest</td>
+                            <td>High-capacity budget SSDs</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="alert alert-info">
+                <span class="alert-icon">💡</span>
+                <div class="alert-content">
+                    <strong>Forensic Implication:</strong> NAND type doesn't significantly affect forensic techniques, but it does affect drive lifespan and performance. TLC and QLC drives are most common in consumer devices you'll encounter in investigations.
+                </div>
+            </div>
+
+            <h3>Critical SSD Technologies (The "Anti-Forensics Trinity")</h3>
+
+            <div class="feature-grid">
+                <div class="feature-card" onclick="toggleFeature(this)" role="button" tabindex="0">
+                    <div class="feature-header">
+                        <span class="feature-icon">✂️</span>
+                        <span class="feature-title">TRIM Command</span>
+                    </div>
+                    <div class="feature-description">
+                        OS notifies SSD which blocks are no longer needed
+                    </div>
+                    <div class="feature-details">
+                        <h5>How TRIM Works:</h5>
+                        <ol>
+                            <li>User deletes a file</li>
+                            <li>Operating system marks file as deleted</li>
+                            <li>OS sends TRIM command to SSD listing freed blocks</li>
+                            <li>SSD immediately or soon after erases those blocks</li>
+                            <li>Data is permanently gone—cannot be recovered</li>
+                        </ol>
+                        <h5>TRIM Status by OS:</h5>
+                        <ul>
+                            <li><strong>Windows 7+:</strong> Enabled by default</li>
+                            <li><strong>macOS 10.6.8+:</strong> Enabled by default</li>
+                            <li><strong>Linux 2.6.33+:</strong> Enabled by default</li>
+                        </ul>
+                        <div class="alert alert-danger">
+                            <span class="alert-icon">⚠️</span>
+                            <div class="alert-content">
+                                <strong>Forensic Impact:</strong> TRIM makes deleted file recovery nearly impossible on SSDs. Files may be unrecoverable within minutes of deletion.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="feature-card" onclick="toggleFeature(this)" role="button" tabindex="0">
+                    <div class="feature-header">
+                        <span class="feature-icon">⚖️</span>
+                        <span class="feature-title">Wear Leveling</span>
+                    </div>
+                    <div class="feature-description">
+                        Distributes writes evenly to prevent premature cell failure
+                    </div>
+                    <div class="feature-details">
+                        <h5>Why Wear Leveling Exists:</h5>
+                        <p>Flash memory cells have limited write cycles (1,000-100,000 depending on NAND type). If the same cells were written repeatedly, they would fail quickly. Wear leveling distributes writes across all cells to maximize drive lifespan.</p>
+                        <h5>How It Works:</h5>
+                        <ul>
+                            <li>Controller maintains mapping of logical addresses to physical cells</li>
+                            <li>When data is written, controller chooses least-worn cells</li>
+                            <li>Data location changes over time even without user action</li>
+                            <li>Mapping is stored in controller, not accessible to forensic tools</li>
+                        </ul>
+                        <h5>Forensic Impact:</h5>
+                        <ul>
+                            <li>❌ Logical addresses don't correspond to physical locations</li>
+                            <li>❌ Data location unpredictable and constantly changing</li>
+                            <li>❌ Some deleted data may randomly survive in unmapped cells</li>
+                            <li>❌ Cannot predict what will or won't be recoverable</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="feature-card" onclick="toggleFeature(this)" role="button" tabindex="0">
+                    <div class="feature-header">
+                        <span class="feature-icon">🗑️</span>
+                        <span class="feature-title">Garbage Collection</span>
+                    </div>
+                    <div class="feature-description">
+                        Background process that permanently erases deleted data
+                    </div>
+                    <div class="feature-details">
+                        <h5>Why Garbage Collection Exists:</h5>
+                        <p>Flash memory cannot overwrite data in place—it must erase entire blocks before rewriting. Garbage collection reclaims deleted blocks in the background to maintain write performance.</p>
+                        <h5>How It Works:</h5>
+                        <ol>
+                            <li>Controller identifies blocks containing deleted data</li>
+                            <li>If block contains valid data, it's moved elsewhere</li>
+                            <li>Entire block is erased</li>
+                            <li>Block is marked as available for new writes</li>
+                            <li>Process runs continuously in background when drive is idle</li>
+                        </ol>
+                        <h5>Forensic Impact:</h5>
+                        <ul>
+                            <li>❌ Automatically erases deleted data independent of TRIM</li>
+                            <li>❌ Runs in background even when system is idle</li>
+                            <li>❌ Cannot be disabled or controlled by examiner</li>
+                            <li>⚠️ May be triggered by connecting drive to forensic workstation</li>
+                        </ul>
+                        <div class="alert alert-warning">
+                            <span class="alert-icon">⚠️</span>
+                            <div class="alert-content">
+                                <strong>Critical:</strong> Even with a hardware write blocker preventing OS writes, garbage collection can still run because it's controlled by the SSD's internal controller.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="feature-card" onclick="toggleFeature(this)" role="button" tabindex="0">
+                    <div class="feature-header">
+                        <span class="feature-icon">🔒</span>
+                        <span class="feature-title">Hardware Encryption</span>
+                    </div>
+                    <div class="feature-description">
+                        Many SSDs include built-in AES encryption
+                    </div>
+                    <div class="feature-details">
+                        <h5>Self-Encrypting Drives (SEDs):</h5>
+                        <p>Many SSDs implement hardware-based encryption at the controller level. All data is encrypted before being written to flash memory.</p>
+                        <h5>TCG Opal Standard:</h5>
+                        <ul>
+                            <li>Industry standard for SED management</li>
+                            <li>Pre-boot authentication options</li>
+                            <li>Encryption keys stored in drive controller</li>
+                            <li>May integrate with TPM (Trusted Platform Module)</li>
+                        </ul>
+                        <h5>Forensic Challenges:</h5>
+                        <ul>
+                            <li>❌ Encryption keys inaccessible to examiner</li>
+                            <li>❌ Removing power may lock drive permanently</li>
+                            <li>❌ No way to extract keys from controller</li>
+                            <li>⚠️ Must image drive while unlocked (live acquisition)</li>
+                        </ul>
+                        <div class="alert alert-danger">
+                            <span class="alert-icon">⚠️</span>
+                            <div class="alert-content">
+                                <strong>Worst Case Scenario:</strong> A powered-off SED with unknown password is essentially a brick. Data is permanently inaccessible.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Over-Provisioning: The Hidden Space</h3>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>🔍 Understanding Over-Provisioning</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <p><strong>Over-provisioning</strong> is extra flash memory capacity reserved by the SSD controller that is not visible to the operating system or user.</p>
+                        
+                        <h5>Purpose of Over-Provisioning:</h5>
+                        <ul>
+                            <li>Provides extra cells for wear leveling</li>
+                            <li>Improves write performance</li>
+                            <li>Extends drive lifespan</li>
+                            <li>Maintains performance as drive fills up</li>
+                        </ul>
+
+                        <h5>Typical Over-Provisioning Amounts:</h5>
+                        <ul>
+                            <li><strong>Consumer SSDs:</strong> 7-10% over-provisioning</li>
+                            <li><strong>Prosumer SSDs:</strong> 10-15% over-provisioning</li>
+                            <li><strong>Enterprise SSDs:</strong> 20-28% over-provisioning</li>
+                        </ul>
+
+                        <h5>Example:</h5>
+                        <p>A "500 GB" SSD might actually have 550 GB of physical flash memory. The extra 50 GB (10%) is over-provisioned space not accessible to the OS.</p>
+
+                        <h5>Forensic Implications:</h5>
+                        <ul>
+                            <li>❌ Over-provisioned area may contain deleted data</li>
+                            <li>❌ Standard forensic tools cannot access this space</li>
+                            <li>❌ Only controller has access to over-provisioned cells</li>
+                            <li>⚠️ Specialized techniques or chip-off forensics may be required</li>
+                        </ul>
+
+                        <div class="alert alert-info">
+                            <span class="alert-icon">💡</span>
+                            <div class="alert-content">
+                                <strong>Research Area:</strong> Accessing over-provisioned space is an active area of forensic research. Some success has been achieved with chip-off techniques and specialized hardware, but it remains extremely difficult.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>SSD Forensic Best Practices</h3>
+
+            <div class="alert alert-success">
+                <span class="alert-icon">✅</span>
+                <div class="alert-content">
+                    <strong>Essential SSD Forensic Strategies</strong>
+                    <ol>
+                        <li><strong>⏱️ Immediate Acquisition:</strong> Prioritize SSDs in evidence collection. Every minute counts.</li>
+                        <li><strong>🔒 Hardware Write Blocking:</strong> Prevent any write operations including TRIM commands.</li>
+                        <li><strong>⚡ Power Management:</strong> Consider keeping drive powered (with write blocker) to prevent garbage collection trigger on reconnection.</li>
+                        <li><strong>📊 Expect Limited Recovery:</strong> Set realistic expectations for deleted file recovery—it's often impossible.</li>
+                        <li><strong>📝 Document Thoroughly:</strong> Record make, model, firmware version, TRIM status, and encryption status.</li>
+                        <li><strong>🔍 Live Acquisition When Possible:</strong> If system is running and encrypted, image while unlocked.</li>
+                        <li><strong>⚖️ Adjust Investigation Strategy:</strong> Focus on existing files, logs, and artifacts rather than deleted file recovery.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="alert alert-warning">
+                <span class="alert-icon">⚠️</span>
+                <div class="alert-content">
+                    <strong>The Hard Truth About SSD Forensics</strong>
+                    <p>Unlike HDDs where deleted file recovery is expected, with SSDs it's the exception rather than the rule. Investigators must adapt their strategies:</p>
+                    <ul>
+                        <li>Focus on timeline reconstruction from existing files and logs</li>
+                        <li>Emphasize file system metadata and application artifacts</li>
+                        <li>Leverage network logs and cloud storage for corroboration</li>
+                        <li>Accept that some evidence may be permanently lost</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Comparison Section -->
+        <section id="section-comparison" class="content-section">
+            <h2><span>⚖️</span> HDD vs. SSD: Forensic Comparison</h2>
+
+            <p>Understanding the forensic differences between HDDs and SSDs is critical for setting appropriate expectations, choosing acquisition strategies, and explaining limitations to stakeholders.</p>
+
+            <h3>Side-by-Side Comparison</h3>
+
+            <div class="comparison-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Characteristic</th>
+                            <th class="hdd-col">HDD (Magnetic Storage)</th>
+                            <th class="ssd-col">SSD (Flash Memory)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Data Persistence After Deletion</strong></td>
+                            <td class="hdd-col">✅ High - deleted data remains until overwritten (weeks to years)</td>
+                            <td class="ssd-col">❌ Low - TRIM/garbage collection erase quickly (minutes to hours)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Deleted File Recovery Success Rate</strong></td>
+                            <td class="hdd-col">✅ High (70-90% typical)</td>
+                            <td class="ssd-col">❌ Low (0-20% typical)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Forensic Imaging Speed</strong></td>
+                            <td class="hdd-col">⚠️ Moderate (50-150 MB/s typical)</td>
+                            <td class="ssd-col">✅ Fast (200-3500 MB/s typical)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Forensic Complexity</strong></td>
+                            <td class="hdd-col">✅ Lower - predictable behavior</td>
+                            <td class="ssd-col">❌ Higher - wear leveling, TRIM, garbage collection</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Timeline Accuracy</strong></td>
+                            <td class="hdd-col">✅ Reliable - data stays where written</td>
+                            <td class="ssd-col">⚠️ Can be affected by wear leveling</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Write Blocker Support</strong></td>
+                            <td class="hdd-col">✅ Excellent - all major blockers support SATA</td>
+                            <td class="ssd-col">⚠️ More challenging - fewer NVMe blockers available</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Hardware Encryption Prevalence</strong></td>
+                            <td class="hdd-col">⚠️ Less common</td>
+                            <td class="ssd-col">❌ Very common - many SSDs are SEDs</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Physical Durability</strong></td>
+                            <td class="hdd-col">❌ Fragile - moving parts susceptible to damage</td>
+                            <td class="ssd-col">✅ Durable - no moving parts</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Slack Space Evidence</strong></td>
+                            <td class="hdd-col">✅ Available - file slack contains remnants</td>
+                            <td class="ssd-col">❌ Not applicable - no traditional slack space</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cost (Evidence Budget Impact)</strong></td>
+                            <td class="hdd-col">✅ Lower per GB</td>
+                            <td class="ssd-col">⚠️ Higher per GB</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Time Sensitivity of Collection</strong></td>
+                            <td class="hdd-col">✅ Low - data persists indefinitely</td>
+                            <td class="ssd-col">❌ Critical - time is literally evidence</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tool Maturity & Support</strong></td>
+                            <td class="hdd-col">✅ Excellent - decades of tool development</td>
+                            <td class="ssd-col">⚠️ Good but evolving - newer technology</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Visual Comparison: Data Lifecycle</h3>
+
+            <div class="comparison-container">
+                <div class="comparison-card hdd">
+                    <div class="comparison-header">
+                        <span class="comparison-icon">💿</span>
+                        <span class="comparison-title">HDD Data Lifecycle</span>
+                    </div>
+                    <div class="comparison-content">
+                        <h4>File Creation</h4>
+                        <p>✅ Data written to specific sectors on platter</p>
+                        
+                        <h4>File Modification</h4>
+                        <p>✅ New data written, old data may remain in slack space</p>
+                        
+                        <h4>File Deletion</h4>
+                        <p>✅ File system entry removed</p>
+                        <p>✅ Data remains intact in sectors</p>
+                        <p>✅ Marked as "available for reuse"</p>
+                        
+                        <h4>Time Passes (Weeks/Months)</h4>
+                        <p>✅ Deleted data still present</p>
+                        <p>✅ Recoverable with forensic tools</p>
+                        
+                        <h4>New File Written</h4>
+                        <p>⚠️ May overwrite old data if sectors reused</p>
+                        <p>⚠️ Until then, old data remains</p>
+                        
+                        <h4>Forensic Recovery</h4>
+                        <p>✅ High success rate for deleted files</p>
+                        <p>✅ File carving from unallocated space</p>
+                        <p>✅ Slack space analysis</p>
+                    </div>
+                </div>
+
+                <div class="comparison-card ssd">
+                    <div class="comparison-header">
+                        <span class="comparison-icon">⚡</span>
+                        <span class="comparison-title">SSD Data Lifecycle</span>
+                    </div>
+                    <div class="comparison-content">
+                        <h4>File Creation</h4>
+                        <p>✅ Data written to flash cells</p>
+                        <p>⚠️ Wear leveling chooses physical location</p>
+                        
+                        <h4>File Modification</h4>
+                        <p>✅ New data written to different cells</p>
+                        <p>⚠️ Old data marked for garbage collection</p>
+                        
+                        <h4>File Deletion</h4>
+                        <p>❌ File system entry removed</p>
+                        <p>❌ TRIM command sent to SSD</p>
+                        <p>❌ SSD marks blocks for erasure</p>
+                        
+                        <h4>Time Passes (Minutes/Hours)</h4>
+                        <p>❌ TRIM erases blocks immediately or soon after</p>
+                        <p>❌ Garbage collection runs in background</p>
+                        <p>❌ Data permanently destroyed</p>
+                        
+                        <h4>Forensic Attempt</h4>
+                        <p>❌ Deleted files likely unrecoverable</p>
+                        <p>⚠️ Random data remnants may survive (unpredictable)</p>
+                        <p>❌ No slack space to analyze</p>
+                        
+                        <h4>Forensic Recovery</h4>
+                        <p>❌ Low success rate for deleted files</p>
+                        <p>✅ Existing files and metadata still available</p>
+                        <p>⚠️ Must rely on logs and artifacts</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-forensic">
+                <span class="alert-icon">🔍</span>
+                <div class="alert-content">
+                    <strong>Key Takeaway: Paradigm Shift in Forensics</strong>
+                    <p>The transition from HDDs to SSDs has fundamentally changed digital forensics. Techniques that worked for 30+ years are now unreliable. Modern forensic examiners must:</p>
+                    <ul>
+                        <li>Understand the technology deeply to explain limitations</li>
+                        <li>Adapt investigation strategies to focus on existing artifacts</li>
+                        <li>Set realistic expectations with stakeholders</li>
+                        <li>Act quickly when SSDs are involved</li>
+                        <li>Document why certain evidence may be unrecoverable</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Forensic Implications Section -->
+        <section id="section-forensics" class="content-section">
+            <h2><span>🔍</span> Forensic Implications & Best Practices</h2>
+
+            <h3>Strategic Considerations by Storage Type</h3>
+
+            <div class="tab-container">
+                <div class="tab-buttons">
+                    <button class="tab-button active" onclick="switchTab(event, 'hdd-strategy')">HDD Strategy</button>
+                    <button class="tab-button" onclick="switchTab(event, 'ssd-strategy')">SSD Strategy</button>
+                    <button class="tab-button" onclick="switchTab(event, 'mixed-strategy')">Mixed Environment</button>
+                </div>
+
+                <div id="hdd-strategy" class="tab-content active">
+                    <h4>HDD Forensic Strategy</h4>
+                    
+                    <h5>✅ What Works Well:</h5>
+                    <ul>
+                        <li><strong>Deleted file recovery:</strong> Expect high success rates</li>
+                        <li><strong>File carving:</strong> Effective for fragmented files</li>
+                        <li><strong>Slack space analysis:</strong> Valuable source of remnant data</li>
+                        <li><strong>Timeline reconstruction:</strong> Reliable file system metadata</li>
+                        <li><strong>Standard imaging:</strong> Straightforward with any write blocker</li>
+                    </ul>
+
+                    <h5>⚠️ Watch Out For:</h5>
+                    <ul>
+                        <li><strong>Encryption:</strong> Requires live acquisition if encrypted</li>
+                        <li><strong>Physical damage:</strong> Handle carefully, check SMART data</li>
+                        <li><strong>Large capacity:</strong> Plan for long imaging times</li>
+                        <li><strong>HPA/DCO:</strong> Check for hidden areas</li>
+                    </ul>
+
+                    <h5>📋 HDD Acquisition Checklist:</h5>
+                    <ol>
+                        <li>✅ Document drive make, model, serial number, capacity</li>
+                        <li>✅ Check SMART data for health indicators</li>
+                        <li>✅ Connect via hardware write blocker</li>
+                        <li>✅ Create forensic image (dd, FTK Imager, Guymager)</li>
+                        <li>✅ Calculate and verify hash (MD5, SHA-256)</li>
+                        <li>✅ Check for HPA/DCO hidden areas</li>
+                        <li>✅ Document acquisition parameters and times</li>
+                        <li>✅ Store original drive securely</li>
+                    </ol>
+                </div>
+
+                <div id="ssd-strategy" class="tab-content">
+                    <h4>SSD Forensic Strategy</h4>
+                    
+                    <h5>⏱️ Time-Critical Actions:</h5>
+                    <ul>
+                        <li><strong>Immediate acquisition:</strong> Do not delay—every minute matters</li>
+                        <li><strong>Minimize power cycles:</strong> Each power-on may trigger garbage collection</li>
+                        <li><strong>Consider live acquisition:</strong> If system is running, image immediately</li>
+                        <li><strong>Document TRIM status:</strong> Check if TRIM is enabled</li>
+                    </ul>
+
+                    <h5>✅ What You CAN Recover:</h5>
+                    <ul>
+                        <li><strong>Existing files:</strong> Current file system contents</li>
+                        <li><strong>File metadata:</strong> Timestamps, permissions, attributes</li>
+                        <li><strong>Application artifacts:</strong> Logs, caches, databases</li>
+                        <li><strong>System logs:</strong> Event logs, registry, prefetch</li>
+                        <li><strong>Random deleted remnants:</strong> Unpredictable but possible</li>
+                    </ul>
+
+                    <h5>❌ What's Likely Gone:</h5>
+                    <ul>
+                        <li><strong>Recently deleted files:</strong> TRIM erases within minutes</li>
+                        <li><strong>Slack space:</strong> Concept doesn't apply to SSDs</li>
+                        <li><strong>Overwritten data:</strong> No remnants like HDDs</li>
+                        <li><strong>Over-provisioned area:</strong> Inaccessible with standard tools</li>
+                    </ul>
+
+                    <h5>📋 SSD Acquisition Checklist:</h5>
+                    <ol>
+                        <li>✅ Document drive make, model, serial, firmware, TRIM status</li>
+                        <li>✅ Note encryption status (is it a SED?)</li>
+                        <li>✅ If encrypted and running, perform live acquisition</li>
+                        <li>✅ Connect via hardware write blocker (NVMe-compatible if needed)</li>
+                        <li>✅ Create forensic image as quickly as possible</li>
+                        <li>✅ Calculate and verify hash</li>
+                        <li>✅ Document why deleted file recovery may be limited</li>
+                        <li>✅ Focus analysis on existing artifacts and logs</li>
+                    </ol>
+
+                    <div class="alert alert-warning">
+                        <span class="alert-icon">⚠️</span>
+                        <div class="alert-content">
+                            <strong>Set Expectations Early:</strong> Inform stakeholders immediately that deleted file recovery from SSDs is unlikely. This prevents disappointment and allows investigation strategy to adapt.
+                        </div>
+                    </div>
+                </div>
+
+                <div id="mixed-strategy" class="tab-content">
+                    <h4>Mixed Environment Strategy</h4>
+                    
+                    <p>Many investigations involve multiple storage devices of different types. Prioritization and strategy become critical.</p>
+
+                    <h5>🎯 Prioritization Framework:</h5>
+                    <ol>
+                        <li><strong>Highest Priority:</strong> SSDs (especially if system was recently used)</li>
+                        <li><strong>High Priority:</strong> Encrypted drives (while still unlocked)</li>
+                        <li><strong>Medium Priority:</strong> USB drives and external SSDs</li>
+                        <li><strong>Standard Priority:</strong> HDDs (data persists, less time-sensitive)</li>
+                        <li><strong>Lower Priority:</strong> Offline backup HDDs</li>
+                    </ol>
+
+                    <h5>📊 Triage Decision Matrix:</h5>
+                    <div class="comparison-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Scenario</th>
+                                    <th>Storage Type</th>
+                                    <th>Action</th>
+                                    <th>Rationale</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Laptop seized during search</td>
+                                    <td>NVMe SSD</td>
+                                    <td>Image immediately</td>
+                                    <td>TRIM may be actively erasing deleted files</td>
+                                </tr>
+                                <tr>
+                                    <td>Desktop powered off for weeks</td>
+                                    <td>SATA HDD</td>
+                                    <td>Standard imaging</td>
+                                    <td>Data persists indefinitely on HDD</td>
+                                </tr>
+                                <tr>
+                                    <td>Server still running</td>
+                                    <td>Multiple SSDs (RAID)</td>
+                                    <td>Live acquisition + memory</td>
+                                    <td>Capture volatile data and prevent TRIM</td>
+                                </tr>
+                                <tr>
+                                    <td>External backup drive</td>
+                                    <td>USB HDD</td>
+                                    <td>Image after primary devices</td>
+                                    <td>Lower priority, data is stable</td>
+                                </tr>
+                                <tr>
+                                    <td>Phone connected to computer</td>
+                                    <td>Internal flash</td>
+                                    <td>Acquire immediately</td>
+                                    <td>May be unlocked, time-sensitive</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h5>🔄 Parallel Acquisition Strategy:</h5>
+                    <p>When multiple devices are present:</p>
+                    <ul>
+                        <li><strong>Team approach:</strong> Multiple examiners working simultaneously</li>
+                        <li><strong>Multiple write blockers:</strong> Image several drives at once</li>
+                        <li><strong>Prioritize SSDs first:</strong> Even if HDDs are larger/more important</li>
+                        <li><strong>Document everything:</strong> Capture state of all devices immediately</li>
+                    </ul>
+
+                    <div class="alert alert-success">
+                        <span class="alert-icon">✅</span>
+                        <div class="alert-content">
+                            <strong>Best Practice:</strong> Create a visual diagram of all storage devices found, their types, and acquisition order. This helps explain your prioritization decisions in reports and testimony.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Explaining Limitations to Stakeholders</h3>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>💬 Communicating SSD Limitations</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <p>One of the most challenging aspects of SSD forensics is explaining to non-technical stakeholders why deleted files cannot be recovered. Here are effective communication strategies:</p>
+
+                        <h5>❌ What NOT to Say:</h5>
+                        <ul>
+                            <li>"I can't do my job because of SSDs"</li>
+                            <li>"The evidence is just gone, sorry"</li>
+                            <li>"SSDs make forensics impossible"</li>
+                        </ul>
+
+                        <h5>✅ Effective Explanations:</h5>
+
+                        <h6>For Attorneys:</h6>
+                        <p><em>"Modern solid-state drives include automatic data sanitization features called TRIM and garbage collection. These are designed to optimize drive performance but have the side effect of permanently erasing deleted files within minutes to hours. This is a well-documented limitation of SSD technology that affects all forensic examiners industry-wide. However, we can still recover existing files, system logs, and application artifacts that provide valuable evidence."</em></p>
+
+                        <h6>For Executives:</h6>
+                        <p><em>"SSDs are like self-shredding paper. Traditional hard drives are like regular paper—when you throw it away, it goes in the trash and we can retrieve it. SSDs automatically shred deleted files almost immediately. We can still examine everything that hasn't been deleted, which often provides substantial evidence."</em></p>
+
+                        <h6>For Technical Peers:</h6>
+                        <p><em>"TRIM and garbage collection are controller-level operations we can't prevent or reverse. The over-provisioned area may contain remnants, but it's inaccessible without chip-off techniques. Our best bet is focusing on existing artifacts, logs, and timeline reconstruction from file system metadata."</em></p>
+
+                        <h5>📝 Documentation Approach:</h5>
+                        <p>In reports, include a section explaining SSD limitations:</p>
+                        <blockquote style="border-left: 4px solid var(--info-color); padding-left: 1rem; margin: 1rem 0; font-style: italic;">
+                            "The subject device utilizes a Samsung 980 Pro NVMe SSD with TRIM enabled. Due to the automatic data sanitization features inherent in SSD technology (TRIM and garbage collection), deleted files are typically unrecoverable. This is a well-documented limitation affecting all forensic examiners and is not a deficiency in examination methodology. Analysis focused on existing files, system logs, and application artifacts which provided [describe what was found]."
+                        </blockquote>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Future of Storage Forensics</h3>
+
+            <div class="expandable">
+                <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false">
+                    <span>🔮 Emerging Technologies & Challenges</span>
+                    <span class="expandable-icon">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="expandable-body">
+                        <h5>Persistent Memory (Intel Optane)</h5>
+                        <ul>
+                            <li>Combines speed of RAM with persistence of storage</li>
+                            <li>May retain data even after power loss</li>
+                            <li>Forensic implications still being researched</li>
+                        </ul>
+
+                        <h5>DNA Storage</h5>
+                        <ul>
+                            <li>Experimental technology encoding data in synthetic DNA</li>
+                            <li>Extremely high density (215 petabytes per gram)</li>
+                            <li>Would require entirely new forensic techniques</li>
+                        </ul>
+
+                        <h5>Quantum Storage</h5>
+                        <ul>
+                            <li>Theoretical storage using quantum states</li>
+                            <li>May be unreadable without specific quantum state</li>
+                            <li>Forensic challenges unknown</li>
+                        </ul>
+
+                        <h5>Increased Encryption</h5>
+                        <ul>
+                            <li>More SSDs shipping with hardware encryption by default</li>
+                            <li>OS-level encryption becoming standard (Windows BitLocker, macOS FileVault)</li>
+                            <li>Live acquisition will become increasingly necessary</li>
+                        </ul>
+
+                        <div class="alert alert-info">
+                            <span class="alert-icon">💡</span>
+                            <div class="alert-content">
+                                <strong>Career Insight:</strong> Digital forensics is a constantly evolving field. Staying current with storage technologies and adapting techniques is essential for long-term success.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Scenarios Section -->
+        <section id="section-scenarios" class="content-section">
+            <h2><span>🎮</span> Interactive Scenarios</h2>
+
+            <p>Test your understanding by working through realistic forensic scenarios involving different storage technologies.</p>
+
+            <div class="scenario-container">
+                <h3>🎯 Scenario 1: The Intellectual Property Theft</h3>
+                <div class="scenario-question">
+                    <p><strong>Situation:</strong> You're investigating suspected intellectual property theft at a tech company. The suspect's workstation was seized during a search warrant execution. The computer was powered on and unlocked when seized. Upon examination, you discover it contains a 1TB Samsung 980 Pro NVMe SSD.</p>
+                    
+                    <p><strong>Additional Information:</strong></p>
+                    <ul>
+                        <li>System is running Windows 11</li>
+                        <li>TRIM is enabled (default for Windows 11)</li>
+                        <li>No hardware encryption detected</li>
+                        <li>Suspect was actively using computer when warrant executed</li>
+                        <li>Preliminary examination shows recent file deletions in "Projects" folder</li>
+                    </ul>
+
+                    <p><strong>Question:</strong> What is your BEST course of action regarding the deleted files in the "Projects" folder?</p>
+                </div>
+
+                <div class="scenario-options">
+                    <div class="scenario-option" onclick="selectScenario(this, 1, 'a')">
+                        <strong>A)</strong> Shut down the system immediately and image the SSD using a hardware write blocker. Then attempt deleted file recovery using standard forensic tools.
+                    </div>
+                    <div class="scenario-option" onclick="selectScenario(this, 1, 'b')">
+                        <strong>B)</strong> Perform a live acquisition while the system is still running to capture the current state, then shut down and create a second forensic image for thorough analysis.
+                    </div>
+                    <div class="scenario-option" onclick="selectScenario(this, 1, 'c')">
+                        <strong>C)</strong> Document that deleted file recovery from the SSD is unlikely due to TRIM, focus investigation on existing files, system logs, email, and cloud storage instead.
+                    </div>
+                    <div class="scenario-option" onclick="selectScenario(this, 1, 'd')">
+                        <strong>D)</strong> Use specialized SSD forensic tools to disable TRIM before imaging, then recover deleted files using advanced carving techniques.
+                    </div>
+                </div>
+
+                <button class="check-scenario-btn" onclick="checkScenario(1)">Check Answer</button>
+
+                <div class="scenario-feedback" id="scenario1-feedback"></div>
+            </div>
+
+            <div class="scenario-container">
+                <h3>🎯 Scenario 2: The Legacy System</h3>
+                <div class="scenario-question">
+                    <p><strong>Situation:</strong> You're examining a desktop computer from a financial fraud investigation. The system is from 2012 and contains a 500GB Western Digital Blue SATA HDD spinning at 7200 RPM. The system was powered off when seized three weeks ago.</p>
+                    
+                    <p><strong>Additional Information:</strong></p>
+                    <ul>
+                        <li>System runs Windows 7 Professional</li>
+                        <li>No encryption detected</li>
+                        <li>SMART data shows drive is healthy</li>
+                        <li>Suspect claims to have deleted all incriminating files months ago</li>
+                        <li>You need to recover deleted financial spreadsheets</li>
+                    </ul>
+
+                    <p><strong>Question:</strong> What should you expect regarding deleted file recovery from this HDD?</p>
+                </div>
+
+                <div class="scenario-options">
+                    <div class="scenario-option" onclick="selectScenario(this, 2, 'a')">
+                        <strong>A)</strong> Deleted file recovery is impossible because the files were deleted months ago and the drive has been in use since then.
+                    </div>
+                    <div class="scenario-option" onclick="selectScenario(this, 2, 'b')">
+                        <strong>B)</strong> High likelihood of recovering deleted files since HDDs don't automatically erase deleted data, and the drive has been powered off for weeks.
+                    </div>
+                    <div class="scenario-option" onclick="selectScenario(this, 2, 'c')">
+                        <strong>C)</strong> Moderate likelihood, but only if the files were deleted within the last 24 hours due to Windows 7's automatic cleanup features.
+                    </div>
+                    <div class="scenario-option" onclick="selectScenario(this, 2, 'd')">
+                        <strong>D)</strong> No chance of recovery because Windows 7 enables TRIM by default on all drives.
+                    </div>
+                </div>
+
+                <button class="check-scenario-btn" onclick="checkScenario(2)">Check Answer</button>
+
+                <div class="scenario-feedback" id="scenario2-feedback"></div>
+            </div>
+
+            <div class="scenario-container">
+                <h3>🎯 Scenario 3: The Encrypted Laptop</h3>
+                <div class="scenario-question">
+                    <p><strong>Situation:</strong> Law enforcement seized a laptop from a cybercrime suspect. The laptop contains a 512GB Crucial MX500 SATA SSD. When powered on, it immediately prompts for a BitLocker password. The suspect refuses to provide the password.</p>
+                    
+                    <p><strong>Additional Information:</strong></p>
+                    <ul>
+                        <li>System runs Windows 10 Professional</li>
+                        <li>BitLocker full-disk encryption enabled</li>
+                        <li>No recovery key found in suspect's Microsoft account</li>
+                        <li>Laptop was powered off when seized</li>
+                        <li>Legal authority exists to search the laptop</li>
+                    </ul>
+
+                    <p><strong>Question:</strong> What is the MOST LIKELY outcome for this investigation?</p>
+                </div>
+
+                <div class="scenario-options">
+                    <div class="scenario-option" onclick="selectScenario(this, 3, 'a')">
+                        <strong>A)</strong> Use brute-force password cracking tools to break the BitLocker encryption and access the drive contents.
+                    </div>
+                    <div class="scenario-option" onclick="selectScenario(this, 3, 'b')">
+                        <strong>B)</strong> Send the SSD to a specialized lab that can extract data from the NAND chips directly, bypassing encryption.
+                    </div>
+                    <div class="scenario-option" onclick="selectScenario(this, 3, 'c')">
+                        <strong>C)</strong> The data is effectively inaccessible without the password or recovery key. Investigation must rely on other evidence sources.
+                    </div>
+                    <div class="scenario-option" onclick="selectScenario(this, 3, 'd')">
+                        <strong>D)</strong> Examine the SSD's over-provisioned area where unencrypted remnants may exist.
+                    </div>
+                </div>
+
+                <button class="check-scenario-btn" onclick="checkScenario(3)">Check Answer</button>
+
+                <div class="scenario-feedback" id="scenario3-feedback"></div>
+            </div>
+        </section>
+
+        <!-- Knowledge Check Section -->
+        <section class="content-section">
+            <div class="knowledge-check">
+                <h3>🎯 Knowledge Check</h3>
+                <p>Test your understanding of storage technologies and their forensic implications:</p>
+
+                <div class="quiz-question">
+                    <p class="question-text">1. What is the PRIMARY reason deleted files are difficult to recover from SSDs?</p>
+                    <div class="quiz-options">
+                        <label class="quiz-option">
+                            <input type="radio" name="q1" value="a">
+                            <span>SSDs use flash memory instead of magnetic platters</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q1" value="b" data-correct="true">
+                            <span>TRIM command and garbage collection automatically erase deleted data</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q1" value="c">
+                            <span>SSDs are always encrypted by default</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q1" value="d">
+                            <span>Wear leveling moves data to random locations</span>
+                        </label>
+                    </div>
+                    <button class="check-answer-btn" onclick="checkAnswer('q1', this)">Check Answer</button>
+                    <div class="quiz-feedback" id="feedback-q1"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p class="question-text">2. In an HDD, what is "slack space" and why is it forensically valuable?</p>
+                    <div class="quiz-options">
+                        <label class="quiz-option">
+                            <input type="radio" name="q2" value="a">
+                            <span>Empty space between tracks on the platter where data can be hidden</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q2" value="b" data-correct="true">
+                            <span>Unused space in a file's final cluster that may contain remnants of previous data</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q2" value="c">
+                            <span>The space between the read/write head and the platter surface</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q2" value="d">
+                            <span>Hidden areas like HPA and DCO that are not visible to the operating system</span>
+                        </label>
+                    </div>
+                    <button class="check-answer-btn" onclick="checkAnswer('q2', this)">Check Answer</button>
+                    <div class="quiz-feedback" id="feedback-q2"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p class="question-text">3. Why should SSDs be prioritized over HDDs during evidence collection at a crime scene?</p>
+                    <div class="quiz-options">
+                        <label class="quiz-option">
+                            <input type="radio" name="q3" value="a">
+                            <span>SSDs are more expensive and therefore contain more valuable evidence</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q3" value="b">
+                            <span>SSDs are smaller and easier to transport</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q3" value="c" data-correct="true">
+                            <span>Time is critical—TRIM and garbage collection may permanently erase deleted data within minutes to hours</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q3" value="d">
+                            <span>SSDs are more fragile and can be damaged if not imaged immediately</span>
+                        </label>
+                    </div>
+                    <button class="check-answer-btn" onclick="checkAnswer('q3', this)">Check Answer</button>
+                    <div class="quiz-feedback" id="feedback-q3"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p class="question-text">4. What is "wear leveling" in SSDs and how does it affect forensics?</p>
+                    <div class="quiz-options">
+                        <label class="quiz-option">
+                            <input type="radio" name="q4" value="a">
+                            <span>A process that erases deleted files to maintain performance</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q4" value="b" data-correct="true">
+                            <span>A technique that distributes writes evenly across cells, making data location unpredictable</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q4" value="c">
+                            <span>A method of encrypting data at the hardware level</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q4" value="d">
+                            <span>A feature that automatically backs up data to prevent loss</span>
+                        </label>
+                    </div>
+                    <button class="check-answer-btn" onclick="checkAnswer('q4', this)">Check Answer</button>
+                    <div class="quiz-feedback" id="feedback-q4"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <p class="question-text">5. A suspect's computer contains a Self-Encrypting Drive (SED) that was powered off when seized. The suspect refuses to provide the password. What is the MOST LIKELY outcome?</p>
+                    <div class="quiz-options">
+                        <label class="quiz-option">
+                            <input type="radio" name="q5" value="a">
+                            <span>Forensic tools can easily bypass hardware encryption</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q5" value="b">
+                            <span>The encryption key can be extracted from the SSD controller</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q5" value="c" data-correct="true">
+                            <span>The data is effectively inaccessible without the password—investigation must rely on other evidence</span>
+                        </label>
+                        <label class="quiz-option">
+                            <input type="radio" name="q5" value="d">
+                            <span>Deleted files can still be recovered from unencrypted slack space</span>
+                        </label>
+                    </div>
+                    <button class="check-answer-btn" onclick="checkAnswer('q5', this)">Check Answer</button>
+                    <div class="quiz-feedback" id="feedback-q5"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Completion Badge -->
+        <div class="completion-badge" id="completionBadge">
+            <div class="completion-icon">🎉</div>
+            <h3>Module 4.2 Complete!</h3>
+            <p>Excellent work! You now understand the critical differences between HDD and SSD technologies and their profound impact on digital forensics.</p>
+            <p><strong>Key Takeaways:</strong></p>
+            <ul style="text-align: left; display: inline-block; margin-top: 1rem;">
+                <li>HDDs are "forensically friendly" with high deleted file recovery rates</li>
+                <li>SSDs actively destroy deleted data through TRIM and garbage collection</li>
+                <li>Time is literally evidence when dealing with SSDs</li>
+                <li>Modern forensics requires adapting strategies based on storage technology</li>
+                <li>Setting realistic expectations with stakeholders is critical</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer role="contentinfo">
+        <p>© 2026 Mendocino College | CSC 156 - Digital Forensics Fundamentals</p>
+        <p>Week 4, Module 4.2: Storage Technologies (HDD vs. SSD)</p>
+        <p>Instructor: David Pai | Spring 2026</p>
+        <p style="margin-top: 1rem; font-size: 0.9rem;">
+            💾 Your progress is saved for this session only. Bookmark this page to return to it later.
+        </p>
+    </footer>
+
+    <script>
+        // ===== SESSION STORAGE KEYS =====
+        const STORAGE_KEY = 'csc156_week4_module42_progress';
+        
+        // ===== PROGRESS TRACKING =====
+        let progress = {
+            sectionsVisited: new Set(),
+            featuresExplored: new Set(),
+            quizAnswers: {},
+            scenariosCompleted: new Set(),
+            tabsViewed: new Set(),
+            expandablesOpened: new Set(),
+            startTime: Date.now()
+        };
+
+        // Load saved progress
+        function loadProgress() {
+            const saved = sessionStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                progress.sectionsVisited = new Set(parsed.sectionsVisited || []);
+                progress.featuresExplored = new Set(parsed.featuresExplored || []);
+                progress.quizAnswers = parsed.quizAnswers || {};
+                progress.scenariosCompleted = new Set(parsed.scenariosCompleted || []);
+                progress.tabsViewed = new Set(parsed.tabsViewed || []);
+                progress.expandablesOpened = new Set(parsed.expandablesOpened || []);
+                progress.startTime = parsed.startTime || Date.now();
+            }
+            updateProgressBar();
+        }
+
+        // Save progress
+        function saveProgress() {
+            const toSave = {
+                sectionsVisited: Array.from(progress.sectionsVisited),
+                featuresExplored: Array.from(progress.featuresExplored),
+                quizAnswers: progress.quizAnswers,
+                scenariosCompleted: Array.from(progress.scenariosCompleted),
+                tabsViewed: Array.from(progress.tabsViewed),
+                expandablesOpened: Array.from(progress.expandablesOpened),
+                startTime: progress.startTime
+            };
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+        }
+
+        // Update progress bar
+        function updateProgressBar() {
+            const totalItems = 6 + 8 + 5 + 3 + 6 + 4; // sections + features + quiz + scenarios + tabs + expandables
+            const completedItems = progress.sectionsVisited.size + 
+                                  progress.featuresExplored.size + 
+                                  Object.keys(progress.quizAnswers).length +
+                                  progress.scenariosCompleted.size +
+                                  progress.tabsViewed.size +
+                                  progress.expandablesOpened.size;
+            
+            const percentage = Math.round((completedItems / totalItems) * 100);
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = percentage + '%';
+            progressBar.textContent = percentage + '%';
+            progressBar.parentElement.setAttribute('aria-valuenow', percentage);
+
+            // Show completion badge at 100%
+            if (percentage >= 100) {
+                document.getElementById('completionBadge').classList.add('show');
+            }
+
+            saveProgress();
+        }
+
+        // ===== INTERSECTION OBSERVER FOR SECTIONS =====
+        const sectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const sectionId = entry.target.id;
+                    if (sectionId && !progress.sectionsVisited.has(sectionId)) {
+                        progress.sectionsVisited.add(sectionId);
+                        updateProgressBar();
+                    }
+                }
+            });
+        }, { threshold: 0.5 });
+
+        // Observe all content sections
+        document.querySelectorAll('.content-section').forEach(section => {
+            sectionObserver.observe(section);
+        });
+
+        // ===== TAB SWITCHING =====
+        function switchTab(event, tabId) {
+            const container = event.target.closest('.tab-container');
+            
+            // Hide all tab contents in this container
+            container.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove active class from all buttons in this container
+            container.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            // Show selected tab content
+            const selectedContent = document.getElementById(tabId);
+            if (selectedContent) {
+                selectedContent.classList.add('active');
+            }
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+
+            // Track tab viewed
+            if (!progress.tabsViewed.has(tabId)) {
+                progress.tabsViewed.add(tabId);
+                updateProgressBar();
+            }
+        }
+
+        // ===== EXPANDABLE SECTIONS =====
+        function toggleExpandable(header) {
+            const expandable = header.parentElement;
+            expandable.classList.toggle('open');
+            
+            const isExpanded = expandable.classList.contains('open');
+            header.setAttribute('aria-expanded', isExpanded);
+
+            // Track expandable opened
+            if (isExpanded) {
+                const expandableText = header.querySelector('span').textContent;
+                if (!progress.expandablesOpened.has(expandableText)) {
+                    progress.expandablesOpened.add(expandableText);
+                    updateProgressBar();
+                }
+            }
+        }
+
+        // Keyboard support for expandables
+        document.addEventListener('keydown', function(e) {
+            if (e.target.classList.contains('expandable-header')) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleExpandable(e.target);
+                }
+            }
+        });
+
+        // ===== FEATURE CARDS =====
+        function toggleFeature(card) {
+            const wasActive = card.classList.contains('active');
+            
+            // Close all cards in the same grid
+            const grid = card.closest('.feature-grid');
+            grid.querySelectorAll('.feature-card').forEach(c => {
+                c.classList.remove('active');
+            });
+
+            // Toggle this card
+            if (!wasActive) {
+                card.classList.add('active');
+                const featureTitle = card.querySelector('.feature-title').textContent;
+                if (!progress.featuresExplored.has(featureTitle)) {
+                    progress.featuresExplored.add(featureTitle);
+                    updateProgressBar();
+                }
+            }
+        }
+
+        // Keyboard support for feature cards
+        document.querySelectorAll('.feature-card').forEach(card => {
+            card.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleFeature(card);
+                }
+            });
+        });
+
+        // ===== SCENARIO HANDLING =====
+        const scenarioAnswers = {
+            1: { correct: 'c', feedback: {
+                'a': 'Incorrect. While imaging with a write blocker is good practice, shutting down immediately doesn\'t help with already-deleted files. TRIM has likely already erased them. This approach misses the opportunity to capture volatile data.',
+                'b': 'Partially correct. Live acquisition is good for capturing current state, but the key issue is that deleted files are likely already gone due to TRIM. This is a reasonable approach but doesn\'t address the core limitation.',
+                'c': 'Correct! This is the most realistic and professional response. TRIM has likely already erased the deleted files (they were deleted before seizure, and the system was running). The best strategy is to document this limitation, perform thorough acquisition of existing data, and focus on artifacts that ARE recoverable: existing files, system logs, event logs, email, browser history, cloud storage sync folders, and application artifacts. Setting proper expectations is critical.',
+                'd': 'Incorrect. You cannot disable TRIM after the fact—it has already executed. There are no "specialized SSD forensic tools" that can reverse TRIM\'s effects. This answer reflects a misunderstanding of how TRIM works.'
+            }},
+            2: { correct: 'b', feedback: {
+                'a': 'Incorrect. HDDs do not automatically erase deleted data. Even files deleted months ago can often be recovered if the sectors haven\'t been overwritten by new data. The drive being powered off actually helps preserve evidence.',
+                'b': 'Correct! HDDs are "forensically friendly." Deleted files remain in unallocated space until those sectors are reused for new files. Since the drive has been powered off for weeks (no new writes), and HDDs don\'t have TRIM or garbage collection, there\'s a high likelihood of recovering deleted files. This is exactly the scenario where traditional forensic techniques excel.',
+                'c': 'Incorrect. Windows 7 does not have aggressive automatic cleanup features that would affect deleted file recovery. The 24-hour timeframe is not relevant for HDD forensics.',
+                'd': 'Incorrect. Windows 7 does NOT enable TRIM by default—TRIM support was introduced in Windows 7 but only applies to SSDs, not HDDs. HDDs don\'t support or need TRIM.'
+            }},
+            3: { correct: 'c', feedback: {
+                'a': 'Incorrect. BitLocker uses AES-128 or AES-256 encryption, which is computationally infeasible to brute-force crack within any reasonable timeframe. Even with powerful hardware, it would take millions of years.',
+                'b': 'Incorrect. Extracting data directly from NAND chips bypasses the controller but NOT the encryption. The data on the chips is encrypted—you\'d just have an encrypted image. The encryption keys are what you need, not the raw data.',
+                'c': 'Correct. This is the harsh reality of modern encryption. Without the BitLocker password or recovery key, the data is effectively inaccessible. This is exactly why live acquisition (while the system is unlocked) is so critical. The investigation must pivot to other evidence sources: network logs, cloud storage, email servers, other devices, witness testimony, etc.',
+                'd': 'Incorrect. The over-provisioned area is also encrypted in a BitLocker-encrypted drive. Even if you could access it (which is extremely difficult), you\'d only find encrypted data.'
+            }}
+        };
+
+        let scenarioSelections = {1: null, 2: null, 3: null};
+
+        function selectScenario(element, scenarioNum, choice) {
+            // Deselect all options in this scenario
+            const container = element.closest('.scenario-container');
+            container.querySelectorAll('.scenario-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+
+            // Select this option
+            element.classList.add('selected');
+            scenarioSelections[scenarioNum] = choice;
+        }
+
+        function checkScenario(scenarioNum) {
+            const selected = scenarioSelections[scenarioNum];
+            if (!selected) {
+                alert('Please select an answer first.');
+                return;
+            }
+
+            const correct = scenarioAnswers[scenarioNum].correct;
+            const feedback = scenarioAnswers[scenarioNum].feedback[selected];
+            const feedbackDiv = document.getElementById(`scenario${scenarioNum}-feedback`);
+            const container = feedbackDiv.closest('.scenario-container');
+
+            // Mark options as correct/incorrect
+            container.querySelectorAll('.scenario-option').forEach(opt => {
+                opt.classList.remove('selected');
+                const optChoice = opt.getAttribute('onclick').match(/'([a-d])'/)[1];
+                if (optChoice === correct) {
+                    opt.classList.add('correct');
+                } else if (optChoice === selected) {
+                    opt.classList.add('incorrect');
+                }
+            });
+
+            // Show feedback
+            if (selected === correct) {
+                feedbackDiv.innerHTML = `<strong>✅ Excellent!</strong> ${feedback}`;
+                feedbackDiv.style.background = 'rgba(46, 204, 113, 0.2)';
+            } else {
+                feedbackDiv.innerHTML = `<strong>❌ Not quite.</strong> ${feedback}`;
+                feedbackDiv.style.background = 'rgba(231, 76, 60, 0.2)';
+            }
+            feedbackDiv.classList.add('show');
+
+            // Track completion
+            if (!progress.scenariosCompleted.has(scenarioNum)) {
+                progress.scenariosCompleted.add(scenarioNum);
+                updateProgressBar();
+            }
+
+            // Disable button
+            const button = container.querySelector('.check-scenario-btn');
+            button.disabled = true;
+        }
+
+        // ===== KNOWLEDGE CHECK QUIZ =====
+        function checkAnswer(questionName, button) {
+            const options = document.querySelectorAll(`input[name="${questionName}"]`);
+            const feedback = document.getElementById(`feedback-${questionName}`);
+            let selectedOption = null;
+            let correctOption = null;
+
+            options.forEach(option => {
+                const label = option.closest('.quiz-option');
+                if (option.checked) {
+                    selectedOption = option;
+                }
+                if (option.dataset.correct) {
+                    correctOption = option;
+                }
+            });
+
+            if (!selectedOption) {
+                feedback.textContent = 'Please select an answer first.';
+                feedback.className = 'quiz-feedback show incorrect';
+                return;
+            }
+
+            button.disabled = true;
+
+            if (selectedOption === correctOption) {
+                selectedOption.closest('.quiz-option').classList.add('correct');
+                feedback.innerHTML = '<strong>✅ Correct!</strong> ' + getCorrectFeedback(questionName);
+                feedback.className = 'quiz-feedback show correct';
+                
+                if (!progress.quizAnswers[questionName]) {
+                    progress.quizAnswers[questionName] = true;
+                    updateProgressBar();
+                }
+            } else {
+                selectedOption.closest('.quiz-option').classList.add('incorrect');
+                correctOption.closest('.quiz-option').classList.add('correct');
+                feedback.innerHTML = '<strong>❌ Incorrect.</strong> ' + getIncorrectFeedback(questionName);
+                feedback.className = 'quiz-feedback show incorrect';
+            }
+        }
+
+        function getCorrectFeedback(questionName) {
+            const feedbacks = {
+                'q1': 'TRIM and garbage collection are the primary mechanisms that make deleted file recovery difficult on SSDs. These processes actively and automatically erase deleted data.',
+                'q2': 'Slack space is the unused portion of a file\'s final cluster. It often contains remnants of previously deleted files, making it a valuable source of evidence in HDD forensics.',
+                'q3': 'Time is critical with SSDs because TRIM and garbage collection can permanently erase deleted data within minutes to hours. HDDs preserve deleted data indefinitely, making them less time-sensitive.',
+                'q4': 'Wear leveling distributes writes evenly across flash cells to extend drive lifespan. This makes data location unpredictable and complicates forensic analysis because logical addresses don\'t map consistently to physical locations.',
+                'q5': 'Hardware encryption on SEDs is extremely robust. Without the password or recovery key, the data is effectively inaccessible. This is why live acquisition (while unlocked) is so critical for encrypted drives.'
+            };
+            return feedbacks[questionName] || 'Great job!';
+        }
+
+        function getIncorrectFeedback(questionName) {
+            const feedbacks = {
+                'q1': 'Review the SSD section on TRIM and garbage collection. While flash memory and wear leveling are characteristics of SSDs, they aren\'t the primary reason for poor deleted file recovery.',
+                'q2': 'Review the HDD section on data organization, specifically the explanation of clusters and slack space. Slack space is at the file system level, not the physical hardware level.',
+                'q3': 'Review the comparison section on time sensitivity. SSDs actively destroy deleted data through TRIM and garbage collection, making rapid acquisition critical.',
+                'q4': 'Review the SSD section on wear leveling. It\'s a technique for distributing writes to extend drive life, not for erasing data or encryption.',
+                'q5': 'Review the section on hardware encryption and SEDs. Modern encryption is extremely strong—there are no easy bypasses when the drive is powered off and locked.'
+            };
+            return feedbacks[questionName] || 'Review the relevant section and try again.';
+        }
+
+        // ===== SMOOTH SCROLLING FOR SECTION LINKS =====
+        document.querySelectorAll('.section-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetSection = document.querySelector(targetId);
+                if (targetSection) {
+                    targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // ===== INITIALIZE ON PAGE LOAD =====
+        window.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+
+            // Announce page load to screen readers
+            const announcement = document.createElement('div');
+            announcement.setAttribute('role', 'status');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.className = 'sr-only';
+            announcement.textContent = 'Module 4.2: Storage Technologies loaded. Use tab to navigate through sections.';
+            document.body.appendChild(announcement);
+
+            // Remove announcement after screen readers process it
+            setTimeout(() => {
+                announcement.remove();
+            }, 3000);
+        });
+
+        // ===== SAVE PROGRESS BEFORE UNLOAD =====
+        window.addEventListener('beforeunload', function() {
+            saveProgress();
+        });
+
+        // Periodic progress save
+        setInterval(saveProgress, 30000); // Save every 30 seconds
+    </script>
+</body>
+</html>
