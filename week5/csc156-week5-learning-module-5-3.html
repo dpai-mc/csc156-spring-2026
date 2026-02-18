@@ -1,0 +1,3991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CSC 156 Week 5 Module 5.3: NTFS Deep Dive - Comprehensive study of NTFS architecture, MFT, timestamps, Alternate Data Streams, and journaling for digital forensics">
+    <title>Module 5.3: NTFS Deep Dive | CSC 156 Digital Forensics</title>
+    <style>
+        /* CSS Reset and Base Styles */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-color: #0ea5e9;
+            --primary-dark: #0284c7;
+            --primary-light: #38bdf8;
+            --secondary-color: #8b5cf6;
+            --secondary-dark: #7c3aed;
+            --secondary-light: #a78bfa;
+            --accent-color: #06b6d4;
+            --accent-light: #22d3ee;
+            --danger-color: #ef4444;
+            --danger-light: #f87171;
+            --success-color: #10b981;
+            --success-light: #34d399;
+            --warning-color: #f59e0b;
+            --warning-light: #fbbf24;
+            --purple-color: #8b5cf6;
+            --purple-light: #a78bfa;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --text-light: #94a3b8;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f1f5f9;
+            --bg-tertiary: #e2e8f0;
+            --bg-dark: #0f172a;
+            --bg-code: #1e293b;
+            --border-color: #cbd5e1;
+            --border-light: #e2e8f0;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --font-mono: 'Cascadia Code', 'Fira Code', 'Consolas', 'Monaco', monospace;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.7;
+            color: var(--text-primary);
+            background-color: var(--bg-secondary);
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Skip Link for Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            z-index: 1000;
+            text-decoration: none;
+            border-radius: 0 0 var(--radius-sm) 0;
+            font-weight: 600;
+        }
+        
+        .skip-link:focus {
+            top: 0;
+        }
+        
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 50%, var(--primary-dark) 100%);
+            color: white;
+            padding: 2.5rem 1rem;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.07'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.6;
+        }
+        
+        header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .header-meta {
+            font-size: 1rem;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header-meta span {
+            display: inline-block;
+            margin: 0.25rem 0.5rem;
+        }
+        
+        .header-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1.25rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(4px);
+        }
+        
+        .header-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            background: var(--bg-primary);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .progress-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .progress-percentage {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background: var(--bg-tertiary);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 5px;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+        
+        .progress-note {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+        
+        /* Navigation */
+        .module-nav {
+            background: var(--bg-primary);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .nav-list a {
+            display: block;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+        
+        .nav-list a:hover,
+        .nav-list a:focus {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+        
+        .nav-list a.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        /* Main Content */
+        main {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        
+        /* Section Styles */
+        .section {
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+        }
+        
+        .section-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 1.25rem 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+        
+        .section-header:hover {
+            background: linear-gradient(135deg, var(--primary-dark), var(--secondary-dark));
+        }
+        
+        .section-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .section-toggle {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            transition: transform 0.3s ease, background 0.2s ease;
+        }
+        
+        .section-toggle:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .section-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+        
+        .section-content {
+            padding: 1.5rem;
+            display: block;
+        }
+        
+        .section-content.collapsed {
+            display: none;
+        }
+        
+        /* Typography */
+        h3 {
+            color: var(--primary-dark);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            border-bottom: 2px solid var(--bg-tertiary);
+            padding-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        h3:first-child {
+            margin-top: 0;
+        }
+        
+        h4 {
+            color: var(--text-primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 1.05rem;
+        }
+        
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+        
+        strong {
+            color: var(--text-primary);
+        }
+        
+        /* Definition Cards */
+        .definition-card {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-left: 4px solid var(--primary-color);
+            padding: 1.25rem;
+            margin: 1.25rem 0;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        }
+        
+        .definition-card h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--primary-dark);
+            font-size: 1.1rem;
+        }
+        
+        .definition-card p {
+            margin: 0;
+            color: var(--text-primary);
+        }
+        
+        .definition-card p:not(:last-child) {
+            margin-bottom: 0.75rem;
+        }
+        
+        /* Info Boxes */
+        .info-box {
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            margin: 1.25rem 0;
+        }
+        
+        .info-box.concept {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border: 1px solid #86efac;
+        }
+        
+        .info-box.warning {
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+            border: 1px solid #fcd34d;
+        }
+        
+        .info-box.forensic {
+            background: linear-gradient(135deg, #fdf4ff, #f3e8ff);
+            border: 1px solid #d8b4fe;
+        }
+        
+        .info-box.example {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 1px solid #7dd3fc;
+        }
+        
+        .info-box.danger {
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+            border: 1px solid #fca5a5;
+        }
+        
+        .info-box.ntfs {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border: 1px solid #93c5fd;
+        }
+        
+        .info-box.mft {
+            background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+            border: 1px solid #c4b5fd;
+        }
+        
+        .info-box-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .info-box.concept .info-box-title { color: #166534; }
+        .info-box.warning .info-box-title { color: #a16207; }
+        .info-box.forensic .info-box-title { color: #7c3aed; }
+        .info-box.example .info-box-title { color: #0369a1; }
+        .info-box.danger .info-box-title { color: #dc2626; }
+        .info-box.ntfs .info-box-title { color: #1d4ed8; }
+        .info-box.mft .info-box-title { color: #6d28d9; }
+        
+        /* Code Blocks */
+        pre {
+            background: var(--bg-code);
+            color: #e2e8f0;
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin: 1rem 0;
+            white-space: pre;
+            word-wrap: normal;
+            border: 1px solid #334155;
+        }
+        
+        code {
+            font-family: var(--font-mono);
+            background: var(--bg-tertiary);
+            padding: 0.125rem 0.375rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.875em;
+            color: var(--secondary-dark);
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+        
+        /* Syntax Highlighting */
+        .code-keyword { color: #c792ea; }
+        .code-string { color: #c3e88d; }
+        .code-number { color: #f78c6c; }
+        .code-comment { color: #697098; font-style: italic; }
+        .code-function { color: #82aaff; }
+        .code-variable { color: #f07178; }
+        .code-hex { color: #ffcb6b; }
+        .code-attribute { color: #89ddff; }
+        
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 1.25rem 0;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        
+        th, td {
+            padding: 0.875rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        th {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+            font-weight: 600;
+            color: var(--text-primary);
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover {
+            background: var(--bg-secondary);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* Diagrams */
+        .diagram-container {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+        
+        .diagram-title {
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            font-size: 1.05rem;
+        }
+        
+        .diagram {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            line-height: 1.4;
+            white-space: pre;
+            overflow-x: auto;
+            color: var(--text-primary);
+        }
+        
+        /* MFT Entry Visualizer */
+        .mft-visualizer {
+            background: var(--bg-dark);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+        
+        .mft-header {
+            color: var(--primary-light);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+        
+        .mft-entry {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .mft-row {
+            display: flex;
+            align-items: stretch;
+            gap: 2px;
+            flex-wrap: wrap;
+        }
+        
+        .mft-field {
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            min-width: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .mft-field:hover {
+            transform: scale(1.05);
+            z-index: 1;
+        }
+        
+        .mft-field .field-name {
+            font-weight: 600;
+            font-size: 0.7rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .mft-field .field-value {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+        
+        .mft-field.signature { background: #3b82f6; color: white; }
+        .mft-field.fixup { background: #6366f1; color: white; }
+        .mft-field.lsn { background: #8b5cf6; color: white; }
+        .mft-field.sequence { background: #a855f7; color: white; }
+        .mft-field.link { background: #d946ef; color: white; }
+        .mft-field.attr-offset { background: #ec4899; color: white; }
+        .mft-field.flags { background: #f43f5e; color: white; }
+        .mft-field.used-size { background: #ef4444; color: white; }
+        .mft-field.alloc-size { background: #f97316; color: white; }
+        .mft-field.base-ref { background: #f59e0b; color: white; }
+        .mft-field.next-attr { background: #eab308; color: white; }
+        
+        .mft-field.attr-type { background: #22c55e; color: white; }
+        .mft-field.attr-length { background: #10b981; color: white; }
+        .mft-field.attr-resident { background: #14b8a6; color: white; }
+        .mft-field.attr-name { background: #06b6d4; color: white; }
+        .mft-field.attr-data { background: #0ea5e9; color: white; }
+        
+        .mft-description {
+            background: rgba(255,255,255,0.1);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-top: 1rem;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+            display: none;
+        }
+        
+        .mft-description.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Timestamp Comparison */
+        .timestamp-comparison {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .timestamp-card {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .timestamp-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+        
+        .timestamp-card.si {
+            border-color: var(--primary-color);
+        }
+        
+        .timestamp-card.fn {
+            border-color: var(--secondary-color);
+        }
+        
+        .timestamp-card-header {
+            padding: 1rem;
+            color: white;
+            font-weight: 700;
+        }
+        
+        .timestamp-card.si .timestamp-card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        }
+        
+        .timestamp-card.fn .timestamp-card-header {
+            background: linear-gradient(135deg, var(--secondary-color), var(--secondary-dark));
+        }
+        
+        .timestamp-card-body {
+            padding: 1rem;
+        }
+        
+        .timestamp-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .timestamp-item:last-child {
+            border-bottom: none;
+        }
+        
+        .timestamp-label {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .timestamp-value {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Interactive Elements */
+        .interactive-container {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 2px solid var(--primary-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .interactive-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* Quiz Styles */
+        .quiz-question {
+            background: var(--bg-primary);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+        }
+        
+        .quiz-question p {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .quiz-option:hover {
+            border-color: var(--primary-color);
+            background: #f0f9ff;
+        }
+        
+        .quiz-option.selected {
+            border-color: var(--primary-color);
+            background: #e0f2fe;
+        }
+        
+        .quiz-option.correct {
+            border-color: var(--success-color);
+            background: #dcfce7;
+        }
+        
+        .quiz-option.incorrect {
+            border-color: var(--danger-color);
+            background: #fee2e2;
+        }
+        
+        .quiz-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary-color);
+        }
+        
+        .quiz-feedback {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            display: none;
+        }
+        
+        .quiz-feedback.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .quiz-feedback.correct {
+            background: #dcfce7;
+            border: 1px solid #86efac;
+            color: #166534;
+        }
+        
+        .quiz-feedback.incorrect {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+        
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+            margin: 1.25rem 0;
+        }
+        
+        .card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+        }
+        
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .card-title {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .card-content {
+            color: var(--text-secondary);
+            font-size: 0.925rem;
+        }
+        
+        /* Attribute Type List */
+        .attribute-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .attribute-item {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.2s ease;
+        }
+        
+        .attribute-item:hover {
+            background: var(--bg-tertiary);
+            transform: translateX(5px);
+        }
+        
+        .attribute-item.important {
+            border-left-color: var(--danger-color);
+            background: linear-gradient(135deg, #fef2f2, var(--bg-secondary));
+        }
+        
+        .attribute-item.forensic {
+            border-left-color: var(--secondary-color);
+            background: linear-gradient(135deg, #faf5ff, var(--bg-secondary));
+        }
+        
+        .attribute-code {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            color: var(--primary-dark);
+            font-size: 0.9rem;
+        }
+        
+        .attribute-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-left: 0.5rem;
+        }
+        
+        .attribute-desc {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+        
+        /* Lists */
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+            color: var(--text-secondary);
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+        
+        li::marker {
+            color: var(--primary-color);
+        }
+        
+        /* Collapsible sections */
+        .collapsible {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+        
+        .collapsible-header {
+            background: var(--bg-secondary);
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: var(--text-primary);
+            transition: background 0.2s ease;
+        }
+        
+        .collapsible-header:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .collapsible-icon {
+            transition: transform 0.3s ease;
+            color: var(--primary-color);
+        }
+        
+        .collapsible.open .collapsible-icon {
+            transform: rotate(180deg);
+        }
+        
+        .collapsible-content {
+            padding: 0 1.25rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        
+        .collapsible.open .collapsible-content {
+            padding: 1.25rem;
+            max-height: 5000px;
+        }
+        
+        /* Tabs */
+        .tabs-container {
+            margin: 1.5rem 0;
+        }
+        
+        .tabs-header {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .tab-btn {
+            padding: 0.75rem 1.25rem;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+        }
+        
+        .tab-btn:hover {
+            color: var(--primary-color);
+        }
+        
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 1.5rem 0;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        /* ADS Demo */
+        .ads-demo {
+            background: var(--bg-dark);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            font-family: var(--font-mono);
+        }
+        
+        .ads-prompt {
+            color: #22c55e;
+            margin-bottom: 0.5rem;
+        }
+        
+        .ads-command {
+            color: #fbbf24;
+            margin-bottom: 0.5rem;
+        }
+        
+        .ads-output {
+            color: #e2e8f0;
+            margin-bottom: 1rem;
+            padding-left: 1rem;
+            border-left: 2px solid #475569;
+        }
+        
+        .ads-comment {
+            color: #64748b;
+            font-style: italic;
+        }
+        
+        /* Journal Timeline */
+        .journal-timeline {
+            position: relative;
+            padding-left: 2rem;
+            margin: 1.5rem 0;
+        }
+        
+        .journal-timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+            border-radius: 3px;
+        }
+        
+        .journal-entry {
+            position: relative;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+        }
+        
+        .journal-entry::before {
+            content: '';
+            position: absolute;
+            left: -2rem;
+            top: 1.25rem;
+            width: 12px;
+            height: 12px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            border: 3px solid var(--bg-primary);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .journal-entry.create::before { background: #22c55e; }
+        .journal-entry.modify::before { background: #f59e0b; }
+        .journal-entry.delete::before { background: #ef4444; }
+        .journal-entry.rename::before { background: #8b5cf6; }
+        
+        .journal-time {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+        
+        .journal-action {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .journal-details {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+        
+        /* Completion Checklist */
+        .checklist {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0;
+        }
+        
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: var(--radius-sm);
+            margin-bottom: 0.5rem;
+            transition: background 0.2s ease;
+        }
+        
+        .checklist-item:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .checklist-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--success-color);
+            cursor: pointer;
+        }
+        
+        .checklist-item label {
+            cursor: pointer;
+            flex: 1;
+        }
+        
+        .checklist-item.completed label {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+        
+        /* Hex Viewer */
+        .hex-viewer {
+            background: #0f172a;
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+        }
+        
+        .hex-row {
+            display: flex;
+            gap: 1rem;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #1e293b;
+        }
+        
+        .hex-offset {
+            color: #64748b;
+            min-width: 60px;
+        }
+        
+        .hex-bytes {
+            color: #e2e8f0;
+            flex: 1;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .hex-byte {
+            cursor: pointer;
+            padding: 0 2px;
+            border-radius: 2px;
+            transition: all 0.2s ease;
+        }
+        
+        .hex-byte:hover {
+            background: #334155;
+        }
+        
+        .hex-ascii {
+            color: #94a3b8;
+            min-width: 100px;
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--bg-dark);
+            color: white;
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 2rem;
+        }
+        
+        footer p {
+            color: rgba(255,255,255,0.8);
+            margin: 0.25rem 0;
+        }
+        
+        .footer-nav {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1.25rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: var(--radius-md);
+            transition: all 0.2s ease;
+        }
+        
+        .footer-nav a:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-1px);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .section-header h2 {
+                font-size: 1.1rem;
+            }
+            
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .timestamp-comparison {
+                grid-template-columns: 1fr;
+            }
+            
+            .attribute-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .mft-field {
+                min-width: 60px;
+                padding: 0.5rem;
+                font-size: 0.7rem;
+            }
+        }
+        
+        /* Print Styles */
+        @media print {
+            .progress-container,
+            .module-nav,
+            .section-toggle,
+            .interactive-container,
+            .btn,
+            footer {
+                display: none !important;
+            }
+            
+            .section-content.collapsed {
+                display: block !important;
+            }
+            
+            .section {
+                break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid #ccc;
+            }
+        }
+        
+        /* Focus Styles for Accessibility */
+        *:focus {
+            outline: 3px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+        
+        *:focus:not(:focus-visible) {
+            outline: none;
+        }
+        
+        *:focus-visible {
+            outline: 3px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+        
+        /* Screen Reader Only */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <header role="banner">
+        <h1>🖥️ Module 5.3: NTFS Deep Dive</h1>
+        <p class="header-subtitle">Master File Table, Attributes, Timestamps & Journaling</p>
+        <div class="header-meta">
+            <span>CSC 156 - Digital Forensics Fundamentals</span>
+            <span>|</span>
+            <span>Week 5: File Systems and Data Structures</span>
+        </div>
+        <div class="header-badge">⏱️ Estimated Time: 60-70 minutes</div>
+    </header>
+    
+    <div class="progress-container" role="region" aria-label="Module progress">
+        <div class="progress-header">
+            <span class="progress-label">📊 Module 5.3 Progress</span>
+            <span class="progress-percentage" id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <p class="progress-note">💾 Progress is saved for this session only</p>
+    </div>
+    
+    <nav class="module-nav" aria-label="Module sections">
+        <ul class="nav-list">
+            <li><a href="#section-overview" class="active">Overview</a></li>
+            <li><a href="#section-architecture">Architecture</a></li>
+            <li><a href="#section-mft">MFT</a></li>
+            <li><a href="#section-attributes">Attributes</a></li>
+            <li><a href="#section-timestamps">Timestamps</a></li>
+            <li><a href="#section-ads">ADS</a></li>
+            <li><a href="#section-journaling">Journaling</a></li>
+            <li><a href="#section-deletion">Deletion</a></li>
+            <li><a href="#section-practice">Practice</a></li>
+        </ul>
+    </nav>
+    
+    <main id="main-content" role="main">
+        <!-- Section 1: Overview -->
+        <section class="section" id="section-overview">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🎯</span> Learning Overview & Objectives</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>NTFS (New Technology File System) is the dominant file system for modern Windows operating systems and the most frequently encountered file system in Windows forensic investigations. Its sophisticated architecture provides rich forensic artifacts that can reveal detailed user activity, file history, and potential evidence of tampering.</p>
+                
+                <p>This module is the most comprehensive in Week 5 because NTFS knowledge is essential for Windows forensics covered in Weeks 7-8. The concepts learned here—particularly MFT analysis, timestamp interpretation, and journal examination—will be applied throughout the remainder of the course.</p>
+                
+                <div class="info-box concept">
+                    <div class="info-box-title"><span aria-hidden="true">🎓</span> Learning Objectives</div>
+                    <p>Upon completing this module, you will be able to:</p>
+                    <ol>
+                        <li><strong>Describe NTFS architecture</strong> including the MFT and key metadata files</li>
+                        <li><strong>Analyze MFT entries</strong> and interpret common attributes</li>
+                        <li><strong>Compare $STANDARD_INFORMATION and $FILE_NAME timestamps</strong> for forensic analysis</li>
+                        <li><strong>Explain Alternate Data Streams (ADS)</strong> and their forensic significance</li>
+                        <li><strong>Describe NTFS journaling</strong> ($LogFile and $UsnJrnl) and its forensic value</li>
+                        <li><strong>Understand NTFS file deletion</strong> and recovery implications</li>
+                    </ol>
+                </div>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> CSLO Alignment</div>
+                    <p><strong>This module supports CSLO 2:</strong> Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data.</p>
+                    <p><strong>Certification Alignment:</strong></p>
+                    <ul>
+                        <li>IACIS CFCE: File Systems</li>
+                        <li>GIAC GCFE: Windows Forensics</li>
+                        <li>GIAC GCFA: Filesystem Analysis</li>
+                    </ul>
+                </div>
+                
+                <h3>Why NTFS Dominates Windows Forensics</h3>
+                
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-icon">🪟</div>
+                        <div class="card-title">Windows Standard</div>
+                        <div class="card-content">NTFS has been the default Windows file system since Windows XP (2001). Every modern Windows installation uses NTFS for the system drive.</div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">📊</div>
+                        <div class="card-title">Rich Metadata</div>
+                        <div class="card-content">NTFS stores extensive metadata including multiple timestamps, security descriptors, and object IDs—far more than FAT provides.</div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">📝</div>
+                        <div class="card-title">Transaction Journals</div>
+                        <div class="card-content">$LogFile and $UsnJrnl track file system changes, providing a historical record of file operations even after files are deleted.</div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">🔒</div>
+                        <div class="card-title">Security Features</div>
+                        <div class="card-content">Access Control Lists (ACLs), encryption (EFS), and compression provide security artifacts useful in investigations.</div>
+                    </div>
+                </div>
+                
+                <div class="info-box warning">
+                    <div class="info-box-title"><span aria-hidden="true">⚠️</span> Prerequisites Check</div>
+                    <p>This module builds on concepts from Modules 5.1 and 5.2. Ensure you understand:</p>
+                    <ul>
+                        <li>File system fundamentals (clusters, metadata, slack space)</li>
+                        <li>FAT structure and directory entries</li>
+                        <li>How file deletion works at the file system level</li>
+                        <li>Timestamp concepts and their forensic value</li>
+                    </ul>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-overview-1" onchange="updateProgress()">
+                        <label for="check-overview-1">I understand the learning objectives for this module</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-overview-2" onchange="updateProgress()">
+                        <label for="check-overview-2">I recognize why NTFS is critical for Windows forensics</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 2: NTFS Architecture -->
+        <section class="section" id="section-architecture">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🏗️</span> NTFS Architecture Overview</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>NTFS uses a fundamentally different architecture than FAT. While FAT separates metadata into distinct areas (FAT table, directory entries), NTFS treats <strong>everything as a file</strong>—including the metadata structures themselves. This unified approach provides consistency and flexibility but adds complexity.</p>
+                
+                <h3>NTFS History</h3>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Version</th>
+                                <th>Windows Version</th>
+                                <th>Key Features Added</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>NTFS 1.0</td>
+                                <td>Windows NT 3.1 (1993)</td>
+                                <td>Initial release with MFT, security, journaling</td>
+                            </tr>
+                            <tr>
+                                <td>NTFS 1.1</td>
+                                <td>Windows NT 3.5 (1994)</td>
+                                <td>Compression support</td>
+                            </tr>
+                            <tr>
+                                <td>NTFS 1.2</td>
+                                <td>Windows NT 4.0 (1996)</td>
+                                <td>Security descriptors, disk quotas</td>
+                            </tr>
+                            <tr>
+                                <td>NTFS 3.0</td>
+                                <td>Windows 2000 (2000)</td>
+                                <td>Encryption (EFS), reparse points, $UsnJrnl</td>
+                            </tr>
+                            <tr>
+                                <td>NTFS 3.1</td>
+                                <td>Windows XP (2001)</td>
+                                <td>Self-healing, improved performance</td>
+                            </tr>
+                            <tr>
+                                <td>NTFS 3.1</td>
+                                <td>Windows 10/11 (current)</td>
+                                <td>Same version, minor improvements</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h3>Key NTFS Features</h3>
+                
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-icon">📋</div>
+                        <div class="card-title">Master File Table (MFT)</div>
+                        <div class="card-content">Central database containing a record for every file and directory. The MFT is itself a file ($MFT) and can be analyzed directly.</div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">📝</div>
+                        <div class="card-title">Journaling</div>
+                        <div class="card-content">$LogFile provides crash recovery; $UsnJrnl tracks all file changes. Both are invaluable for forensic timeline reconstruction.</div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">🔐</div>
+                        <div class="card-title">Security</div>
+                        <div class="card-content">Access Control Lists (ACLs) on every file. Encrypting File System (EFS) for file-level encryption. Stored in $SECURITY_DESCRIPTOR attribute.</div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">📎</div>
+                        <div class="card-title">Alternate Data Streams</div>
+                        <div class="card-content">Files can have multiple data streams. Hidden streams can contain evidence or be used to conceal data.</div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">🗜️</div>
+                        <div class="card-title">Compression</div>
+                        <div class="card-content">Transparent file and folder compression. Compressed data stored in sparse clusters.</div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">📏</div>
+                        <div class="card-title">Large Volume Support</div>
+                        <div class="card-content">Maximum volume size: 16 EB (exabytes). Maximum file size: 16 EB. Far exceeds practical limits.</div>
+                    </div>
+                </div>
+                
+                <h3>NTFS Volume Layout</h3>
+                
+                <div class="diagram-container">
+                    <div class="diagram-title">NTFS Volume Structure</div>
+<pre class="diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              NTFS VOLUME                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │                    BOOT SECTOR (VBR)                                    │ │
+│  │  • BIOS Parameter Block (BPB)                                          │ │
+│  │  • Cluster size, MFT location, volume size                             │ │
+│  │  • Boot code (if bootable)                                             │ │
+│  │  • Sector 0 (with backup at last sector)                               │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │                    MASTER FILE TABLE ($MFT)                             │ │
+│  │  • Record 0: $MFT (self-reference)                                     │ │
+│  │  • Record 1: $MFTMirr (backup of first 4 records)                      │ │
+│  │  • Record 2: $LogFile (transaction journal)                            │ │
+│  │  • Record 3: $Volume (volume information)                              │ │
+│  │  • Record 4: $AttrDef (attribute definitions)                          │ │
+│  │  • Record 5: . (root directory)                                        │ │
+│  │  • Record 6: $Bitmap (cluster allocation)                              │ │
+│  │  • Record 7: $Boot (boot sector copy)                                  │ │
+│  │  • Record 8: $BadClus (bad cluster tracking)                           │ │
+│  │  • Record 9: $Secure (security descriptors)                            │ │
+│  │  • Record 10: $UpCase (uppercase table)                                │ │
+│  │  • Record 11: $Extend (extensions directory)                           │ │
+│  │  • Records 12-15: Reserved                                             │ │
+│  │  • Records 16+: User files and directories                             │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │                         DATA AREA                                       │ │
+│  │  • File data stored in clusters                                        │ │
+│  │  • MFT can grow into this area                                         │ │
+│  │  • $Bitmap tracks allocation status                                    │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │                    MFT MIRROR ZONE                                      │ │
+│  │  • Backup of first 4 MFT records                                       │ │
+│  │  • Located at middle of volume                                         │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                </div>
+                
+                <h3>NTFS Metadata Files</h3>
+                
+                <p>NTFS stores its metadata in special files that begin with <code>$</code>. These files are hidden from normal directory listings but are accessible to forensic tools:</p>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>MFT Record</th>
+                                <th>Filename</th>
+                                <th>Purpose</th>
+                                <th>Forensic Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>0</td>
+                                <td><code>$MFT</code></td>
+                                <td>Master File Table itself</td>
+                                <td>⭐⭐⭐ Contains all file metadata</td>
+                            </tr>
+                            <tr>
+                                <td>1</td>
+                                <td><code>$MFTMirr</code></td>
+                                <td>Backup of first 4 MFT records</td>
+                                <td>⭐⭐ Recovery if MFT damaged</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td><code>$LogFile</code></td>
+                                <td>Transaction journal</td>
+                                <td>⭐⭐⭐ Recent file operations</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td><code>$Volume</code></td>
+                                <td>Volume information</td>
+                                <td>⭐ Volume name, version, flags</td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td><code>$AttrDef</code></td>
+                                <td>Attribute definitions</td>
+                                <td>⭐ Attribute type mappings</td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td><code>.</code></td>
+                                <td>Root directory</td>
+                                <td>⭐⭐ Directory structure root</td>
+                            </tr>
+                            <tr>
+                                <td>6</td>
+                                <td><code>$Bitmap</code></td>
+                                <td>Cluster allocation bitmap</td>
+                                <td>⭐⭐ Shows allocated/free clusters</td>
+                            </tr>
+                            <tr>
+                                <td>7</td>
+                                <td><code>$Boot</code></td>
+                                <td>Boot sector</td>
+                                <td>⭐ Volume parameters</td>
+                            </tr>
+                            <tr>
+                                <td>8</td>
+                                <td><code>$BadClus</code></td>
+                                <td>Bad cluster list</td>
+                                <td>⭐ May hide data (anti-forensics)</td>
+                            </tr>
+                            <tr>
+                                <td>9</td>
+                                <td><code>$Secure</code></td>
+                                <td>Security descriptors</td>
+                                <td>⭐⭐ File permissions, ownership</td>
+                            </tr>
+                            <tr>
+                                <td>10</td>
+                                <td><code>$UpCase</code></td>
+                                <td>Uppercase conversion table</td>
+                                <td>⭐ Case-insensitive comparisons</td>
+                            </tr>
+                            <tr>
+                                <td>11</td>
+                                <td><code>$Extend</code></td>
+                                <td>Extensions directory</td>
+                                <td>⭐⭐ Contains $UsnJrnl, $ObjId, etc.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> Key Forensic Files in $Extend</div>
+                    <p>The <code>$Extend</code> directory contains additional metadata files crucial for forensics:</p>
+                    <ul>
+                        <li><strong>$UsnJrnl</strong> — Update Sequence Number Journal tracking all file changes</li>
+                        <li><strong>$ObjId</strong> — Object ID index for tracking files across moves/renames</li>
+                        <li><strong>$Quota</strong> — Disk quota tracking per user</li>
+                        <li><strong>$Reparse</strong> — Reparse point index (symbolic links, mount points)</li>
+                    </ul>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-arch-1" onchange="updateProgress()">
+                        <label for="check-arch-1">I understand NTFS treats everything as a file, including metadata</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-arch-2" onchange="updateProgress()">
+                        <label for="check-arch-2">I can identify key NTFS metadata files and their purposes</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-arch-3" onchange="updateProgress()">
+                        <label for="check-arch-3">I recognize the forensic value of different metadata files</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 3: Master File Table -->
+        <section class="section" id="section-mft">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">📋</span> Master File Table (MFT)</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>The Master File Table (MFT) is the heart of NTFS—a relational database containing one record for every file and directory on the volume. Understanding MFT structure is essential for NTFS forensics because it contains all file metadata and can even store small file contents directly.</p>
+                
+                <div class="definition-card">
+                    <h4>Master File Table (MFT)</h4>
+                    <p>A file (<code>$MFT</code>) that serves as a database of all files and directories on an NTFS volume. Each file has at least one 1,024-byte MFT entry (record) containing the file's attributes—metadata and potentially data. The MFT is the primary source of file system metadata for forensic analysis.</p>
+                </div>
+                
+                <h3>MFT Entry Structure</h3>
+                
+                <p>Each MFT entry is exactly <strong>1,024 bytes</strong> (1 KB) and follows a consistent structure:</p>
+                
+                <div class="diagram-container">
+                    <div class="diagram-title">MFT Entry Layout (1,024 bytes)</div>
+<pre class="diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           MFT ENTRY HEADER (48 bytes)                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Offset │ Size │ Field                    │ Description                       │
+├────────┼──────┼──────────────────────────┼───────────────────────────────────┤
+│ 0x00   │ 4    │ Signature                │ "FILE" (0x454C4946) or "BAAD"     │
+│ 0x04   │ 2    │ Fixup Array Offset       │ Offset to update sequence array   │
+│ 0x06   │ 2    │ Fixup Array Count        │ Number of fixup entries           │
+│ 0x08   │ 8    │ $LogFile Sequence Number │ LSN for journaling                │
+│ 0x10   │ 2    │ Sequence Number          │ Incremented when entry reused     │
+│ 0x12   │ 2    │ Hard Link Count          │ Number of hard links to file      │
+│ 0x14   │ 2    │ First Attribute Offset   │ Offset to first attribute         │
+│ 0x16   │ 2    │ Flags                    │ 0x01=In use, 0x02=Directory       │
+│ 0x18   │ 4    │ Used Size                │ Bytes used in this entry          │
+│ 0x1C   │ 4    │ Allocated Size           │ Total allocated (usually 1024)    │
+│ 0x20   │ 8    │ Base Record Reference    │ Base record if extension          │
+│ 0x28   │ 2    │ Next Attribute ID        │ ID for next attribute added       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                              ATTRIBUTES AREA                                 │
+│  • $STANDARD_INFORMATION                                                    │
+│  • $FILE_NAME                                                               │
+│  • $DATA (or run list for non-resident)                                     │
+│  • Other attributes as needed                                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                          END MARKER (0xFFFFFFFF)                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                      UNUSED SPACE / FIXUP VALUES                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                </div>
+                
+                <h3>Interactive MFT Entry Visualizer</h3>
+                
+                <div class="interactive-container">
+                    <div class="interactive-title"><span aria-hidden="true">🔬</span> MFT Entry Structure (Click fields for details)</div>
+                    
+                    <div class="mft-visualizer">
+                        <div class="mft-header">MFT Entry Header (First 48 bytes)</div>
+                        <div class="mft-entry">
+                            <div class="mft-row">
+                                <div class="mft-field signature" onclick="showMFTInfo('signature')" tabindex="0">
+                                    <span class="field-name">Signature</span>
+                                    <span class="field-value">FILE</span>
+                                </div>
+                                <div class="mft-field fixup" onclick="showMFTInfo('fixup')" tabindex="0">
+                                    <span class="field-name">Fixup Offset</span>
+                                    <span class="field-value">0x0030</span>
+                                </div>
+                                <div class="mft-field fixup" onclick="showMFTInfo('fixup-count')" tabindex="0">
+                                    <span class="field-name">Fixup Count</span>
+                                    <span class="field-value">0x0003</span>
+                                </div>
+                                <div class="mft-field lsn" onclick="showMFTInfo('lsn')" tabindex="0">
+                                    <span class="field-name">$LogFile LSN</span>
+                                    <span class="field-value">0x0012345678</span>
+                                </div>
+                            </div>
+                            <div class="mft-row">
+                                <div class="mft-field sequence" onclick="showMFTInfo('sequence')" tabindex="0">
+                                    <span class="field-name">Sequence #</span>
+                                    <span class="field-value">0x0005</span>
+                                </div>
+                                <div class="mft-field link" onclick="showMFTInfo('links')" tabindex="0">
+                                    <span class="field-name">Hard Links</span>
+                                    <span class="field-value">0x0001</span>
+                                </div>
+                                <div class="mft-field attr-offset" onclick="showMFTInfo('attr-offset')" tabindex="0">
+                                    <span class="field-name">1st Attr Offset</span>
+                                    <span class="field-value">0x0038</span>
+                                </div>
+                                <div class="mft-field flags" onclick="showMFTInfo('flags')" tabindex="0">
+                                    <span class="field-name">Flags</span>
+                                    <span class="field-value">0x0001</span>
+                                </div>
+                            </div>
+                            <div class="mft-row">
+                                <div class="mft-field used-size" onclick="showMFTInfo('used-size')" tabindex="0">
+                                    <span class="field-name">Used Size</span>
+                                    <span class="field-value">0x01A8</span>
+                                </div>
+                                <div class="mft-field alloc-size" onclick="showMFTInfo('alloc-size')" tabindex="0">
+                                    <span class="field-name">Allocated Size</span>
+                                    <span class="field-value">0x0400</span>
+                                </div>
+                                <div class="mft-field base-ref" onclick="showMFTInfo('base-ref')" tabindex="0">
+                                    <span class="field-name">Base Record</span>
+                                    <span class="field-value">0x0000</span>
+                                </div>
+                                <div class="mft-field next-attr" onclick="showMFTInfo('next-attr')" tabindex="0">
+                                    <span class="field-name">Next Attr ID</span>
+                                    <span class="field-value">0x0004</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mft-header" style="margin-top: 1.5rem;">Attribute Example ($STANDARD_INFORMATION)</div>
+                        <div class="mft-entry">
+                            <div class="mft-row">
+                                <div class="mft-field attr-type" onclick="showMFTInfo('attr-type')" tabindex="0">
+                                    <span class="field-name">Type</span>
+                                    <span class="field-value">0x10 ($SI)</span>
+                                </div>
+                                <div class="mft-field attr-length" onclick="showMFTInfo('attr-length')" tabindex="0">
+                                    <span class="field-name">Length</span>
+                                    <span class="field-value">0x0060</span>
+                                </div>
+                                <div class="mft-field attr-resident" onclick="showMFTInfo('attr-resident')" tabindex="0">
+                                    <span class="field-name">Resident</span>
+                                    <span class="field-value">0x00 (Yes)</span>
+                                </div>
+                                <div class="mft-field attr-name" onclick="showMFTInfo('attr-name')" tabindex="0">
+                                    <span class="field-name">Name Length</span>
+                                    <span class="field-value">0x00</span>
+                                </div>
+                                <div class="mft-field attr-data" onclick="showMFTInfo('attr-data')" tabindex="0">
+                                    <span class="field-name">Attribute Data</span>
+                                    <span class="field-value">Timestamps...</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mft-description" id="mft-info">
+                            <p>Click on any field above to see detailed information about that component of the MFT entry.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>MFT Entry Flags</h3>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Flag Value</th>
+                                <th>Meaning</th>
+                                <th>Forensic Significance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>0x0000</code></td>
+                                <td>Entry not in use (deleted)</td>
+                                <td>⭐⭐⭐ Deleted file—metadata may be recoverable</td>
+                            </tr>
+                            <tr>
+                                <td><code>0x0001</code></td>
+                                <td>Entry in use (file)</td>
+                                <td>Active file</td>
+                            </tr>
+                            <tr>
+                                <td><code>0x0002</code></td>
+                                <td>Directory</td>
+                                <td>Entry is a directory (combined with 0x01 = 0x03)</td>
+                            </tr>
+                            <tr>
+                                <td><code>0x0003</code></td>
+                                <td>In use + Directory</td>
+                                <td>Active directory</td>
+                            </tr>
+                            <tr>
+                                <td><code>0x0004</code></td>
+                                <td>Unknown/Extension</td>
+                                <td>Rarely seen</td>
+                            </tr>
+                            <tr>
+                                <td><code>0x0008</code></td>
+                                <td>Unknown/Index</td>
+                                <td>Rarely seen</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> Forensic Significance of MFT Flags</div>
+                    <p>When a file is deleted in NTFS:</p>
+                    <ul>
+                        <li>The <strong>flags field is set to 0x0000</strong> (not in use)</li>
+                        <li>The <strong>sequence number is incremented</strong> (helps track reuse)</li>
+                        <li>The <strong>attributes remain intact</strong> until the entry is reused</li>
+                        <li>The <strong>$Bitmap is updated</strong> to mark clusters as free</li>
+                    </ul>
+                    <p>This means deleted files can often be recovered by finding MFT entries with flags = 0x0000 and intact attributes.</p>
+                </div>
+                
+                <h3>Resident vs. Non-Resident Data</h3>
+                
+                <p>NTFS has a unique optimization: small files can be stored <strong>entirely within the MFT entry</strong> itself, without using separate clusters. This is called "resident" data.</p>
+                
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-icon">📦</div>
+                        <div class="card-title">Resident Data</div>
+                        <div class="card-content">
+                            <p>File data stored directly in the MFT entry's $DATA attribute.</p>
+                            <ul>
+                                <li>Typical for files under ~700 bytes</li>
+                                <li>Very fast access</li>
+                                <li>Entire file recoverable from MFT alone</li>
+                                <li>Common for small text files, shortcuts</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">🔗</div>
+                        <div class="card-title">Non-Resident Data</div>
+                        <div class="card-content">
+                            <p>File data stored in clusters outside the MFT. The $DATA attribute contains a "run list" pointing to the clusters.</p>
+                            <ul>
+                                <li>Required for larger files</li>
+                                <li>Run list describes cluster locations</li>
+                                <li>Can be fragmented across volume</li>
+                                <li>MFT contains metadata only</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-box example">
+                    <div class="info-box-title"><span aria-hidden="true">💡</span> Run List Example</div>
+                    <p>A run list (also called "data runs") describes where non-resident data is stored. Each run specifies a starting cluster and length:</p>
+                    <pre><code>Run List: 21 18 34 12 01 00
+Decoded:
+  Run 1: Start at cluster 0x1234, length 0x18 clusters
+  Run 2: (would continue if more data)</code></pre>
+                    <p>The first nibble indicates the size of the length and offset fields. Forensic tools parse these automatically, but understanding the concept helps when manually analyzing MFT entries.</p>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-mft-1" onchange="updateProgress()">
+                        <label for="check-mft-1">I understand the MFT entry header structure</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-mft-2" onchange="updateProgress()">
+                        <label for="check-mft-2">I can interpret MFT entry flags</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-mft-3" onchange="updateProgress()">
+                        <label for="check-mft-3">I understand the difference between resident and non-resident data</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 4: NTFS Attributes -->
+        <section class="section" id="section-attributes">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🏷️</span> NTFS Attributes</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>In NTFS, everything about a file—its name, timestamps, permissions, and data—is stored as <strong>attributes</strong> within the MFT entry. Understanding these attributes is crucial for forensic analysis because different attributes contain different types of evidence.</p>
+                
+                <h3>Common NTFS Attribute Types</h3>
+                
+                <div class="attribute-list">
+                    <div class="attribute-item important">
+                        <div><span class="attribute-code">0x10</span><span class="attribute-name">$STANDARD_INFORMATION</span></div>
+                        <div class="attribute-desc">Timestamps (MACE), file attributes, owner ID, security ID. Present in every file. Key forensic artifact.</div>
+                    </div>
+                    
+                    <div class="attribute-item important">
+                        <div><span class="attribute-code">0x30</span><span class="attribute-name">$FILE_NAME</span></div>
+                        <div class="attribute-desc">Filename, parent directory reference, timestamps (MACE), file size. May have multiple (short + long name).</div>
+                    </div>
+                    
+                    <div class="attribute-item forensic">
+                        <div><span class="attribute-code">0x40</span><span class="attribute-name">$OBJECT_ID</span></div>
+                        <div class="attribute-desc">Unique object identifier. Can track files across moves/renames. Used by Windows link tracking.</div>
+                    </div>
+                    
+                    <div class="attribute-item">
+                        <div><span class="attribute-code">0x50</span><span class="attribute-name">$SECURITY_DESCRIPTOR</span></div>
+                        <div class="attribute-desc">Access Control List (ACL), owner, group. Usually stored in $Secure file and referenced by ID.</div>
+                    </div>
+                    
+                    <div class="attribute-item">
+                        <div><span class="attribute-code">0x60</span><span class="attribute-name">$VOLUME_NAME</span></div>
+                        <div class="attribute-desc">Volume label. Only in $Volume metadata file.</div>
+                    </div>
+                    
+                    <div class="attribute-item">
+                        <div><span class="attribute-code">0x70</span><span class="attribute-name">$VOLUME_INFORMATION</span></div>
+                        <div class="attribute-desc">NTFS version, flags. Only in $Volume metadata file.</div>
+                    </div>
+                    
+                    <div class="attribute-item important">
+                        <div><span class="attribute-code">0x80</span><span class="attribute-name">$DATA</span></div>
+                        <div class="attribute-desc">File content (default stream). Can be resident (in MFT) or non-resident (in clusters). Files can have multiple $DATA attributes (ADS).</div>
+                    </div>
+                    
+                    <div class="attribute-item">
+                        <div><span class="attribute-code">0x90</span><span class="attribute-name">$INDEX_ROOT</span></div>
+                        <div class="attribute-desc">Root of B-tree index. Used for directories (filename index) and other indexes.</div>
+                    </div>
+                    
+                    <div class="attribute-item forensic">
+                        <div><span class="attribute-code">0xA0</span><span class="attribute-name">$INDEX_ALLOCATION</span></div>
+                        <div class="attribute-desc">Non-resident index data. For directories, contains additional filename entries. May contain deleted entries!</div>
+                    </div>
+                    
+                    <div class="attribute-item">
+                        <div><span class="attribute-code">0xB0</span><span class="attribute-name">$BITMAP</span></div>
+                        <div class="attribute-desc">Bitmap for indexes showing which entries are in use.</div>
+                    </div>
+                    
+                    <div class="attribute-item forensic">
+                        <div><span class="attribute-code">0xC0</span><span class="attribute-name">$REPARSE_POINT</span></div>
+                        <div class="attribute-desc">Symbolic links, mount points, and other reparse data. Can indicate junction points or symlinks.</div>
+                    </div>
+                    
+                    <div class="attribute-item forensic">
+                        <div><span class="attribute-code">0xD0</span><span class="attribute-name">$EA_INFORMATION</span></div>
+                        <div class="attribute-desc">Extended attribute information. Size of EA data.</div>
+                    </div>
+                    
+                    <div class="attribute-item forensic">
+                        <div><span class="attribute-code">0xE0</span><span class="attribute-name">$EA</span></div>
+                        <div class="attribute-desc">Extended attributes. Used for OS/2 compatibility and some applications.</div>
+                    </div>
+                    
+                    <div class="attribute-item forensic">
+                        <div><span class="attribute-code">0x100</span><span class="attribute-name">$LOGGED_UTILITY_STREAM</span></div>
+                        <div class="attribute-desc">EFS encryption information. Contains encryption keys and recovery data.</div>
+                    </div>
+                </div>
+                
+                <h3>Attribute Header Structure</h3>
+                
+                <p>Every attribute starts with a header that describes the attribute:</p>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Offset</th>
+                                <th>Size</th>
+                                <th>Field</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>0x00</td>
+                                <td>4</td>
+                                <td>Attribute Type</td>
+                                <td>Type code (0x10, 0x30, 0x80, etc.)</td>
+                            </tr>
+                            <tr>
+                                <td>0x04</td>
+                                <td>4</td>
+                                <td>Length</td>
+                                <td>Total length of attribute including header</td>
+                            </tr>
+                            <tr>
+                                <td>0x08</td>
+                                <td>1</td>
+                                <td>Non-Resident Flag</td>
+                                <td>0 = Resident, 1 = Non-resident</td>
+                            </tr>
+                            <tr>
+                                <td>0x09</td>
+                                <td>1</td>
+                                <td>Name Length</td>
+                                <td>Length of attribute name (for named streams)</td>
+                            </tr>
+                            <tr>
+                                <td>0x0A</td>
+                                <td>2</td>
+                                <td>Name Offset</td>
+                                <td>Offset to attribute name</td>
+                            </tr>
+                            <tr>
+                                <td>0x0C</td>
+                                <td>2</td>
+                                <td>Flags</td>
+                                <td>Compressed, encrypted, sparse flags</td>
+                            </tr>
+                            <tr>
+                                <td>0x0E</td>
+                                <td>2</td>
+                                <td>Attribute ID</td>
+                                <td>Unique ID within this MFT entry</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h3>$STANDARD_INFORMATION Attribute (0x10)</h3>
+                
+                <p>This attribute is present in <strong>every file and directory</strong> and contains critical metadata:</p>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Offset</th>
+                                <th>Size</th>
+                                <th>Field</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>0x00</td>
+                                <td>8</td>
+                                <td>Created Time</td>
+                                <td>File creation timestamp</td>
+                            </tr>
+                            <tr>
+                                <td>0x08</td>
+                                <td>8</td>
+                                <td>Modified Time</td>
+                                <td>File content modification timestamp</td>
+                            </tr>
+                            <tr>
+                                <td>0x10</td>
+                                <td>8</td>
+                                <td>MFT Modified Time</td>
+                                <td>MFT entry modification timestamp</td>
+                            </tr>
+                            <tr>
+                                <td>0x18</td>
+                                <td>8</td>
+                                <td>Accessed Time</td>
+                                <td>Last access timestamp</td>
+                            </tr>
+                            <tr>
+                                <td>0x20</td>
+                                <td>4</td>
+                                <td>Flags</td>
+                                <td>Read-only, hidden, system, archive, etc.</td>
+                            </tr>
+                            <tr>
+                                <td>0x24</td>
+                                <td>4</td>
+                                <td>Max Versions</td>
+                                <td>Maximum versions (usually 0)</td>
+                            </tr>
+                            <tr>
+                                <td>0x28</td>
+                                <td>4</td>
+                                <td>Version Number</td>
+                                <td>Current version (usually 0)</td>
+                            </tr>
+                            <tr>
+                                <td>0x2C</td>
+                                <td>4</td>
+                                <td>Class ID</td>
+                                <td>Class ID (usually 0)</td>
+                            </tr>
+                            <tr>
+                                <td>0x30</td>
+                                <td>4</td>
+                                <td>Owner ID</td>
+                                <td>Owner ID (NTFS 3.0+)</td>
+                            </tr>
+                            <tr>
+                                <td>0x34</td>
+                                <td>4</td>
+                                <td>Security ID</td>
+                                <td>Security descriptor ID (NTFS 3.0+)</td>
+                            </tr>
+                            <tr>
+                                <td>0x38</td>
+                                <td>8</td>
+                                <td>Quota Charged</td>
+                                <td>Bytes charged to quota (NTFS 3.0+)</td>
+                            </tr>
+                            <tr>
+                                <td>0x40</td>
+                                <td>8</td>
+                                <td>USN</td>
+                                <td>Update Sequence Number (NTFS 3.0+)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h3>$FILE_NAME Attribute (0x30)</h3>
+                
+                <p>Contains the filename and additional timestamps. A file may have <strong>multiple $FILE_NAME attributes</strong> (e.g., long name and 8.3 short name):</p>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Offset</th>
+                                <th>Size</th>
+                                <th>Field</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>0x00</td>
+                                <td>8</td>
+                                <td>Parent Directory Reference</td>
+                                <td>MFT reference to parent directory</td>
+                            </tr>
+                            <tr>
+                                <td>0x08</td>
+                                <td>8</td>
+                                <td>Created Time</td>
+                                <td>File creation timestamp</td>
+                            </tr>
+                            <tr>
+                                <td>0x10</td>
+                                <td>8</td>
+                                <td>Modified Time</td>
+                                <td>File modification timestamp</td>
+                            </tr>
+                            <tr>
+                                <td>0x18</td>
+                                <td>8</td>
+                                <td>MFT Modified Time</td>
+                                <td>MFT entry modification timestamp</td>
+                            </tr>
+                            <tr>
+                                <td>0x20</td>
+                                <td>8</td>
+                                <td>Accessed Time</td>
+                                <td>Last access timestamp</td>
+                            </tr>
+                            <tr>
+                                <td>0x28</td>
+                                <td>8</td>
+                                <td>Allocated Size</td>
+                                <td>Allocated size of file</td>
+                            </tr>
+                            <tr>
+                                <td>0x30</td>
+                                <td>8</td>
+                                <td>Real Size</td>
+                                <td>Actual size of file</td>
+                            </tr>
+                            <tr>
+                                <td>0x38</td>
+                                <td>4</td>
+                                <td>Flags</td>
+                                <td>File attribute flags</td>
+                            </tr>
+                            <tr>
+                                <td>0x3C</td>
+                                <td>4</td>
+                                <td>Reparse Value</td>
+                                <td>Reparse point tag</td>
+                            </tr>
+                            <tr>
+                                <td>0x40</td>
+                                <td>1</td>
+                                <td>Name Length</td>
+                                <td>Length of filename in characters</td>
+                            </tr>
+                            <tr>
+                                <td>0x41</td>
+                                <td>1</td>
+                                <td>Namespace</td>
+                                <td>0=POSIX, 1=Win32, 2=DOS, 3=Win32+DOS</td>
+                            </tr>
+                            <tr>
+                                <td>0x42</td>
+                                <td>varies</td>
+                                <td>Filename</td>
+                                <td>Unicode filename (2 bytes per char)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> Namespace Values</div>
+                    <ul>
+                        <li><strong>0 (POSIX):</strong> Case-sensitive, allows almost any character</li>
+                        <li><strong>1 (Win32):</strong> Standard Windows long filename</li>
+                        <li><strong>2 (DOS):</strong> 8.3 short filename for compatibility</li>
+                        <li><strong>3 (Win32 & DOS):</strong> Name fits both Win32 and DOS requirements</li>
+                    </ul>
+                    <p>Files with long names typically have two $FILE_NAME attributes: one with namespace 1 (Win32) and one with namespace 2 (DOS).</p>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-attr-1" onchange="updateProgress()">
+                        <label for="check-attr-1">I can identify the major NTFS attribute types</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-attr-2" onchange="updateProgress()">
+                        <label for="check-attr-2">I understand the structure of $STANDARD_INFORMATION</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-attr-3" onchange="updateProgress()">
+                        <label for="check-attr-3">I understand the structure of $FILE_NAME</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 5: Timestamps -->
+        <section class="section" id="section-timestamps">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">⏰</span> NTFS Timestamps & Forensic Analysis</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>NTFS stores <strong>eight timestamps</strong> per file—four in $STANDARD_INFORMATION and four in $FILE_NAME. Understanding the differences between these timestamps is critical for forensic analysis, particularly for detecting timestamp manipulation (timestomping).</p>
+                
+                <h3>NTFS Timestamp Format</h3>
+                
+                <div class="definition-card">
+                    <h4>FILETIME Format</h4>
+                    <p>NTFS timestamps use the Windows FILETIME format: a 64-bit value representing the number of 100-nanosecond intervals since <strong>January 1, 1601 UTC</strong>.</p>
+                    <p><strong>Resolution:</strong> 100 nanoseconds (0.0000001 seconds)</p>
+                    <p><strong>Range:</strong> 1601 to approximately 30828</p>
+                    <p>This is vastly more precise than FAT's 2-second resolution!</p>
+                </div>
+                
+                <h3>The MACE Timestamps</h3>
+                
+                <p>Both $STANDARD_INFORMATION (SI) and $FILE_NAME (FN) contain four timestamps, often called <strong>MACE</strong>:</p>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Letter</th>
+                                <th>Timestamp</th>
+                                <th>Updated When</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>M</strong></td>
+                                <td>Modified</td>
+                                <td>File <em>content</em> is changed (data written)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>A</strong></td>
+                                <td>Accessed</td>
+                                <td>File is read (may be disabled for performance)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>C</strong></td>
+                                <td>Changed (MFT Modified)</td>
+                                <td>MFT entry is modified (metadata change)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>E</strong></td>
+                                <td>Entry Created (Birth)</td>
+                                <td>File is first created</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h3>$STANDARD_INFORMATION vs. $FILE_NAME Timestamps</h3>
+                
+                <p>This is one of the most important forensic concepts in NTFS analysis:</p>
+                
+                <div class="timestamp-comparison">
+                    <div class="timestamp-card si">
+                        <div class="timestamp-card-header">
+                            📊 $STANDARD_INFORMATION (SI)
+                        </div>
+                        <div class="timestamp-card-body">
+                            <div class="timestamp-item">
+                                <span class="timestamp-label">Updated by:</span>
+                                <span class="timestamp-value">User-level APIs</span>
+                            </div>
+                            <div class="timestamp-item">
+                                <span class="timestamp-label">Modifiable:</span>
+                                <span class="timestamp-value">Yes (easily)</span>
+                            </div>
+                            <div class="timestamp-item">
+                                <span class="timestamp-label">Tools can change:</span>
+                                <span class="timestamp-value">SetFileTime(), touch, timestomp</span>
+                            </div>
+                            <div class="timestamp-item">
+                                <span class="timestamp-label">Forensic trust:</span>
+                                <span class="timestamp-value">⚠️ Lower (can be manipulated)</span>
+                            </div>
+                            <div class="timestamp-item">
+                                <span class="timestamp-label">Shown by:</span>
+                                <span class="timestamp-value">Windows Explorer, dir command</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="timestamp-card fn">
+                        <div class="timestamp-card-header">
+                            📁 $FILE_NAME (FN)
+                        </div>
+                        <div class="timestamp-card-body">
+                            <div class="timestamp-item">
+                                <span class="timestamp-label">Updated by:</span>
+                                <span class="timestamp-value">Kernel only</span>
+                            </div>
+                            <div class="timestamp-item">
+                                <span class="timestamp-label">Modifiable:</span>
+                                <span class="timestamp-value">No (not by normal APIs)</span>
+                            </div>
+                            <div class="timestamp-item">
+                                <span class="timestamp-label">Updated when:</span>
+                                <span class="timestamp-value">File created, renamed, moved</span>
+                            </div>
+                            <div class="timestamp-item">
+                                <span class="timestamp-label">Forensic trust:</span>
+                                <span class="timestamp-value">✅ Higher (harder to fake)</span>
+                            </div>
+                            <div class="timestamp-item">
+                                <span class="timestamp-label">Shown by:</span>
+                                <span class="timestamp-value">Forensic tools only</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-box danger">
+                    <div class="info-box-title"><span aria-hidden="true">🚨</span> Timestomping Detection</div>
+                    <p><strong>Timestomping</strong> is an anti-forensic technique where attackers modify file timestamps to hide malicious activity or make files appear older/newer than they are.</p>
+                    <p><strong>Detection method:</strong> Compare SI and FN timestamps!</p>
+                    <ul>
+                        <li>If SI timestamps are <em>older</em> than FN timestamps → Suspicious!</li>
+                        <li>If SI Created time is before FN Created time → Likely timestomped</li>
+                        <li>If all SI timestamps are identical → Suspicious (tools often set all four the same)</li>
+                        <li>If timestamps show impossible precision patterns → May indicate manipulation</li>
+                    </ul>
+                </div>
+                
+                <h3>Interactive Timestamp Analyzer</h3>
+                
+                <div class="interactive-container">
+                    <div class="interactive-title"><span aria-hidden="true">🔍</span> Timestamp Comparison Scenarios</div>
+                    
+                    <div class="tabs-container">
+                        <div class="tabs-header" role="tablist">
+                            <button class="tab-btn active" onclick="switchTab(event, 'tab-normal')" role="tab" aria-selected="true">Normal File</button>
+                            <button class="tab-btn" onclick="switchTab(event, 'tab-copied')" role="tab" aria-selected="false">Copied File</button>
+                            <button class="tab-btn" onclick="switchTab(event, 'tab-timestomp')" role="tab" aria-selected="false">Timestomped</button>
+                        </div>
+                        
+                        <div class="tab-content active" id="tab-normal" role="tabpanel">
+                            <h4>✅ Normal File Creation and Modification</h4>
+                            <p>A file created on March 1, 2025 and modified on March 15, 2025:</p>
+                            
+                            <div class="timestamp-comparison">
+                                <div class="timestamp-card si">
+                                    <div class="timestamp-card-header">$STANDARD_INFORMATION</div>
+                                    <div class="timestamp-card-body">
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">Created:</span>
+                                            <span class="timestamp-value">2025-03-01 09:15:32</span>
+                                        </div>
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">Modified:</span>
+                                            <span class="timestamp-value">2025-03-15 14:22:18</span>
+                                        </div>
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">MFT Changed:</span>
+                                            <span class="timestamp-value">2025-03-15 14:22:18</span>
+                                        </div>
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">Accessed:</span>
+                                            <span class="timestamp-value">2025-03-15 14:22:18</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="timestamp-card fn">
+                                    <div class="timestamp-card-header">$FILE_NAME</div>
+                                    <div class="timestamp-card-body">
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">Created:</span>
+                                            <span class="timestamp-value">2025-03-01 09:15:32</span>
+                                        </div>
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">Modified:</span>
+                                            <span class="timestamp-value">2025-03-01 09:15:32</span>
+                                        </div>
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">MFT Changed:</span>
+                                            <span class="timestamp-value">2025-03-01 09:15:32</span>
+                                        </div>
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">Accessed:</span>
+                                            <span class="timestamp-value">2025-03-01 09:15:32</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="info-box concept">
+                                <div class="info-box-title">Analysis</div>
+                                <p><strong>Normal behavior:</strong> FN timestamps match the original creation time. SI timestamps show subsequent modifications. This is expected—FN is only updated on file creation, rename, or move.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-content" id="tab-copied" role="tabpanel">
+                            <h4>📋 File Copied from Another Location</h4>
+                            <p>A file originally created January 10, 2025, copied to this location on March 20, 2025:</p>
+                            
+                            <div class="timestamp-comparison">
+                                <div class="timestamp-card si">
+                                    <div class="timestamp-card-header">$STANDARD_INFORMATION</div>
+                                    <div class="timestamp-card-body">
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">Created:</span>
+                                            <span class="timestamp-value">2025-03-20 11:45:03</span>
+                                        </div>
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">Modified:</span>
+                                            <span class="timestamp-value">2025-01-10 08:30:15</span>
+                                        </div>
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">MFT Changed:</span>
+                                            <span class="timestamp-value">2025-03-20 11:45:03</span>
+                                        </div>
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">Accessed:</span>
+                                            <span class="timestamp-value">2025-03-20 11:45:03</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="timestamp-card fn">
+                                    <div class="timestamp-card-header">$FILE_NAME</div>
+                                    <div class="timestamp-card-body">
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">Created:</span>
+                                            <span class="timestamp-value">2025-03-20 11:45:03</span>
+                                        </div>
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">Modified:</span>
+                                            <span class="timestamp-value">2025-03-20 11:45:03</span>
+                                        </div>
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">MFT Changed:</span>
+                                            <span class="timestamp-value">2025-03-20 11:45:03</span>
+                                        </div>
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">Accessed:</span>
+                                            <span class="timestamp-value">2025-03-20 11:45:03</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="info-box concept">
+                                <div class="info-box-title">Analysis</div>
+                                <p><strong>Copy behavior:</strong> Notice SI Modified is <em>older</em> than SI Created! This is normal for copied files—Windows preserves the original Modified time but sets Created to the copy time. FN timestamps all match the copy time.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-content" id="tab-timestomp" role="tabpanel">
+                            <h4>🚨 Timestomped File (Manipulation Detected)</h4>
+                            <p>An attacker created malware on March 25, 2025, then used timestomping to make it appear old:</p>
+                            
+                            <div class="timestamp-comparison">
+                                <div class="timestamp-card si" style="border-color: var(--danger-color);">
+                                    <div class="timestamp-card-header" style="background: linear-gradient(135deg, var(--danger-color), var(--danger-light));">$STANDARD_INFORMATION ⚠️</div>
+                                    <div class="timestamp-card-body">
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">Created:</span>
+                                            <span class="timestamp-value" style="color: var(--danger-color);">2019-06-15 00:00:00</span>
+                                        </div>
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">Modified:</span>
+                                            <span class="timestamp-value" style="color: var(--danger-color);">2019-06-15 00:00:00</span>
+                                        </div>
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">MFT Changed:</span>
+                                            <span class="timestamp-value" style="color: var(--danger-color);">2019-06-15 00:00:00</span>
+                                        </div>
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">Accessed:</span>
+                                            <span class="timestamp-value" style="color: var(--danger-color);">2019-06-15 00:00:00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="timestamp-card fn">
+                                    <div class="timestamp-card-header">$FILE_NAME (Truth!)</div>
+                                    <div class="timestamp-card-body">
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">Created:</span>
+                                            <span class="timestamp-value" style="color: var(--success-color);">2025-03-25 02:14:37</span>
+                                        </div>
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">Modified:</span>
+                                            <span class="timestamp-value" style="color: var(--success-color);">2025-03-25 02:14:37</span>
+                                        </div>
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">MFT Changed:</span>
+                                            <span class="timestamp-value" style="color: var(--success-color);">2025-03-25 02:14:37</span>
+                                        </div>
+                                        <div class="timestamp-item">
+                                            <span class="timestamp-label">Accessed:</span>
+                                            <span class="timestamp-value" style="color: var(--success-color);">2025-03-25 02:14:37</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="info-box danger">
+                                <div class="info-box-title">🚨 Red Flags Detected!</div>
+                                <ul>
+                                    <li><strong>SI Created is BEFORE FN Created</strong> — Impossible without manipulation!</li>
+                                    <li><strong>All four SI timestamps are identical</strong> — Common timestomping artifact</li>
+                                    <li><strong>Timestamps at exactly midnight</strong> — Suspicious precision</li>
+                                    <li><strong>FN reveals true creation date</strong> — File actually created March 25, 2025</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>Timestamp Behavior Summary</h3>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>SI Created</th>
+                                <th>SI Modified</th>
+                                <th>SI Changed</th>
+                                <th>SI Accessed</th>
+                                <th>FN Updated?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Create new file</td>
+                                <td>✅ Set</td>
+                                <td>✅ Set</td>
+                                <td>✅ Set</td>
+                                <td>✅ Set</td>
+                                <td>✅ Yes (all)</td>
+                            </tr>
+                            <tr>
+                                <td>Modify content</td>
+                                <td>—</td>
+                                <td>✅ Updated</td>
+                                <td>✅ Updated</td>
+                                <td>✅ Updated</td>
+                                <td>❌ No</td>
+                            </tr>
+                            <tr>
+                                <td>Read file</td>
+                                <td>—</td>
+                                <td>—</td>
+                                <td>—</td>
+                                <td>✅ Updated*</td>
+                                <td>❌ No</td>
+                            </tr>
+                            <tr>
+                                <td>Rename file</td>
+                                <td>—</td>
+                                <td>—</td>
+                                <td>✅ Updated</td>
+                                <td>—</td>
+                                <td>✅ Yes (all)</td>
+                            </tr>
+                            <tr>
+                                <td>Move file (same vol)</td>
+                                <td>—</td>
+                                <td>—</td>
+                                <td>✅ Updated</td>
+                                <td>—</td>
+                                <td>✅ Yes (all)</td>
+                            </tr>
+                            <tr>
+                                <td>Copy file</td>
+                                <td>✅ Set (now)</td>
+                                <td>Preserved</td>
+                                <td>✅ Set (now)</td>
+                                <td>✅ Set (now)</td>
+                                <td>✅ Yes (all=now)</td>
+                            </tr>
+                            <tr>
+                                <td>Change attributes</td>
+                                <td>—</td>
+                                <td>—</td>
+                                <td>✅ Updated</td>
+                                <td>—</td>
+                                <td>❌ No</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p><em>* Access time updates may be disabled (NtfsDisableLastAccessUpdate registry setting) for performance.</em></p>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-time-1" onchange="updateProgress()">
+                        <label for="check-time-1">I understand the difference between SI and FN timestamps</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-time-2" onchange="updateProgress()">
+                        <label for="check-time-2">I can identify signs of timestamp manipulation</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-time-3" onchange="updateProgress()">
+                        <label for="check-time-3">I know how different file operations affect timestamps</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 6: Alternate Data Streams -->
+        <section class="section" id="section-ads">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">📎</span> Alternate Data Streams (ADS)</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>Alternate Data Streams (ADS) are a unique NTFS feature that allows multiple data streams to be associated with a single file. While designed for legitimate purposes, ADS can be used to hide data, making them an important forensic consideration.</p>
+                
+                <div class="definition-card">
+                    <h4>Alternate Data Stream (ADS)</h4>
+                    <p>An additional named $DATA attribute attached to a file or directory. Every file has a default (unnamed) data stream containing its normal content. Additional named streams can store extra data that is invisible to standard Windows tools like Explorer and <code>dir</code>.</p>
+                </div>
+                
+                <h3>How ADS Works</h3>
+                
+                <div class="diagram-container">
+                    <div class="diagram-title">File with Multiple Data Streams</div>
+<pre class="diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         MFT Entry for "document.txt"                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  $STANDARD_INFORMATION (0x10)                                               │
+│  └── Timestamps, flags, etc.                                                │
+│                                                                              │
+│  $FILE_NAME (0x30)                                                          │
+│  └── "document.txt"                                                         │
+│                                                                              │
+│  $DATA (0x80) - UNNAMED (Default Stream)                                    │
+│  └── "This is the normal file content that everyone sees..."               │
+│      Size: 1,234 bytes                                                      │
+│      Accessed via: document.txt                                             │
+│                                                                              │
+│  $DATA (0x80) - NAMED "hidden" (Alternate Stream)                          │
+│  └── "Secret data hidden in alternate stream..."                           │
+│      Size: 5,678 bytes                                                      │
+│      Accessed via: document.txt:hidden                                      │
+│                                                                              │
+│  $DATA (0x80) - NAMED "Zone.Identifier" (Common ADS)                       │
+│  └── "[ZoneTransfer]\r\nZoneId=3\r\n"                                      │
+│      Size: 26 bytes                                                         │
+│      Accessed via: document.txt:Zone.Identifier                            │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Windows Explorer shows: document.txt (1,234 bytes)
+                        ↑ Only the default stream!
+</pre>
+                </div>
+                
+                <h3>ADS Syntax</h3>
+                
+                <p>Alternate Data Streams are accessed using the <code>filename:streamname</code> syntax:</p>
+                
+                <div class="ads-demo">
+                    <div class="ads-comment"># Create a normal file</div>
+                    <div class="ads-prompt">C:\&gt;</div>
+                    <div class="ads-command">echo "Normal content" &gt; document.txt</div>
+                    
+                    <div class="ads-comment"># Create an alternate data stream</div>
+                    <div class="ads-prompt">C:\&gt;</div>
+                    <div class="ads-command">echo "Hidden content" &gt; document.txt:secret</div>
+                    
+                    <div class="ads-comment"># View the file normally (ADS not shown)</div>
+                    <div class="ads-prompt">C:\&gt;</div>
+                    <div class="ads-command">dir document.txt</div>
+                    <div class="ads-output">03/25/2025  10:30 AM                17 document.txt</div>
+                    
+                    <div class="ads-comment"># View with /R flag to show streams</div>
+                    <div class="ads-prompt">C:\&gt;</div>
+                    <div class="ads-command">dir /R document.txt</div>
+                    <div class="ads-output">03/25/2025  10:30 AM                17 document.txt
+                                               16 document.txt:secret:$DATA</div>
+                    
+                    <div class="ads-comment"># Read the alternate stream</div>
+                    <div class="ads-prompt">C:\&gt;</div>
+                    <div class="ads-command">more &lt; document.txt:secret</div>
+                    <div class="ads-output">Hidden content</div>
+                </div>
+                
+                <h3>Legitimate Uses of ADS</h3>
+                
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-icon">🌐</div>
+                        <div class="card-title">Zone.Identifier</div>
+                        <div class="card-content">
+                            <p>Windows uses ADS to track where files came from:</p>
+                            <ul>
+                                <li>ZoneId=0: Local machine</li>
+                                <li>ZoneId=1: Local intranet</li>
+                                <li>ZoneId=2: Trusted sites</li>
+                                <li>ZoneId=3: Internet</li>
+                                <li>ZoneId=4: Restricted sites</li>
+                            </ul>
+                            <p>This triggers the "This file came from another computer" warning.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">🖼️</div>
+                        <div class="card-title">Thumbnails & Summaries</div>
+                        <div class="card-content">
+                            <p>Some applications store metadata in ADS:</p>
+                            <ul>
+                                <li>Image thumbnails</li>
+                                <li>Document summaries</li>
+                                <li>Custom properties</li>
+                                <li>Application-specific data</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">🔐</div>
+                        <div class="card-title">Encryption Metadata</div>
+                        <div class="card-content">
+                            <p>EFS (Encrypting File System) stores encryption information in ADS, including recovery certificates and encryption keys.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>Malicious Uses of ADS</h3>
+                
+                <div class="info-box danger">
+                    <div class="info-box-title"><span aria-hidden="true">⚠️</span> ADS as a Hiding Technique</div>
+                    <p>Attackers may use ADS to:</p>
+                    <ul>
+                        <li><strong>Hide malware:</strong> Store executable code in an ADS attached to a legitimate file</li>
+                        <li><strong>Exfiltrate data:</strong> Hide stolen data in ADS before extraction</li>
+                        <li><strong>Evade detection:</strong> ADS content is invisible to basic file listings</li>
+                        <li><strong>Persist on system:</strong> Some malware uses ADS for persistence mechanisms</li>
+                    </ul>
+                    <p><strong>Note:</strong> Modern Windows and security tools are ADS-aware, but it remains a technique worth checking.</p>
+                </div>
+                
+                <h3>Forensic Detection of ADS</h3>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tool/Command</th>
+                                <th>How to Detect ADS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>dir /R</code></td>
+                                <td>Lists alternate streams in directory listing</td>
+                            </tr>
+                            <tr>
+                                <td><code>streams.exe</code> (Sysinternals)</td>
+                                <td>Recursively finds all ADS on a volume</td>
+                            </tr>
+                            <tr>
+                                <td>PowerShell <code>Get-Item -Stream *</code></td>
+                                <td>Lists all streams for a file</td>
+                            </tr>
+                            <tr>
+                                <td>Autopsy / FTK</td>
+                                <td>Automatically extracts and displays ADS</td>
+                            </tr>
+                            <tr>
+                                <td>MFT analysis tools</td>
+                                <td>Show all $DATA attributes including named ones</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> Zone.Identifier Forensic Value</div>
+                    <p>The Zone.Identifier ADS is particularly valuable for forensics:</p>
+                    <ul>
+                        <li>Proves a file was downloaded from the internet (ZoneId=3)</li>
+                        <li>May contain the original URL (ReferrerUrl field)</li>
+                        <li>May contain the downloading application (HostUrl field)</li>
+                        <li>Survives file moves within the same NTFS volume</li>
+                        <li>Removed when file is copied to non-NTFS volume</li>
+                    </ul>
+                    <pre><code>[ZoneTransfer]
+ZoneId=3
+ReferrerUrl=https://example.com/downloads/
+HostUrl=https://example.com/files/malware.exe</code></pre>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-ads-1" onchange="updateProgress()">
+                        <label for="check-ads-1">I understand what Alternate Data Streams are</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-ads-2" onchange="updateProgress()">
+                        <label for="check-ads-2">I can identify legitimate and malicious uses of ADS</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-ads-3" onchange="updateProgress()">
+                        <label for="check-ads-3">I know how to detect ADS during forensic analysis</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 7: Journaling -->
+        <section class="section" id="section-journaling">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">📝</span> NTFS Journaling ($LogFile & $UsnJrnl)</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>NTFS maintains two journals that record file system activity. These journals are invaluable for forensic investigations because they can reveal file operations even after files have been deleted or modified.</p>
+                
+                <h3>The Two NTFS Journals</h3>
+                
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-icon">📋</div>
+                        <div class="card-title">$LogFile (Transaction Log)</div>
+                        <div class="card-content">
+                            <p><strong>Purpose:</strong> Crash recovery and file system integrity</p>
+                            <ul>
+                                <li>Records metadata changes before they're committed</li>
+                                <li>Enables rollback of incomplete operations</li>
+                                <li>Circular log (overwrites old entries)</li>
+                                <li>Typically 64 MB</li>
+                                <li>Contains detailed operation data</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">📜</div>
+                        <div class="card-title">$UsnJrnl (Change Journal)</div>
+                        <div class="card-content">
+                            <p><strong>Purpose:</strong> Track all file changes for applications</p>
+                            <ul>
+                                <li>Records what changed, not how</li>
+                                <li>Used by backup, search, antivirus</li>
+                                <li>Located in $Extend\$UsnJrnl</li>
+                                <li>Can grow very large (32+ MB)</li>
+                                <li>Survives longer than $LogFile</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>$LogFile Details</h3>
+                
+                <p>The $LogFile is a transaction journal that records all metadata operations. It's designed for crash recovery but has forensic value:</p>
+                
+                <div class="info-box ntfs">
+                    <div class="info-box-title"><span aria-hidden="true">📋</span> $LogFile Forensic Value</div>
+                    <ul>
+                        <li><strong>Recent operations:</strong> Shows file system changes from the last few hours/days</li>
+                        <li><strong>Deleted file evidence:</strong> May contain MFT entries for recently deleted files</li>
+                        <li><strong>Timestamp history:</strong> Can reveal original timestamps before modification</li>
+                        <li><strong>Filename history:</strong> May show previous filenames after rename</li>
+                    </ul>
+                    <p><strong>Limitation:</strong> Circular buffer means old data is overwritten. Active systems may only have minutes of history.</p>
+                </div>
+                
+                <h3>$UsnJrnl (Update Sequence Number Journal)</h3>
+                
+                <p>The $UsnJrnl is the primary forensic journal, recording a history of all file system changes:</p>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Size</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Record Length</td>
+                                <td>4 bytes</td>
+                                <td>Size of this record</td>
+                            </tr>
+                            <tr>
+                                <td>Major Version</td>
+                                <td>2 bytes</td>
+                                <td>USN journal version (usually 2)</td>
+                            </tr>
+                            <tr>
+                                <td>Minor Version</td>
+                                <td>2 bytes</td>
+                                <td>Minor version number</td>
+                            </tr>
+                            <tr>
+                                <td>File Reference</td>
+                                <td>8 bytes</td>
+                                <td>MFT reference number</td>
+                            </tr>
+                            <tr>
+                                <td>Parent Reference</td>
+                                <td>8 bytes</td>
+                                <td>Parent directory MFT reference</td>
+                            </tr>
+                            <tr>
+                                <td>USN</td>
+                                <td>8 bytes</td>
+                                <td>Update Sequence Number (offset in journal)</td>
+                            </tr>
+                            <tr>
+                                <td>Timestamp</td>
+                                <td>8 bytes</td>
+                                <td>When the change occurred (FILETIME)</td>
+                            </tr>
+                            <tr>
+                                <td>Reason</td>
+                                <td>4 bytes</td>
+                                <td>Flags indicating what changed</td>
+                            </tr>
+                            <tr>
+                                <td>Source Info</td>
+                                <td>4 bytes</td>
+                                <td>Source of the change</td>
+                            </tr>
+                            <tr>
+                                <td>Security ID</td>
+                                <td>4 bytes</td>
+                                <td>Security identifier</td>
+                            </tr>
+                            <tr>
+                                <td>File Attributes</td>
+                                <td>4 bytes</td>
+                                <td>File attribute flags</td>
+                            </tr>
+                            <tr>
+                                <td>Filename Length</td>
+                                <td>2 bytes</td>
+                                <td>Length of filename in bytes</td>
+                            </tr>
+                            <tr>
+                                <td>Filename Offset</td>
+                                <td>2 bytes</td>
+                                <td>Offset to filename</td>
+                            </tr>
+                            <tr>
+                                <td>Filename</td>
+                                <td>varies</td>
+                                <td>Unicode filename</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h3>$UsnJrnl Reason Codes</h3>
+                
+                <p>The "Reason" field contains flags indicating what type of change occurred:</p>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Flag</th>
+                                <th>Value</th>
+                                <th>Meaning</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>DATA_OVERWRITE</td>
+                                <td>0x00000001</td>
+                                <td>File data was overwritten</td>
+                            </tr>
+                            <tr>
+                                <td>DATA_EXTEND</td>
+                                <td>0x00000002</td>
+                                <td>File data was extended</td>
+                            </tr>
+                            <tr>
+                                <td>DATA_TRUNCATION</td>
+                                <td>0x00000004</td>
+                                <td>File data was truncated</td>
+                            </tr>
+                            <tr>
+                                <td>NAMED_DATA_OVERWRITE</td>
+                                <td>0x00000010</td>
+                                <td>ADS was overwritten</td>
+                            </tr>
+                            <tr>
+                                <td>NAMED_DATA_EXTEND</td>
+                                <td>0x00000020</td>
+                                <td>ADS was extended</td>
+                            </tr>
+                            <tr>
+                                <td>FILE_CREATE</td>
+                                <td>0x00000100</td>
+                                <td>File was created</td>
+                            </tr>
+                            <tr>
+                                <td>FILE_DELETE</td>
+                                <td>0x00000200</td>
+                                <td>File was deleted</td>
+                            </tr>
+                            <tr>
+                                <td>EA_CHANGE</td>
+                                <td>0x00000400</td>
+                                <td>Extended attributes changed</td>
+                            </tr>
+                            <tr>
+                                <td>SECURITY_CHANGE</td>
+                                <td>0x00000800</td>
+                                <td>Security descriptor changed</td>
+                            </tr>
+                            <tr>
+                                <td>RENAME_OLD_NAME</td>
+                                <td>0x00001000</td>
+                                <td>Old name before rename</td>
+                            </tr>
+                            <tr>
+                                <td>RENAME_NEW_NAME</td>
+                                <td>0x00002000</td>
+                                <td>New name after rename</td>
+                            </tr>
+                            <tr>
+                                <td>INDEXABLE_CHANGE</td>
+                                <td>0x00004000</td>
+                                <td>Indexing-relevant change</td>
+                            </tr>
+                            <tr>
+                                <td>BASIC_INFO_CHANGE</td>
+                                <td>0x00008000</td>
+                                <td>Timestamps or attributes changed</td>
+                            </tr>
+                            <tr>
+                                <td>HARD_LINK_CHANGE</td>
+                                <td>0x00010000</td>
+                                <td>Hard link added/removed</td>
+                            </tr>
+                            <tr>
+                                <td>CLOSE</td>
+                                <td>0x80000000</td>
+                                <td>File handle was closed</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h3>Example $UsnJrnl Timeline</h3>
+                
+                <div class="journal-timeline">
+                    <div class="journal-entry create">
+                        <div class="journal-time">2025-03-25 09:15:32.1234567</div>
+                        <div class="journal-action">FILE_CREATE | CLOSE</div>
+                        <div class="journal-details">malware.exe created in C:\Users\victim\Downloads\</div>
+                    </div>
+                    
+                    <div class="journal-entry modify">
+                        <div class="journal-time">2025-03-25 09:15:33.2345678</div>
+                        <div class="journal-action">DATA_EXTEND | CLOSE</div>
+                        <div class="journal-details">malware.exe data written (download complete)</div>
+                    </div>
+                    
+                    <div class="journal-entry rename">
+                        <div class="journal-time">2025-03-25 09:16:45.3456789</div>
+                        <div class="journal-action">RENAME_OLD_NAME</div>
+                        <div class="journal-details">malware.exe (original name before rename)</div>
+                    </div>
+                    
+                    <div class="journal-entry rename">
+                        <div class="journal-time">2025-03-25 09:16:45.3456790</div>
+                        <div class="journal-action">RENAME_NEW_NAME | CLOSE</div>
+                        <div class="journal-details">svchost.exe (disguised as system file)</div>
+                    </div>
+                    
+                    <div class="journal-entry modify">
+                        <div class="journal-time">2025-03-25 09:17:01.4567890</div>
+                        <div class="journal-action">BASIC_INFO_CHANGE | CLOSE</div>
+                        <div class="journal-details">svchost.exe timestamps modified (timestomping!)</div>
+                    </div>
+                    
+                    <div class="journal-entry delete">
+                        <div class="journal-time">2025-03-25 14:30:22.5678901</div>
+                        <div class="journal-action">FILE_DELETE | CLOSE</div>
+                        <div class="journal-details">svchost.exe deleted (attempted cleanup)</div>
+                    </div>
+                </div>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> $UsnJrnl Forensic Power</div>
+                    <p>The example above shows how $UsnJrnl can reveal the complete history of a malicious file:</p>
+                    <ol>
+                        <li>File was downloaded as "malware.exe"</li>
+                        <li>Attacker renamed it to "svchost.exe" to disguise it</li>
+                        <li>Attacker modified timestamps (timestomping)</li>
+                        <li>File was later deleted to cover tracks</li>
+                    </ol>
+                    <p><strong>Even though the file is deleted, the $UsnJrnl preserves the entire activity history!</strong></p>
+                </div>
+                
+                <h3>Tools for Journal Analysis</h3>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tool</th>
+                                <th>Journal Support</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>MFTECmd</strong> (Eric Zimmerman)</td>
+                                <td>$UsnJrnl, $MFT</td>
+                                <td>Fast, outputs to CSV for analysis</td>
+                            </tr>
+                            <tr>
+                                <td><strong>ANJP</strong></td>
+                                <td>$UsnJrnl</td>
+                                <td>GUI-based journal parser</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Autopsy</strong></td>
+                                <td>Both journals</td>
+                                <td>Integrated timeline view</td>
+                            </tr>
+                            <tr>
+                                <td><strong>X-Ways Forensics</strong></td>
+                                <td>Both journals</td>
+                                <td>Professional analysis features</td>
+                            </tr>
+                            <tr>
+                                <td><strong>LogFileParser</strong></td>
+                                <td>$LogFile</td>
+                                <td>Specialized $LogFile analysis</td>
+                            </tr>
+                            <tr>
+                                <td><strong>fsutil usn</strong></td>
+                                <td>$UsnJrnl</td>
+                                <td>Built-in Windows command</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-journal-1" onchange="updateProgress()">
+                        <label for="check-journal-1">I understand the difference between $LogFile and $UsnJrnl</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-journal-2" onchange="updateProgress()">
+                        <label for="check-journal-2">I can interpret $UsnJrnl reason codes</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-journal-3" onchange="updateProgress()">
+                        <label for="check-journal-3">I recognize the forensic value of NTFS journals</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 8: File Deletion -->
+        <section class="section" id="section-deletion">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🗑️</span> NTFS File Deletion & Recovery</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>Understanding how NTFS handles file deletion is crucial for forensic recovery. Like FAT, NTFS deletion doesn't immediately destroy data, but the process is more complex due to NTFS's sophisticated architecture.</p>
+                
+                <h3>What Happens When You Delete a File in NTFS</h3>
+                
+                <div class="diagram-container">
+                    <div class="diagram-title">NTFS Deletion Process</div>
+<pre class="diagram">
+STEP 1: MFT Entry Flag Changed
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  MFT Entry Header                                                            │
+│  ├── Flags: 0x0001 (In Use) ──────────► 0x0000 (Not In Use)                │
+│  ├── Sequence Number: 5 ──────────────► 6 (Incremented)                     │
+│  └── Attributes: UNCHANGED (still contain all metadata!)                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+STEP 2: $Bitmap Updated
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  Cluster Bitmap ($Bitmap)                                                    │
+│  Clusters 1000-1005: 111111 ──────────► 000000 (Marked as free)            │
+│  (File's clusters are now available for reuse)                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+STEP 3: Parent Directory Updated
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  Parent Directory $INDEX_ROOT / $INDEX_ALLOCATION                           │
+│  └── Index entry for file: REMOVED from B-tree index                        │
+│      (But may remain in slack space of index!)                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+STEP 4: $UsnJrnl Entry Created
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  $UsnJrnl Record                                                             │
+│  ├── Reason: FILE_DELETE (0x00000200)                                       │
+│  ├── Timestamp: When deletion occurred                                      │
+│  └── Filename: Name of deleted file                                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+WHAT REMAINS AFTER DELETION:
+✅ MFT entry (with flag = 0x0000) - All attributes intact!
+✅ File data in clusters (until overwritten)
+✅ $UsnJrnl record of deletion
+✅ Possibly: Index slack space with filename
+✅ Possibly: $LogFile entries
+</pre>
+                </div>
+                
+                <h3>NTFS vs. FAT Deletion Comparison</h3>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Aspect</th>
+                                <th>FAT</th>
+                                <th>NTFS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Deletion marker</strong></td>
+                                <td>First byte of filename → 0xE5</td>
+                                <td>MFT flags → 0x0000</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Filename preserved?</strong></td>
+                                <td>Partially (first char lost)</td>
+                                <td>Completely (in MFT)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Timestamps preserved?</strong></td>
+                                <td>Yes (in directory entry)</td>
+                                <td>Yes (in MFT attributes)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Cluster chain preserved?</strong></td>
+                                <td>No (FAT entries zeroed)</td>
+                                <td>Yes (run list in MFT)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Deletion logged?</strong></td>
+                                <td>No</td>
+                                <td>Yes ($UsnJrnl)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Recovery difficulty</strong></td>
+                                <td>Moderate</td>
+                                <td>Often easier (more metadata)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h3>Recovery Scenarios</h3>
+                
+                <div class="collapsible" id="collapse-recovery1">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-recovery1')" role="button" aria-expanded="false" tabindex="0">
+                        <span>✅ Best Case: Recent Deletion, Low Activity</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p><strong>Conditions:</strong></p>
+                        <ul>
+                            <li>File deleted recently</li>
+                            <li>Little disk activity since deletion</li>
+                            <li>MFT entry not yet reused</li>
+                            <li>Data clusters not overwritten</li>
+                        </ul>
+                        <p><strong>Recovery method:</strong></p>
+                        <ol>
+                            <li>Parse MFT for entries with flags = 0x0000</li>
+                            <li>Extract $FILE_NAME attribute for filename</li>
+                            <li>Extract $DATA attribute (resident) or run list (non-resident)</li>
+                            <li>Read data from clusters specified in run list</li>
+                            <li>Verify with $UsnJrnl for deletion timestamp</li>
+                        </ol>
+                        <p><strong>Result:</strong> Complete file recovery with full metadata</p>
+                    </div>
+                </div>
+                
+                <div class="collapsible" id="collapse-recovery2">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-recovery2')" role="button" aria-expanded="false" tabindex="0">
+                        <span>⚠️ Moderate Case: MFT Entry Reused</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p><strong>Conditions:</strong></p>
+                        <ul>
+                            <li>MFT entry has been reused for new file</li>
+                            <li>Original metadata lost</li>
+                            <li>Data clusters may still be intact</li>
+                        </ul>
+                        <p><strong>Recovery method:</strong></p>
+                        <ol>
+                            <li>Check $UsnJrnl for deletion record (filename, timestamp)</li>
+                            <li>Check $LogFile for recent MFT changes</li>
+                            <li>Use file carving on unallocated clusters</li>
+                            <li>Match carved data with $UsnJrnl records</li>
+                        </ol>
+                        <p><strong>Result:</strong> Possible data recovery, limited metadata</p>
+                    </div>
+                </div>
+                
+                <div class="collapsible" id="collapse-recovery3">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-recovery3')" role="button" aria-expanded="false" tabindex="0">
+                        <span>❌ Worst Case: Data Overwritten</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p><strong>Conditions:</strong></p>
+                        <ul>
+                            <li>MFT entry reused</li>
+                            <li>Data clusters overwritten by new files</li>
+                            <li>Significant time/activity since deletion</li>
+                        </ul>
+                        <p><strong>What may still exist:</strong></p>
+                        <ul>
+                            <li>$UsnJrnl record (filename, deletion time)</li>
+                            <li>Slack space fragments</li>
+                            <li>$INDEX_ALLOCATION slack (directory index)</li>
+                            <li>Volume shadow copies (if enabled)</li>
+                        </ul>
+                        <p><strong>Result:</strong> Evidence of existence, but data likely unrecoverable</p>
+                    </div>
+                </div>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> Key NTFS Recovery Advantages</div>
+                    <ul>
+                        <li><strong>Complete filenames:</strong> Unlike FAT, NTFS preserves the entire filename</li>
+                        <li><strong>Cluster locations:</strong> Run list often survives, showing exact data locations</li>
+                        <li><strong>Multiple timestamps:</strong> Both SI and FN timestamps may be available</li>
+                        <li><strong>Deletion evidence:</strong> $UsnJrnl proves file existed and when it was deleted</li>
+                        <li><strong>Resident files:</strong> Small files stored in MFT may be fully recoverable from MFT alone</li>
+                    </ul>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-del-1" onchange="updateProgress()">
+                        <label for="check-del-1">I understand the NTFS deletion process</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-del-2" onchange="updateProgress()">
+                        <label for="check-del-2">I can compare NTFS and FAT deletion mechanisms</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-del-3" onchange="updateProgress()">
+                        <label for="check-del-3">I recognize factors affecting NTFS file recovery</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 9: Practice Activities -->
+        <section class="section" id="section-practice">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🎮</span> Practice Activities & Knowledge Check</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>Test your understanding of NTFS with these interactive activities.</p>
+                
+                <!-- Quiz -->
+                <div class="interactive-container">
+                    <div class="interactive-title"><span aria-hidden="true">📝</span> Knowledge Check Quiz</div>
+                    
+                    <div class="quiz-question" id="quiz-1">
+                        <p>1. What is the size of a standard MFT entry in NTFS?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-1" value="a">
+                                <span>512 bytes</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-1" value="b">
+                                <span>1,024 bytes (1 KB)</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-1" value="c">
+                                <span>4,096 bytes (4 KB)</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-1" value="d">
+                                <span>Variable size</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-1-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-2">
+                        <p>2. Which NTFS attribute contains timestamps that are harder to manipulate?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-2" value="a">
+                                <span>$STANDARD_INFORMATION</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-2" value="b">
+                                <span>$FILE_NAME</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-2" value="c">
+                                <span>$DATA</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-2" value="d">
+                                <span>$OBJECT_ID</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-2-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-3">
+                        <p>3. What is an Alternate Data Stream (ADS)?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-3" value="a">
+                                <span>A backup copy of the file</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-3" value="b">
+                                <span>An additional named $DATA attribute attached to a file</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-3" value="c">
+                                <span>A compressed version of the file</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-3" value="d">
+                                <span>An encrypted data stream</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-3-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-4">
+                        <p>4. Which NTFS journal records all file system changes and is most valuable for forensic timeline analysis?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-4" value="a">
+                                <span>$LogFile</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-4" value="b">
+                                <span>$UsnJrnl</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-4" value="c">
+                                <span>$Bitmap</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-4" value="d">
+                                <span>$MFT</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-4-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-5">
+                        <p>5. How can you detect timestomping (timestamp manipulation) in NTFS?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-5" value="a">
+                                <span>Check if the file is hidden</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-5" value="b">
+                                <span>Compare $STANDARD_INFORMATION and $FILE_NAME timestamps</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-5" value="c">
+                                <span>Check the file extension</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-5" value="d">
+                                <span>Look at the file size</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-5-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-6">
+                        <p>6. What happens to the MFT entry when a file is deleted in NTFS?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-6" value="a">
+                                <span>The entry is immediately erased</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-6" value="b">
+                                <span>The flags are set to 0x0000 and sequence number incremented, but attributes remain</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-6" value="c">
+                                <span>The first byte is changed to 0xE5</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-6" value="d">
+                                <span>The entry is moved to a deleted files table</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-6-feedback"></div>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="checkAllQuizAnswers()" style="margin-top: 1rem;">Check All Answers</button>
+                    <button class="btn btn-secondary" onclick="resetQuiz()" style="margin-top: 1rem;">Reset Quiz</button>
+                    
+                    <div id="quiz-results" style="margin-top: 1rem; display: none;">
+                        <div class="info-box concept">
+                            <div class="info-box-title">Quiz Results</div>
+                            <p id="quiz-score"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-practice-1" onchange="updateProgress()">
+                        <label for="check-practice-1">I completed the knowledge check quiz</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-practice-2" onchange="updateProgress()">
+                        <label for="check-practice-2">I explored the interactive MFT visualizer</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-practice-3" onchange="updateProgress()">
+                        <label for="check-practice-3">I reviewed the timestamp comparison scenarios</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Module Summary -->
+        <section class="section" id="section-summary">
+            <div class="section-header" style="background: linear-gradient(135deg, var(--success-color), #059669);">
+                <h2><span aria-hidden="true">🎉</span> Module 5.3 Summary</h2>
+            </div>
+            <div class="section-content">
+                <div class="info-box concept">
+                    <div class="info-box-title"><span aria-hidden="true">📚</span> Key Takeaways</div>
+                    <ul>
+                        <li><strong>NTFS is the dominant Windows file system</strong> and the most important for Windows forensics</li>
+                        <li>The <strong>Master File Table (MFT)</strong> contains 1,024-byte entries for every file with rich metadata</li>
+                        <li><strong>NTFS attributes</strong> store all file information: $STANDARD_INFORMATION, $FILE_NAME, $DATA, etc.</li>
+                        <li><strong>Two sets of timestamps</strong> (SI and FN) enable detection of timestomping</li>
+                        <li><strong>Alternate Data Streams (ADS)</strong> can hide data and should always be checked</li>
+                        <li><strong>$LogFile and $UsnJrnl</strong> provide historical records of file operations</li>
+                        <li><strong>NTFS deletion</strong> preserves more metadata than FAT, aiding recovery</li>
+                        <li><strong>Zone.Identifier ADS</strong> reveals download sources for files</li>
+                    </ul>
+                </div>
+                
+                <h3>Preparation for Windows Forensics</h3>
+                <p>The NTFS knowledge from this module is directly applicable to:</p>
+                <ul>
+                    <li><strong>Week 7-8 (Windows Forensics):</strong> MFT analysis, timeline creation, artifact extraction</li>
+                    <li><strong>Week 5 Lab:</strong> Practical NTFS analysis using Autopsy</li>
+                    <li><strong>Timeline analysis:</strong> Correlating NTFS timestamps with other evidence</li>
+                </ul>
+                
+                <h3>What's Next?</h3>
+                <p>In <strong>Module 5.4: Linux & macOS File Systems</strong>, you'll explore ext4 (Linux) and APFS/HFS+ (macOS) file systems, learning about inodes, extents, and cross-platform forensic considerations.</p>
+                
+                <div class="footer-nav" style="margin-top: 1.5rem; justify-content: center;">
+                    <a href="#" class="btn btn-secondary" onclick="alert('Module 5.2 link')">← Module 5.2: FAT</a>
+                    <a href="#" class="btn btn-primary" onclick="alert('Module 5.4 coming soon!')">Module 5.4: Linux & macOS →</a>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer role="contentinfo">
+        <p><strong>CSC 156 - Digital Forensics Fundamentals</strong></p>
+        <p>Module 5.3: NTFS Deep Dive | Week 5</p>
+        <p>Mendocino College</p>
+        <p style="margin-top: 1rem; font-size: 0.875rem; opacity: 0.8;">💾 Progress is saved for this session only</p>
+        <div class="footer-nav">
+            <a href="#">← Previous Module</a>
+            <a href="#">Module Index</a>
+            <a href="#">Next Module →</a>
+        </div>
+    </footer>
+    
+    <script>
+        // ==================== Progress Tracking ====================
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const checked = document.querySelectorAll('input[type="checkbox"]:checked').length;
+            const total = checkboxes.length;
+            const percentage = Math.round((checked / total) * 100);
+            
+            document.getElementById('progressPercent').textContent = percentage + '%';
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.querySelector('.progress-bar').setAttribute('aria-valuenow', percentage);
+            
+            checkboxes.forEach(cb => {
+                const item = cb.closest('.checklist-item');
+                if (item) {
+                    if (cb.checked) {
+                        item.classList.add('completed');
+                    } else {
+                        item.classList.remove('completed');
+                    }
+                }
+            });
+            
+            saveProgress();
+        }
+        
+        function saveProgress() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const state = {};
+            checkboxes.forEach(cb => {
+                state[cb.id] = cb.checked;
+            });
+            sessionStorage.setItem('module53Progress', JSON.stringify(state));
+        }
+        
+        function loadProgress() {
+            const saved = sessionStorage.getItem('module53Progress');
+            if (saved) {
+                const state = JSON.parse(saved);
+                Object.keys(state).forEach(id => {
+                    const cb = document.getElementById(id);
+                    if (cb) {
+                        cb.checked = state[id];
+                    }
+                });
+                updateProgress();
+            }
+        }
+        
+        // ==================== Section Toggle ====================
+        function toggleSection(header) {
+            const content = header.nextElementSibling;
+            const toggle = header.querySelector('.section-toggle');
+            const isExpanded = header.getAttribute('aria-expanded') === 'true';
+            
+            header.setAttribute('aria-expanded', !isExpanded);
+            content.classList.toggle('collapsed');
+            toggle.classList.toggle('collapsed');
+        }
+        
+        function handleKeyPress(event, element) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleSection(element);
+            }
+        }
+        
+        // ==================== Collapsible Sections ====================
+        function toggleCollapsible(id) {
+            const element = document.getElementById(id);
+            element.classList.toggle('open');
+            const header = element.querySelector('.collapsible-header');
+            const isExpanded = element.classList.contains('open');
+            header.setAttribute('aria-expanded', isExpanded);
+        }
+        
+        // ==================== Tabs ====================
+        function switchTab(event, tabId) {
+            const container = event.target.closest('.tabs-container');
+            
+            container.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-selected', 'false');
+            });
+            container.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            event.target.classList.add('active');
+            event.target.setAttribute('aria-selected', 'true');
+            document.getElementById(tabId).classList.add('active');
+        }
+        
+        // ==================== MFT Visualizer ====================
+        const mftDescriptions = {
+            'signature': '<strong>Signature (4 bytes):</strong> "FILE" (0x454C4946) indicates a valid MFT entry. "BAAD" indicates a corrupt entry. This is the first thing forensic tools check when parsing MFT entries.',
+            'fixup': '<strong>Fixup Array Offset (2 bytes):</strong> Points to the update sequence array used for error detection. The fixup mechanism replaces the last two bytes of each sector with a sequence number for integrity checking.',
+            'fixup-count': '<strong>Fixup Array Count (2 bytes):</strong> Number of entries in the fixup array. Typically 3 for a 1024-byte entry (covers 2 sectors + 1 for the sequence number).',
+            'lsn': '<strong>$LogFile Sequence Number (8 bytes):</strong> Links this MFT entry to the transaction log. Used for crash recovery and can help forensically correlate MFT changes with $LogFile entries.',
+            'sequence': '<strong>Sequence Number (2 bytes):</strong> Incremented each time the MFT entry is reused for a new file. Helps detect if an entry has been recycled. Forensically valuable for tracking file history.',
+            'links': '<strong>Hard Link Count (2 bytes):</strong> Number of hard links pointing to this file. Most files have 1. Directories typically have at least 2 (parent reference and self ".").',
+            'attr-offset': '<strong>First Attribute Offset (2 bytes):</strong> Byte offset from the start of the MFT entry to the first attribute. Attributes immediately follow the header.',
+            'flags': '<strong>Flags (2 bytes):</strong> 0x0001 = In use (file exists), 0x0002 = Directory. When a file is deleted, flags become 0x0000. This is the primary deletion indicator!',
+            'used-size': '<strong>Used Size (4 bytes):</strong> Actual number of bytes used in this MFT entry. Useful for knowing where valid data ends.',
+            'alloc-size': '<strong>Allocated Size (4 bytes):</strong> Total size allocated for this entry (usually 1024 bytes). May be larger for files with many attributes.',
+            'base-ref': '<strong>Base Record Reference (8 bytes):</strong> If this is an extension record (file needs multiple MFT entries), points to the base record. Zero for base records.',
+            'next-attr': '<strong>Next Attribute ID (2 bytes):</strong> ID that will be assigned to the next attribute added. Useful for tracking attribute history.',
+            'attr-type': '<strong>Attribute Type (4 bytes):</strong> Identifies the attribute type. Common values: 0x10 ($STANDARD_INFORMATION), 0x30 ($FILE_NAME), 0x80 ($DATA).',
+            'attr-length': '<strong>Attribute Length (4 bytes):</strong> Total size of this attribute including header. Used to find the next attribute.',
+            'attr-resident': '<strong>Non-Resident Flag (1 byte):</strong> 0 = Resident (data in MFT), 1 = Non-resident (data in clusters). Small files are often resident.',
+            'attr-name': '<strong>Name Length (1 byte):</strong> Length of attribute name for named attributes (like ADS). Zero for standard unnamed attributes.',
+            'attr-data': '<strong>Attribute Data:</strong> The actual attribute content. For $STANDARD_INFORMATION, this contains timestamps and flags. For $DATA, either file content (resident) or run list (non-resident).'
+        };
+        
+        function showMFTInfo(field) {
+            const infoDiv = document.getElementById('mft-info');
+            infoDiv.innerHTML = mftDescriptions[field] || 'Click on a field to see details.';
+            infoDiv.classList.add('active');
+        }
+        
+        // ==================== Quiz ====================
+        const quizAnswers = {
+            'quiz-1': 'b',
+            'quiz-2': 'b',
+            'quiz-3': 'b',
+            'quiz-4': 'b',
+            'quiz-5': 'b',
+            'quiz-6': 'b'
+        };
+        
+        const quizExplanations = {
+            'quiz-1': 'A standard MFT entry is exactly 1,024 bytes (1 KB). This fixed size contains the entry header and all attributes for the file. Files with many attributes may use multiple MFT entries.',
+            'quiz-2': '$FILE_NAME timestamps are updated only by the kernel during file creation, rename, or move operations. They cannot be modified by user-level APIs like SetFileTime(), making them more trustworthy than $STANDARD_INFORMATION timestamps.',
+            'quiz-3': 'An Alternate Data Stream (ADS) is an additional named $DATA attribute attached to a file. Files can have multiple $DATA attributes—the default unnamed stream plus any number of named streams. ADS can be used legitimately (Zone.Identifier) or maliciously to hide data.',
+            'quiz-4': '$UsnJrnl (Update Sequence Number Journal) records all file system changes including creates, deletes, renames, and modifications. It provides a historical timeline of file activity and survives longer than $LogFile, making it invaluable for forensic analysis.',
+            'quiz-5': 'Timestomping is detected by comparing $STANDARD_INFORMATION (SI) and $FILE_NAME (FN) timestamps. If SI timestamps are older than FN timestamps, or if all four SI timestamps are identical, this indicates manipulation since FN timestamps cannot be modified by normal user tools.',
+            'quiz-6': 'When a file is deleted in NTFS, the MFT entry flags are set to 0x0000 (not in use) and the sequence number is incremented. However, all attributes (including $FILE_NAME with the filename and $DATA with cluster locations) remain intact until the entry is reused, enabling recovery.'
+        };
+        
+        function selectQuizOption(option) {
+            const question = option.closest('.quiz-question');
+            question.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            option.classList.add('selected');
+        }
+        
+        function checkAllQuizAnswers() {
+            let correct = 0;
+            const total = Object.keys(quizAnswers).length;
+            
+            Object.keys(quizAnswers).forEach(quizId => {
+                const question = document.getElementById(quizId);
+                const selected = question.querySelector('input:checked');
+                const feedback = document.getElementById(quizId + '-feedback');
+                const options = question.querySelectorAll('.quiz-option');
+                
+                options.forEach(opt => {
+                    opt.classList.remove('correct', 'incorrect');
+                });
+                
+                if (selected) {
+                    const selectedOption = selected.closest('.quiz-option');
+                    if (selected.value === quizAnswers[quizId]) {
+                        correct++;
+                        selectedOption.classList.add('correct');
+                        feedback.className = 'quiz-feedback show correct';
+                        feedback.innerHTML = '<strong>✓ Correct!</strong> ' + quizExplanations[quizId];
+                    } else {
+                        selectedOption.classList.add('incorrect');
+                        options.forEach(opt => {
+                            if (opt.querySelector('input').value === quizAnswers[quizId]) {
+                                opt.classList.add('correct');
+                            }
+                        });
+                        feedback.className = 'quiz-feedback show incorrect';
+                        feedback.innerHTML = '<strong>✗ Incorrect.</strong> ' + quizExplanations[quizId];
+                    }
+                } else {
+                    feedback.className = 'quiz-feedback show incorrect';
+                    feedback.innerHTML = '<strong>Please select an answer.</strong>';
+                }
+            });
+            
+            const resultsDiv = document.getElementById('quiz-results');
+            const scoreP = document.getElementById('quiz-score');
+            resultsDiv.style.display = 'block';
+            
+            const percentage = Math.round((correct / total) * 100);
+            let message = '';
+            if (percentage === 100) {
+                message = '🎉 Perfect score! You have mastered NTFS forensics concepts!';
+            } else if (percentage >= 80) {
+                message = '👍 Great job! You have a solid understanding of NTFS.';
+            } else if (percentage >= 60) {
+                message = '📚 Good effort! Review the sections for topics you missed.';
+            } else {
+                message = '💪 Keep studying! NTFS is complex but essential for Windows forensics.';
+            }
+            
+            scoreP.innerHTML = `You got <strong>${correct} out of ${total}</strong> questions correct (${percentage}%).<br>${message}`;
+        }
+        
+        function resetQuiz() {
+            Object.keys(quizAnswers).forEach(quizId => {
+                const question = document.getElementById(quizId);
+                question.querySelectorAll('input').forEach(input => input.checked = false);
+                question.querySelectorAll('.quiz-option').forEach(opt => {
+                    opt.classList.remove('selected', 'correct', 'incorrect');
+                });
+                document.getElementById(quizId + '-feedback').className = 'quiz-feedback';
+            });
+            document.getElementById('quiz-results').style.display = 'none';
+        }
+        
+        // ==================== Navigation Highlighting ====================
+        function updateNavHighlight() {
+            const sections = document.querySelectorAll('.section');
+            const navLinks = document.querySelectorAll('.nav-list a');
+            
+            let currentSection = '';
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= 150) {
+                    currentSection = section.id;
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + currentSection) {
+                    link.classList.add('active');
+                }
+            });
+        }
+        
+        // ==================== Initialize ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+            window.addEventListener('scroll', updateNavHighlight);
+        });
+    </script>
+</body>
+</html>

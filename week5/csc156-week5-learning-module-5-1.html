@@ -1,0 +1,2605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CSC 156 Week 5 Module 5.1: File System Fundamentals - Learn core concepts of how operating systems organize and manage data storage">
+    <title>Module 5.1: File System Fundamentals | CSC 156 Digital Forensics</title>
+    <style>
+        /* CSS Reset and Base Styles */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary-color: #059669;
+            --accent-color: #d97706;
+            --danger-color: #dc2626;
+            --success-color: #16a34a;
+            --warning-color: #ca8a04;
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --text-muted: #6b7280;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f3f4f6;
+            --bg-tertiary: #e5e7eb;
+            --border-color: #d1d5db;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --font-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: var(--bg-secondary);
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Skip Link for Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            z-index: 1000;
+            text-decoration: none;
+            border-radius: 0 0 var(--radius-sm) 0;
+        }
+        
+        .skip-link:focus {
+            top: 0;
+        }
+        
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            box-shadow: var(--shadow-md);
+        }
+        
+        header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: clamp(1.5rem, 4vw, 2.25rem);
+            font-weight: 700;
+        }
+        
+        .header-meta {
+            font-size: 0.95rem;
+            opacity: 0.95;
+        }
+        
+        .header-meta span {
+            display: inline-block;
+            margin: 0.25rem 0.75rem;
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            background: var(--bg-primary);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .progress-label {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .progress-percentage {
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        /* Navigation */
+        .module-nav {
+            background: var(--bg-primary);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+        
+        .nav-list a {
+            display: block;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+        
+        .nav-list a:hover,
+        .nav-list a:focus {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .nav-list a.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        /* Main Content */
+        main {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        
+        /* Section Styles */
+        .section {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        
+        .section-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 1.25rem 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s ease;
+        }
+        
+        .section-header:hover {
+            background: linear-gradient(135deg, var(--primary-dark), #1e40af);
+        }
+        
+        .section-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .section-toggle {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            transition: transform 0.3s ease, background 0.2s ease;
+        }
+        
+        .section-toggle:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .section-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+        
+        .section-content {
+            padding: 1.5rem;
+            display: block;
+        }
+        
+        .section-content.collapsed {
+            display: none;
+        }
+        
+        /* Typography */
+        h3 {
+            color: var(--primary-dark);
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.15rem;
+            border-bottom: 2px solid var(--bg-tertiary);
+            padding-bottom: 0.5rem;
+        }
+        
+        h3:first-child {
+            margin-top: 0;
+        }
+        
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Definition Cards */
+        .definition-card {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border-left: 4px solid var(--primary-color);
+            padding: 1.25rem;
+            margin: 1rem 0;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        }
+        
+        .definition-card h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--primary-dark);
+            font-size: 1.1rem;
+        }
+        
+        .definition-card p {
+            margin: 0;
+            color: var(--text-primary);
+        }
+        
+        /* Info Boxes */
+        .info-box {
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            margin: 1rem 0;
+        }
+        
+        .info-box.concept {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border: 1px solid #86efac;
+        }
+        
+        .info-box.warning {
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+            border: 1px solid #fcd34d;
+        }
+        
+        .info-box.forensic {
+            background: linear-gradient(135deg, #fdf4ff, #f3e8ff);
+            border: 1px solid #d8b4fe;
+        }
+        
+        .info-box.example {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 1px solid #7dd3fc;
+        }
+        
+        .info-box-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .info-box.concept .info-box-title { color: #166534; }
+        .info-box.warning .info-box-title { color: #a16207; }
+        .info-box.forensic .info-box-title { color: #7c3aed; }
+        .info-box.example .info-box-title { color: #0369a1; }
+        
+        /* Code Blocks */
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            line-height: 1.5;
+            margin: 1rem 0;
+            white-space: pre;
+            word-wrap: normal;
+        }
+        
+        code {
+            font-family: var(--font-mono);
+            background: var(--bg-tertiary);
+            padding: 0.125rem 0.375rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.875em;
+            color: var(--danger-color);
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+        
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 1rem 0;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.925rem;
+        }
+        
+        th, td {
+            padding: 0.875rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        th {
+            background: var(--bg-secondary);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        tr:hover {
+            background: var(--bg-secondary);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* Diagrams */
+        .diagram-container {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+        
+        .diagram-title {
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+        
+        .diagram {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            line-height: 1.4;
+            white-space: pre;
+            overflow-x: auto;
+            text-align: center;
+        }
+        
+        /* Interactive Elements */
+        .interactive-container {
+            background: linear-gradient(135deg, #fefce8, #fef9c3);
+            border: 2px solid #facc15;
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .interactive-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* Quiz Styles */
+        .quiz-question {
+            background: var(--bg-primary);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+        }
+        
+        .quiz-question p {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .quiz-option:hover {
+            border-color: var(--primary-color);
+            background: #eff6ff;
+        }
+        
+        .quiz-option.selected {
+            border-color: var(--primary-color);
+            background: #dbeafe;
+        }
+        
+        .quiz-option.correct {
+            border-color: var(--success-color);
+            background: #dcfce7;
+        }
+        
+        .quiz-option.incorrect {
+            border-color: var(--danger-color);
+            background: #fee2e2;
+        }
+        
+        .quiz-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary-color);
+        }
+        
+        .quiz-feedback {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            display: none;
+        }
+        
+        .quiz-feedback.show {
+            display: block;
+        }
+        
+        .quiz-feedback.correct {
+            background: #dcfce7;
+            border: 1px solid #86efac;
+            color: #166534;
+        }
+        
+        .quiz-feedback.incorrect {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+        
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #15803d;
+        }
+        
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .card-title {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .card-content {
+            color: var(--text-secondary);
+            font-size: 0.925rem;
+        }
+        
+        /* Lists */
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+            color: var(--text-secondary);
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Collapsible Details */
+        .collapsible {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+        
+        .collapsible-header {
+            background: var(--bg-secondary);
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: var(--text-primary);
+            transition: background 0.2s ease;
+        }
+        
+        .collapsible-header:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .collapsible-icon {
+            transition: transform 0.3s ease;
+        }
+        
+        .collapsible.open .collapsible-icon {
+            transform: rotate(180deg);
+        }
+        
+        .collapsible-content {
+            padding: 0 1.25rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        
+        .collapsible.open .collapsible-content {
+            padding: 1.25rem;
+            max-height: 2000px;
+        }
+        
+        /* Drag and Drop */
+        .drag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .drag-zone {
+            flex: 1;
+            min-width: 250px;
+            background: var(--bg-secondary);
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            min-height: 150px;
+        }
+        
+        .drag-zone-title {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+            text-align: center;
+        }
+        
+        .drag-item {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 0.625rem 0.875rem;
+            margin-bottom: 0.5rem;
+            cursor: grab;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+        
+        .drag-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .drag-item.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+        
+        .drag-zone.drag-over {
+            border-color: var(--primary-color);
+            background: #eff6ff;
+        }
+        
+        /* Matching Exercise */
+        .matching-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+        
+        .matching-column {
+            flex: 1;
+            min-width: 200px;
+            max-width: 300px;
+        }
+        
+        .matching-column-title {
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+        
+        .matching-item {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 0.875rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        
+        .matching-item:hover {
+            border-color: var(--primary-color);
+        }
+        
+        .matching-item.selected {
+            border-color: var(--primary-color);
+            background: #dbeafe;
+        }
+        
+        .matching-item.matched {
+            border-color: var(--success-color);
+            background: #dcfce7;
+            cursor: default;
+        }
+        
+        .matching-item.incorrect {
+            border-color: var(--danger-color);
+            background: #fee2e2;
+        }
+        
+        /* Tabs */
+        .tabs-container {
+            margin: 1.5rem 0;
+        }
+        
+        .tabs-header {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .tab-btn {
+            padding: 0.75rem 1.25rem;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+        }
+        
+        .tab-btn:hover {
+            color: var(--primary-color);
+        }
+        
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 1.5rem 0;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Completion Checklist */
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: var(--radius-sm);
+            margin-bottom: 0.5rem;
+            transition: background 0.2s ease;
+        }
+        
+        .checklist-item:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .checklist-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--success-color);
+        }
+        
+        .checklist-item.completed label {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--text-primary);
+            color: white;
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 2rem;
+        }
+        
+        footer p {
+            color: rgba(255,255,255,0.8);
+            margin: 0.25rem 0;
+        }
+        
+        .footer-nav {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1.25rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: var(--radius-md);
+            transition: background 0.2s ease;
+        }
+        
+        .footer-nav a:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .section-header h2 {
+                font-size: 1.1rem;
+            }
+            
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .drag-container {
+                flex-direction: column;
+            }
+            
+            .matching-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .matching-column {
+                max-width: 100%;
+            }
+        }
+        
+        /* Print Styles */
+        @media print {
+            .progress-container,
+            .module-nav,
+            .section-toggle,
+            .interactive-container,
+            .btn,
+            footer {
+                display: none !important;
+            }
+            
+            .section-content.collapsed {
+                display: block !important;
+            }
+            
+            .section {
+                break-inside: avoid;
+            }
+        }
+        
+        /* Focus Styles for Accessibility */
+        *:focus {
+            outline: 3px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+        
+        *:focus:not(:focus-visible) {
+            outline: none;
+        }
+        
+        *:focus-visible {
+            outline: 3px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+        
+        /* Screen Reader Only */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <header role="banner">
+        <h1>📁 Module 5.1: File System Fundamentals</h1>
+        <div class="header-meta">
+            <span>CSC 156 - Digital Forensics Fundamentals</span>
+            <span>|</span>
+            <span>Week 5: File Systems and Data Structures</span>
+            <span>|</span>
+            <span>⏱️ Estimated Time: 45-55 minutes</span>
+        </div>
+    </header>
+    
+    <div class="progress-container" role="region" aria-label="Module progress">
+        <div class="progress-header">
+            <span class="progress-label">📊 Module Progress</span>
+            <span class="progress-percentage" id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+    </div>
+    
+    <nav class="module-nav" aria-label="Module sections">
+        <ul class="nav-list">
+            <li><a href="#section-overview" class="active">Overview</a></li>
+            <li><a href="#section-definitions">Definitions</a></li>
+            <li><a href="#section-purpose">Purpose</a></li>
+            <li><a href="#section-components">Components</a></li>
+            <li><a href="#section-types">Types</a></li>
+            <li><a href="#section-forensic">Forensic Relevance</a></li>
+            <li><a href="#section-practice">Practice</a></li>
+        </ul>
+    </nav>
+    
+    <main id="main-content" role="main">
+        <!-- Section 1: Overview -->
+        <section class="section" id="section-overview">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🎯</span> Learning Overview & Objectives</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>This module introduces the foundational concepts of file systems—the critical layer between operating systems and physical storage that organizes how data is stored, retrieved, and managed. Understanding file systems is essential for digital forensic examiners because it determines where evidence can be found and how it can be recovered.</p>
+                
+                <div class="info-box concept">
+                    <div class="info-box-title"><span aria-hidden="true">🎓</span> Learning Objectives</div>
+                    <p>Upon completing this module, you will be able to:</p>
+                    <ul>
+                        <li>Define what a file system is and explain its purpose in computing</li>
+                        <li>Identify the core components that make up a file system</li>
+                        <li>Distinguish between different types of file systems and their characteristics</li>
+                        <li>Explain why file system knowledge is critical for digital forensics</li>
+                        <li>Describe the relationship between file systems and storage media</li>
+                    </ul>
+                </div>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> CSLO Alignment</div>
+                    <p><strong>This module supports CSLO 2:</strong> Describe the procedures for the collection, preservation, and analysis of digital evidence, including the use of forensic tools and techniques for data recovery and examination.</p>
+                </div>
+                
+                <h3>Why File Systems Matter in Forensics</h3>
+                <p>Every piece of digital evidence—documents, images, emails, browser history, and application data—is stored within a file system. The file system acts as a librarian, organizing billions of bytes into meaningful files and folders. For forensic examiners, understanding this organization is crucial because:</p>
+                
+                <ul>
+                    <li><strong>Evidence Location:</strong> File systems determine where and how data is physically stored on media</li>
+                    <li><strong>Deleted File Recovery:</strong> Understanding file system structures enables recovery of deleted files</li>
+                    <li><strong>Timeline Analysis:</strong> File systems maintain timestamps that establish when events occurred</li>
+                    <li><strong>Hidden Data:</strong> Knowledge of file system slack space and unallocated areas reveals hidden evidence</li>
+                    <li><strong>Data Integrity:</strong> File systems provide mechanisms to verify data hasn't been tampered with</li>
+                </ul>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-overview-1" onchange="updateProgress()">
+                        <label for="check-overview-1">I understand the learning objectives for this module</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-overview-2" onchange="updateProgress()">
+                        <label for="check-overview-2">I recognize why file systems are important for digital forensics</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 2: Key Definitions -->
+        <section class="section" id="section-definitions">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">📖</span> Key Definitions & Terminology</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>Before diving deeper into file systems, let's establish the essential terminology you'll encounter throughout this module and the remainder of the course.</p>
+                
+                <div class="definition-card">
+                    <h4>File System</h4>
+                    <p>A method and data structure that an operating system uses to control how data is stored, organized, and retrieved on a storage device. It provides a logical structure for organizing files and directories, manages space allocation, and maintains metadata about stored data.</p>
+                </div>
+                
+                <div class="definition-card">
+                    <h4>Metadata</h4>
+                    <p>Data about data. In file systems, metadata includes information such as file names, sizes, creation dates, modification dates, access dates, permissions, and ownership. Metadata is stored separately from the file content itself and is crucial for forensic timeline analysis.</p>
+                </div>
+                
+                <div class="definition-card">
+                    <h4>Cluster (Allocation Unit)</h4>
+                    <p>The smallest unit of disk space that can be allocated to a file. A cluster consists of one or more contiguous sectors. When a file is saved, the file system allocates whole clusters to it, even if the file doesn't fill the entire cluster.</p>
+                </div>
+                
+                <div class="definition-card">
+                    <h4>Sector</h4>
+                    <p>The smallest physical storage unit on a disk, traditionally 512 bytes but now commonly 4,096 bytes (4K) on modern drives. Sectors are grouped into clusters by the file system.</p>
+                </div>
+                
+                <div class="definition-card">
+                    <h4>Volume</h4>
+                    <p>A logical storage unit that contains a single file system. A volume can span an entire physical disk, a partition of a disk, or multiple physical disks (in RAID configurations). Each volume is formatted with a specific file system type.</p>
+                </div>
+                
+                <div class="definition-card">
+                    <h4>Partition</h4>
+                    <p>A logical division of a physical storage device that creates separate volumes. Each partition can be formatted with a different file system and appears as a separate drive to the operating system.</p>
+                </div>
+                
+                <div class="definition-card">
+                    <h4>Slack Space</h4>
+                    <p>The unused space within a cluster after a file's data ends. Because clusters are allocated in fixed sizes, files rarely fill their last cluster completely. This leftover space may contain remnants of previously deleted files—a valuable source of forensic evidence.</p>
+                </div>
+                
+                <div class="definition-card">
+                    <h4>Unallocated Space</h4>
+                    <p>Clusters that are not currently assigned to any file. When files are deleted, their clusters are marked as unallocated but the data typically remains until overwritten by new files. Forensic tools can recover data from unallocated space.</p>
+                </div>
+                
+                <div class="info-box example">
+                    <div class="info-box-title"><span aria-hidden="true">💡</span> Real-World Analogy</div>
+                    <p>Think of a file system like a library's organization system:</p>
+                    <ul>
+                        <li><strong>The building</strong> = Physical storage device (hard drive)</li>
+                        <li><strong>Floors/wings</strong> = Partitions</li>
+                        <li><strong>The card catalog</strong> = File system metadata structures</li>
+                        <li><strong>Bookshelves</strong> = Clusters</li>
+                        <li><strong>Individual shelf slots</strong> = Sectors</li>
+                        <li><strong>Books</strong> = Files</li>
+                        <li><strong>Empty space on a shelf</strong> = Slack space</li>
+                        <li><strong>Empty shelves</strong> = Unallocated space</li>
+                    </ul>
+                    <p>Just as a librarian uses the card catalog to locate books, the operating system uses file system structures to locate files. And just as a removed card doesn't make the book disappear from the shelf, deleting a file's catalog entry doesn't immediately erase its data.</p>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-def-1" onchange="updateProgress()">
+                        <label for="check-def-1">I can define what a file system is</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-def-2" onchange="updateProgress()">
+                        <label for="check-def-2">I understand the difference between sectors and clusters</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-def-3" onchange="updateProgress()">
+                        <label for="check-def-3">I can explain what slack space and unallocated space are</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 3: Purpose of File Systems -->
+        <section class="section" id="section-purpose">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🎯</span> Purpose & Functions of File Systems</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>File systems serve as the critical interface between the operating system and physical storage media. Without a file system, a storage device would be nothing more than a vast collection of meaningless bytes. Let's explore the essential functions that file systems provide.</p>
+                
+                <h3>Core Functions of File Systems</h3>
+                
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-icon">📂</div>
+                        <div class="card-title">Organization</div>
+                        <div class="card-content">Provides hierarchical directory structures (folders within folders) to logically organize files. Creates a namespace for identifying and locating files through paths like <code>C:\Users\Documents\report.docx</code>.</div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">💾</div>
+                        <div class="card-title">Space Management</div>
+                        <div class="card-content">Tracks which clusters are in use and which are available. Allocates space when files are created or expanded, and deallocates space when files are deleted or shrunk.</div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">🏷️</div>
+                        <div class="card-title">Metadata Storage</div>
+                        <div class="card-content">Maintains essential information about each file: name, size, location on disk, timestamps (created, modified, accessed), permissions, and ownership attributes.</div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">🔗</div>
+                        <div class="card-title">Data Retrieval</div>
+                        <div class="card-content">Provides mechanisms to locate and read file data from storage. Translates logical file requests into physical disk locations, handling fragmented files spread across multiple clusters.</div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">🔐</div>
+                        <div class="card-title">Access Control</div>
+                        <div class="card-content">Implements security through permissions that control who can read, write, or execute files. Modern file systems support complex access control lists (ACLs) for granular permissions.</div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">🛡️</div>
+                        <div class="card-title">Data Integrity</div>
+                        <div class="card-content">Protects against data corruption through journaling (logging changes before applying them), checksums, and recovery mechanisms that can repair inconsistencies after crashes.</div>
+                    </div>
+                </div>
+                
+                <h3>The Abstraction Layer</h3>
+                <p>One of the most important roles of a file system is providing <strong>abstraction</strong>—hiding the complexity of physical storage from applications and users. Consider what happens when you save a document:</p>
+                
+                <div class="diagram-container">
+                    <div class="diagram-title">File System Abstraction Layers</div>
+<pre class="diagram" aria-label="Diagram showing file system abstraction layers">
+┌─────────────────────────────────────────────────────────────┐
+│                    APPLICATION LAYER                         │
+│         (Word processor saves "report.docx")                │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  OPERATING SYSTEM API                        │
+│            (CreateFile, WriteFile, CloseFile)               │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    FILE SYSTEM DRIVER                        │
+│     • Finds available clusters                              │
+│     • Updates directory entries                             │
+│     • Writes metadata (timestamps, size)                    │
+│     • Manages journaling for crash protection               │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    STORAGE DRIVER                            │
+│        (Translates to physical disk commands)               │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   PHYSICAL STORAGE                           │
+│     (Data written to specific sectors on disk)              │
+└─────────────────────────────────────────────────────────────┘
+</pre>
+                </div>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> Forensic Significance</div>
+                    <p>Each layer in this abstraction provides forensic opportunities:</p>
+                    <ul>
+                        <li><strong>Application Layer:</strong> May leave temporary files, recent file lists, or application-specific metadata</li>
+                        <li><strong>OS API Layer:</strong> Generates system logs and registry entries</li>
+                        <li><strong>File System Layer:</strong> Creates timestamps, journal entries, and allocation records</li>
+                        <li><strong>Physical Layer:</strong> Data persists in unallocated space even after deletion</li>
+                    </ul>
+                </div>
+                
+                <h3>File System Operations</h3>
+                <p>Understanding how common operations work helps forensic examiners know where to look for evidence:</p>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Operation</th>
+                                <th>What Happens</th>
+                                <th>Forensic Artifacts</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Create File</strong></td>
+                                <td>Allocates clusters, creates directory entry, initializes metadata</td>
+                                <td>Creation timestamp, journal entry, directory record</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Write Data</strong></td>
+                                <td>Writes content to allocated clusters, updates size and modification time</td>
+                                <td>Modified timestamp, file content, possible previous versions in slack</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Read File</strong></td>
+                                <td>Locates clusters via metadata, retrieves data, updates access time</td>
+                                <td>Access timestamp (on some systems)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Delete File</strong></td>
+                                <td>Marks directory entry as deleted, marks clusters as unallocated</td>
+                                <td>Data remains in unallocated space, deleted directory entry often recoverable</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Rename/Move</strong></td>
+                                <td>Updates directory entries, file data doesn't move (usually)</td>
+                                <td>New timestamps, possible old directory entries</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-purpose-1" onchange="updateProgress()">
+                        <label for="check-purpose-1">I can list the core functions of a file system</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-purpose-2" onchange="updateProgress()">
+                        <label for="check-purpose-2">I understand how file systems provide abstraction</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-purpose-3" onchange="updateProgress()">
+                        <label for="check-purpose-3">I recognize the forensic artifacts created by file operations</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 4: Core Components -->
+        <section class="section" id="section-components">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🔧</span> Core Components of File Systems</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>All file systems share certain fundamental components, though their specific implementations vary. Understanding these components is essential for forensic analysis because each stores different types of recoverable evidence.</p>
+                
+                <h3>The Four Essential Components</h3>
+                
+                <div class="diagram-container">
+                    <div class="diagram-title">File System Component Architecture</div>
+<pre class="diagram" aria-label="Diagram showing the four essential components of a file system">
+┌──────────────────────────────────────────────────────────────────┐
+│                        FILE SYSTEM VOLUME                         │
+├──────────────────────────────────────────────────────────────────┤
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │                    1. BOOT SECTOR                          │  │
+│  │    • Volume identification                                 │  │
+│  │    • File system parameters                                │  │
+│  │    • Bootstrap code (if bootable)                          │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │              2. ALLOCATION STRUCTURES                      │  │
+│  │    • Track which clusters are used/free                    │  │
+│  │    • FAT: File Allocation Table                            │  │
+│  │    • NTFS: $Bitmap file                                    │  │
+│  │    • ext4: Block group bitmaps                             │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │               3. METADATA STRUCTURES                       │  │
+│  │    • File/directory information                            │  │
+│  │    • Names, sizes, timestamps, permissions                 │  │
+│  │    • Location pointers to data clusters                    │  │
+│  │    • FAT: Directory entries                                │  │
+│  │    • NTFS: Master File Table (MFT)                         │  │
+│  │    • ext4: Inode tables                                    │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │                 4. DATA AREA                               │  │
+│  │    • Actual file content                                   │  │
+│  │    • Organized into clusters                               │  │
+│  │    • Contains both allocated and unallocated clusters      │  │
+│  └────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────┘
+</pre>
+                </div>
+                
+                <h3>Component Details</h3>
+                
+                <div class="collapsible" id="collapse-boot">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-boot')" role="button" aria-expanded="false" tabindex="0">
+                        <span>1. Boot Sector / Volume Boot Record (VBR)</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p>The boot sector is the first sector of a volume and contains critical information about the file system structure. It serves as the "table of contents" for the entire volume.</p>
+                        
+                        <h4>Contents of a Boot Sector:</h4>
+                        <ul>
+                            <li><strong>Jump instruction:</strong> Directs the CPU to bootstrap code (if bootable)</li>
+                            <li><strong>OEM identifier:</strong> Identifies the formatting utility/OS</li>
+                            <li><strong>BIOS Parameter Block (BPB):</strong> Critical file system parameters
+                                <ul>
+                                    <li>Bytes per sector</li>
+                                    <li>Sectors per cluster</li>
+                                    <li>Total number of sectors</li>
+                                    <li>Location of file system structures</li>
+                                </ul>
+                            </li>
+                            <li><strong>Volume serial number:</strong> Unique identifier assigned during formatting</li>
+                            <li><strong>Bootstrap code:</strong> Initial loading code for bootable volumes</li>
+                        </ul>
+                        
+                        <div class="info-box forensic">
+                            <div class="info-box-title"><span aria-hidden="true">🔍</span> Forensic Value</div>
+                            <p>The boot sector reveals when the volume was formatted, what tool was used, and provides parameters needed to interpret the rest of the file system. A corrupted boot sector can prevent normal access but forensic tools can often reconstruct it from backup copies or known parameters.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="collapsible" id="collapse-alloc">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-alloc')" role="button" aria-expanded="false" tabindex="0">
+                        <span>2. Allocation Structures</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p>Allocation structures track which clusters are in use and which are available. They're essential for the file system to know where it can write new data.</p>
+                        
+                        <h4>Types of Allocation Tracking:</h4>
+                        
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>File System</th>
+                                        <th>Allocation Structure</th>
+                                        <th>How It Works</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>FAT12/16/32</td>
+                                        <td>File Allocation Table</td>
+                                        <td>Array of entries, one per cluster. Each entry points to next cluster in chain or marks end-of-file/free.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>NTFS</td>
+                                        <td>$Bitmap file</td>
+                                        <td>Bitmap where each bit represents one cluster. 1 = allocated, 0 = free.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>ext4</td>
+                                        <td>Block bitmaps</td>
+                                        <td>Similar bitmap approach, organized by block groups for efficiency.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>APFS</td>
+                                        <td>Space manager</td>
+                                        <td>B-tree structure tracking free space extents.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="info-box forensic">
+                            <div class="info-box-title"><span aria-hidden="true">🔍</span> Forensic Value</div>
+                            <p>Allocation structures show which clusters are currently "free" and may contain deleted file data. Comparing allocation status with actual cluster content can reveal recently deleted files. In FAT systems, the allocation table itself contains the cluster chains, making it possible to trace file fragments.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="collapsible" id="collapse-meta">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-meta')" role="button" aria-expanded="false" tabindex="0">
+                        <span>3. Metadata Structures</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p>Metadata structures store information <em>about</em> files rather than the file content itself. This is where file names, timestamps, sizes, and locations are recorded.</p>
+                        
+                        <h4>Common Metadata Elements:</h4>
+                        <ul>
+                            <li><strong>File name:</strong> The human-readable identifier</li>
+                            <li><strong>File size:</strong> Exact number of bytes in the file</li>
+                            <li><strong>Timestamps:</strong>
+                                <ul>
+                                    <li>Created (birth time)</li>
+                                    <li>Modified (content changed)</li>
+                                    <li>Accessed (last read)</li>
+                                    <li>Changed (metadata changed) - Unix systems</li>
+                                </ul>
+                            </li>
+                            <li><strong>Location pointers:</strong> Which clusters contain the file data</li>
+                            <li><strong>Attributes:</strong> Read-only, hidden, system, archive flags</li>
+                            <li><strong>Permissions:</strong> Who can read, write, execute</li>
+                            <li><strong>Owner:</strong> User/group ownership information</li>
+                        </ul>
+                        
+                        <h4>Metadata Structure by File System:</h4>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>File System</th>
+                                        <th>Metadata Structure</th>
+                                        <th>Key Characteristics</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>FAT</td>
+                                        <td>Directory Entries</td>
+                                        <td>32-byte entries in directory clusters; limited metadata</td>
+                                    </tr>
+                                    <tr>
+                                        <td>NTFS</td>
+                                        <td>Master File Table (MFT)</td>
+                                        <td>1024-byte records; extensive attributes; resident small files</td>
+                                    </tr>
+                                    <tr>
+                                        <td>ext4</td>
+                                        <td>Inodes</td>
+                                        <td>Fixed-size structures; name stored separately in directories</td>
+                                    </tr>
+                                    <tr>
+                                        <td>APFS</td>
+                                        <td>Inode records</td>
+                                        <td>B-tree organized; supports snapshots and clones</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="info-box forensic">
+                            <div class="info-box-title"><span aria-hidden="true">🔍</span> Forensic Value</div>
+                            <p>Metadata structures are goldmines for forensic analysis. Timestamps establish timelines of user activity. Deleted file entries often remain recoverable. NTFS MFT entries may contain entire small files within the metadata itself. Comparing metadata timestamps with file content can reveal anti-forensic manipulation attempts.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="collapsible" id="collapse-data">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-data')" role="button" aria-expanded="false" tabindex="0">
+                        <span>4. Data Area</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p>The data area comprises the majority of the volume and contains the actual content of files, organized into clusters.</p>
+                        
+                        <h4>Data Area Concepts:</h4>
+                        <ul>
+                            <li><strong>Allocated clusters:</strong> Currently assigned to files; contain current file data</li>
+                            <li><strong>Unallocated clusters:</strong> Not assigned to any file; may contain deleted data</li>
+                            <li><strong>Slack space:</strong> Unused portions within allocated clusters</li>
+                            <li><strong>Fragmentation:</strong> Files split across non-contiguous clusters</li>
+                        </ul>
+                        
+                        <div class="diagram-container">
+                            <div class="diagram-title">Cluster Allocation Example</div>
+<pre class="diagram" aria-label="Diagram showing cluster allocation with allocated, unallocated, and slack space">
+Cluster:    [  1  ][  2  ][  3  ][  4  ][  5  ][  6  ][  7  ][  8  ]
+            ├──────┴──────┤      ├──────┴──────┴──────┤      │      │
+            │   File A    │      │      File B        │      │      │
+            │  (2 clusters)│      │   (3 clusters)    │      │      │
+            └─────────────┘      └────────────────────┘      │      │
+                                                             │      │
+Status:     [ALLOC][ALLOC][FREE ][ALLOC][ALLOC][ALLOC][FREE ][FREE ]
+                          ▲                              ▲      ▲
+                          │                              └──────┴──
+                    Unallocated                          Unallocated
+                    (may contain                         (may contain
+                    deleted data)                        deleted data)
+
+File A Detail (Cluster 2):
+┌────────────────────────────────────────────────────────────────┐
+│ File A Data ████████████████████████████░░░░░░░░░░░░░░░░░░░░░░│
+│              ◄──── Actual File Content ────►◄── Slack Space ──►│
+│                     (2,847 bytes)              (1,249 bytes)   │
+└────────────────────────────────────────────────────────────────┘
+                                                        ▲
+                                              May contain remnants
+                                              of previous file data
+</pre>
+                        </div>
+                        
+                        <div class="info-box forensic">
+                            <div class="info-box-title"><span aria-hidden="true">🔍</span> Forensic Value</div>
+                            <p>The data area is where most evidence resides. Unallocated space can contain recoverable deleted files. Slack space may hold fragments of overwritten data. File carving techniques can recover files from unallocated space even without metadata. Forensic imaging captures the entire data area, including all unallocated and slack space.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-comp-1" onchange="updateProgress()">
+                        <label for="check-comp-1">I can identify the four essential components of a file system</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-comp-2" onchange="updateProgress()">
+                        <label for="check-comp-2">I understand what the boot sector contains</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-comp-3" onchange="updateProgress()">
+                        <label for="check-comp-3">I can explain the forensic value of each component</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 5: Types of File Systems -->
+        <section class="section" id="section-types">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">📊</span> Types of File Systems</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>Different operating systems use different file systems, each with unique characteristics that affect forensic analysis. A forensic examiner must be familiar with multiple file system types to effectively analyze evidence from various sources.</p>
+                
+                <h3>File System Categories</h3>
+                
+                <div class="tabs-container">
+                    <div class="tabs-header" role="tablist">
+                        <button class="tab-btn active" onclick="switchTab(event, 'tab-windows')" role="tab" aria-selected="true" aria-controls="tab-windows">Windows</button>
+                        <button class="tab-btn" onclick="switchTab(event, 'tab-unix')" role="tab" aria-selected="false" aria-controls="tab-unix">Unix/Linux</button>
+                        <button class="tab-btn" onclick="switchTab(event, 'tab-macos')" role="tab" aria-selected="false" aria-controls="tab-macos">macOS</button>
+                        <button class="tab-btn" onclick="switchTab(event, 'tab-removable')" role="tab" aria-selected="false" aria-controls="tab-removable">Removable Media</button>
+                    </div>
+                    
+                    <div class="tab-content active" id="tab-windows" role="tabpanel">
+                        <h4>FAT (File Allocation Table)</h4>
+                        <p>The FAT file system family (FAT12, FAT16, FAT32) was developed by Microsoft starting in 1977. While largely replaced by NTFS on modern Windows systems, FAT remains important for removable media and legacy systems.</p>
+                        
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Variant</th>
+                                        <th>Max Volume</th>
+                                        <th>Max File</th>
+                                        <th>Common Use</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>FAT12</td>
+                                        <td>16 MB</td>
+                                        <td>16 MB</td>
+                                        <td>Floppy disks (legacy)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>FAT16</td>
+                                        <td>2 GB</td>
+                                        <td>2 GB</td>
+                                        <td>Small partitions, DOS</td>
+                                    </tr>
+                                    <tr>
+                                        <td>FAT32</td>
+                                        <td>2 TB</td>
+                                        <td>4 GB</td>
+                                        <td>USB drives, SD cards</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <h4>NTFS (New Technology File System)</h4>
+                        <p>NTFS is the primary file system for modern Windows operating systems (Windows NT and later). It offers significant advantages over FAT for forensic analysis.</p>
+                        
+                        <p><strong>Key NTFS Features:</strong></p>
+                        <ul>
+                            <li>Maximum volume size: 16 EB (exabytes)</li>
+                            <li>Maximum file size: 16 EB</li>
+                            <li>Journaling for crash recovery</li>
+                            <li>Access control lists (ACLs) for security</li>
+                            <li>File compression and encryption (EFS)</li>
+                            <li>Alternate Data Streams (ADS)</li>
+                            <li>Sparse files and hard links</li>
+                        </ul>
+                        
+                        <div class="info-box forensic">
+                            <div class="info-box-title"><span aria-hidden="true">🔍</span> NTFS Forensic Features</div>
+                            <ul>
+                                <li><strong>$MFT:</strong> Master File Table contains metadata for all files</li>
+                                <li><strong>$LogFile:</strong> Transaction journal for recovery and forensic timeline</li>
+                                <li><strong>$UsnJrnl:</strong> Change journal tracking file system modifications</li>
+                                <li><strong>Alternate Data Streams:</strong> Can hide data attached to files</li>
+                                <li><strong>Resident files:</strong> Small files stored entirely in MFT</li>
+                            </ul>
+                        </div>
+                        
+                        <h4>exFAT (Extended FAT)</h4>
+                        <p>Developed by Microsoft for flash drives and SD cards, exFAT removes FAT32's 4GB file size limit while maintaining cross-platform compatibility.</p>
+                        <ul>
+                            <li>Maximum volume size: 128 PB</li>
+                            <li>Maximum file size: 16 EB</li>
+                            <li>Optimized for flash storage</li>
+                            <li>No journaling (less forensic metadata)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="tab-content" id="tab-unix" role="tabpanel">
+                        <h4>ext Family (Extended File System)</h4>
+                        <p>The ext file system family is the standard for Linux distributions. Each version has added features while maintaining backward compatibility.</p>
+                        
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Version</th>
+                                        <th>Max Volume</th>
+                                        <th>Max File</th>
+                                        <th>Key Features</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>ext2</td>
+                                        <td>32 TB</td>
+                                        <td>2 TB</td>
+                                        <td>No journaling; still used for flash</td>
+                                    </tr>
+                                    <tr>
+                                        <td>ext3</td>
+                                        <td>32 TB</td>
+                                        <td>2 TB</td>
+                                        <td>Added journaling</td>
+                                    </tr>
+                                    <tr>
+                                        <td>ext4</td>
+                                        <td>1 EB</td>
+                                        <td>16 TB</td>
+                                        <td>Extents, delayed allocation, modern default</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <p><strong>ext4 Key Features:</strong></p>
+                        <ul>
+                            <li>Inode-based metadata storage</li>
+                            <li>Extent-based allocation (contiguous blocks)</li>
+                            <li>Journaling with multiple modes</li>
+                            <li>Nanosecond timestamps</li>
+                            <li>Extended attributes for additional metadata</li>
+                        </ul>
+                        
+                        <h4>XFS</h4>
+                        <p>High-performance journaling file system originally from Silicon Graphics, now common in enterprise Linux (default in RHEL/CentOS 7+).</p>
+                        <ul>
+                            <li>Excellent performance with large files</li>
+                            <li>Maximum volume: 8 EB</li>
+                            <li>Allocation groups for parallelism</li>
+                            <li>Online defragmentation and growth</li>
+                        </ul>
+                        
+                        <h4>Btrfs (B-tree File System)</h4>
+                        <p>Modern copy-on-write file system with advanced features:</p>
+                        <ul>
+                            <li>Built-in snapshots and cloning</li>
+                            <li>Checksums for data integrity</li>
+                            <li>RAID support at file system level</li>
+                            <li>Transparent compression</li>
+                        </ul>
+                        
+                        <div class="info-box forensic">
+                            <div class="info-box-title"><span aria-hidden="true">🔍</span> Linux Forensic Considerations</div>
+                            <ul>
+                                <li><strong>Inodes:</strong> Contain timestamps but not file names (stored in directories)</li>
+                                <li><strong>Journal:</strong> May contain recent file operations</li>
+                                <li><strong>Deleted inodes:</strong> Often recoverable with intact metadata</li>
+                                <li><strong>Extended attributes:</strong> May contain security labels, checksums</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="tab-macos" role="tabpanel">
+                        <h4>HFS+ (Hierarchical File System Plus)</h4>
+                        <p>Apple's file system from 1998-2017, still found on older Macs and some external drives.</p>
+                        <ul>
+                            <li>B-tree based catalog and extents</li>
+                            <li>Case-insensitive by default (case-preserving)</li>
+                            <li>Resource forks for additional file data</li>
+                            <li>Journaling added in Mac OS X 10.2.2</li>
+                            <li>Maximum volume: 8 EB</li>
+                        </ul>
+                        
+                        <h4>APFS (Apple File System)</h4>
+                        <p>Modern file system introduced in 2017, now default on all Apple devices (macOS, iOS, iPadOS, watchOS, tvOS).</p>
+                        
+                        <p><strong>Key APFS Features:</strong></p>
+                        <ul>
+                            <li>Optimized for flash/SSD storage</li>
+                            <li>Copy-on-write design</li>
+                            <li>Native encryption support</li>
+                            <li>Space sharing between volumes</li>
+                            <li>Snapshots for backup (Time Machine)</li>
+                            <li>Clones for instant file copies</li>
+                            <li>Nanosecond timestamp precision</li>
+                        </ul>
+                        
+                        <div class="info-box forensic">
+                            <div class="info-box-title"><span aria-hidden="true">🔍</span> APFS Forensic Challenges</div>
+                            <ul>
+                                <li><strong>Encryption:</strong> FileVault encryption is default; requires password/key</li>
+                                <li><strong>Snapshots:</strong> May contain historical file states</li>
+                                <li><strong>Copy-on-write:</strong> Deleted data may persist longer</li>
+                                <li><strong>Container structure:</strong> Multiple volumes share space</li>
+                                <li><strong>Limited tool support:</strong> Newer than other file systems</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="tab-removable" role="tabpanel">
+                        <h4>Common Removable Media File Systems</h4>
+                        
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>File System</th>
+                                        <th>Typical Use</th>
+                                        <th>Compatibility</th>
+                                        <th>Limitations</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>FAT32</td>
+                                        <td>USB drives, SD cards</td>
+                                        <td>Universal (Windows, Mac, Linux)</td>
+                                        <td>4 GB max file size</td>
+                                    </tr>
+                                    <tr>
+                                        <td>exFAT</td>
+                                        <td>Large USB drives, SDXC cards</td>
+                                        <td>Windows, Mac, Linux (with driver)</td>
+                                        <td>No journaling</td>
+                                    </tr>
+                                    <tr>
+                                        <td>UDF</td>
+                                        <td>Optical media (DVD, Blu-ray)</td>
+                                        <td>Universal</td>
+                                        <td>Complex structure</td>
+                                    </tr>
+                                    <tr>
+                                        <td>ISO 9660</td>
+                                        <td>CD-ROMs</td>
+                                        <td>Universal</td>
+                                        <td>Read-only, 8.3 names (without extensions)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <h4>Optical Disc File Systems</h4>
+                        <p><strong>ISO 9660:</strong> Standard file system for CD-ROMs</p>
+                        <ul>
+                            <li>Originally limited to 8.3 filenames</li>
+                            <li>Extensions: Joliet (Windows long names), Rock Ridge (Unix attributes)</li>
+                            <li>Read-only by design</li>
+                        </ul>
+                        
+                        <p><strong>UDF (Universal Disk Format):</strong></p>
+                        <ul>
+                            <li>Used for DVDs, Blu-rays, and packet-written CDs</li>
+                            <li>Supports large files and long filenames</li>
+                            <li>Multiple versions with varying features</li>
+                        </ul>
+                        
+                        <div class="info-box forensic">
+                            <div class="info-box-title"><span aria-hidden="true">🔍</span> Removable Media Forensic Notes</div>
+                            <ul>
+                                <li>FAT-based systems have simpler structures, easier recovery</li>
+                                <li>No journaling means less metadata but also less overhead</li>
+                                <li>Flash wear leveling may preserve deleted data longer</li>
+                                <li>SD cards may have hidden areas (protected areas)</li>
+                                <li>Optical media is write-once, preserving original evidence</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>File System Comparison Summary</h3>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>FAT32</th>
+                                <th>NTFS</th>
+                                <th>ext4</th>
+                                <th>APFS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Max File Size</td>
+                                <td>4 GB</td>
+                                <td>16 EB</td>
+                                <td>16 TB</td>
+                                <td>8 EB</td>
+                            </tr>
+                            <tr>
+                                <td>Journaling</td>
+                                <td>No</td>
+                                <td>Yes</td>
+                                <td>Yes</td>
+                                <td>Yes (CoW)</td>
+                            </tr>
+                            <tr>
+                                <td>Permissions</td>
+                                <td>Basic</td>
+                                <td>ACLs</td>
+                                <td>POSIX + ACLs</td>
+                                <td>POSIX + ACLs</td>
+                            </tr>
+                            <tr>
+                                <td>Encryption</td>
+                                <td>No</td>
+                                <td>EFS</td>
+                                <td>External</td>
+                                <td>Native</td>
+                            </tr>
+                            <tr>
+                                <td>Timestamps</td>
+                                <td>2-second</td>
+                                <td>100ns</td>
+                                <td>1ns</td>
+                                <td>1ns</td>
+                            </tr>
+                            <tr>
+                                <td>Deleted Recovery</td>
+                                <td>Good</td>
+                                <td>Excellent</td>
+                                <td>Good</td>
+                                <td>Varies</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-types-1" onchange="updateProgress()">
+                        <label for="check-types-1">I can identify which file systems are used by different operating systems</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-types-2" onchange="updateProgress()">
+                        <label for="check-types-2">I understand the key differences between FAT, NTFS, ext4, and APFS</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-types-3" onchange="updateProgress()">
+                        <label for="check-types-3">I can explain why different file systems have different forensic implications</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 6: Forensic Relevance -->
+        <section class="section" id="section-forensic">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🔍</span> Forensic Relevance of File Systems</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>Understanding file system internals is not merely academic—it directly impacts a forensic examiner's ability to find, recover, and interpret digital evidence. This section explores specific forensic applications of file system knowledge.</p>
+                
+                <h3>Evidence Locations in File Systems</h3>
+                
+                <div class="diagram-container">
+                    <div class="diagram-title">Where Evidence Hides in File Systems</div>
+<pre class="diagram" aria-label="Diagram showing different locations where evidence can be found in file systems">
+┌────────────────────────────────────────────────────────────────────┐
+│                    EVIDENCE LOCATIONS                               │
+├────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐ │
+│  │   ALLOCATED     │    │   UNALLOCATED   │    │  SLACK SPACE    │ │
+│  │     SPACE       │    │     SPACE       │    │                 │ │
+│  │                 │    │                 │    │                 │ │
+│  │ • Active files  │    │ • Deleted files │    │ • Previous file │ │
+│  │ • Current data  │    │ • Formatted     │    │   remnants      │ │
+│  │ • Metadata      │    │   volume data   │    │ • Partial data  │ │
+│  │                 │    │ • Carved files  │    │ • Memory dumps  │ │
+│  └─────────────────┘    └─────────────────┘    └─────────────────┘ │
+│                                                                     │
+│  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐ │
+│  │   FILE SYSTEM   │    │    JOURNAL/     │    │    METADATA     │ │
+│  │   STRUCTURES    │    │      LOG        │    │   STRUCTURES    │ │
+│  │                 │    │                 │    │                 │ │
+│  │ • Boot sector   │    │ • Transaction   │    │ • Timestamps    │ │
+│  │ • Allocation    │    │   history       │    │ • Permissions   │ │
+│  │   tables        │    │ • Recovery      │    │ • Deleted       │ │
+│  │ • Directory     │    │   information   │    │   entries       │ │
+│  │   structures    │    │ • Change log    │    │ • ADS (NTFS)    │ │
+│  └─────────────────┘    └─────────────────┘    └─────────────────┘ │
+│                                                                     │
+└────────────────────────────────────────────────────────────────────┘
+</pre>
+                </div>
+                
+                <h3>Key Forensic Concepts</h3>
+                
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-icon">🗑️</div>
+                        <div class="card-title">Deleted File Recovery</div>
+                        <div class="card-content">
+                            <p>When files are deleted, the file system typically only marks the space as available—the actual data remains until overwritten. Recovery depends on:</p>
+                            <ul>
+                                <li>Time since deletion</li>
+                                <li>Disk activity since deletion</li>
+                                <li>File system type</li>
+                                <li>SSD TRIM operations</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">⏰</div>
+                        <div class="card-title">Timeline Analysis</div>
+                        <div class="card-content">
+                            <p>File system timestamps (MAC times) establish when events occurred:</p>
+                            <ul>
+                                <li><strong>M</strong>odified: Content changed</li>
+                                <li><strong>A</strong>ccessed: File read/opened</li>
+                                <li><strong>C</strong>hanged: Metadata altered</li>
+                                <li><strong>B</strong>irth: File created (some FS)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">🔎</div>
+                        <div class="card-title">File Carving</div>
+                        <div class="card-content">
+                            <p>Recovering files from unallocated space using file signatures (magic numbers) rather than file system metadata. Works even when:</p>
+                            <ul>
+                                <li>File system is damaged</li>
+                                <li>Metadata is destroyed</li>
+                                <li>Volume is reformatted</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">📊</div>
+                        <div class="card-title">Metadata Analysis</div>
+                        <div class="card-content">
+                            <p>File system metadata reveals user activity:</p>
+                            <ul>
+                                <li>File ownership and permissions</li>
+                                <li>Access patterns</li>
+                                <li>Security identifiers (SIDs)</li>
+                                <li>Extended attributes</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>Forensic Challenges by File System</h3>
+                
+                <div class="info-box warning">
+                    <div class="info-box-title"><span aria-hidden="true">⚠️</span> SSD and Modern Storage Challenges</div>
+                    <p>Modern storage technologies present unique forensic challenges:</p>
+                    <ul>
+                        <li><strong>TRIM Command:</strong> SSDs may immediately zero deleted data blocks, preventing recovery</li>
+                        <li><strong>Wear Leveling:</strong> Data may be moved without file system knowledge</li>
+                        <li><strong>Encryption:</strong> Full-disk encryption (BitLocker, FileVault, LUKS) requires keys for access</li>
+                        <li><strong>Copy-on-Write:</strong> APFS and Btrfs may preserve or destroy data unpredictably</li>
+                    </ul>
+                </div>
+                
+                <h3>Practical Forensic Workflow</h3>
+                
+                <div class="info-box concept">
+                    <div class="info-box-title"><span aria-hidden="true">📋</span> File System Analysis Steps</div>
+                    <ol>
+                        <li><strong>Identify the file system type</strong> - Examine boot sector/superblock</li>
+                        <li><strong>Parse file system structures</strong> - Read allocation tables, metadata structures</li>
+                        <li><strong>Enumerate allocated files</strong> - Build directory tree of existing files</li>
+                        <li><strong>Recover deleted entries</strong> - Find and parse deleted metadata records</li>
+                        <li><strong>Analyze unallocated space</strong> - Carve for files without metadata</li>
+                        <li><strong>Extract slack space</strong> - Recover data fragments from cluster slack</li>
+                        <li><strong>Build timeline</strong> - Correlate timestamps across all sources</li>
+                        <li><strong>Document findings</strong> - Record all evidence with proper chain of custody</li>
+                    </ol>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-forensic-1" onchange="updateProgress()">
+                        <label for="check-forensic-1">I understand where evidence can be found within file systems</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-forensic-2" onchange="updateProgress()">
+                        <label for="check-forensic-2">I can explain how deleted files can be recovered</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-forensic-3" onchange="updateProgress()">
+                        <label for="check-forensic-3">I recognize the forensic challenges of modern storage technologies</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 7: Practice Activities -->
+        <section class="section" id="section-practice">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🎮</span> Practice Activities & Knowledge Check</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>Test your understanding of file system fundamentals with these interactive activities.</p>
+                
+                <!-- Matching Activity -->
+                <div class="interactive-container">
+                    <div class="interactive-title"><span aria-hidden="true">🎯</span> Activity 1: Match Components to Descriptions</div>
+                    <p>Click on a component, then click on its matching description.</p>
+                    
+                    <div class="matching-container" id="matching-1">
+                        <div class="matching-column">
+                            <div class="matching-column-title">Component</div>
+                            <div class="matching-item" data-match="boot" onclick="handleMatch(this, 'matching-1')">Boot Sector</div>
+                            <div class="matching-item" data-match="alloc" onclick="handleMatch(this, 'matching-1')">Allocation Structure</div>
+                            <div class="matching-item" data-match="meta" onclick="handleMatch(this, 'matching-1')">Metadata Structure</div>
+                            <div class="matching-item" data-match="data" onclick="handleMatch(this, 'matching-1')">Data Area</div>
+                        </div>
+                        <div class="matching-column">
+                            <div class="matching-column-title">Description</div>
+                            <div class="matching-item" data-match="meta" onclick="handleMatch(this, 'matching-1')">Stores file names, timestamps, and location pointers</div>
+                            <div class="matching-item" data-match="data" onclick="handleMatch(this, 'matching-1')">Contains actual file content in clusters</div>
+                            <div class="matching-item" data-match="boot" onclick="handleMatch(this, 'matching-1')">First sector with file system parameters</div>
+                            <div class="matching-item" data-match="alloc" onclick="handleMatch(this, 'matching-1')">Tracks which clusters are in use or free</div>
+                        </div>
+                    </div>
+                    <div id="matching-1-feedback" class="quiz-feedback"></div>
+                    <button class="btn btn-secondary" onclick="resetMatching('matching-1')" style="margin-top: 1rem;">Reset Activity</button>
+                </div>
+                
+                <!-- Quiz Questions -->
+                <div class="interactive-container">
+                    <div class="interactive-title"><span aria-hidden="true">📝</span> Activity 2: Knowledge Check Quiz</div>
+                    
+                    <div class="quiz-question" id="quiz-1">
+                        <p>1. What is the smallest unit of disk space that can be allocated to a file?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-1" value="a">
+                                <span>Sector</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-1" value="b">
+                                <span>Cluster (Allocation Unit)</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-1" value="c">
+                                <span>Block</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-1" value="d">
+                                <span>Partition</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-1-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-2">
+                        <p>2. What is "slack space" in a file system?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-2" value="a">
+                                <span>Space reserved for the operating system</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-2" value="b">
+                                <span>Unused space within an allocated cluster after file data ends</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-2" value="c">
+                                <span>Space between partitions</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-2" value="d">
+                                <span>Corrupted sectors on the disk</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-2-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-3">
+                        <p>3. Which file system is the default for modern Windows operating systems?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-3" value="a">
+                                <span>FAT32</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-3" value="b">
+                                <span>ext4</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-3" value="c">
+                                <span>NTFS</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-3" value="d">
+                                <span>APFS</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-3-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-4">
+                        <p>4. Why is understanding file systems important for digital forensics?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-4" value="a">
+                                <span>It helps format drives faster</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-4" value="b">
+                                <span>It determines where evidence can be found and how it can be recovered</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-4" value="c">
+                                <span>It makes computers run faster</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-4" value="d">
+                                <span>It is only important for system administrators</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-4-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-5">
+                        <p>5. What happens to file data when a file is deleted in most file systems?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-5" value="a">
+                                <span>The data is immediately and permanently erased</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-5" value="b">
+                                <span>The data is encrypted</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-5" value="c">
+                                <span>The space is marked as available, but data remains until overwritten</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-5" value="d">
+                                <span>The data is moved to a hidden partition</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-5-feedback"></div>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="checkAllQuizAnswers()" style="margin-top: 1rem;">Check All Answers</button>
+                    <button class="btn btn-secondary" onclick="resetQuiz()" style="margin-top: 1rem;">Reset Quiz</button>
+                    
+                    <div id="quiz-results" style="margin-top: 1rem; display: none;">
+                        <div class="info-box concept">
+                            <div class="info-box-title">Quiz Results</div>
+                            <p id="quiz-score"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Drag and Drop Activity -->
+                <div class="interactive-container">
+                    <div class="interactive-title"><span aria-hidden="true">🔀</span> Activity 3: Categorize File Systems</div>
+                    <p>Drag each file system to its correct operating system category.</p>
+                    
+                    <div class="drag-container">
+                        <div class="drag-zone" id="source-zone">
+                            <div class="drag-zone-title">File Systems</div>
+                            <div class="drag-item" draggable="true" data-category="windows" ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">NTFS</div>
+                            <div class="drag-item" draggable="true" data-category="linux" ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">ext4</div>
+                            <div class="drag-item" draggable="true" data-category="macos" ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">APFS</div>
+                            <div class="drag-item" draggable="true" data-category="windows" ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">FAT32</div>
+                            <div class="drag-item" draggable="true" data-category="linux" ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">XFS</div>
+                            <div class="drag-item" draggable="true" data-category="macos" ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">HFS+</div>
+                        </div>
+                        <div class="drag-zone" id="windows-zone" ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'windows')">
+                            <div class="drag-zone-title">🪟 Windows</div>
+                        </div>
+                        <div class="drag-zone" id="linux-zone" ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'linux')">
+                            <div class="drag-zone-title">🐧 Linux</div>
+                        </div>
+                        <div class="drag-zone" id="macos-zone" ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'macos')">
+                            <div class="drag-zone-title">🍎 macOS</div>
+                        </div>
+                    </div>
+                    <div id="drag-feedback" class="quiz-feedback" style="margin-top: 1rem;"></div>
+                    <button class="btn btn-secondary" onclick="resetDragDrop()" style="margin-top: 1rem;">Reset Activity</button>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-practice-1" onchange="updateProgress()">
+                        <label for="check-practice-1">I completed the matching activity</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-practice-2" onchange="updateProgress()">
+                        <label for="check-practice-2">I completed the knowledge check quiz</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-practice-3" onchange="updateProgress()">
+                        <label for="check-practice-3">I completed the drag-and-drop categorization</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Module Summary -->
+        <section class="section" id="section-summary">
+            <div class="section-header" style="background: linear-gradient(135deg, var(--secondary-color), #047857);">
+                <h2><span aria-hidden="true">🎉</span> Module 5.1 Summary</h2>
+            </div>
+            <div class="section-content">
+                <div class="info-box concept">
+                    <div class="info-box-title"><span aria-hidden="true">📚</span> Key Takeaways</div>
+                    <ul>
+                        <li>A <strong>file system</strong> is the method an OS uses to organize, store, and retrieve data on storage devices</li>
+                        <li>File systems provide <strong>abstraction</strong> between applications and physical storage</li>
+                        <li>The four essential components are: <strong>boot sector, allocation structures, metadata structures, and data area</strong></li>
+                        <li>Different operating systems use different file systems: <strong>NTFS (Windows), ext4 (Linux), APFS (macOS)</strong></li>
+                        <li><strong>Slack space</strong> and <strong>unallocated space</strong> are critical areas for forensic evidence recovery</li>
+                        <li>Understanding file systems is essential for <strong>locating, recovering, and interpreting digital evidence</strong></li>
+                    </ul>
+                </div>
+                
+                <h3>What's Next?</h3>
+                <p>In <strong>Module 5.2: FAT File System Deep Dive</strong>, you'll explore the FAT file system family in detail, learning about the File Allocation Table structure, directory entries, and forensic analysis techniques specific to FAT volumes.</p>
+                
+                <div class="footer-nav" style="margin-top: 1.5rem;">
+                    <a href="#" class="btn btn-primary" onclick="alert('Module 5.2 coming soon!')">Continue to Module 5.2 →</a>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer role="contentinfo">
+        <p><strong>CSC 156 - Digital Forensics Fundamentals</strong></p>
+        <p>Module 5.1: File System Fundamentals | Week 5</p>
+        <p>Mendocino College</p>
+        <p style="margin-top: 1rem; font-size: 0.875rem;">💾 Progress is saved for this session only</p>
+        <div class="footer-nav">
+            <a href="#">← Previous Module</a>
+            <a href="#">Module Index</a>
+            <a href="#">Next Module →</a>
+        </div>
+    </footer>
+    
+    <script>
+        // Progress tracking
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const checked = document.querySelectorAll('input[type="checkbox"]:checked').length;
+            const total = checkboxes.length;
+            const percentage = Math.round((checked / total) * 100);
+            
+            document.getElementById('progressPercent').textContent = percentage + '%';
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.querySelector('.progress-bar').setAttribute('aria-valuenow', percentage);
+            
+            // Save to session storage
+            saveProgress();
+        }
+        
+        function saveProgress() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const state = {};
+            checkboxes.forEach(cb => {
+                state[cb.id] = cb.checked;
+            });
+            sessionStorage.setItem('module51Progress', JSON.stringify(state));
+        }
+        
+        function loadProgress() {
+            const saved = sessionStorage.getItem('module51Progress');
+            if (saved) {
+                const state = JSON.parse(saved);
+                Object.keys(state).forEach(id => {
+                    const cb = document.getElementById(id);
+                    if (cb) {
+                        cb.checked = state[id];
+                    }
+                });
+                updateProgress();
+            }
+        }
+        
+        // Section toggle
+        function toggleSection(header) {
+            const content = header.nextElementSibling;
+            const toggle = header.querySelector('.section-toggle');
+            const isExpanded = header.getAttribute('aria-expanded') === 'true';
+            
+            header.setAttribute('aria-expanded', !isExpanded);
+            content.classList.toggle('collapsed');
+            toggle.classList.toggle('collapsed');
+        }
+        
+        function handleKeyPress(event, element) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleSection(element);
+            }
+        }
+        
+        // Collapsible sections
+        function toggleCollapsible(id) {
+            const element = document.getElementById(id);
+            element.classList.toggle('open');
+            const header = element.querySelector('.collapsible-header');
+            const isExpanded = element.classList.contains('open');
+            header.setAttribute('aria-expanded', isExpanded);
+        }
+        
+        // Tabs
+        function switchTab(event, tabId) {
+            // Remove active class from all tabs and content
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-selected', 'false');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Add active class to clicked tab and corresponding content
+            event.target.classList.add('active');
+            event.target.setAttribute('aria-selected', 'true');
+            document.getElementById(tabId).classList.add('active');
+        }
+        
+        // Quiz functionality
+        const quizAnswers = {
+            'quiz-1': 'b',
+            'quiz-2': 'b',
+            'quiz-3': 'c',
+            'quiz-4': 'b',
+            'quiz-5': 'c'
+        };
+        
+        const quizExplanations = {
+            'quiz-1': 'A cluster (also called an allocation unit) is the smallest unit of disk space that can be allocated to a file. Clusters consist of one or more sectors.',
+            'quiz-2': 'Slack space is the unused space within an allocated cluster after a file\'s data ends. This space may contain remnants of previously deleted files.',
+            'quiz-3': 'NTFS (New Technology File System) is the default file system for modern Windows operating systems, offering features like journaling, ACLs, and encryption.',
+            'quiz-4': 'Understanding file systems is crucial for digital forensics because it determines where evidence can be found (allocated space, unallocated space, slack space, metadata) and how it can be recovered.',
+            'quiz-5': 'In most file systems, when a file is deleted, only the metadata is updated to mark the space as available. The actual data remains on the disk until it is overwritten by new data.'
+        };
+        
+        function selectQuizOption(option) {
+            const question = option.closest('.quiz-question');
+            question.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            option.classList.add('selected');
+        }
+        
+        function checkAllQuizAnswers() {
+            let correct = 0;
+            let total = Object.keys(quizAnswers).length;
+            
+            Object.keys(quizAnswers).forEach(quizId => {
+                const question = document.getElementById(quizId);
+                const selected = question.querySelector('input:checked');
+                const feedback = document.getElementById(quizId + '-feedback');
+                const options = question.querySelectorAll('.quiz-option');
+                
+                options.forEach(opt => {
+                    opt.classList.remove('correct', 'incorrect');
+                });
+                
+                if (selected) {
+                    const selectedOption = selected.closest('.quiz-option');
+                    if (selected.value === quizAnswers[quizId]) {
+                        correct++;
+                        selectedOption.classList.add('correct');
+                        feedback.className = 'quiz-feedback show correct';
+                        feedback.innerHTML = '<strong>✓ Correct!</strong> ' + quizExplanations[quizId];
+                    } else {
+                        selectedOption.classList.add('incorrect');
+                        // Show correct answer
+                        options.forEach(opt => {
+                            if (opt.querySelector('input').value === quizAnswers[quizId]) {
+                                opt.classList.add('correct');
+                            }
+                        });
+                        feedback.className = 'quiz-feedback show incorrect';
+                        feedback.innerHTML = '<strong>✗ Incorrect.</strong> ' + quizExplanations[quizId];
+                    }
+                } else {
+                    feedback.className = 'quiz-feedback show incorrect';
+                    feedback.innerHTML = '<strong>Please select an answer.</strong>';
+                }
+            });
+            
+            const resultsDiv = document.getElementById('quiz-results');
+            const scoreP = document.getElementById('quiz-score');
+            resultsDiv.style.display = 'block';
+            scoreP.innerHTML = `You got <strong>${correct} out of ${total}</strong> questions correct (${Math.round(correct/total*100)}%).`;
+        }
+        
+        function resetQuiz() {
+            Object.keys(quizAnswers).forEach(quizId => {
+                const question = document.getElementById(quizId);
+                question.querySelectorAll('input').forEach(input => input.checked = false);
+                question.querySelectorAll('.quiz-option').forEach(opt => {
+                    opt.classList.remove('selected', 'correct', 'incorrect');
+                });
+                document.getElementById(quizId + '-feedback').className = 'quiz-feedback';
+            });
+            document.getElementById('quiz-results').style.display = 'none';
+        }
+        
+        // Matching activity
+        let matchingState = {};
+        
+        function handleMatch(item, containerId) {
+            if (item.classList.contains('matched')) return;
+            
+            if (!matchingState[containerId]) {
+                matchingState[containerId] = { selected: null, matches: [] };
+            }
+            
+            const state = matchingState[containerId];
+            
+            if (state.selected === null) {
+                item.classList.add('selected');
+                state.selected = item;
+            } else if (state.selected === item) {
+                item.classList.remove('selected');
+                state.selected = null;
+            } else {
+                // Check if match
+                const match1 = state.selected.dataset.match;
+                const match2 = item.dataset.match;
+                
+                if (match1 === match2) {
+                    state.selected.classList.remove('selected');
+                    state.selected.classList.add('matched');
+                    item.classList.add('matched');
+                    state.matches.push(match1);
+                    state.selected = null;
+                    
+                    // Check if all matched
+                    if (state.matches.length === 4) {
+                        const feedback = document.getElementById(containerId + '-feedback');
+                        feedback.className = 'quiz-feedback show correct';
+                        feedback.innerHTML = '<strong>✓ Excellent!</strong> You\'ve correctly matched all file system components to their descriptions.';
+                    }
+                } else {
+                    // Wrong match - flash red
+                    state.selected.classList.add('incorrect');
+                    item.classList.add('incorrect');
+                    setTimeout(() => {
+                        state.selected.classList.remove('selected', 'incorrect');
+                        item.classList.remove('incorrect');
+                        state.selected = null;
+                    }, 500);
+                }
+            }
+        }
+        
+        function resetMatching(containerId) {
+            const container = document.getElementById(containerId);
+            container.querySelectorAll('.matching-item').forEach(item => {
+                item.classList.remove('selected', 'matched', 'incorrect');
+            });
+            matchingState[containerId] = { selected: null, matches: [] };
+            document.getElementById(containerId + '-feedback').className = 'quiz-feedback';
+        }
+        
+        // Drag and drop
+        let draggedItem = null;
+        
+        function handleDragStart(event) {
+            draggedItem = event.target;
+            event.target.classList.add('dragging');
+            event.dataTransfer.effectAllowed = 'move';
+        }
+        
+        function handleDragEnd(event) {
+            event.target.classList.remove('dragging');
+            document.querySelectorAll('.drag-zone').forEach(zone => {
+                zone.classList.remove('drag-over');
+            });
+        }
+        
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('drag-over');
+        }
+        
+        function handleDrop(event, category) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('drag-over');
+            
+            if (draggedItem) {
+                event.currentTarget.appendChild(draggedItem);
+                checkDragDropComplete();
+            }
+        }
+        
+        function checkDragDropComplete() {
+            const zones = ['windows', 'linux', 'macos'];
+            let allCorrect = true;
+            let allPlaced = true;
+            
+            const sourceZone = document.getElementById('source-zone');
+            if (sourceZone.querySelectorAll('.drag-item').length > 0) {
+                allPlaced = false;
+            }
+            
+            zones.forEach(zone => {
+                const zoneElement = document.getElementById(zone + '-zone');
+                const items = zoneElement.querySelectorAll('.drag-item');
+                items.forEach(item => {
+                    if (item.dataset.category !== zone) {
+                        allCorrect = false;
+                    }
+                });
+            });
+            
+            const feedback = document.getElementById('drag-feedback');
+            if (allPlaced) {
+                if (allCorrect) {
+                    feedback.className = 'quiz-feedback show correct';
+                    feedback.innerHTML = '<strong>✓ Perfect!</strong> You\'ve correctly categorized all file systems by their primary operating system.';
+                } else {
+                    feedback.className = 'quiz-feedback show incorrect';
+                    feedback.innerHTML = '<strong>Not quite right.</strong> Some file systems are in the wrong category. Try again!';
+                }
+            }
+        }
+        
+        function resetDragDrop() {
+            const sourceZone = document.getElementById('source-zone');
+            const items = document.querySelectorAll('.drag-item');
+            items.forEach(item => {
+                sourceZone.appendChild(item);
+            });
+            document.getElementById('drag-feedback').className = 'quiz-feedback';
+        }
+        
+        // Navigation highlighting
+        function updateNavHighlight() {
+            const sections = document.querySelectorAll('.section');
+            const navLinks = document.querySelectorAll('.nav-list a');
+            
+            let currentSection = '';
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= 150) {
+                    currentSection = section.id;
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + currentSection) {
+                    link.classList.add('active');
+                }
+            });
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+            window.addEventListener('scroll', updateNavHighlight);
+        });
+    </script>
+</body>
+</html>

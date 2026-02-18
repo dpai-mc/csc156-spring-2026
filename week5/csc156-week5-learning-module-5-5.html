@@ -1,0 +1,3466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CSC 156 Week 5 Module 5.5: Deleted File Recovery and File Carving - Learn metadata-based recovery, file carving techniques, and recovery challenges">
+    <title>Module 5.5: Deleted File Recovery & File Carving | CSC 156 Digital Forensics</title>
+    <style>
+        /* CSS Reset and Base Styles */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-color: #dc2626;
+            --primary-dark: #b91c1c;
+            --primary-light: #ef4444;
+            --secondary-color: #059669;
+            --secondary-dark: #047857;
+            --secondary-light: #10b981;
+            --accent-color: #7c3aed;
+            --accent-light: #8b5cf6;
+            --recovery-color: #2563eb;
+            --recovery-dark: #1d4ed8;
+            --recovery-light: #3b82f6;
+            --carving-color: #d97706;
+            --carving-dark: #b45309;
+            --carving-light: #f59e0b;
+            --danger-color: #dc2626;
+            --danger-light: #f87171;
+            --success-color: #10b981;
+            --success-light: #34d399;
+            --warning-color: #f59e0b;
+            --warning-light: #fbbf24;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --text-light: #94a3b8;
+            --bg-primary: #ffffff;
+            --bg-secondary: #fef2f2;
+            --bg-tertiary: #fee2e2;
+            --bg-dark: #0f172a;
+            --bg-code: #1e293b;
+            --border-color: #fecaca;
+            --border-light: #fee2e2;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --font-mono: 'Cascadia Code', 'Fira Code', 'Consolas', 'Monaco', monospace;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.7;
+            color: var(--text-primary);
+            background-color: var(--bg-secondary);
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Skip Link for Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            z-index: 1000;
+            text-decoration: none;
+            border-radius: 0 0 var(--radius-sm) 0;
+            font-weight: 600;
+        }
+        
+        .skip-link:focus {
+            top: 0;
+        }
+        
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--carving-color) 50%, var(--recovery-color) 100%);
+            color: white;
+            padding: 2.5rem 1rem;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.07'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.6;
+        }
+        
+        header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .header-meta {
+            font-size: 1rem;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header-meta span {
+            display: inline-block;
+            margin: 0.25rem 0.5rem;
+        }
+        
+        .header-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1.25rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(4px);
+        }
+        
+        .header-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            margin-top: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            background: var(--bg-primary);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .progress-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .progress-percentage {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background: var(--bg-tertiary);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--carving-color), var(--recovery-color));
+            border-radius: 5px;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+        
+        .progress-note {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+        
+        /* Navigation */
+        .module-nav {
+            background: var(--bg-primary);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .nav-list a {
+            display: block;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+        
+        .nav-list a:hover,
+        .nav-list a:focus {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+        
+        .nav-list a.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .nav-list a.recovery {
+            border-left: 3px solid var(--recovery-color);
+        }
+        
+        .nav-list a.carving {
+            border-left: 3px solid var(--carving-color);
+        }
+        
+        /* Main Content */
+        main {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        
+        /* Section Styles */
+        .section {
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+        }
+        
+        .section-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 1.25rem 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+        
+        .section-header:hover {
+            background: linear-gradient(135deg, var(--primary-dark), #991b1b);
+        }
+        
+        .section-header.recovery {
+            background: linear-gradient(135deg, var(--recovery-color), var(--recovery-dark));
+        }
+        
+        .section-header.recovery:hover {
+            background: linear-gradient(135deg, var(--recovery-dark), #1e40af);
+        }
+        
+        .section-header.carving {
+            background: linear-gradient(135deg, var(--carving-color), var(--carving-dark));
+        }
+        
+        .section-header.carving:hover {
+            background: linear-gradient(135deg, var(--carving-dark), #92400e);
+        }
+        
+        .section-header.challenges {
+            background: linear-gradient(135deg, var(--accent-color), #6d28d9);
+        }
+        
+        .section-header.challenges:hover {
+            background: linear-gradient(135deg, #6d28d9, #5b21b6);
+        }
+        
+        .section-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .section-toggle {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            transition: transform 0.3s ease, background 0.2s ease;
+        }
+        
+        .section-toggle:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .section-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+        
+        .section-content {
+            padding: 1.5rem;
+            display: block;
+        }
+        
+        .section-content.collapsed {
+            display: none;
+        }
+        
+        /* Typography */
+        h3 {
+            color: var(--primary-dark);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            border-bottom: 2px solid var(--bg-tertiary);
+            padding-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        h3:first-child {
+            margin-top: 0;
+        }
+        
+        h3.recovery {
+            color: var(--recovery-dark);
+            border-bottom-color: #dbeafe;
+        }
+        
+        h3.carving {
+            color: var(--carving-dark);
+            border-bottom-color: #fef3c7;
+        }
+        
+        h4 {
+            color: var(--text-primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 1.05rem;
+        }
+        
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+        
+        strong {
+            color: var(--text-primary);
+        }
+        
+        /* Definition Cards */
+        .definition-card {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border-left: 4px solid var(--primary-color);
+            padding: 1.25rem;
+            margin: 1.25rem 0;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        }
+        
+        .definition-card.recovery {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-left-color: var(--recovery-color);
+        }
+        
+        .definition-card.carving {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border-left-color: var(--carving-color);
+        }
+        
+        .definition-card h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--primary-dark);
+            font-size: 1.1rem;
+        }
+        
+        .definition-card.recovery h4 {
+            color: var(--recovery-dark);
+        }
+        
+        .definition-card.carving h4 {
+            color: var(--carving-dark);
+        }
+        
+        .definition-card p {
+            margin: 0;
+            color: var(--text-primary);
+        }
+        
+        .definition-card p:not(:last-child) {
+            margin-bottom: 0.75rem;
+        }
+        
+        /* Info Boxes */
+        .info-box {
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            margin: 1.25rem 0;
+        }
+        
+        .info-box.concept {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border: 1px solid #86efac;
+        }
+        
+        .info-box.warning {
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+            border: 1px solid #fcd34d;
+        }
+        
+        .info-box.forensic {
+            background: linear-gradient(135deg, #fdf4ff, #f3e8ff);
+            border: 1px solid #d8b4fe;
+        }
+        
+        .info-box.example {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 1px solid #7dd3fc;
+        }
+        
+        .info-box.danger {
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+            border: 1px solid #fca5a5;
+        }
+        
+        .info-box.recovery {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border: 1px solid #93c5fd;
+        }
+        
+        .info-box.carving {
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+            border: 1px solid #fcd34d;
+        }
+        
+        .info-box.hdd {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border: 1px solid #86efac;
+        }
+        
+        .info-box.ssd {
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+            border: 1px solid #fca5a5;
+        }
+        
+        .info-box-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .info-box.concept .info-box-title { color: #166534; }
+        .info-box.warning .info-box-title { color: #a16207; }
+        .info-box.forensic .info-box-title { color: #7c3aed; }
+        .info-box.example .info-box-title { color: #0369a1; }
+        .info-box.danger .info-box-title { color: #dc2626; }
+        .info-box.recovery .info-box-title { color: var(--recovery-dark); }
+        .info-box.carving .info-box-title { color: var(--carving-dark); }
+        .info-box.hdd .info-box-title { color: #166534; }
+        .info-box.ssd .info-box-title { color: #dc2626; }
+        
+        /* Code Blocks */
+        pre {
+            background: var(--bg-code);
+            color: #e2e8f0;
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin: 1rem 0;
+            white-space: pre;
+            word-wrap: normal;
+            border: 1px solid #334155;
+        }
+        
+        code {
+            font-family: var(--font-mono);
+            background: var(--bg-tertiary);
+            padding: 0.125rem 0.375rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.875em;
+            color: var(--primary-dark);
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+        
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 1.25rem 0;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        
+        th, td {
+            padding: 0.875rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        th {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+            font-weight: 600;
+            color: var(--text-primary);
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover {
+            background: var(--bg-secondary);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* Diagrams */
+        .diagram-container {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+        
+        .diagram-title {
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            font-size: 1.05rem;
+        }
+        
+        .diagram {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            line-height: 1.4;
+            white-space: pre;
+            overflow-x: auto;
+            color: var(--text-primary);
+        }
+        
+        /* Recovery Method Cards */
+        .method-comparison {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .method-card {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .method-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+        
+        .method-card.recovery {
+            border-color: var(--recovery-color);
+        }
+        
+        .method-card.carving {
+            border-color: var(--carving-color);
+        }
+        
+        .method-card-header {
+            padding: 1rem;
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .method-card.recovery .method-card-header {
+            background: linear-gradient(135deg, var(--recovery-color), var(--recovery-dark));
+        }
+        
+        .method-card.carving .method-card-header {
+            background: linear-gradient(135deg, var(--carving-color), var(--carving-dark));
+        }
+        
+        .method-card-body {
+            padding: 1rem;
+        }
+        
+        .method-card-item {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .method-card-item:last-child {
+            border-bottom: none;
+        }
+        
+        .method-card-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        
+        .method-card-value {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+        
+        /* File Signature Display */
+        .signature-table {
+            margin: 1rem 0;
+        }
+        
+        .signature-row {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            margin-bottom: 0.5rem;
+            transition: all 0.2s ease;
+        }
+        
+        .signature-row:hover {
+            background: var(--bg-tertiary);
+            transform: translateX(5px);
+        }
+        
+        .signature-icon {
+            font-size: 1.5rem;
+            margin-right: 1rem;
+            width: 40px;
+            text-align: center;
+        }
+        
+        .signature-info {
+            flex: 1;
+        }
+        
+        .signature-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .signature-hex {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--carving-dark);
+            background: #fef3c7;
+            padding: 0.125rem 0.5rem;
+            border-radius: var(--radius-sm);
+            margin-top: 0.25rem;
+            display: inline-block;
+        }
+        
+        .signature-footer {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-left: 1rem;
+        }
+        
+        /* Storage Comparison */
+        .storage-comparison {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .storage-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            border: 2px solid var(--border-color);
+        }
+        
+        .storage-card.hdd {
+            border-color: var(--success-color);
+        }
+        
+        .storage-card.ssd {
+            border-color: var(--danger-color);
+        }
+        
+        .storage-card-header {
+            padding: 1rem;
+            color: white;
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        .storage-card.hdd .storage-card-header {
+            background: linear-gradient(135deg, var(--success-color), #047857);
+        }
+        
+        .storage-card.ssd .storage-card-header {
+            background: linear-gradient(135deg, var(--danger-color), #b91c1c);
+        }
+        
+        .storage-card-body {
+            padding: 1rem;
+        }
+        
+        .storage-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .storage-item:last-child {
+            border-bottom: none;
+        }
+        
+        .storage-icon {
+            font-size: 1.25rem;
+            margin-right: 0.75rem;
+        }
+        
+        .storage-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        /* Interactive Elements */
+        .interactive-container {
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+            border: 2px solid var(--primary-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .interactive-container.recovery {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border-color: var(--recovery-color);
+        }
+        
+        .interactive-container.carving {
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+            border-color: var(--carving-color);
+        }
+        
+        .interactive-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* Decision Tree */
+        .decision-tree {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border-color);
+        }
+        
+        .decision-node {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .decision-node:hover {
+            border-color: var(--primary-color);
+            transform: scale(1.02);
+        }
+        
+        .decision-node.question {
+            background: linear-gradient(135deg, #fdf4ff, #f3e8ff);
+            border-color: var(--accent-color);
+        }
+        
+        .decision-node.recovery-answer {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border-color: var(--recovery-color);
+        }
+        
+        .decision-node.carving-answer {
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+            border-color: var(--carving-color);
+        }
+        
+        .decision-arrow {
+            text-align: center;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            margin: 0.5rem 0;
+        }
+        
+        .decision-branches {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .decision-branch {
+            text-align: center;
+        }
+        
+        .decision-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+        
+        /* Quiz Styles */
+        .quiz-question {
+            background: var(--bg-primary);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+        }
+        
+        .quiz-question p {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .quiz-option:hover {
+            border-color: var(--primary-color);
+            background: #fef2f2;
+        }
+        
+        .quiz-option.selected {
+            border-color: var(--primary-color);
+            background: #fee2e2;
+        }
+        
+        .quiz-option.correct {
+            border-color: var(--success-color);
+            background: #dcfce7;
+        }
+        
+        .quiz-option.incorrect {
+            border-color: var(--danger-color);
+            background: #fee2e2;
+        }
+        
+        .quiz-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary-color);
+        }
+        
+        .quiz-feedback {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            display: none;
+        }
+        
+        .quiz-feedback.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .quiz-feedback.correct {
+            background: #dcfce7;
+            border: 1px solid #86efac;
+            color: #166534;
+        }
+        
+        .quiz-feedback.incorrect {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+        
+        .btn-recovery {
+            background: var(--recovery-color);
+            color: white;
+        }
+        
+        .btn-recovery:hover {
+            background: var(--recovery-dark);
+        }
+        
+        .btn-carving {
+            background: var(--carving-color);
+            color: white;
+        }
+        
+        .btn-carving:hover {
+            background: var(--carving-dark);
+        }
+        
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+            margin: 1.25rem 0;
+        }
+        
+        .card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .card.recovery {
+            border-left: 4px solid var(--recovery-color);
+        }
+        
+        .card.carving {
+            border-left: 4px solid var(--carving-color);
+        }
+        
+        .card.success {
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .card.danger {
+            border-left: 4px solid var(--danger-color);
+        }
+        
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .card-title {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .card-content {
+            color: var(--text-secondary);
+            font-size: 0.925rem;
+        }
+        
+        /* Process Steps */
+        .process-steps {
+            margin: 1.5rem 0;
+        }
+        
+        .process-step {
+            display: flex;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        
+        .process-step:last-child {
+            margin-bottom: 0;
+        }
+        
+        .process-step::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 40px;
+            bottom: -1rem;
+            width: 2px;
+            background: var(--border-color);
+        }
+        
+        .process-step:last-child::before {
+            display: none;
+        }
+        
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-right: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .step-number.recovery {
+            background: var(--recovery-color);
+        }
+        
+        .step-number.carving {
+            background: var(--carving-color);
+        }
+        
+        .step-content {
+            flex: 1;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+        }
+        
+        .step-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .step-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        /* Lists */
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+            color: var(--text-secondary);
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+        
+        li::marker {
+            color: var(--primary-color);
+        }
+        
+        /* Collapsible sections */
+        .collapsible {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+        
+        .collapsible-header {
+            background: var(--bg-secondary);
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: var(--text-primary);
+            transition: background 0.2s ease;
+        }
+        
+        .collapsible-header:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .collapsible-icon {
+            transition: transform 0.3s ease;
+            color: var(--primary-color);
+        }
+        
+        .collapsible.open .collapsible-icon {
+            transform: rotate(180deg);
+        }
+        
+        .collapsible-content {
+            padding: 0 1.25rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        
+        .collapsible.open .collapsible-content {
+            padding: 1.25rem;
+            max-height: 5000px;
+        }
+        
+        /* Tabs */
+        .tabs-container {
+            margin: 1.5rem 0;
+        }
+        
+        .tabs-header {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .tab-btn {
+            padding: 0.75rem 1.25rem;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+        }
+        
+        .tab-btn:hover {
+            color: var(--primary-color);
+        }
+        
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .tab-btn.recovery.active {
+            color: var(--recovery-color);
+            border-bottom-color: var(--recovery-color);
+        }
+        
+        .tab-btn.carving.active {
+            color: var(--carving-color);
+            border-bottom-color: var(--carving-color);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 1.5rem 0;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        /* Completion Checklist */
+        .checklist {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0;
+        }
+        
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: var(--radius-sm);
+            margin-bottom: 0.5rem;
+            transition: background 0.2s ease;
+        }
+        
+        .checklist-item:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .checklist-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--success-color);
+            cursor: pointer;
+        }
+        
+        .checklist-item label {
+            cursor: pointer;
+            flex: 1;
+        }
+        
+        .checklist-item.completed label {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--bg-dark);
+            color: white;
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 2rem;
+        }
+        
+        footer p {
+            color: rgba(255,255,255,0.8);
+            margin: 0.25rem 0;
+        }
+        
+        .footer-nav {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1.25rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: var(--radius-md);
+            transition: all 0.2s ease;
+        }
+        
+        .footer-nav a:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-1px);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .section-header h2 {
+                font-size: 1.1rem;
+            }
+            
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .method-comparison {
+                grid-template-columns: 1fr;
+            }
+            
+            .storage-comparison {
+                grid-template-columns: 1fr;
+            }
+            
+            .decision-branches {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Print Styles */
+        @media print {
+            .progress-container,
+            .module-nav,
+            .section-toggle,
+            .interactive-container,
+            .btn,
+            footer {
+                display: none !important;
+            }
+            
+            .section-content.collapsed {
+                display: block !important;
+            }
+            
+            .section {
+                break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid #ccc;
+            }
+        }
+        
+        /* Focus Styles for Accessibility */
+        *:focus {
+            outline: 3px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+        
+        *:focus:not(:focus-visible) {
+            outline: none;
+        }
+        
+        *:focus-visible {
+            outline: 3px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+        
+        /* Screen Reader Only */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <header role="banner">
+        <h1>🔄 Module 5.5: Deleted File Recovery & File Carving</h1>
+        <p class="header-subtitle">Recovering Evidence from the Digital Graveyard</p>
+        <div class="header-meta">
+            <span>CSC 156 - Digital Forensics Fundamentals</span>
+            <span>|</span>
+            <span>Week 5: File Systems and Data Structures</span>
+        </div>
+        <div class="header-badge">⏱️ Estimated Time: 55-60 minutes</div>
+    </header>
+    
+    <div class="progress-container" role="region" aria-label="Module progress">
+        <div class="progress-header">
+            <span class="progress-label">📊 Module 5.5 Progress</span>
+            <span class="progress-percentage" id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <p class="progress-note">💾 Progress is saved for this session only</p>
+    </div>
+    
+    <nav class="module-nav" aria-label="Module sections">
+        <ul class="nav-list">
+            <li><a href="#section-overview" class="active">Overview</a></li>
+            <li><a href="#section-deletion">Deletion</a></li>
+            <li><a href="#section-metadata-recovery" class="recovery">Metadata Recovery</a></li>
+            <li><a href="#section-carving" class="carving">File Carving</a></li>
+            <li><a href="#section-signatures" class="carving">Signatures</a></li>
+            <li><a href="#section-challenges">Challenges</a></li>
+            <li><a href="#section-decision">Decision Guide</a></li>
+            <li><a href="#section-practice">Practice</a></li>
+        </ul>
+    </nav>
+    
+    <main id="main-content" role="main">
+        <!-- Section 1: Overview -->
+        <section class="section" id="section-overview">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🎯</span> Learning Overview & Objectives</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>The ability to recover deleted files is one of the most valuable skills in digital forensics. Suspects often delete incriminating evidence, believing it's gone forever. This module teaches you the techniques to prove them wrong—recovering files through metadata analysis and file carving, even when traditional methods fail.</p>
+                
+                <div class="info-box concept">
+                    <div class="info-box-title"><span aria-hidden="true">🎓</span> Learning Objectives</div>
+                    <p>Upon completing this module, you will be able to:</p>
+                    <ol>
+                        <li><strong>Explain the difference between logical deletion and physical destruction</strong></li>
+                        <li><strong>Describe metadata-based recovery techniques</strong> for FAT, NTFS, and ext4</li>
+                        <li><strong>Perform file carving</strong> using header/footer signatures</li>
+                        <li><strong>Configure carving tools</strong> with custom signatures</li>
+                        <li><strong>Recognize recovery challenges</strong> based on storage type (HDD vs. SSD)</li>
+                        <li><strong>Apply appropriate recovery methods</strong> based on scenario</li>
+                    </ol>
+                </div>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> CSLO Alignment</div>
+                    <p><strong>This module directly addresses CSLO 2:</strong> Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data.</p>
+                    <p><strong>Course Objective:</strong> "Analyze file systems and recover deleted files"</p>
+                    <p><strong>Certification Alignment:</strong></p>
+                    <ul>
+                        <li>IACIS CFCE: File Systems</li>
+                        <li>GIAC GCFE: Filesystem Forensics</li>
+                        <li>EC-Council CHFI: Data Recovery</li>
+                    </ul>
+                </div>
+                
+                <h3>The Two Approaches to File Recovery</h3>
+                
+                <div class="method-comparison">
+                    <div class="method-card recovery">
+                        <div class="method-card-header">📋 Metadata-Based Recovery</div>
+                        <div class="method-card-body">
+                            <div class="method-card-item">
+                                <div class="method-card-label">How it works</div>
+                                <div class="method-card-value">Uses file system metadata (directory entries, MFT, inodes) to locate deleted files</div>
+                            </div>
+                            <div class="method-card-item">
+                                <div class="method-card-label">Advantages</div>
+                                <div class="method-card-value">Recovers filename, timestamps, attributes; handles fragmented files</div>
+                            </div>
+                            <div class="method-card-item">
+                                <div class="method-card-label">Limitations</div>
+                                <div class="method-card-value">Requires intact metadata; fails if metadata overwritten</div>
+                            </div>
+                            <div class="method-card-item">
+                                <div class="method-card-label">Best for</div>
+                                <div class="method-card-value">Recently deleted files on intact file systems</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="method-card carving">
+                        <div class="method-card-header">🔪 File Carving</div>
+                        <div class="method-card-body">
+                            <div class="method-card-item">
+                                <div class="method-card-label">How it works</div>
+                                <div class="method-card-value">Scans raw data for file signatures (magic numbers) regardless of file system</div>
+                            </div>
+                            <div class="method-card-item">
+                                <div class="method-card-label">Advantages</div>
+                                <div class="method-card-value">Works without metadata; recovers from formatted/damaged media</div>
+                            </div>
+                            <div class="method-card-item">
+                                <div class="method-card-label">Limitations</div>
+                                <div class="method-card-value">No filename/timestamps; struggles with fragmented files</div>
+                            </div>
+                            <div class="method-card-item">
+                                <div class="method-card-label">Best for</div>
+                                <div class="method-card-value">Formatted drives, corrupted file systems, unallocated space</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-box warning">
+                    <div class="info-box-title"><span aria-hidden="true">⚠️</span> Prerequisites Check</div>
+                    <p>This module builds on all previous Week 5 modules. Ensure you understand:</p>
+                    <ul>
+                        <li>File system structures (FAT, NTFS, ext4) from Modules 5.2-5.4</li>
+                        <li>How deletion works in each file system</li>
+                        <li>Clusters, slack space, and unallocated space</li>
+                        <li>Week 4 concepts: HDD vs. SSD differences, TRIM command</li>
+                    </ul>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-overview-1" onchange="updateProgress()">
+                        <label for="check-overview-1">I understand the learning objectives for this module</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-overview-2" onchange="updateProgress()">
+                        <label for="check-overview-2">I can distinguish between metadata recovery and file carving</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 2: Understanding File Deletion -->
+        <section class="section" id="section-deletion">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🗑️</span> Understanding File Deletion</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>The fundamental principle of file recovery is simple: <strong>deleted ≠ destroyed</strong>. When you delete a file, the operating system doesn't erase the data—it simply marks the space as available for reuse. Understanding this distinction is crucial for forensic recovery.</p>
+                
+                <h3>Logical Deletion vs. Physical Destruction</h3>
+                
+                <div class="definition-card">
+                    <h4>Logical Deletion</h4>
+                    <p><strong>What happens when you "delete" a file:</strong> The file system updates its metadata to indicate the file no longer exists and marks the file's storage space as available. The actual data remains on the storage device until overwritten by new data.</p>
+                    <p><strong>Analogy:</strong> Removing a book's card from the library catalog doesn't remove the book from the shelf—it just means the library no longer tracks it.</p>
+                </div>
+                
+                <div class="definition-card" style="border-left-color: #dc2626;">
+                    <h4>Physical Destruction</h4>
+                    <p><strong>What actually erases data:</strong> Overwriting the storage locations with new data, secure deletion tools that write patterns over the data, or physical destruction of the storage media.</p>
+                    <p><strong>Analogy:</strong> Actually removing the book from the shelf and replacing it with a different book.</p>
+                </div>
+                
+                <h3>What Happens During Deletion (By File System)</h3>
+                
+                <div class="tabs-container">
+                    <div class="tabs-header" role="tablist">
+                        <button class="tab-btn active" onclick="switchTab(event, 'tab-fat-del')" role="tab" aria-selected="true">FAT</button>
+                        <button class="tab-btn" onclick="switchTab(event, 'tab-ntfs-del')" role="tab" aria-selected="false">NTFS</button>
+                        <button class="tab-btn" onclick="switchTab(event, 'tab-ext4-del')" role="tab" aria-selected="false">ext4</button>
+                    </div>
+                    
+                    <div class="tab-content active" id="tab-fat-del" role="tabpanel">
+                        <h4>FAT Deletion Process</h4>
+                        <div class="process-steps">
+                            <div class="process-step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <div class="step-title">Directory Entry Marked</div>
+                                    <div class="step-description">First byte of filename changed to <code>0xE5</code>. Rest of entry (including timestamps, starting cluster, size) remains intact.</div>
+                                </div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <div class="step-title">FAT Chain Zeroed</div>
+                                    <div class="step-description">Cluster entries in the FAT are set to <code>0x0000</code> (free). The chain linking clusters is broken.</div>
+                                </div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <div class="step-title">Data Unchanged</div>
+                                    <div class="step-description">Actual file content in data clusters is NOT modified. Data persists until clusters are reallocated.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-box recovery">
+                            <div class="info-box-title">Recovery Potential</div>
+                            <p><strong>High</strong> if file was contiguous (not fragmented). Starting cluster and size are preserved in directory entry. Only first character of filename is lost.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="tab-ntfs-del" role="tabpanel">
+                        <h4>NTFS Deletion Process</h4>
+                        <div class="process-steps">
+                            <div class="process-step">
+                                <div class="step-number recovery">1</div>
+                                <div class="step-content">
+                                    <div class="step-title">MFT Entry Flags Changed</div>
+                                    <div class="step-description">Flags set to <code>0x0000</code> (not in use). Sequence number incremented. All attributes remain intact.</div>
+                                </div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number recovery">2</div>
+                                <div class="step-content">
+                                    <div class="step-title">$Bitmap Updated</div>
+                                    <div class="step-description">Cluster bitmap marks file's clusters as free. Clusters available for reallocation.</div>
+                                </div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number recovery">3</div>
+                                <div class="step-content">
+                                    <div class="step-title">Directory Index Updated</div>
+                                    <div class="step-description">File removed from parent directory's $INDEX. May remain in index slack space.</div>
+                                </div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number recovery">4</div>
+                                <div class="step-content">
+                                    <div class="step-title">$UsnJrnl Entry Created</div>
+                                    <div class="step-description">Deletion recorded in change journal with FILE_DELETE reason code.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-box recovery">
+                            <div class="info-box-title">Recovery Potential</div>
+                            <p><strong>Excellent.</strong> Complete filename preserved in $FILE_NAME attribute. Run list (cluster locations) often intact. Timestamps, permissions, and all metadata available. $UsnJrnl proves file existed.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="tab-ext4-del" role="tabpanel">
+                        <h4>ext4 Deletion Process</h4>
+                        <div class="process-steps">
+                            <div class="process-step">
+                                <div class="step-number" style="background: #f97316;">1</div>
+                                <div class="step-content">
+                                    <div class="step-title">Directory Entry Removed</div>
+                                    <div class="step-description">Filename removed from parent directory. Unlike FAT, entry is actually removed, not just marked.</div>
+                                </div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number" style="background: #f97316;">2</div>
+                                <div class="step-content">
+                                    <div class="step-title">Link Count Decremented</div>
+                                    <div class="step-description">Inode's hard link count reduced. If count reaches 0 and no open handles, inode marked for reuse.</div>
+                                </div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number" style="background: #f97316;">3</div>
+                                <div class="step-content">
+                                    <div class="step-title">Block Pointers May Be Cleared</div>
+                                    <div class="step-description">ext4 may zero extent/block pointers in inode. This is the key challenge for ext4 recovery.</div>
+                                </div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number" style="background: #f97316;">4</div>
+                                <div class="step-content">
+                                    <div class="step-title">Deletion Time Set</div>
+                                    <div class="step-description">dtime field in inode records when file was deleted—useful forensic artifact.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-box warning">
+                            <div class="info-box-title">Recovery Potential</div>
+                            <p><strong>Moderate.</strong> Filename stored in directory (not inode), so often lost. Block pointers may be cleared. Journal may help for recent deletions. File carving often necessary.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>The Recovery Window</h3>
+                
+                <p>The time between deletion and data destruction is called the "recovery window." Several factors affect this window:</p>
+                
+                <div class="cards-grid">
+                    <div class="card success">
+                        <div class="card-icon">✅</div>
+                        <div class="card-title">Extends Recovery Window</div>
+                        <div class="card-content">
+                            <ul>
+                                <li>Large free space on drive</li>
+                                <li>Low disk activity after deletion</li>
+                                <li>HDD (no TRIM)</li>
+                                <li>Quick acquisition after incident</li>
+                                <li>File was in less-used area of disk</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card danger">
+                        <div class="card-icon">❌</div>
+                        <div class="card-title">Shortens Recovery Window</div>
+                        <div class="card-content">
+                            <ul>
+                                <li>Low free space (high reuse)</li>
+                                <li>High disk activity</li>
+                                <li>SSD with TRIM enabled</li>
+                                <li>Defragmentation run</li>
+                                <li>System updates/installations</li>
+                                <li>Secure deletion tools used</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-box danger">
+                    <div class="info-box-title"><span aria-hidden="true">🚨</span> Critical: SSD TRIM Impact</div>
+                    <p>Remember from Week 4: SSDs with TRIM enabled may <strong>immediately and permanently</strong> destroy deleted data. The SSD's controller zeros blocks in the background, often within seconds of deletion. This is the single biggest threat to file recovery on modern systems.</p>
+                    <p><strong>Forensic implication:</strong> For SSDs, time is critical. Acquire images immediately. Don't boot suspect systems if possible.</p>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-deletion-1" onchange="updateProgress()">
+                        <label for="check-deletion-1">I understand the difference between logical deletion and physical destruction</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-deletion-2" onchange="updateProgress()">
+                        <label for="check-deletion-2">I can describe how deletion works in FAT, NTFS, and ext4</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-deletion-3" onchange="updateProgress()">
+                        <label for="check-deletion-3">I understand factors that affect the recovery window</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 3: Metadata-Based Recovery -->
+        <section class="section" id="section-metadata-recovery">
+            <div class="section-header recovery" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">📋</span> Metadata-Based Recovery</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>Metadata-based recovery uses the file system's own structures to locate and recover deleted files. This is the preferred method when metadata remains intact because it preserves filenames, timestamps, and can handle fragmented files.</p>
+                
+                <div class="definition-card recovery">
+                    <h4>Metadata-Based Recovery</h4>
+                    <p>A file recovery technique that examines file system metadata structures (directory entries, MFT entries, inodes) to find records of deleted files and use their stored information (starting location, size, cluster chain) to reconstruct the original file.</p>
+                </div>
+                
+                <h3 class="recovery">Recovery by File System</h3>
+                
+                <div class="collapsible" id="collapse-fat-recovery">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-fat-recovery')" role="button" aria-expanded="false" tabindex="0">
+                        <span>💾 FAT Recovery Technique</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <h4>Step-by-Step FAT Recovery</h4>
+                        
+                        <div class="process-steps">
+                            <div class="process-step">
+                                <div class="step-number recovery">1</div>
+                                <div class="step-content">
+                                    <div class="step-title">Scan for 0xE5 Entries</div>
+                                    <div class="step-description">Search directory areas for entries where the first byte is <code>0xE5</code>. These are deleted file markers.</div>
+                                </div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number recovery">2</div>
+                                <div class="step-content">
+                                    <div class="step-title">Extract Metadata</div>
+                                    <div class="step-description">Read the remaining 31 bytes: filename (minus first char), extension, attributes, timestamps, starting cluster, file size.</div>
+                                </div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number recovery">3</div>
+                                <div class="step-content">
+                                    <div class="step-title">Verify Cluster Status</div>
+                                    <div class="step-description">Check if the starting cluster (and subsequent clusters based on file size) are still unallocated in the FAT.</div>
+                                </div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number recovery">4</div>
+                                <div class="step-content">
+                                    <div class="step-title">Calculate Cluster Range</div>
+                                    <div class="step-description">Using file size and cluster size, calculate how many clusters the file occupied: <code>clusters = ceil(size / cluster_size)</code></div>
+                                </div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number recovery">5</div>
+                                <div class="step-content">
+                                    <div class="step-title">Extract Data</div>
+                                    <div class="step-description">Read data from starting cluster for the calculated number of clusters. Trim to exact file size.</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="info-box warning">
+                            <div class="info-box-title">FAT Recovery Limitations</div>
+                            <ul>
+                                <li><strong>First character lost:</strong> Must guess or use LFN entries if available</li>
+                                <li><strong>Fragmentation:</strong> FAT chain is zeroed, so fragmented files can't be fully recovered</li>
+                                <li><strong>Assumption:</strong> Recovery assumes contiguous clusters from starting cluster</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="info-box example">
+                            <div class="info-box-title">Sleuth Kit Commands for FAT Recovery</div>
+<pre><code># List all files including deleted (marked with *)
+fls -r -d /dev/sdb1
+
+# Example output:
+# r/r * 5:    _EPORT.TXT
+#             ^ First char replaced with underscore
+
+# Get inode/entry information
+istat /dev/sdb1 5
+
+# Extract file by inode number
+icat /dev/sdb1 5 > recovered_file.txt</code></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="collapsible" id="collapse-ntfs-recovery">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-ntfs-recovery')" role="button" aria-expanded="false" tabindex="0">
+                        <span>🖥️ NTFS Recovery Technique</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <h4>Step-by-Step NTFS Recovery</h4>
+                        
+                        <div class="process-steps">
+                            <div class="process-step">
+                                <div class="step-number recovery">1</div>
+                                <div class="step-content">
+                                    <div class="step-title">Scan MFT for Deleted Entries</div>
+                                    <div class="step-description">Search $MFT for entries with flags = <code>0x0000</code> (not in use). These are deleted files.</div>
+                                </div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number recovery">2</div>
+                                <div class="step-content">
+                                    <div class="step-title">Parse Attributes</div>
+                                    <div class="step-description">Extract $STANDARD_INFORMATION (timestamps), $FILE_NAME (complete filename), and $DATA (content or run list).</div>
+                                </div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number recovery">3</div>
+                                <div class="step-content">
+                                    <div class="step-title">Check for Resident Data</div>
+                                    <div class="step-description">Small files may be entirely stored in the MFT entry's $DATA attribute. If resident, extract directly.</div>
+                                </div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number recovery">4</div>
+                                <div class="step-content">
+                                    <div class="step-title">Follow Run List</div>
+                                    <div class="step-description">For non-resident files, parse the run list to find cluster locations. Run list often survives deletion!</div>
+                                </div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number recovery">5</div>
+                                <div class="step-content">
+                                    <div class="step-title">Verify and Extract</div>
+                                    <div class="step-description">Check if clusters are still unallocated. Extract data from clusters specified in run list.</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="info-box concept">
+                            <div class="info-box-title">NTFS Recovery Advantages</div>
+                            <ul>
+                                <li><strong>Complete filename:</strong> $FILE_NAME attribute preserves entire filename</li>
+                                <li><strong>Run list survives:</strong> Cluster locations often intact, enabling fragmented file recovery</li>
+                                <li><strong>Rich metadata:</strong> All timestamps, permissions, and attributes available</li>
+                                <li><strong>Journal evidence:</strong> $UsnJrnl proves file existed and when it was deleted</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="info-box example">
+                            <div class="info-box-title">Sleuth Kit Commands for NTFS Recovery</div>
+<pre><code># List all files including deleted
+fls -r -d /dev/sdc1
+
+# Get detailed MFT entry information
+istat /dev/sdc1 [MFT_entry_number]
+
+# Extract file content
+icat /dev/sdc1 [MFT_entry_number] > recovered_file
+
+# Analyze $MFT directly
+icat /dev/sdc1 0 > mft.raw
+# Then use MFTECmd or analyzeMFT</code></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="collapsible" id="collapse-ext4-recovery">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-ext4-recovery')" role="button" aria-expanded="false" tabindex="0">
+                        <span>🐧 ext4 Recovery Technique</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <h4>Step-by-Step ext4 Recovery</h4>
+                        
+                        <div class="process-steps">
+                            <div class="process-step">
+                                <div class="step-number" style="background: #f97316;">1</div>
+                                <div class="step-content">
+                                    <div class="step-title">Scan for Deleted Inodes</div>
+                                    <div class="step-description">Search inode tables for inodes with deletion time (dtime) set and link count = 0.</div>
+                                </div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number" style="background: #f97316;">2</div>
+                                <div class="step-content">
+                                    <div class="step-title">Check Journal</div>
+                                    <div class="step-description">Examine ext4 journal for recent transactions that may contain deleted file metadata or data.</div>
+                                </div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number" style="background: #f97316;">3</div>
+                                <div class="step-content">
+                                    <div class="step-title">Examine Block Pointers</div>
+                                    <div class="step-description">Check if extent/block pointers in inode are still populated. ext4 may zero these on deletion.</div>
+                                </div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number" style="background: #f97316;">4</div>
+                                <div class="step-content">
+                                    <div class="step-title">Attempt Recovery</div>
+                                    <div class="step-description">If block pointers exist, extract data. If not, fall back to file carving.</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="info-box danger">
+                            <div class="info-box-title">ext4 Recovery Challenges</div>
+                            <ul>
+                                <li><strong>Block pointers cleared:</strong> ext4 often zeros extent information on deletion</li>
+                                <li><strong>Filename in directory:</strong> Filename not stored in inode; directory entry removed</li>
+                                <li><strong>Journal limited:</strong> Journal only helps for very recent deletions</li>
+                                <li><strong>Tool recommendation:</strong> Use <code>extundelete</code> or <code>ext4magic</code> for best results</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="info-box example">
+                            <div class="info-box-title">ext4 Recovery Commands</div>
+<pre><code># Using extundelete (specialized ext recovery)
+extundelete /dev/sda1 --restore-all
+
+# Using Sleuth Kit
+fls -r -d /dev/sda1
+istat /dev/sda1 [inode_number]
+
+# Examine journal
+jls /dev/sda1
+jcat /dev/sda1 [journal_block]</code></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 class="recovery">When Metadata Recovery Works Best</h3>
+                
+                <div class="info-box recovery">
+                    <div class="info-box-title"><span aria-hidden="true">✅</span> Ideal Conditions for Metadata Recovery</div>
+                    <ul>
+                        <li>File was recently deleted</li>
+                        <li>Low disk activity since deletion</li>
+                        <li>File system structures are intact</li>
+                        <li>Metadata entries haven't been overwritten</li>
+                        <li>File was not fragmented (especially for FAT)</li>
+                        <li>HDD rather than SSD (no TRIM)</li>
+                    </ul>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-metadata-1" onchange="updateProgress()">
+                        <label for="check-metadata-1">I understand metadata-based recovery techniques for FAT</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-metadata-2" onchange="updateProgress()">
+                        <label for="check-metadata-2">I understand metadata-based recovery techniques for NTFS</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-metadata-3" onchange="updateProgress()">
+                        <label for="check-metadata-3">I recognize the challenges of ext4 recovery</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 4: File Carving -->
+        <section class="section" id="section-carving">
+            <div class="section-header carving" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🔪</span> File Carving Fundamentals</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>File carving is a powerful technique that recovers files based on their content structure rather than file system metadata. It's essential when metadata is unavailable—after formatting, on corrupted file systems, or in unallocated space.</p>
+                
+                <div class="definition-card carving">
+                    <h4>File Carving</h4>
+                    <p>A data recovery technique that identifies and extracts files from raw data by searching for known file signatures (magic numbers) and file structures, without relying on file system metadata. Carving works on any storage media regardless of file system type or condition.</p>
+                </div>
+                
+                <h3 class="carving">How File Carving Works</h3>
+                
+                <div class="diagram-container">
+                    <div class="diagram-title">File Carving Process</div>
+<pre class="diagram">
+RAW DISK DATA (No file system interpretation)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 00 00 00 00 00 00 00 00 FF D8 FF E0 00 10 4A 46 49 46 00 01 01 00 00 01 ... │
+│ ▲                       ▲                                                    │
+│ │                       └── JPEG Header Found! (FF D8 FF E0)                │
+│ └── Scanning byte by byte                                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+                    ┌───────────────────────────────┐
+                    │   Header Detected: JPEG       │
+                    │   Start offset: 0x00000008    │
+                    │   Looking for footer...       │
+                    └───────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ... image data continues ... FF D9 00 00 00 00 00 00 00 00 50 4B 03 04 ...  │
+│                              ▲                             ▲                 │
+│                              └── JPEG Footer (FF D9)       └── ZIP Header   │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+                    ┌───────────────────────────────┐
+                    │   Footer Found: FF D9         │
+                    │   End offset: 0x0000A4F2      │
+                    │   Extract bytes 8 to A4F2     │
+                    │   Save as carved_00001.jpg    │
+                    └───────────────────────────────┘
+</pre>
+                </div>
+                
+                <h3 class="carving">Carving Techniques</h3>
+                
+                <div class="cards-grid">
+                    <div class="card carving">
+                        <div class="card-icon">📍</div>
+                        <div class="card-title">Header-Footer Carving</div>
+                        <div class="card-content">
+                            <p>Finds file header, then searches for corresponding footer to determine file end.</p>
+                            <p><strong>Best for:</strong> JPEG, PDF, ZIP, Office documents</p>
+                            <p><strong>Limitation:</strong> Fails if footer is missing or file is fragmented</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card carving">
+                        <div class="card-icon">📏</div>
+                        <div class="card-title">Header-Maximum Size</div>
+                        <div class="card-content">
+                            <p>Finds header, extracts up to a maximum size limit when no footer exists.</p>
+                            <p><strong>Best for:</strong> File types without footers (BMP, some video formats)</p>
+                            <p><strong>Limitation:</strong> May include garbage data; requires post-processing</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card carving">
+                        <div class="card-icon">🔍</div>
+                        <div class="card-title">Structure-Based Carving</div>
+                        <div class="card-content">
+                            <p>Uses internal file structure (chunks, records) to determine boundaries.</p>
+                            <p><strong>Best for:</strong> PNG, AVI, MOV (files with internal structure)</p>
+                            <p><strong>Limitation:</strong> More complex; requires format knowledge</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card carving">
+                        <div class="card-icon">🧩</div>
+                        <div class="card-title">Fragment Recovery Carving</div>
+                        <div class="card-content">
+                            <p>Advanced technique that attempts to reassemble fragmented files.</p>
+                            <p><strong>Best for:</strong> Heavily fragmented files</p>
+                            <p><strong>Limitation:</strong> Computationally expensive; not always successful</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 class="carving">Carving Advantages & Limitations</h3>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Advantages</th>
+                                <th>Limitations</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>✅ Works without file system metadata</td>
+                                <td>❌ No filename recovery</td>
+                            </tr>
+                            <tr>
+                                <td>✅ Recovers from formatted drives</td>
+                                <td>❌ No timestamps or attributes</td>
+                            </tr>
+                            <tr>
+                                <td>✅ Works on corrupted file systems</td>
+                                <td>❌ Cannot handle fragmented files</td>
+                            </tr>
+                            <tr>
+                                <td>✅ File system agnostic</td>
+                                <td>❌ High false positive rate</td>
+                            </tr>
+                            <tr>
+                                <td>✅ Can recover from raw/unallocated space</td>
+                                <td>❌ Requires known file signatures</td>
+                            </tr>
+                            <tr>
+                                <td>✅ Useful when metadata is destroyed</td>
+                                <td>❌ May recover partial/corrupted files</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="info-box warning">
+                    <div class="info-box-title"><span aria-hidden="true">⚠️</span> The Fragmentation Problem</div>
+                    <p>File carving's biggest weakness is <strong>fragmented files</strong>. When a file is stored in non-contiguous clusters, carving will:</p>
+                    <ul>
+                        <li>Find the header in the first fragment</li>
+                        <li>Continue reading until it hits the end of that fragment</li>
+                        <li>Include unrelated data from the next file's clusters</li>
+                        <li>Miss the remaining fragments entirely</li>
+                    </ul>
+                    <p><strong>Result:</strong> Corrupted or partial file recovery. This is why metadata-based recovery is preferred when possible.</p>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-carving-1" onchange="updateProgress()">
+                        <label for="check-carving-1">I understand how file carving works</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-carving-2" onchange="updateProgress()">
+                        <label for="check-carving-2">I can describe different carving techniques</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-carving-3" onchange="updateProgress()">
+                        <label for="check-carving-3">I understand carving limitations, especially fragmentation</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 5: File Signatures -->
+        <section class="section" id="section-signatures">
+            <div class="section-header carving" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🔢</span> File Signatures & Magic Numbers</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>File signatures (also called "magic numbers") are specific byte sequences that identify file types. They're the foundation of file carving and file type identification. Most file formats begin with a distinctive header that identifies them.</p>
+                
+                <div class="definition-card carving">
+                    <h4>File Signature (Magic Number)</h4>
+                    <p>A constant sequence of bytes at a specific location (usually the beginning) of a file that identifies the file format. File signatures are independent of file extensions and are used by forensic tools to identify true file types and perform file carving.</p>
+                </div>
+                
+                <h3 class="carving">Common File Signatures</h3>
+                
+                <div class="signature-table">
+                    <div class="signature-row">
+                        <div class="signature-icon">🖼️</div>
+                        <div class="signature-info">
+                            <div class="signature-name">JPEG Image</div>
+                            <div class="signature-hex">FF D8 FF E0</div> or <div class="signature-hex">FF D8 FF E1</div>
+                        </div>
+                        <div class="signature-footer">Footer: <code>FF D9</code></div>
+                    </div>
+                    
+                    <div class="signature-row">
+                        <div class="signature-icon">🖼️</div>
+                        <div class="signature-info">
+                            <div class="signature-name">PNG Image</div>
+                            <div class="signature-hex">89 50 4E 47 0D 0A 1A 0A</div>
+                        </div>
+                        <div class="signature-footer">Footer: <code>49 45 4E 44 AE 42 60 82</code></div>
+                    </div>
+                    
+                    <div class="signature-row">
+                        <div class="signature-icon">🖼️</div>
+                        <div class="signature-info">
+                            <div class="signature-name">GIF Image</div>
+                            <div class="signature-hex">47 49 46 38 39 61</div> (GIF89a) or <div class="signature-hex">47 49 46 38 37 61</div> (GIF87a)
+                        </div>
+                        <div class="signature-footer">Footer: <code>00 3B</code></div>
+                    </div>
+                    
+                    <div class="signature-row">
+                        <div class="signature-icon">📄</div>
+                        <div class="signature-info">
+                            <div class="signature-name">PDF Document</div>
+                            <div class="signature-hex">25 50 44 46</div> (%PDF)
+                        </div>
+                        <div class="signature-footer">Footer: <code>25 25 45 4F 46</code> (%%EOF)</div>
+                    </div>
+                    
+                    <div class="signature-row">
+                        <div class="signature-icon">📦</div>
+                        <div class="signature-info">
+                            <div class="signature-name">ZIP Archive</div>
+                            <div class="signature-hex">50 4B 03 04</div> (PK..)
+                        </div>
+                        <div class="signature-footer">Footer: <code>50 4B 05 06</code> (end of central dir)</div>
+                    </div>
+                    
+                    <div class="signature-row">
+                        <div class="signature-icon">📝</div>
+                        <div class="signature-info">
+                            <div class="signature-name">Microsoft Office (DOCX, XLSX, PPTX)</div>
+                            <div class="signature-hex">50 4B 03 04</div> (ZIP-based, same as ZIP)
+                        </div>
+                        <div class="signature-footer">Contains: <code>[Content_Types].xml</code></div>
+                    </div>
+                    
+                    <div class="signature-row">
+                        <div class="signature-icon">📝</div>
+                        <div class="signature-info">
+                            <div class="signature-name">Microsoft Office (DOC, XLS, PPT - legacy)</div>
+                            <div class="signature-hex">D0 CF 11 E0 A1 B1 1A E1</div>
+                        </div>
+                        <div class="signature-footer">OLE Compound Document</div>
+                    </div>
+                    
+                    <div class="signature-row">
+                        <div class="signature-icon">🎬</div>
+                        <div class="signature-info">
+                            <div class="signature-name">MP4 Video</div>
+                            <div class="signature-hex">00 00 00 [xx] 66 74 79 70</div> (ftyp at offset 4)
+                        </div>
+                        <div class="signature-footer">No fixed footer</div>
+                    </div>
+                    
+                    <div class="signature-row">
+                        <div class="signature-icon">🎵</div>
+                        <div class="signature-info">
+                            <div class="signature-name">MP3 Audio</div>
+                            <div class="signature-hex">FF FB</div> or <div class="signature-hex">49 44 33</div> (ID3 tag)
+                        </div>
+                        <div class="signature-footer">No fixed footer</div>
+                    </div>
+                    
+                    <div class="signature-row">
+                        <div class="signature-icon">⚙️</div>
+                        <div class="signature-info">
+                            <div class="signature-name">Windows Executable (EXE/DLL)</div>
+                            <div class="signature-hex">4D 5A</div> (MZ)
+                        </div>
+                        <div class="signature-footer">No fixed footer</div>
+                    </div>
+                    
+                    <div class="signature-row">
+                        <div class="signature-icon">🐧</div>
+                        <div class="signature-info">
+                            <div class="signature-name">Linux Executable (ELF)</div>
+                            <div class="signature-hex">7F 45 4C 46</div> (.ELF)
+                        </div>
+                        <div class="signature-footer">No fixed footer</div>
+                    </div>
+                    
+                    <div class="signature-row">
+                        <div class="signature-icon">🗃️</div>
+                        <div class="signature-info">
+                            <div class="signature-name">SQLite Database</div>
+                            <div class="signature-hex">53 51 4C 69 74 65 20 66 6F 72 6D 61 74 20 33 00</div>
+                        </div>
+                        <div class="signature-footer">"SQLite format 3\0"</div>
+                    </div>
+                </div>
+                
+                <h3 class="carving">Configuring Carving Tools</h3>
+                
+                <p>Most carving tools use configuration files that define file signatures. Here's an example Scalpel configuration:</p>
+                
+                <div class="info-box example">
+                    <div class="info-box-title"><span aria-hidden="true">📝</span> Scalpel Configuration Example (scalpel.conf)</div>
+<pre><code># Scalpel configuration file
+# Format: extension  case_sensitive  size  header  [footer]
+
+# JPEG images
+jpg     y       200000000       \xff\xd8\xff\xe0\x00\x10    \xff\xd9
+jpg     y       200000000       \xff\xd8\xff\xe1            \xff\xd9
+
+# PNG images  
+png     y       200000000       \x89\x50\x4e\x47\x0d\x0a\x1a\x0a    \x49\x45\x4e\x44\xae\x42\x60\x82
+
+# PDF documents
+pdf     y       50000000        %PDF    %%EOF
+
+# ZIP archives (and DOCX, XLSX, PPTX)
+zip     y       500000000       PK\x03\x04      \x50\x4b\x05\x06
+
+# Microsoft Office legacy
+doc     y       50000000        \xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1
+
+# SQLite databases
+sqlite  y       50000000        SQLite format 3\x00</code></pre>
+                </div>
+                
+                <h3 class="carving">File Type Identification vs. Extension</h3>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> Why Signatures Matter More Than Extensions</div>
+                    <p>File extensions can be easily changed to hide file types:</p>
+                    <ul>
+                        <li><code>malware.exe</code> → <code>document.pdf</code> (extension changed)</li>
+                        <li><code>illegal_image.jpg</code> → <code>homework.doc</code> (extension changed)</li>
+                    </ul>
+                    <p>Forensic tools use <strong>file signatures</strong> to determine the true file type regardless of extension. This is why:</p>
+                    <ul>
+                        <li>Autopsy shows "Extension Mismatch" alerts</li>
+                        <li>The <code>file</code> command in Linux identifies files by content</li>
+                        <li>Carving ignores extensions entirely</li>
+                    </ul>
+                </div>
+                
+                <div class="info-box example">
+                    <div class="info-box-title"><span aria-hidden="true">💻</span> Identifying True File Types</div>
+<pre><code># Linux/macOS: Use 'file' command
+$ file suspicious_document.pdf
+suspicious_document.pdf: PE32 executable (GUI) Intel 80386, for MS Windows
+
+# The file claims to be PDF but is actually a Windows executable!
+
+# Using xxd to view hex header
+$ xxd suspicious_document.pdf | head -1
+00000000: 4d5a 9000 0300 0000 0400 0000 ffff 0000  MZ..............
+#         ^^^^
+#         MZ = Windows executable, NOT PDF!</code></pre>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-signatures-1" onchange="updateProgress()">
+                        <label for="check-signatures-1">I can identify common file signatures</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-signatures-2" onchange="updateProgress()">
+                        <label for="check-signatures-2">I understand how to configure carving tools</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-signatures-3" onchange="updateProgress()">
+                        <label for="check-signatures-3">I know why signatures are more reliable than extensions</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 6: Recovery Challenges -->
+        <section class="section" id="section-challenges">
+            <div class="section-header challenges" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">⚠️</span> Recovery Challenges by Storage Type</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>The type of storage device dramatically affects recovery success. Understanding these differences helps set realistic expectations and choose appropriate techniques.</p>
+                
+                <h3>HDD vs. SSD Recovery Comparison</h3>
+                
+                <div class="storage-comparison">
+                    <div class="storage-card hdd">
+                        <div class="storage-card-header">💾 HDD (Hard Disk Drive)</div>
+                        <div class="storage-card-body">
+                            <div class="storage-item">
+                                <span class="storage-icon">✅</span>
+                                <span class="storage-text"><strong>Excellent recovery potential</strong> - Data persists until overwritten</span>
+                            </div>
+                            <div class="storage-item">
+                                <span class="storage-icon">✅</span>
+                                <span class="storage-text"><strong>No automatic destruction</strong> - No TRIM or garbage collection</span>
+                            </div>
+                            <div class="storage-item">
+                                <span class="storage-icon">✅</span>
+                                <span class="storage-text"><strong>Predictable behavior</strong> - Well-understood, mature tools</span>
+                            </div>
+                            <div class="storage-item">
+                                <span class="storage-icon">✅</span>
+                                <span class="storage-text"><strong>Long recovery window</strong> - Days, weeks, or months</span>
+                            </div>
+                            <div class="storage-item">
+                                <span class="storage-icon">✅</span>
+                                <span class="storage-text"><strong>Carving effective</strong> - Unallocated space contains deleted data</span>
+                            </div>
+                            <div class="storage-item">
+                                <span class="storage-icon">⚠️</span>
+                                <span class="storage-text"><strong>Fragmentation</strong> - May affect carving success</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="storage-card ssd">
+                        <div class="storage-card-header">⚡ SSD (Solid State Drive)</div>
+                        <div class="storage-card-body">
+                            <div class="storage-item">
+                                <span class="storage-icon">❌</span>
+                                <span class="storage-text"><strong>TRIM destroys data</strong> - Deleted blocks zeroed automatically</span>
+                            </div>
+                            <div class="storage-item">
+                                <span class="storage-icon">❌</span>
+                                <span class="storage-text"><strong>Garbage collection</strong> - Background process erases data</span>
+                            </div>
+                            <div class="storage-item">
+                                <span class="storage-icon">❌</span>
+                                <span class="storage-text"><strong>Short recovery window</strong> - Seconds to minutes</span>
+                            </div>
+                            <div class="storage-item">
+                                <span class="storage-icon">❌</span>
+                                <span class="storage-text"><strong>Wear leveling</strong> - Data location unpredictable</span>
+                            </div>
+                            <div class="storage-item">
+                                <span class="storage-icon">⚠️</span>
+                                <span class="storage-text"><strong>Carving limited</strong> - Unallocated space often zeroed</span>
+                            </div>
+                            <div class="storage-item">
+                                <span class="storage-icon">✅</span>
+                                <span class="storage-text"><strong>Over-provisioning</strong> - May contain remnant data</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>Other Recovery Challenges</h3>
+                
+                <div class="collapsible" id="collapse-encryption">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-encryption')" role="button" aria-expanded="false" tabindex="0">
+                        <span>🔐 Encryption</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p>Encrypted storage presents unique challenges:</p>
+                        <ul>
+                            <li><strong>Full Disk Encryption (BitLocker, FileVault, LUKS):</strong> Without the key, data appears as random bytes—carving is impossible</li>
+                            <li><strong>File-level encryption (EFS):</strong> Individual files encrypted; may be recoverable if keys are available</li>
+                            <li><strong>Self-encrypting drives (SEDs):</strong> Hardware encryption; data inaccessible without authentication</li>
+                        </ul>
+                        <p><strong>Forensic approach:</strong> Acquire keys through memory analysis, key escrow, or user cooperation before imaging if possible.</p>
+                    </div>
+                </div>
+                
+                <div class="collapsible" id="collapse-overwriting">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-overwriting')" role="button" aria-expanded="false" tabindex="0">
+                        <span>📝 Overwriting</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p>Once data is overwritten, recovery is generally impossible:</p>
+                        <ul>
+                            <li><strong>Single overwrite:</strong> Original data destroyed on modern drives</li>
+                            <li><strong>Secure deletion tools:</strong> Multiple overwrites with patterns</li>
+                            <li><strong>Defragmentation:</strong> Moves data, overwrites original locations</li>
+                            <li><strong>System updates:</strong> May overwrite large areas of disk</li>
+                        </ul>
+                        <p><strong>Myth busted:</strong> The idea that data can be recovered after overwriting (using electron microscopes, etc.) is largely a myth for modern drives. A single overwrite is sufficient to prevent recovery.</p>
+                    </div>
+                </div>
+                
+                <div class="collapsible" id="collapse-physical">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-physical')" role="button" aria-expanded="false" tabindex="0">
+                        <span>💥 Physical Damage</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p>Physical damage requires specialized recovery:</p>
+                        <ul>
+                            <li><strong>HDD head crash:</strong> Requires cleanroom, platter transplant</li>
+                            <li><strong>HDD motor failure:</strong> Requires donor parts</li>
+                            <li><strong>SSD controller failure:</strong> Direct chip reading may be possible</li>
+                            <li><strong>Water/fire damage:</strong> Depends on extent; professional recovery needed</li>
+                        </ul>
+                        <p><strong>Forensic approach:</strong> Do not attempt DIY recovery on physically damaged drives. Send to professional data recovery lab.</p>
+                    </div>
+                </div>
+                
+                <div class="collapsible" id="collapse-antiforensics">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-antiforensics')" role="button" aria-expanded="false" tabindex="0">
+                        <span>🕵️ Anti-Forensics</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p>Deliberate attempts to prevent recovery:</p>
+                        <ul>
+                            <li><strong>Secure deletion tools:</strong> Eraser, BleachBit, sdelete</li>
+                            <li><strong>Full disk wipe:</strong> DBAN, nwipe</li>
+                            <li><strong>Timestomping:</strong> Modifying timestamps to confuse timeline</li>
+                            <li><strong>Log clearing:</strong> Removing evidence of activity</li>
+                            <li><strong>Steganography:</strong> Hiding data within other files</li>
+                        </ul>
+                        <p><strong>Detection:</strong> Look for secure deletion tool artifacts, unusual timestamp patterns, gaps in logs, and use steganalysis tools.</p>
+                    </div>
+                </div>
+                
+                <h3>Recovery Success Expectations</h3>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Scenario</th>
+                                <th>HDD Success</th>
+                                <th>SSD Success</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Recently deleted file (minutes)</td>
+                                <td>🟢 Very High</td>
+                                <td>🟡 Medium (if TRIM delayed)</td>
+                            </tr>
+                            <tr>
+                                <td>Deleted file (hours-days)</td>
+                                <td>🟢 High</td>
+                                <td>🔴 Low (TRIM likely ran)</td>
+                            </tr>
+                            <tr>
+                                <td>Deleted file (weeks-months)</td>
+                                <td>🟡 Medium</td>
+                                <td>🔴 Very Low</td>
+                            </tr>
+                            <tr>
+                                <td>Formatted drive (quick format)</td>
+                                <td>🟢 High</td>
+                                <td>🔴 Low</td>
+                            </tr>
+                            <tr>
+                                <td>Formatted drive (full format)</td>
+                                <td>🔴 Low (overwritten)</td>
+                                <td>🔴 Very Low</td>
+                            </tr>
+                            <tr>
+                                <td>Secure deletion used</td>
+                                <td>🔴 Very Low</td>
+                                <td>🔴 Very Low</td>
+                            </tr>
+                            <tr>
+                                <td>Encrypted (no key)</td>
+                                <td>🔴 None</td>
+                                <td>🔴 None</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-challenges-1" onchange="updateProgress()">
+                        <label for="check-challenges-1">I understand HDD vs. SSD recovery differences</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-challenges-2" onchange="updateProgress()">
+                        <label for="check-challenges-2">I recognize factors that prevent recovery</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-challenges-3" onchange="updateProgress()">
+                        <label for="check-challenges-3">I can set realistic recovery expectations</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 7: Recovery Method Decision Guide -->
+        <section class="section" id="section-decision">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🧭</span> Recovery Method Decision Guide</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>Choosing the right recovery method is a critical decision in digital forensics. This interactive guide helps you determine the best approach based on the characteristics of your evidence.</p>
+                
+                <div class="interactive-container">
+                    <div class="interactive-title"><span aria-hidden="true">🤔</span> Which Recovery Method Should I Use?</div>
+                    <p>Answer the questions below to navigate the decision tree.</p>
+                    
+                    <div class="decision-tree">
+                        <div class="decision-node question" id="q1" data-state="initial">
+                            <h4>Is the file system intact and mostly uncorrupted?</h4>
+                        </div>
+                        <div class="decision-arrow">↓</div>
+                        <div class="decision-branches" id="branch1">
+                            <div class="decision-branch">
+                                <div class="decision-label">Yes</div>
+                                <div class="decision-node question" id="q2_yes" data-state="q2">
+                                    <h4>Do you need original filenames, timestamps, and full metadata?</h4>
+                                </div>
+                            </div>
+                            <div class="decision-branch">
+                                <div class="decision-label">No</div>
+                                <div class="decision-node question" id="q2_no" data-state="q2">
+                                    <h4>Is the data in unallocated space or on a formatted/damaged drive?</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="decision-arrow">↓</div>
+                        <div class="decision-branches" id="branch2">
+                            <div class="decision-branch">
+                                <div class="decision-label">Yes (from Q2_Yes)</div>
+                                <div class="decision-node recovery-answer" id="result_metadata">
+                                    <h4>✅ Use Metadata-Based Recovery!</h4>
+                                    <p>This method offers the best chance for complete recovery with all original file system artifacts.</p>
+                                    <button class="btn btn-recovery" onclick="resetDecisionTree()">Start Over</button>
+                                </div>
+                            </div>
+                            <div class="decision-branch">
+                                <div class="decision-label">No (from Q2_Yes)</div>
+                                <div class="decision-node question" id="q3_no_q2yes" data-state="q3">
+                                    <h4>Is the file fragmented?</h4>
+                                </div>
+                            </div>
+                            <div class="decision-branch">
+                                <div class="decision-label">Yes (from Q2_No)</div>
+                                <div class="decision-node carving-answer" id="result_carving_q2no">
+                                    <h4>🔪 Use File Carving!</h4>
+                                    <p>When metadata is lost or unavailable, carving is your best option to recover data by signature.</p>
+                                    <button class="btn btn-carving" onclick="resetDecisionTree()">Start Over</button>
+                                </div>
+                            </div>
+                            <div class="decision-branch">
+                                <div class="decision-label">No (from Q2_No)</div>
+                                <div class="decision-node question" id="q3_no_q2no" data-state="q3">
+                                    <h4>Is the storage an SSD with TRIM active?</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="decision-arrow" id="arrow3" style="display:none;">↓</div>
+                        <div class="decision-branches" id="branch3" style="display:none;">
+                            <div class="decision-branch">
+                                <div class="decision-label">Yes (from Q3_no_q2yes)</div>
+                                <div class="decision-node carving-answer" id="result_carving_frag">
+                                    <h4>🔪 Try File Carving (with fragmentation awareness)!</h4>
+                                    <p>Metadata recovery struggles with fragmentation. Carving might recover partial files. Advanced tools may reassemble.</p>
+                                    <button class="btn btn-carving" onclick="resetDecisionTree()">Start Over</button>
+                                </div>
+                            </div>
+                            <div class="decision-branch">
+                                <div class="decision-label">No (from Q3_no_q2yes)</div>
+                                <div class="decision-node recovery-answer" id="result_metadata_nofrag">
+                                    <h4>✅ Use Metadata-Based Recovery!</h4>
+                                    <p>With intact metadata and no fragmentation, this is the most reliable method.</p>
+                                    <button class="btn btn-recovery" onclick="resetDecisionTree()">Start Over</button>
+                                </div>
+                            </div>
+                            <div class="decision-branch">
+                                <div class="decision-label">Yes (from Q3_no_q2no)</div>
+                                <div class="decision-node danger" id="result_trim_loss">
+                                    <h4>❌ Data Likely Unrecoverable!</h4>
+                                    <p>TRIM on SSDs often zeroes deleted data immediately. Recovery chances are very low.</p>
+                                    <button class="btn btn-primary" onclick="resetDecisionTree()">Start Over</button>
+                                </div>
+                            </div>
+                            <div class="decision-branch">
+                                <div class="decision-label">No (from Q3_no_q2no)</div>
+                                <div class="decision-node carving-answer" id="result_carving_no_trim">
+                                    <h4>🔪 Use File Carving!</h4>
+                                    <p>If metadata is gone but TRIM isn't active, carving is your best bet for raw data recovery.</p>
+                                    <button class="btn btn-carving" onclick="resetDecisionTree()">Start Over</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="resetDecisionTree()" style="margin-top: 1rem;">Reset Guide</button>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-decision-1" onchange="updateProgress()">
+                        <label for="check-decision-1">I understand how to choose between recovery methods</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-decision-2" onchange="updateProgress()">
+                        <label for="check-decision-2">I can apply the decision-making process to different scenarios</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 8: Practice Activities -->
+        <section class="section" id="section-practice">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🎮</span> Practice Activities & Knowledge Check</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>Test your understanding of deleted file recovery and file carving with these activities. This section also prepares you for Lab Activity 5.</p>
+                
+                <!-- Quiz -->
+                <div class="interactive-container">
+                    <div class="interactive-title"><span aria-hidden="true">📝</span> Knowledge Check Quiz</div>
+                    
+                    <div class="quiz-question" id="quiz-1">
+                        <p>1. What is the primary difference between logical deletion and physical destruction?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-1" value="a">
+                                <span>Logical deletion uses encryption, physical destruction overwrites data.</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-1" value="b">
+                                <span>Logical deletion removes metadata, physical destruction overwrites data.</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-1" value="c">
+                                <span>Logical deletion is for HDDs, physical destruction is for SSDs.</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-1" value="d">
+                                <span>Logical deletion is reversible, physical destruction is not.</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-1-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-2">
+                        <p>2. Which file system's metadata-based recovery typically offers the best chance for recovering full filenames and fragmented files?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-2" value="a">
+                                <span>FAT32</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-2" value="b">
+                                <span>ext4</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-2" value="c">
+                                <span>NTFS</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-2" value="d">
+                                <span>HFS+</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-2-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-3">
+                        <p>3. When is file carving the preferred recovery method?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-3" value="a">
+                                <span>When original filenames and timestamps are critical.</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-3" value="b">
+                                <span>When the file system metadata is intact and uncorrupted.</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-3" value="c">
+                                <span>When the file system is corrupted, formatted, or metadata is lost.</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-3" value="d">
+                                <span>When recovering from an SSD with TRIM enabled.</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-3-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-4">
+                        <p>4. What is the biggest challenge for file carving when dealing with deleted files?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-4" value="a">
+                                <span>Identifying the correct file signatures.</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-4" value="b">
+                                <span>The lack of original filenames.</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-4" value="c">
+                                <span>File fragmentation.</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-4" value="d">
+                                <span>The large size of disk images.</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-4-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-5">
+                        <p>5. How does the TRIM command impact deleted file recovery on SSDs?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-5" value="a">
+                                <span>It encrypts deleted data, requiring a key for recovery.</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-5" value="b">
+                                <span>It moves deleted data to a hidden area of the drive.</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-5" value="c">
+                                <span>It immediately and permanently zeroes deleted data blocks.</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-5" value="d">
+                                <span>It only affects metadata, leaving file content intact.</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-5-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-6">
+                        <p>6. What information is generally NOT recovered by file carving?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-6" value="a">
+                                <span>File content</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-6" value="b">
+                                <span>File type</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-6" value="c">
+                                <span>Original filename and timestamps</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-6" value="d">
+                                <span>File size (approximate)</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-6-feedback"></div>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="checkAllQuizAnswers()" style="margin-top: 1rem;">Check All Answers</button>
+                    <button class="btn btn-secondary" onclick="resetQuiz()" style="margin-top: 1rem;">Reset Quiz</button>
+                    
+                    <div id="quiz-results" style="margin-top: 1rem; display: none;">
+                        <div class="info-box concept">
+                            <div class="info-box-title">Quiz Results</div>
+                            <p id="quiz-score"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 class="carving">Lab Activity 5 Preparation: Deleted File Recovery & File Carving</h3>
+                
+                <p>This module directly prepares you for <strong>Parts 2 and 3 of Lab Activity 5</strong>. You will apply the techniques learned here to a provided disk image.</p>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🧪</span> Lab Activity 5 Overview (Parts 2 & 3)</div>
+                    <h4>Part 2: Deleted File Recovery (8 points)</h4>
+                    <ul>
+                        <li><strong>FAT32 Volume:</strong>
+                            <ul>
+                                <li>List deleted files using `fls -d`</li>
+                                <li>Recover deleted files using `icat`</li>
+                                <li>Document recovery success/failure and reasons, noting any filename character loss</li>
+                            </ul>
+                        </li>
+                        <li><strong>NTFS Volume:</strong>
+                            <ul>
+                                <li>Analyze MFT for deleted entries using Autopsy</li>
+                                <li>Recover files using Autopsy</li>
+                                <li>Compare $STANDARD_INFORMATION and $FILE_NAME timestamps</li>
+                                <li>Identify any Alternate Data Streams</li>
+                                <li>Export and analyze $UsnJrnl entries related to deleted files</li>
+                            </ul>
+                        </li>
+                        <li><strong>ext4 Volume (if provided):</strong>
+                            <ul>
+                                <li>Examine inode table for deleted files</li>
+                                <li>Attempt recovery using <code>extundelete</code> or similar tool</li>
+                                <li>Document challenges specific to ext4 recovery</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <h4>Part 3: File Carving Exercise (6 points)</h4>
+                    <ul>
+                        <li>Configure Scalpel or Autopsy carving module</li>
+                        <li>Carve provided disk image for: JPEG images, PDF documents, Office documents (DOCX, XLSX), ZIP archives</li>
+                        <li>Review carved files for: valid files vs. false positives, complete vs. partial recovery, fragmentation effects</li>
+                        <li>Document carving methodology and results</li>
+                        <li>Compare carved files to metadata-based recovery results</li>
+                    </ul>
+                    <p><strong>Deliverables:</strong> Deleted file recovery report and File carving report.</p>
+                </div>
+                
+                <div class="info-box warning">
+                    <div class="info-box-title"><span aria-hidden="true">💡</span> Tips for Lab Success</div>
+                    <ul>
+                        <li><strong>Work on copies:</strong> Always work on a forensic image, never the original evidence.</li>
+                        <li><strong>Document everything:</strong> Keep detailed notes of commands, output, and observations. Screenshots are vital.</li>
+                        <li><strong>Validate results:</strong> Don't just recover a file—try to open it, hash it, and verify its content.</li>
+                        <li><strong>Be patient:</strong> File recovery can be time-consuming, especially carving large images.</li>
+                        <li><strong>Understand limitations:</strong> Not every deleted file is recoverable. Document why.</li>
+                    </ul>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-practice-1" onchange="updateProgress()">
+                        <label for="check-practice-1">I completed the knowledge check quiz</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-practice-2" onchange="updateProgress()">
+                        <label for="check-practice-2">I understand the requirements for Lab Activity 5 (Parts 2 & 3)</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-practice-3" onchange="updateProgress()">
+                        <label for="check-practice-3">I feel ready to attempt deleted file recovery and carving</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Module Summary -->
+        <section class="section" id="section-summary">
+            <div class="section-header" style="background: linear-gradient(135deg, var(--secondary-color), var(--secondary-dark));">
+                <h2><span aria-hidden="true">🎉</span> Module 5.5 Summary</h2>
+            </div>
+            <div class="section-content">
+                <div class="info-box concept">
+                    <div class="info-box-title"><span aria-hidden="true">📚</span> Key Takeaways</div>
+                    <ul>
+                        <li><strong>Logical deletion ≠ physical destruction:</strong> Data persists until overwritten.</li>
+                        <li><strong>Metadata-based recovery</strong> uses file system structures to recover files with full metadata (filenames, timestamps). It's best when metadata is intact.</li>
+                        <li><strong>File carving</strong> scans raw data for file signatures (magic numbers) and works when metadata is corrupted or missing (e.g., formatted drives). It recovers content but not metadata.</li>
+                        <li><strong>Fragmentation</strong> is the biggest challenge for file carving, often leading to partial or corrupted files.</li>
+                        <li><strong>File signatures</strong> are crucial for identifying file types and configuring carving tools (e.g., Scalpel, Autopsy).</li>
+                        <li><strong>Storage type matters:</strong> HDDs offer excellent recovery potential; SSDs with TRIM enabled significantly reduce recovery chances.</li>
+                        <li>Always use a <strong>forensic image</strong> and never work on original evidence.</li>
+                    </ul>
+                </div>
+                
+                <h3>Connection to Lab Activity 5</h3>
+                <p>This module provides the theoretical and practical foundation for <strong>Parts 2 and 3 of Lab Activity 5</strong>, where you will perform deleted file recovery across different file systems and apply file carving techniques.</p>
+                
+                <h3>What's Next?</h3>
+                <p>In <strong>Module 5.6: Practical Application and Lab Preparation</strong>, you'll get hands-on experience with forensic tools like Autopsy and The Sleuth Kit, applying the file system knowledge from this week to prepare for Lab Activity 5.</p>
+                
+                <div class="footer-nav" style="margin-top: 1.5rem; justify-content: center;">
+                    <a href="#" class="btn btn-secondary" onclick="alert('Module 5.4 link')">← Module 5.4: Linux & macOS</a>
+                    <a href="#" class="btn btn-primary" onclick="alert('Module 5.6 coming soon!')">Module 5.6: Practical Application →</a>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer role="contentinfo">
+        <p><strong>CSC 156 - Digital Forensics Fundamentals</strong></p>
+        <p>Module 5.5: Deleted File Recovery & File Carving | Week 5</p>
+        <p>Mendocino College</p>
+        <p style="margin-top: 1rem; font-size: 0.875rem; opacity: 0.8;">💾 Progress is saved for this session only</p>
+        <div class="footer-nav">
+            <a href="#">← Previous Module</a>
+            <a href="#">Module Index</a>
+            <a href="#">Next Module →</a>
+        </div>
+    </footer>
+    
+    <script>
+        // ==================== Progress Tracking ====================
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const checked = document.querySelectorAll('input[type="checkbox"]:checked').length;
+            const total = checkboxes.length;
+            const percentage = Math.round((checked / total) * 100);
+            
+            document.getElementById('progressPercent').textContent = percentage + '%';
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.querySelector('.progress-bar').setAttribute('aria-valuenow', percentage);
+            
+            checkboxes.forEach(cb => {
+                const item = cb.closest('.checklist-item');
+                if (item) {
+                    if (cb.checked) {
+                        item.classList.add('completed');
+                    } else {
+                        item.classList.remove('completed');
+                    }
+                }
+            });
+            
+            saveProgress();
+        }
+        
+        function saveProgress() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const state = {};
+            checkboxes.forEach(cb => {
+                state[cb.id] = cb.checked;
+            });
+            sessionStorage.setItem('module55Progress', JSON.stringify(state));
+        }
+        
+        function loadProgress() {
+            const saved = sessionStorage.getItem('module55Progress');
+            if (saved) {
+                const state = JSON.parse(saved);
+                Object.keys(state).forEach(id => {
+                    const cb = document.getElementById(id);
+                    if (cb) {
+                        cb.checked = state[id];
+                    }
+                });
+                updateProgress();
+            }
+        }
+        
+        // ==================== Section Toggle ====================
+        function toggleSection(header) {
+            const content = header.nextElementSibling;
+            const toggle = header.querySelector('.section-toggle');
+            const isExpanded = header.getAttribute('aria-expanded') === 'true';
+            
+            header.setAttribute('aria-expanded', !isExpanded);
+            content.classList.toggle('collapsed');
+            toggle.classList.toggle('collapsed');
+        }
+        
+        function handleKeyPress(event, element) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleSection(element);
+            }
+        }
+        
+        // ==================== Collapsible Sections ====================
+        function toggleCollapsible(id) {
+            const element = document.getElementById(id);
+            element.classList.toggle('open');
+            const header = element.querySelector('.collapsible-header');
+            const isExpanded = element.classList.contains('open');
+            header.setAttribute('aria-expanded', isExpanded);
+        }
+        
+        // ==================== Tabs ====================
+        function switchTab(event, tabId) {
+            const container = event.target.closest('.tabs-container');
+            
+            container.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-selected', 'false');
+            });
+            container.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            event.target.classList.add('active');
+            event.target.setAttribute('aria-selected', 'true');
+            document.getElementById(tabId).classList.add('active');
+        }
+        
+        // ==================== Decision Tree ====================
+        const decisionStates = {
+            'initial': {
+                question: 'q1',
+                yes: 'q2_yes',
+                no: 'q2_no'
+            },
+            'q2': {
+                yes_q2yes: 'result_metadata',
+                no_q2yes: 'q3_no_q2yes',
+                yes_q2no: 'result_carving_q2no',
+                no_q2no: 'q3_no_q2no'
+            },
+            'q3': {
+                yes_q3no_q2yes: 'result_carving_frag',
+                no_q3no_q2yes: 'result_metadata_nofrag',
+                yes_q3no_q2no: 'result_trim_loss',
+                no_q3no_q2no: 'result_carving_no_trim'
+            }
+        };
+
+        let currentDecisionState = 'initial';
+
+        function hideAllDecisionNodes() {
+            document.querySelectorAll('.decision-node').forEach(node => node.style.display = 'none');
+            document.querySelectorAll('.decision-branches').forEach(branch => branch.style.display = 'none');
+            document.getElementById('arrow3').style.display = 'none';
+        }
+
+        function showNode(nodeId) {
+            const node = document.getElementById(nodeId);
+            if (node) {
+                node.style.display = 'block';
+            }
+        }
+
+        function handleDecision(response, fromQuestionId) {
+            hideAllDecisionNodes();
+            
+            if (fromQuestionId === 'q1') {
+                if (response === 'yes') {
+                    currentDecisionState = 'q2';
+                    showNode('q2_yes');
+                    document.getElementById('branch2').style.display = 'grid';
+                    document.getElementById('result_metadata').style.display = 'none'; // Ensure results are hidden initially
+                    document.getElementById('q3_no_q2yes').style.display = 'none';
+                    // Only show the relevant branch options
+                    document.getElementById('branch2').children[0].style.display = 'block'; // Yes from q2_yes
+                    document.getElementById('branch2').children[1].style.display = 'block'; // No from q2_yes
+                    document.getElementById('branch2').children[2].style.display = 'none'; // Hide other branch 2 options
+                    document.getElementById('branch2').children[3].style.display = 'none'; // Hide other branch 2 options
+                } else { // response === 'no'
+                    currentDecisionState = 'q2';
+                    showNode('q2_no');
+                    document.getElementById('branch2').style.display = 'grid';
+                    document.getElementById('result_carving_q2no').style.display = 'none'; // Ensure results are hidden initially
+                    document.getElementById('q3_no_q2no').style.display = 'none';
+                    // Only show the relevant branch options
+                    document.getElementById('branch2').children[0].style.display = 'none'; // Hide other branch 2 options
+                    document.getElementById('branch2').children[1].style.display = 'none'; // Hide other branch 2 options
+                    document.getElementById('branch2').children[2].style.display = 'block'; // Yes from q2_no
+                    document.getElementById('branch2').children[3].style.display = 'block'; // No from q2_no
+                }
+            } else if (fromQuestionId === 'q2_yes') {
+                if (response === 'yes') {
+                    showNode('result_metadata');
+                } else { // response === 'no'
+                    currentDecisionState = 'q3';
+                    showNode('q3_no_q2yes');
+                    document.getElementById('arrow3').style.display = 'block';
+                    document.getElementById('branch3').style.display = 'grid';
+                    document.getElementById('branch3').children[0].style.display = 'block'; // Yes from q3_no_q2yes
+                    document.getElementById('branch3').children[1].style.display = 'block'; // No from q3_no_q2yes
+                    document.getElementById('branch3').children[2].style.display = 'none'; // Hide other branch 3 options
+                    document.getElementById('branch3').children[3].style.display = 'none'; // Hide other branch 3 options
+                }
+            } else if (fromQuestionId === 'q2_no') {
+                if (response === 'yes') {
+                    showNode('result_carving_q2no');
+                } else { // response === 'no'
+                    currentDecisionState = 'q3';
+                    showNode('q3_no_q2no');
+                    document.getElementById('arrow3').style.display = 'block';
+                    document.getElementById('branch3').style.display = 'grid';
+                    document.getElementById('branch3').children[0].style.display = 'none'; // Hide other branch 3 options
+                    document.getElementById('branch3').children[1].style.display = 'none'; // Hide other branch 3 options
+                    document.getElementById('branch3').children[2].style.display = 'block'; // Yes from q3_no_q2no
+                    document.getElementById('branch3').children[3].style.display = 'block'; // No from q3_no_q2no
+                }
+            } else if (fromQuestionId === 'q3_no_q2yes') {
+                if (response === 'yes') {
+                    showNode('result_carving_frag');
+                } else { // response === 'no'
+                    showNode('result_metadata_nofrag');
+                }
+            } else if (fromQuestionId === 'q3_no_q2no') {
+                if (response === 'yes') {
+                    showNode('result_trim_loss');
+                } else { // response === 'no'
+                    showNode('result_carving_no_trim');
+                }
+            }
+        }
+
+        function resetDecisionTree() {
+            hideAllDecisionNodes();
+            showNode('q1');
+            currentDecisionState = 'initial';
+            document.querySelectorAll('.decision-node.question').forEach(node => {
+                node.onclick = function() {
+                    let response = this.textContent.toLowerCase().includes('yes') ? 'yes' : 'no';
+                    handleDecision(response, this.id);
+                };
+            });
+            // Re-attach specific handlers for q1
+            document.getElementById('q1').onclick = function() {
+                // For the initial question, we need to show the next layer with its questions
+                hideAllDecisionNodes();
+                document.getElementById('branch1').style.display = 'grid';
+                showNode('q2_yes');
+                showNode('q2_no');
+                currentDecisionState = 'q2';
+            };
+            document.getElementById('q2_yes').onclick = function() { handleDecision('yes', 'q2_yes'); };
+            document.getElementById('q2_no').onclick = function() { handleDecision('no', 'q2_no'); };
+            document.getElementById('q3_no_q2yes').onclick = function() { handleDecision('yes', 'q3_no_q2yes'); }; // This is technically a question, but here it acts as a decision point for the branch
+            document.getElementById('q3_no_q2no').onclick = function() { handleDecision('yes', 'q3_no_q2no'); }; // Same here
+            
+            // Re-enable click for the inner decision nodes
+            document.getElementById('q2_yes').onclick = function() {
+                hideAllDecisionNodes();
+                document.getElementById('branch2').style.display = 'grid';
+                showNode('result_metadata'); // Yes path
+                document.getElementById('branch2').children[1].style.display = 'block'; // No path
+                document.getElementById('q3_no_q2yes').style.display = 'block';
+                document.getElementById('arrow3').style.display = 'block';
+                document.getElementById('branch3').style.display = 'grid';
+                document.getElementById('branch3').children[0].style.display = 'block';
+                document.getElementById('branch3').children[1].style.display = 'block';
+                document.getElementById('branch3').children[2].style.display = 'none';
+                document.getElementById('branch3').children[3].style.display = 'none';
+            };
+             document.getElementById('q2_no').onclick = function() {
+                hideAllDecisionNodes();
+                document.getElementById('branch2').style.display = 'grid';
+                showNode('result_carving_q2no'); // Yes path
+                document.getElementById('branch2').children[3].style.display = 'block'; // No path
+                document.getElementById('q3_no_q2no').style.display = 'block';
+                document.getElementById('arrow3').style.display = 'block';
+                document.getElementById('branch3').style.display = 'grid';
+                document.getElementById('branch3').children[0].style.display = 'none';
+                document.getElementById('branch3').children[1].style.display = 'none';
+                document.getElementById('branch3').children[2].style.display = 'block';
+                document.getElementById('branch3').children[3].style.display = 'block';
+            };
+            document.getElementById('q3_no_q2yes').onclick = function() {
+                hideAllDecisionNodes();
+                document.getElementById('branch3').style.display = 'grid';
+                showNode('result_carving_frag'); // Yes path
+                document.getElementById('branch3').children[1].style.display = 'block'; // No path
+                showNode('result_metadata_nofrag');
+            };
+            document.getElementById('q3_no_q2no').onclick = function() {
+                hideAllDecisionNodes();
+                document.getElementById('branch3').style.display = 'grid';
+                showNode('result_trim_loss'); // Yes path
+                document.getElementById('branch3').children[3].style.display = 'block'; // No path
+                showNode('result_carving_no_trim');
+            };
+            
+            document.getElementById('q1').onclick = function() {
+                hideAllDecisionNodes();
+                document.getElementById('branch1').style.display = 'grid';
+                document.getElementById('branch1').children[0].innerHTML = '<div class="decision-label">Yes</div><div class="decision-node question" id="q2_yes" onclick="handleDecision(\'yes\', \'q1\')"><h4>Do you need original filenames, timestamps, and full metadata?</h4></div>';
+                document.getElementById('branch1').children[1].innerHTML = '<div class="decision-label">No</div><div class="decision-node question" id="q2_no" onclick="handleDecision(\'no\', \'q1\')"><h4>Is the data in unallocated space or on a formatted/damaged drive?</h4></div>';
+                showNode('q2_yes');
+                showNode('q2_no');
+            };
+            
+            // Re-assign listeners for the newly created dynamic nodes
+            document.getElementById('branch1').children[0].querySelector('.decision-node').onclick = function() {
+                hideAllDecisionNodes();
+                document.getElementById('branch2').style.display = 'grid';
+                document.getElementById('branch2').children[0].innerHTML = '<div class="decision-label">Yes</div><div class="decision-node recovery-answer" id="result_metadata"><h4>✅ Use Metadata-Based Recovery!</h4><p>This method offers the best chance for complete recovery with all original file system artifacts.</p><button class="btn btn-recovery" onclick="resetDecisionTree()">Start Over</button></div>';
+                document.getElementById('branch2').children[1].innerHTML = '<div class="decision-label">No</div><div class="decision-node question" id="q3_no_q2yes" onclick="handleDecision(\'no\', \'q2_yes\')"><h4>Is the file fragmented?</h4></div>';
+                showNode('result_metadata');
+                showNode('q3_no_q2yes');
+                document.getElementById('arrow3').style.display = 'block';
+                document.getElementById('branch3').style.display = 'grid';
+                document.getElementById('branch3').children[0].innerHTML = '<div class="decision-label">Yes</div><div class="decision-node carving-answer" id="result_carving_frag"><h4>🔪 Try File Carving (with fragmentation awareness)!</h4><p>Metadata recovery struggles with fragmentation. Carving might recover partial files. Advanced tools may reassemble.</p><button class="btn btn-carving" onclick="resetDecisionTree()">Start Over</button></div>';
+                document.getElementById('branch3').children[1].innerHTML = '<div class="decision-label">No</div><div class="decision-node recovery-answer" id="result_metadata_nofrag"><h4>✅ Use Metadata-Based Recovery!</h4><p>With intact metadata and no fragmentation, this is the most reliable method.</p><button class="btn btn-recovery" onclick="resetDecisionTree()">Start Over</button></div>';
+                document.getElementById('branch3').children[2].style.display = 'none';
+                document.getElementById('branch3').children[3].style.display = 'none';
+                
+                document.getElementById('q3_no_q2yes').onclick = function() {
+                    hideAllDecisionNodes();
+                    document.getElementById('branch3').style.display = 'grid';
+                    document.getElementById('branch3').children[0].style.display = 'block';
+                    document.getElementById('branch3').children[1].style.display = 'block';
+                    document.getElementById('branch3').children[2].style.display = 'none';
+                    document.getElementById('branch3').children[3].style.display = 'none';
+                };
+            };
+            
+            document.getElementById('branch1').children[1].querySelector('.decision-node').onclick = function() {
+                hideAllDecisionNodes();
+                document.getElementById('branch2').style.display = 'grid';
+                document.getElementById('branch2').children[2].innerHTML = '<div class="decision-label">Yes</div><div class="decision-node carving-answer" id="result_carving_q2no"><h4>🔪 Use File Carving!</h4><p>When metadata is lost or unavailable, carving is your best option to recover data by signature.</p><button class="btn btn-carving" onclick="resetDecisionTree()">Start Over</button></div>';
+                document.getElementById('branch2').children[3].innerHTML = '<div class="decision-label">No</div><div class="decision-node question" id="q3_no_q2no" onclick="handleDecision(\'no\', \'q2_no\')"><h4>Is the storage an SSD with TRIM active?</h4></div>';
+                showNode('result_carving_q2no');
+                showNode('q3_no_q2no');
+                document.getElementById('arrow3').style.display = 'block';
+                document.getElementById('branch3').style.display = 'grid';
+                document.getElementById('branch3').children[0].style.display = 'none';
+                document.getElementById('branch3').children[1].style.display = 'none';
+                document.getElementById('branch3').children[2].innerHTML = '<div class="decision-label">Yes</div><div class="decision-node danger" id="result_trim_loss"><h4>❌ Data Likely Unrecoverable!</h4><p>TRIM on SSDs often zeroes deleted data immediately. Recovery chances are very low.</p><button class="btn btn-primary" onclick="resetDecisionTree()">Start Over</button></div>';
+                document.getElementById('branch3').children[3].innerHTML = '<div class="decision-label">No</div><div class="decision-node carving-answer" id="result_carving_no_trim"><h4>🔪 Use File Carving!</h4><p>If metadata is gone but TRIM isn\'t active, carving is your best bet for raw data recovery.</p><button class="btn btn-carving" onclick="resetDecisionTree()">Start Over</button></div>';
+                
+                document.getElementById('q3_no_q2no').onclick = function() {
+                    hideAllDecisionNodes();
+                    document.getElementById('branch3').style.display = 'grid';
+                    document.getElementById('branch3').children[0].style.display = 'none';
+                    document.getElementById('branch3').children[1].style.display = 'none';
+                    document.getElementById('branch3').children[2].style.display = 'block';
+                    document.getElementById('branch3').children[3].style.display = 'block';
+                };
+            };
+
+            // Reset the content to ensure all buttons are present for re-binding
+            document.getElementById('branch1').children[0].innerHTML = '<div class="decision-label">Yes</div><div class="decision-node question" id="q2_yes"><h4>Do you need original filenames, timestamps, and full metadata?</h4></div>';
+            document.getElementById('branch1').children[1].innerHTML = '<div class="decision-label">No</div><div class="decision-node question" id="q2_no"><h4>Is the data in unallocated space or on a formatted/damaged drive?</h4></div>';
+            
+            document.getElementById('branch2').children[0].innerHTML = '<div class="decision-label">Yes</div><div class="decision-node recovery-answer" id="result_metadata"><h4>✅ Use Metadata-Based Recovery!</h4><p>This method offers the best chance for complete recovery with all original file system artifacts.</p><button class="btn btn-recovery" onclick="resetDecisionTree()">Start Over</button></div>';
+            document.getElementById('branch2').children[1].innerHTML = '<div class="decision-label">No</div><div class="decision-node question" id="q3_no_q2yes"><h4>Is the file fragmented?</h4></div>';
+            document.getElementById('branch2').children[2].innerHTML = '<div class="decision-label">Yes</div><div class="decision-node carving-answer" id="result_carving_q2no"><h4>🔪 Use File Carving!</h4><p>When metadata is lost or unavailable, carving is your best option to recover data by signature.</p><button class="btn btn-carving" onclick="resetDecisionTree()">Start Over</button></div>';
+            document.getElementById('branch2').children[3].innerHTML = '<div class="decision-label">No</div><div class="decision-node question" id="q3_no_q2no"><h4>Is the storage an SSD with TRIM active?</h4></div>';
+
+            document.getElementById('branch3').children[0].innerHTML = '<div class="decision-label">Yes</div><div class="decision-node carving-answer" id="result_carving_frag"><h4>🔪 Try File Carving (with fragmentation awareness)!</h4><p>Metadata recovery struggles with fragmentation. Carving might recover partial files. Advanced tools may reassemble.</p><button class="btn btn-carving" onclick="resetDecisionTree()">Start Over</button></div>';
+            document.getElementById('branch3').children[1].innerHTML = '<div class="decision-label">No</div><div class="decision-node recovery-answer" id="result_metadata_nofrag"><h4>✅ Use Metadata-Based Recovery!</h4><p>With intact metadata and no fragmentation, this is the most reliable method.</p><button class="btn btn-recovery" onclick="resetDecisionTree()">Start Over</button></div>';
+            document.getElementById('branch3').children[2].innerHTML = '<div class="decision-label">Yes</div><div class="decision-node danger" id="result_trim_loss"><h4>❌ Data Likely Unrecoverable!</h4><p>TRIM on SSDs often zeroes deleted data immediately. Recovery chances are very low.</p><button class="btn btn-primary" onclick="resetDecisionTree()">Start Over</button></div>';
+            document.getElementById('branch3').children[3].innerHTML = '<div class="decision-label">No</div><div class="decision-node carving-answer" id="result_carving_no_trim"><h4>🔪 Use File Carving!</h4><p>If metadata is gone but TRIM isn\'t active, carving is your best bet for raw data recovery.</p><button class="btn btn-carving" onclick="resetDecisionTree()">Start Over</button></div>';
+
+            // Re-bind click handlers for all nodes
+            document.querySelectorAll('.decision-node').forEach(node => {
+                if (node.id.startsWith('q')) {
+                    node.onclick = function() {
+                        const response = this.textContent.toLowerCase().includes('yes') ? 'yes' : 'no';
+                        handleDecision(response, this.id);
+                    };
+                }
+            });
+            // Initial state: only Q1 visible
+            hideAllDecisionNodes();
+            showNode('q1');
+        }
+
+        // Initial setup for the decision tree
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+            window.addEventListener('scroll', updateNavHighlight);
+            resetDecisionTree(); // Initialize the decision tree
+        });
+        
+        // ==================== Quiz ====================
+        const quizAnswers = {
+            'quiz-1': 'b',
+            'quiz-2': 'c',
+            'quiz-3': 'c',
+            'quiz-4': 'c',
+            'quiz-5': 'c',
+            'quiz-6': 'c'
+        };
+        
+        const quizExplanations = {
+            'quiz-1': 'Logical deletion removes the file system\'s reference to data (metadata), while physical destruction actually overwrites the data on the storage medium. Logical deletion makes the space available for reuse, but the data persists until overwritten.',
+            'quiz-2': 'NTFS offers the best chance for recovering full filenames and fragmented files due to its robust MFT structure. It preserves the complete filename in the $FILE_NAME attribute and often retains the run list for fragmented files, unlike FAT (which zeroes its chain) or ext4 (which may clear block pointers).',
+            'quiz-3': 'File carving is the preferred recovery method when the file system is corrupted, formatted, or metadata is lost. It works by scanning raw data for file signatures, independent of file system structures. Metadata-based recovery is preferred when metadata is intact.',
+            'quiz-4': 'File fragmentation is the biggest challenge for file carving. When a file\'s data is split across non-contiguous clusters, header-footer carving will typically only recover the first fragment, resulting in a partial or corrupted file.',
+            'quiz-5': 'The TRIM command on SSDs immediately and permanently zeroes deleted data blocks. This is a crucial anti-forensic feature that makes deleted file recovery on SSDs significantly more difficult or impossible, especially if there\'s any delay in acquisition.',
+            'quiz-6': 'File carving primarily recovers the file\'s content and can identify its type via signatures. However, it generally cannot recover the original filename or timestamps because this information is stored in file system metadata, which carving bypasses.'
+        };
+        
+        function selectQuizOption(option) {
+            const question = option.closest('.quiz-question');
+            question.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            option.classList.add('selected');
+        }
+        
+        function checkAllQuizAnswers() {
+            let correct = 0;
+            const total = Object.keys(quizAnswers).length;
+            
+            Object.keys(quizAnswers).forEach(quizId => {
+                const question = document.getElementById(quizId);
+                const selected = question.querySelector('input:checked');
+                const feedback = document.getElementById(quizId + '-feedback');
+                const options = question.querySelectorAll('.quiz-option');
+                
+                options.forEach(opt => {
+                    opt.classList.remove('correct', 'incorrect');
+                });
+                
+                if (selected) {
+                    const selectedOption = selected.closest('.quiz-option');
+                    if (selected.value === quizAnswers[quizId]) {
+                        correct++;
+                        selectedOption.classList.add('correct');
+                        feedback.className = 'quiz-feedback show correct';
+                        feedback.innerHTML = '<strong>✓ Correct!</strong> ' + quizExplanations[quizId];
+                    } else {
+                        selectedOption.classList.add('incorrect');
+                        options.forEach(opt => {
+                            if (opt.querySelector('input').value === quizAnswers[quizId]) {
+                                opt.classList.add('correct');
+                            }
+                        });
+                        feedback.className = 'quiz-feedback show incorrect';
+                        feedback.innerHTML = '<strong>✗ Incorrect.</strong> ' + quizExplanations[quizId];
+                    }
+                } else {
+                    feedback.className = 'quiz-feedback show incorrect';
+                    feedback.innerHTML = '<strong>Please select an answer.</strong>';
+                }
+            });
+            
+            const resultsDiv = document.getElementById('quiz-results');
+            const scoreP = document.getElementById('quiz-score');
+            resultsDiv.style.display = 'block';
+            
+            const percentage = Math.round((correct / total) * 100);
+            let message = '';
+            if (percentage === 100) {
+                message = '🎉 Perfect score! You\'re a file recovery expert!';
+            } else if (percentage >= 80) {
+                message = '👍 Great job! You have a strong understanding of recovery techniques.';
+            } else if (percentage >= 60) {
+                message = '📚 Good effort! Review the sections for topics you missed.';
+            } else {
+                message = '💪 Keep practicing! File recovery is a core forensic skill.';
+            }
+            
+            scoreP.innerHTML = `You got <strong>${correct} out of ${total}</strong> questions correct (${percentage}%).<br>${message}`;
+        }
+        
+        function resetQuiz() {
+            Object.keys(quizAnswers).forEach(quizId => {
+                const question = document.getElementById(quizId);
+                question.querySelectorAll('input').forEach(input => input.checked = false);
+                question.querySelectorAll('.quiz-option').forEach(opt => {
+                    opt.classList.remove('selected', 'correct', 'incorrect');
+                });
+                document.getElementById(quizId + '-feedback').className = 'quiz-feedback';
+            });
+            document.getElementById('quiz-results').style.display = 'none';
+        }
+        
+        // ==================== Navigation Highlighting ====================
+        function updateNavHighlight() {
+            const sections = document.querySelectorAll('.section');
+            const navLinks = document.querySelectorAll('.nav-list a');
+            
+            let currentSection = '';
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= 150) {
+                    currentSection = section.id;
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + currentSection) {
+                    link.classList.add('active');
+                }
+            });
+        }
+        
+        // ==================== Initialize ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+            window.addEventListener('scroll', updateNavHighlight);
+            resetDecisionTree(); // Initialize the decision tree
+        });
+    </script>
+</body>
+</html>

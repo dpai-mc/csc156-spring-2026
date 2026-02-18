@@ -1,0 +1,3279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CSC 156 Week 5 Module 5.4: Linux and macOS File Systems - Comprehensive study of ext2/ext3/ext4, HFS+, and APFS for digital forensics">
+    <title>Module 5.4: Linux & macOS File Systems | CSC 156 Digital Forensics</title>
+    <style>
+        /* CSS Reset and Base Styles */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-color: #16a34a;
+            --primary-dark: #15803d;
+            --primary-light: #22c55e;
+            --secondary-color: #6366f1;
+            --secondary-dark: #4f46e5;
+            --secondary-light: #818cf8;
+            --linux-color: #f97316;
+            --linux-dark: #ea580c;
+            --linux-light: #fb923c;
+            --macos-color: #64748b;
+            --macos-dark: #475569;
+            --macos-light: #94a3b8;
+            --accent-color: #0ea5e9;
+            --accent-light: #38bdf8;
+            --danger-color: #ef4444;
+            --danger-light: #f87171;
+            --success-color: #10b981;
+            --success-light: #34d399;
+            --warning-color: #f59e0b;
+            --warning-light: #fbbf24;
+            --purple-color: #8b5cf6;
+            --purple-light: #a78bfa;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --text-light: #94a3b8;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --bg-dark: #0f172a;
+            --bg-code: #1e293b;
+            --border-color: #e2e8f0;
+            --border-light: #f1f5f9;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --font-mono: 'Cascadia Code', 'Fira Code', 'Consolas', 'Monaco', monospace;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.7;
+            color: var(--text-primary);
+            background-color: var(--bg-secondary);
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Skip Link for Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            z-index: 1000;
+            text-decoration: none;
+            border-radius: 0 0 var(--radius-sm) 0;
+            font-weight: 600;
+        }
+        
+        .skip-link:focus {
+            top: 0;
+        }
+        
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--linux-color) 0%, var(--primary-color) 50%, var(--macos-color) 100%);
+            color: white;
+            padding: 2.5rem 1rem;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.07'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.6;
+        }
+        
+        header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .header-meta {
+            font-size: 1rem;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header-meta span {
+            display: inline-block;
+            margin: 0.25rem 0.5rem;
+        }
+        
+        .header-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1.25rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(4px);
+        }
+        
+        .header-icons {
+            font-size: 2rem;
+            margin-top: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            background: var(--bg-primary);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .progress-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .progress-percentage {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background: var(--bg-tertiary);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--linux-color), var(--primary-color), var(--macos-color));
+            border-radius: 5px;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+        
+        .progress-note {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+        
+        /* Navigation */
+        .module-nav {
+            background: var(--bg-primary);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .nav-list a {
+            display: block;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+        
+        .nav-list a:hover,
+        .nav-list a:focus {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+        
+        .nav-list a.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .nav-list a.linux {
+            border-left: 3px solid var(--linux-color);
+        }
+        
+        .nav-list a.macos {
+            border-left: 3px solid var(--macos-color);
+        }
+        
+        /* Main Content */
+        main {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        
+        /* Section Styles */
+        .section {
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+        }
+        
+        .section-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 1.25rem 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+        
+        .section-header:hover {
+            background: linear-gradient(135deg, var(--primary-dark), #166534);
+        }
+        
+        .section-header.linux {
+            background: linear-gradient(135deg, var(--linux-color), var(--linux-dark));
+        }
+        
+        .section-header.linux:hover {
+            background: linear-gradient(135deg, var(--linux-dark), #c2410c);
+        }
+        
+        .section-header.macos {
+            background: linear-gradient(135deg, var(--macos-color), var(--macos-dark));
+        }
+        
+        .section-header.macos:hover {
+            background: linear-gradient(135deg, var(--macos-dark), #334155);
+        }
+        
+        .section-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .section-toggle {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            transition: transform 0.3s ease, background 0.2s ease;
+        }
+        
+        .section-toggle:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .section-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+        
+        .section-content {
+            padding: 1.5rem;
+            display: block;
+        }
+        
+        .section-content.collapsed {
+            display: none;
+        }
+        
+        /* Typography */
+        h3 {
+            color: var(--primary-dark);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            border-bottom: 2px solid var(--bg-tertiary);
+            padding-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        h3:first-child {
+            margin-top: 0;
+        }
+        
+        h3.linux {
+            color: var(--linux-dark);
+            border-bottom-color: var(--linux-light);
+        }
+        
+        h3.macos {
+            color: var(--macos-dark);
+            border-bottom-color: var(--macos-light);
+        }
+        
+        h4 {
+            color: var(--text-primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 1.05rem;
+        }
+        
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+        
+        strong {
+            color: var(--text-primary);
+        }
+        
+        /* Definition Cards */
+        .definition-card {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-left: 4px solid var(--primary-color);
+            padding: 1.25rem;
+            margin: 1.25rem 0;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        }
+        
+        .definition-card.linux {
+            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+            border-left-color: var(--linux-color);
+        }
+        
+        .definition-card.macos {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-left-color: var(--macos-color);
+        }
+        
+        .definition-card h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--primary-dark);
+            font-size: 1.1rem;
+        }
+        
+        .definition-card.linux h4 {
+            color: var(--linux-dark);
+        }
+        
+        .definition-card.macos h4 {
+            color: var(--macos-dark);
+        }
+        
+        .definition-card p {
+            margin: 0;
+            color: var(--text-primary);
+        }
+        
+        .definition-card p:not(:last-child) {
+            margin-bottom: 0.75rem;
+        }
+        
+        /* Info Boxes */
+        .info-box {
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            margin: 1.25rem 0;
+        }
+        
+        .info-box.concept {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border: 1px solid #86efac;
+        }
+        
+        .info-box.warning {
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+            border: 1px solid #fcd34d;
+        }
+        
+        .info-box.forensic {
+            background: linear-gradient(135deg, #fdf4ff, #f3e8ff);
+            border: 1px solid #d8b4fe;
+        }
+        
+        .info-box.example {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 1px solid #7dd3fc;
+        }
+        
+        .info-box.danger {
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+            border: 1px solid #fca5a5;
+        }
+        
+        .info-box.linux {
+            background: linear-gradient(135deg, #fff7ed, #ffedd5);
+            border: 1px solid #fdba74;
+        }
+        
+        .info-box.macos {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border: 1px solid #cbd5e1;
+        }
+        
+        .info-box-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .info-box.concept .info-box-title { color: #166534; }
+        .info-box.warning .info-box-title { color: #a16207; }
+        .info-box.forensic .info-box-title { color: #7c3aed; }
+        .info-box.example .info-box-title { color: #0369a1; }
+        .info-box.danger .info-box-title { color: #dc2626; }
+        .info-box.linux .info-box-title { color: var(--linux-dark); }
+        .info-box.macos .info-box-title { color: var(--macos-dark); }
+        
+        /* Code Blocks */
+        pre {
+            background: var(--bg-code);
+            color: #e2e8f0;
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin: 1rem 0;
+            white-space: pre;
+            word-wrap: normal;
+            border: 1px solid #334155;
+        }
+        
+        code {
+            font-family: var(--font-mono);
+            background: var(--bg-tertiary);
+            padding: 0.125rem 0.375rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.875em;
+            color: var(--linux-dark);
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+        
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 1.25rem 0;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        
+        th, td {
+            padding: 0.875rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        th {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+            font-weight: 600;
+            color: var(--text-primary);
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover {
+            background: var(--bg-secondary);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* Diagrams */
+        .diagram-container {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+        
+        .diagram-container.linux {
+            border-color: var(--linux-light);
+            background: linear-gradient(135deg, #fff7ed, var(--bg-secondary));
+        }
+        
+        .diagram-container.macos {
+            border-color: var(--macos-light);
+            background: linear-gradient(135deg, #f8fafc, var(--bg-secondary));
+        }
+        
+        .diagram-title {
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            font-size: 1.05rem;
+        }
+        
+        .diagram {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            line-height: 1.4;
+            white-space: pre;
+            overflow-x: auto;
+            color: var(--text-primary);
+        }
+        
+        /* Inode Visualizer */
+        .inode-visualizer {
+            background: var(--bg-dark);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+        
+        .inode-header {
+            color: var(--linux-light);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+        
+        .inode-structure {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .inode-row {
+            display: flex;
+            align-items: stretch;
+            gap: 2px;
+            flex-wrap: wrap;
+        }
+        
+        .inode-field {
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            min-width: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .inode-field:hover {
+            transform: scale(1.05);
+            z-index: 1;
+        }
+        
+        .inode-field .field-name {
+            font-weight: 600;
+            font-size: 0.7rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .inode-field .field-value {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+        
+        .inode-field.mode { background: #f97316; color: white; }
+        .inode-field.uid { background: #fb923c; color: white; }
+        .inode-field.gid { background: #fdba74; color: #1e293b; }
+        .inode-field.size { background: #22c55e; color: white; }
+        .inode-field.atime { background: #3b82f6; color: white; }
+        .inode-field.ctime { background: #6366f1; color: white; }
+        .inode-field.mtime { background: #8b5cf6; color: white; }
+        .inode-field.crtime { background: #a855f7; color: white; }
+        .inode-field.links { background: #ec4899; color: white; }
+        .inode-field.blocks { background: #14b8a6; color: white; }
+        .inode-field.flags { background: #f43f5e; color: white; }
+        .inode-field.extents { background: #0ea5e9; color: white; }
+        
+        .inode-description {
+            background: rgba(255,255,255,0.1);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-top: 1rem;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+            display: none;
+        }
+        
+        .inode-description.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* OS Comparison Cards */
+        .os-comparison {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .os-card {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .os-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+        
+        .os-card.linux {
+            border-color: var(--linux-color);
+        }
+        
+        .os-card.macos {
+            border-color: var(--macos-color);
+        }
+        
+        .os-card-header {
+            padding: 1rem;
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .os-card.linux .os-card-header {
+            background: linear-gradient(135deg, var(--linux-color), var(--linux-dark));
+        }
+        
+        .os-card.macos .os-card-header {
+            background: linear-gradient(135deg, var(--macos-color), var(--macos-dark));
+        }
+        
+        .os-card-body {
+            padding: 1rem;
+        }
+        
+        .os-card-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .os-card-item:last-child {
+            border-bottom: none;
+        }
+        
+        .os-card-label {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .os-card-value {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Timeline Evolution */
+        .evolution-timeline {
+            position: relative;
+            padding-left: 2rem;
+            margin: 1.5rem 0;
+        }
+        
+        .evolution-timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, var(--linux-color), var(--primary-color));
+            border-radius: 3px;
+        }
+        
+        .evolution-item {
+            position: relative;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+        }
+        
+        .evolution-item::before {
+            content: '';
+            position: absolute;
+            left: -2rem;
+            top: 1.25rem;
+            width: 12px;
+            height: 12px;
+            background: var(--linux-color);
+            border-radius: 50%;
+            border: 3px solid var(--bg-primary);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .evolution-year {
+            font-weight: 700;
+            color: var(--linux-dark);
+            font-size: 1.1rem;
+        }
+        
+        .evolution-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-left: 0.5rem;
+        }
+        
+        .evolution-content {
+            margin-top: 0.5rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Interactive Elements */
+        .interactive-container {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border: 2px solid var(--primary-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .interactive-container.linux {
+            background: linear-gradient(135deg, #fff7ed, #ffedd5);
+            border-color: var(--linux-color);
+        }
+        
+        .interactive-container.macos {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-color: var(--macos-color);
+        }
+        
+        .interactive-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* Quiz Styles */
+        .quiz-question {
+            background: var(--bg-primary);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+        }
+        
+        .quiz-question p {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .quiz-option:hover {
+            border-color: var(--primary-color);
+            background: #f0fdf4;
+        }
+        
+        .quiz-option.selected {
+            border-color: var(--primary-color);
+            background: #dcfce7;
+        }
+        
+        .quiz-option.correct {
+            border-color: var(--success-color);
+            background: #dcfce7;
+        }
+        
+        .quiz-option.incorrect {
+            border-color: var(--danger-color);
+            background: #fee2e2;
+        }
+        
+        .quiz-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary-color);
+        }
+        
+        .quiz-feedback {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            display: none;
+        }
+        
+        .quiz-feedback.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .quiz-feedback.correct {
+            background: #dcfce7;
+            border: 1px solid #86efac;
+            color: #166534;
+        }
+        
+        .quiz-feedback.incorrect {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+        
+        .btn-linux {
+            background: var(--linux-color);
+            color: white;
+        }
+        
+        .btn-linux:hover {
+            background: var(--linux-dark);
+        }
+        
+        .btn-macos {
+            background: var(--macos-color);
+            color: white;
+        }
+        
+        .btn-macos:hover {
+            background: var(--macos-dark);
+        }
+        
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+            margin: 1.25rem 0;
+        }
+        
+        .card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .card.linux {
+            border-left: 4px solid var(--linux-color);
+        }
+        
+        .card.linux:hover {
+            border-color: var(--linux-color);
+        }
+        
+        .card.macos {
+            border-left: 4px solid var(--macos-color);
+        }
+        
+        .card.macos:hover {
+            border-color: var(--macos-color);
+        }
+        
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .card-title {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .card-content {
+            color: var(--text-secondary);
+            font-size: 0.925rem;
+        }
+        
+        /* Lists */
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+            color: var(--text-secondary);
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+        
+        li::marker {
+            color: var(--primary-color);
+        }
+        
+        /* Collapsible sections */
+        .collapsible {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+        
+        .collapsible-header {
+            background: var(--bg-secondary);
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: var(--text-primary);
+            transition: background 0.2s ease;
+        }
+        
+        .collapsible-header:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .collapsible-icon {
+            transition: transform 0.3s ease;
+            color: var(--primary-color);
+        }
+        
+        .collapsible.open .collapsible-icon {
+            transform: rotate(180deg);
+        }
+        
+        .collapsible-content {
+            padding: 0 1.25rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        
+        .collapsible.open .collapsible-content {
+            padding: 1.25rem;
+            max-height: 5000px;
+        }
+        
+        /* Tabs */
+        .tabs-container {
+            margin: 1.5rem 0;
+        }
+        
+        .tabs-header {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .tab-btn {
+            padding: 0.75rem 1.25rem;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+        }
+        
+        .tab-btn:hover {
+            color: var(--primary-color);
+        }
+        
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .tab-btn.linux.active {
+            color: var(--linux-color);
+            border-bottom-color: var(--linux-color);
+        }
+        
+        .tab-btn.macos.active {
+            color: var(--macos-color);
+            border-bottom-color: var(--macos-color);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 1.5rem 0;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        /* Completion Checklist */
+        .checklist {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0;
+        }
+        
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: var(--radius-sm);
+            margin-bottom: 0.5rem;
+            transition: background 0.2s ease;
+        }
+        
+        .checklist-item:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .checklist-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--success-color);
+            cursor: pointer;
+        }
+        
+        .checklist-item label {
+            cursor: pointer;
+            flex: 1;
+        }
+        
+        .checklist-item.completed label {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+        
+        /* Timestamp Comparison */
+        .timestamp-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .timestamp-item {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            text-align: center;
+            border: 2px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+        
+        .timestamp-item:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+        
+        .timestamp-item.linux {
+            border-color: var(--linux-light);
+        }
+        
+        .timestamp-item.linux:hover {
+            border-color: var(--linux-color);
+        }
+        
+        .timestamp-name {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .timestamp-abbrev {
+            font-family: var(--font-mono);
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .timestamp-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--bg-dark);
+            color: white;
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 2rem;
+        }
+        
+        footer p {
+            color: rgba(255,255,255,0.8);
+            margin: 0.25rem 0;
+        }
+        
+        .footer-nav {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1.25rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: var(--radius-md);
+            transition: all 0.2s ease;
+        }
+        
+        .footer-nav a:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-1px);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .section-header h2 {
+                font-size: 1.1rem;
+            }
+            
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .os-comparison {
+                grid-template-columns: 1fr;
+            }
+            
+            .timestamp-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .inode-field {
+                min-width: 60px;
+                padding: 0.5rem;
+                font-size: 0.7rem;
+            }
+        }
+        
+        /* Print Styles */
+        @media print {
+            .progress-container,
+            .module-nav,
+            .section-toggle,
+            .interactive-container,
+            .btn,
+            footer {
+                display: none !important;
+            }
+            
+            .section-content.collapsed {
+                display: block !important;
+            }
+            
+            .section {
+                break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid #ccc;
+            }
+        }
+        
+        /* Focus Styles for Accessibility */
+        *:focus {
+            outline: 3px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+        
+        *:focus:not(:focus-visible) {
+            outline: none;
+        }
+        
+        *:focus-visible {
+            outline: 3px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+        
+        /* Screen Reader Only */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <header role="banner">
+        <h1>🐧🍎 Module 5.4: Linux & macOS File Systems</h1>
+        <div class="header-icons">🐧 + 🍎</div>
+        <div class="header-meta">
+            <span>CSC 156 - Digital Forensics Fundamentals</span>
+            <span>|</span>
+            <span>Week 5: File Systems and Data Structures</span>
+        </div>
+        <div class="header-badge">⏱️ Estimated Time: 45-50 minutes</div>
+    </header>
+    
+    <div class="progress-container" role="region" aria-label="Module progress">
+        <div class="progress-header">
+            <span class="progress-label">📊 Module 5.4 Progress</span>
+            <span class="progress-percentage" id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <p class="progress-note">💾 Progress is saved for this session only</p>
+    </div>
+    
+    <nav class="module-nav" aria-label="Module sections">
+        <ul class="nav-list">
+            <li><a href="#section-overview" class="active">Overview</a></li>
+            <li><a href="#section-ext-overview" class="linux">ext Family</a></li>
+            <li><a href="#section-ext4" class="linux">ext4 Structure</a></li>
+            <li><a href="#section-ext4-forensics" class="linux">ext4 Forensics</a></li>
+            <li><a href="#section-hfsplus" class="macos">HFS+</a></li>
+            <li><a href="#section-apfs" class="macos">APFS</a></li>
+            <li><a href="#section-comparison">Comparison</a></li>
+            <li><a href="#section-practice">Practice</a></li>
+        </ul>
+    </nav>
+    
+    <main id="main-content" role="main">
+        <!-- Section 1: Overview -->
+        <section class="section" id="section-overview">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🎯</span> Learning Overview & Objectives</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>While Windows dominates the desktop market, Linux and macOS systems are increasingly common in forensic investigations. Linux powers servers, IoT devices, Android phones, and is popular among developers and security professionals. macOS is standard in creative industries and increasingly common in corporate environments. This module provides the foundation for analyzing these non-Windows file systems.</p>
+                
+                <div class="info-box concept">
+                    <div class="info-box-title"><span aria-hidden="true">🎓</span> Learning Objectives</div>
+                    <p>Upon completing this module, you will be able to:</p>
+                    <ol>
+                        <li><strong>Describe ext2/ext3/ext4 file system architecture</strong> including superblocks, block groups, and inodes</li>
+                        <li><strong>Explain ext4-specific features</strong> such as extents and journaling modes</li>
+                        <li><strong>Identify ext4 timestamps</strong> and understand ctime vs. crtime</li>
+                        <li><strong>Describe HFS+ and APFS structures</strong> for macOS forensics</li>
+                        <li><strong>Recognize cross-platform forensic considerations</strong></li>
+                    </ol>
+                </div>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> CSLO Alignment</div>
+                    <p><strong>This module supports CSLO 2:</strong> Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data.</p>
+                    <p><strong>Connection to Future Weeks:</strong></p>
+                    <ul>
+                        <li><strong>Week 9 (Linux Forensics):</strong> ext4 file system analysis in depth</li>
+                        <li><strong>Week 14 (Mobile Forensics):</strong> APFS on iOS devices</li>
+                    </ul>
+                </div>
+                
+                <h3>When You'll Encounter These File Systems</h3>
+                
+                <div class="cards-grid">
+                    <div class="card linux">
+                        <div class="card-icon">🐧</div>
+                        <div class="card-title">Linux (ext4)</div>
+                        <div class="card-content">
+                            <ul>
+                                <li>Linux servers and workstations</li>
+                                <li>Android devices (internal storage)</li>
+                                <li>Raspberry Pi and IoT devices</li>
+                                <li>Network Attached Storage (NAS)</li>
+                                <li>Cloud server instances</li>
+                                <li>Docker containers</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card macos">
+                        <div class="card-icon">🍎</div>
+                        <div class="card-title">macOS (HFS+/APFS)</div>
+                        <div class="card-content">
+                            <ul>
+                                <li>Mac computers (desktops, laptops)</li>
+                                <li>iPhone and iPad (APFS)</li>
+                                <li>Apple Watch, Apple TV</li>
+                                <li>Time Machine backup drives</li>
+                                <li>External drives formatted on Mac</li>
+                                <li>Fusion drives (SSD+HDD)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-box warning">
+                    <div class="info-box-title"><span aria-hidden="true">⚠️</span> Prerequisites Check</div>
+                    <p>This module builds on concepts from Modules 5.1-5.3. Ensure you understand:</p>
+                    <ul>
+                        <li>File system fundamentals (clusters/blocks, metadata, slack space)</li>
+                        <li>How file systems organize data on storage devices</li>
+                        <li>Timestamp concepts and their forensic value</li>
+                        <li>File deletion and recovery principles</li>
+                    </ul>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-overview-1" onchange="updateProgress()">
+                        <label for="check-overview-1">I understand the learning objectives for this module</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-overview-2" onchange="updateProgress()">
+                        <label for="check-overview-2">I recognize when I'll encounter Linux and macOS file systems</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 2: ext Family Overview -->
+        <section class="section" id="section-ext-overview">
+            <div class="section-header linux" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🐧</span> The Extended File System Family</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>The Extended File System (ext) family is the standard file system for Linux. Understanding its evolution helps explain the features available in the current ext4 version and why older systems might still use ext2 or ext3.</p>
+                
+                <h3 class="linux">Evolution of ext File Systems</h3>
+                
+                <div class="evolution-timeline">
+                    <div class="evolution-item">
+                        <span class="evolution-year">1992</span>
+                        <span class="evolution-name">ext (First Extended File System)</span>
+                        <div class="evolution-content">
+                            <p>First file system created specifically for Linux. Replaced the Minix file system. Maximum size: 2 GB. Now obsolete.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="evolution-item">
+                        <span class="evolution-year">1993</span>
+                        <span class="evolution-name">ext2 (Second Extended File System)</span>
+                        <div class="evolution-content">
+                            <p>Major rewrite with improved performance and larger limits. Maximum volume: 32 TB. Maximum file: 2 TB. <strong>No journaling</strong>—still used for flash drives where journaling causes wear.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="evolution-item">
+                        <span class="evolution-year">2001</span>
+                        <span class="evolution-name">ext3 (Third Extended File System)</span>
+                        <div class="evolution-content">
+                            <p>Added <strong>journaling</strong> for crash recovery. Backward compatible with ext2 (can mount ext2 as ext3). Same size limits as ext2. Three journaling modes: journal, ordered, writeback.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="evolution-item">
+                        <span class="evolution-year">2008</span>
+                        <span class="evolution-name">ext4 (Fourth Extended File System)</span>
+                        <div class="evolution-content">
+                            <p>Current standard. Added <strong>extents</strong> for better large file handling. Maximum volume: 1 EB. Maximum file: 16 TB. Nanosecond timestamps. Backward compatible with ext3. Default on most Linux distributions.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 class="linux">Key Differences Summary</h3>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>ext2</th>
+                                <th>ext3</th>
+                                <th>ext4</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Year Introduced</strong></td>
+                                <td>1993</td>
+                                <td>2001</td>
+                                <td>2008</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Journaling</strong></td>
+                                <td>❌ No</td>
+                                <td>✅ Yes</td>
+                                <td>✅ Yes (improved)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Max Volume Size</strong></td>
+                                <td>32 TB</td>
+                                <td>32 TB</td>
+                                <td>1 EB</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Max File Size</strong></td>
+                                <td>2 TB</td>
+                                <td>2 TB</td>
+                                <td>16 TB</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Max Filename</strong></td>
+                                <td>255 bytes</td>
+                                <td>255 bytes</td>
+                                <td>255 bytes</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Timestamp Resolution</strong></td>
+                                <td>1 second</td>
+                                <td>1 second</td>
+                                <td>1 nanosecond</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Block Allocation</strong></td>
+                                <td>Indirect blocks</td>
+                                <td>Indirect blocks</td>
+                                <td>Extents</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Creation Time (crtime)</strong></td>
+                                <td>❌ No</td>
+                                <td>❌ No</td>
+                                <td>✅ Yes</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Current Usage</strong></td>
+                                <td>Flash media, recovery</td>
+                                <td>Legacy systems</td>
+                                <td>Default Linux FS</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="info-box linux">
+                    <div class="info-box-title"><span aria-hidden="true">🐧</span> Why ext2 Still Exists</div>
+                    <p>You might wonder why ext2 (without journaling) is still used. The answer is <strong>flash storage</strong>:</p>
+                    <ul>
+                        <li>Journaling causes additional writes, which wears out flash memory faster</li>
+                        <li>SD cards and USB drives formatted on Linux often use ext2</li>
+                        <li>Embedded systems with limited flash may use ext2</li>
+                        <li>Recovery scenarios: ext2 is simpler to analyze and recover</li>
+                    </ul>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-ext-overview-1" onchange="updateProgress()">
+                        <label for="check-ext-overview-1">I understand the evolution from ext2 to ext4</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-ext-overview-2" onchange="updateProgress()">
+                        <label for="check-ext-overview-2">I can identify the key features added in each version</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 3: ext4 Structure -->
+        <section class="section" id="section-ext4">
+            <div class="section-header linux" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🏗️</span> ext4 Structure & Components</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>ext4 organizes a volume into <strong>block groups</strong>, each containing a copy of critical metadata and a portion of the data blocks. This distributed design improves performance and provides redundancy for critical structures.</p>
+                
+                <h3 class="linux">ext4 Volume Layout</h3>
+                
+                <div class="diagram-container linux">
+                    <div class="diagram-title">ext4 Volume Structure</div>
+<pre class="diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              ext4 VOLUME                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌──────────────┐                                                           │
+│  │ Boot Block   │  First 1024 bytes reserved for boot loader                │
+│  │ (1024 bytes) │  (Not used by ext4 itself)                                │
+│  └──────────────┘                                                           │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │                         BLOCK GROUP 0                                   │ │
+│  │  ┌─────────────┬─────────────┬─────────────┬─────────────┬───────────┐ │ │
+│  │  │ Superblock  │ Group Desc  │ Block       │ Inode       │ Inode     │ │ │
+│  │  │             │ Table       │ Bitmap      │ Bitmap      │ Table     │ │ │
+│  │  │ (primary)   │ (all groups)│ (this group)│ (this group)│           │ │ │
+│  │  └─────────────┴─────────────┴─────────────┴─────────────┴───────────┘ │ │
+│  │  ┌─────────────────────────────────────────────────────────────────────┐│ │
+│  │  │                         DATA BLOCKS                                 ││ │
+│  │  │              (File contents and directory data)                     ││ │
+│  │  └─────────────────────────────────────────────────────────────────────┘│ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │                         BLOCK GROUP 1                                   │ │
+│  │  ┌─────────────┬─────────────┬─────────────┬─────────────┬───────────┐ │ │
+│  │  │ Superblock  │ Group Desc  │ Block       │ Inode       │ Inode     │ │ │
+│  │  │ (backup)    │ (backup)    │ Bitmap      │ Bitmap      │ Table     │ │ │
+│  │  └─────────────┴─────────────┴─────────────┴─────────────┴───────────┘ │ │
+│  │  ┌─────────────────────────────────────────────────────────────────────┐│ │
+│  │  │                         DATA BLOCKS                                 ││ │
+│  │  └─────────────────────────────────────────────────────────────────────┘│ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │                    BLOCK GROUPS 2 through N                             │ │
+│  │                    (Same structure, selective backups)                  │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                </div>
+                
+                <h3 class="linux">Key ext4 Components</h3>
+                
+                <div class="collapsible" id="collapse-superblock">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-superblock')" role="button" aria-expanded="false" tabindex="0">
+                        <span>📋 Superblock</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p>The <strong>superblock</strong> contains critical file system metadata. It's located at byte offset 1024 (after the boot block) and has backup copies in certain block groups.</p>
+                        
+                        <h4>Key Superblock Fields:</h4>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Offset</th>
+                                        <th>Size</th>
+                                        <th>Field</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>0x00</td>
+                                        <td>4</td>
+                                        <td>s_inodes_count</td>
+                                        <td>Total number of inodes</td>
+                                    </tr>
+                                    <tr>
+                                        <td>0x04</td>
+                                        <td>4</td>
+                                        <td>s_blocks_count_lo</td>
+                                        <td>Total number of blocks (low 32 bits)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>0x18</td>
+                                        <td>4</td>
+                                        <td>s_log_block_size</td>
+                                        <td>Block size = 1024 << this value</td>
+                                    </tr>
+                                    <tr>
+                                        <td>0x28</td>
+                                        <td>4</td>
+                                        <td>s_blocks_per_group</td>
+                                        <td>Blocks per block group</td>
+                                    </tr>
+                                    <tr>
+                                        <td>0x38</td>
+                                        <td>2</td>
+                                        <td>s_magic</td>
+                                        <td>Magic number: 0xEF53</td>
+                                    </tr>
+                                    <tr>
+                                        <td>0x44</td>
+                                        <td>4</td>
+                                        <td>s_lastcheck</td>
+                                        <td>Last file system check time</td>
+                                    </tr>
+                                    <tr>
+                                        <td>0x4C</td>
+                                        <td>4</td>
+                                        <td>s_creator_os</td>
+                                        <td>OS that created the FS</td>
+                                    </tr>
+                                    <tr>
+                                        <td>0x58</td>
+                                        <td>4</td>
+                                        <td>s_inode_size</td>
+                                        <td>Size of inode structure</td>
+                                    </tr>
+                                    <tr>
+                                        <td>0x78</td>
+                                        <td>16</td>
+                                        <td>s_uuid</td>
+                                        <td>128-bit UUID of volume</td>
+                                    </tr>
+                                    <tr>
+                                        <td>0x88</td>
+                                        <td>16</td>
+                                        <td>s_volume_name</td>
+                                        <td>Volume label</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="info-box forensic">
+                            <div class="info-box-title"><span aria-hidden="true">🔍</span> Forensic Value</div>
+                            <ul>
+                                <li><strong>UUID:</strong> Uniquely identifies the volume—useful for tracking drives</li>
+                                <li><strong>Mount time/count:</strong> Shows when volume was last mounted</li>
+                                <li><strong>Last check time:</strong> When fsck was last run</li>
+                                <li><strong>Creator OS:</strong> Identifies what created the file system</li>
+                                <li><strong>Backup superblocks:</strong> Can recover from primary superblock corruption</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="collapsible" id="collapse-inode">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-inode')" role="button" aria-expanded="false" tabindex="0">
+                        <span>📄 Inodes</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p>An <strong>inode</strong> (index node) is the fundamental metadata structure in ext file systems. Every file and directory has exactly one inode that stores all metadata <em>except</em> the filename.</p>
+                        
+                        <div class="definition-card linux">
+                            <h4>Inode</h4>
+                            <p>A fixed-size data structure containing a file's metadata: permissions, ownership, timestamps, size, and pointers to data blocks. The inode number is the file's unique identifier within the file system. Filenames are stored in directory entries, not in inodes.</p>
+                        </div>
+                        
+                        <h4>ext4 Inode Structure (256 bytes typical):</h4>
+                        
+                        <div class="inode-visualizer">
+                            <div class="inode-header">ext4 Inode Structure (Click fields for details)</div>
+                            <div class="inode-structure">
+                                <div class="inode-row">
+                                    <div class="inode-field mode" onclick="showInodeInfo('mode')" tabindex="0">
+                                        <span class="field-name">Mode</span>
+                                        <span class="field-value">File type & perms</span>
+                                    </div>
+                                    <div class="inode-field uid" onclick="showInodeInfo('uid')" tabindex="0">
+                                        <span class="field-name">UID</span>
+                                        <span class="field-value">Owner ID</span>
+                                    </div>
+                                    <div class="inode-field gid" onclick="showInodeInfo('gid')" tabindex="0">
+                                        <span class="field-name">GID</span>
+                                        <span class="field-value">Group ID</span>
+                                    </div>
+                                    <div class="inode-field size" onclick="showInodeInfo('size')" tabindex="0">
+                                        <span class="field-name">Size</span>
+                                        <span class="field-value">File size</span>
+                                    </div>
+                                </div>
+                                <div class="inode-row">
+                                    <div class="inode-field atime" onclick="showInodeInfo('atime')" tabindex="0">
+                                        <span class="field-name">atime</span>
+                                        <span class="field-value">Access time</span>
+                                    </div>
+                                    <div class="inode-field ctime" onclick="showInodeInfo('ctime')" tabindex="0">
+                                        <span class="field-name">ctime</span>
+                                        <span class="field-value">Change time</span>
+                                    </div>
+                                    <div class="inode-field mtime" onclick="showInodeInfo('mtime')" tabindex="0">
+                                        <span class="field-name">mtime</span>
+                                        <span class="field-value">Modify time</span>
+                                    </div>
+                                    <div class="inode-field crtime" onclick="showInodeInfo('crtime')" tabindex="0">
+                                        <span class="field-name">crtime</span>
+                                        <span class="field-value">Creation time</span>
+                                    </div>
+                                </div>
+                                <div class="inode-row">
+                                    <div class="inode-field links" onclick="showInodeInfo('links')" tabindex="0">
+                                        <span class="field-name">Links</span>
+                                        <span class="field-value">Hard link count</span>
+                                    </div>
+                                    <div class="inode-field blocks" onclick="showInodeInfo('blocks')" tabindex="0">
+                                        <span class="field-name">Blocks</span>
+                                        <span class="field-value">Block count</span>
+                                    </div>
+                                    <div class="inode-field flags" onclick="showInodeInfo('flags')" tabindex="0">
+                                        <span class="field-name">Flags</span>
+                                        <span class="field-value">Inode flags</span>
+                                    </div>
+                                    <div class="inode-field extents" onclick="showInodeInfo('extents')" tabindex="0">
+                                        <span class="field-name">Extents/Blocks</span>
+                                        <span class="field-value">Data pointers</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="inode-description" id="inode-info">
+                                <p>Click on any field above to see detailed information.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="info-box example">
+                            <div class="info-box-title"><span aria-hidden="true">💡</span> Inode vs. NTFS MFT Entry</div>
+                            <p>The inode serves a similar purpose to an NTFS MFT entry, but with key differences:</p>
+                            <ul>
+                                <li><strong>Filename location:</strong> Inodes don't store filenames (directories do); MFT entries contain $FILE_NAME</li>
+                                <li><strong>Size:</strong> Inodes are smaller (256 bytes vs. 1024 bytes)</li>
+                                <li><strong>Data storage:</strong> Inodes use extents or block pointers; MFT can store small files directly</li>
+                                <li><strong>Attributes:</strong> Inodes have fixed fields; MFT has flexible attributes</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="collapsible" id="collapse-extents">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-extents')" role="button" aria-expanded="false" tabindex="0">
+                        <span>📊 Extents (ext4 Feature)</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p><strong>Extents</strong> are an ext4 feature that replaces the traditional indirect block pointers used in ext2/ext3. An extent describes a contiguous range of blocks, making large file storage more efficient.</p>
+                        
+                        <div class="diagram-container linux">
+                            <div class="diagram-title">Indirect Blocks (ext2/ext3) vs. Extents (ext4)</div>
+<pre class="diagram">
+ext2/ext3: INDIRECT BLOCK POINTERS
+─────────────────────────────────────
+Inode contains:
+├── 12 direct block pointers → [Block 100][Block 101]...[Block 111]
+├── 1 indirect pointer → [Pointer Block] → [Block 200][Block 201]...
+├── 1 double indirect → [Ptr Block] → [Ptr Blocks] → [Data Blocks]
+└── 1 triple indirect → [Ptr] → [Ptrs] → [Ptrs] → [Data Blocks]
+
+Problem: Large files require many pointer blocks = overhead + fragmentation
+
+
+ext4: EXTENTS
+─────────────────────────────────────
+Inode contains extent tree:
+├── Extent 1: Start=100, Length=50   → Blocks 100-149 (contiguous!)
+├── Extent 2: Start=500, Length=100  → Blocks 500-599 (contiguous!)
+└── Extent 3: Start=1000, Length=200 → Blocks 1000-1199 (contiguous!)
+
+Advantage: Fewer pointers, better performance, less fragmentation
+</pre>
+                        </div>
+                        
+                        <h4>Extent Structure:</h4>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Field</th>
+                                        <th>Size</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>ee_block</td>
+                                        <td>4 bytes</td>
+                                        <td>First logical block this extent covers</td>
+                                    </tr>
+                                    <tr>
+                                        <td>ee_len</td>
+                                        <td>2 bytes</td>
+                                        <td>Number of blocks in extent (max 32768)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>ee_start_hi</td>
+                                        <td>2 bytes</td>
+                                        <td>High 16 bits of physical block</td>
+                                    </tr>
+                                    <tr>
+                                        <td>ee_start_lo</td>
+                                        <td>4 bytes</td>
+                                        <td>Low 32 bits of physical block</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="info-box forensic">
+                            <div class="info-box-title"><span aria-hidden="true">🔍</span> Forensic Implications of Extents</div>
+                            <ul>
+                                <li><strong>Less fragmentation:</strong> Deleted file data more likely to be contiguous</li>
+                                <li><strong>Easier recovery:</strong> Extent information may survive in inode after deletion</li>
+                                <li><strong>Extent tree:</strong> Large files use B-tree of extents (more complex to parse)</li>
+                                <li><strong>Uninitialized extents:</strong> May contain data from previous files (forensic artifact)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="collapsible" id="collapse-journal">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-journal')" role="button" aria-expanded="false" tabindex="0">
+                        <span>📝 ext4 Journal</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p>ext4 uses a journal to ensure file system consistency after crashes. The journal records changes before they're committed to the main file system.</p>
+                        
+                        <h4>Journaling Modes:</h4>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Mode</th>
+                                        <th>What's Journaled</th>
+                                        <th>Performance</th>
+                                        <th>Safety</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>journal</strong></td>
+                                        <td>Metadata + Data</td>
+                                        <td>Slowest</td>
+                                        <td>Highest</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ordered</strong> (default)</td>
+                                        <td>Metadata only, data written first</td>
+                                        <td>Medium</td>
+                                        <td>Good</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>writeback</strong></td>
+                                        <td>Metadata only, data order not guaranteed</td>
+                                        <td>Fastest</td>
+                                        <td>Lowest</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="info-box forensic">
+                            <div class="info-box-title"><span aria-hidden="true">🔍</span> Journal Forensic Value</div>
+                            <ul>
+                                <li><strong>Recent operations:</strong> Journal may contain recently deleted file metadata</li>
+                                <li><strong>Data recovery:</strong> In "journal" mode, actual file data may be in journal</li>
+                                <li><strong>Timeline:</strong> Journal transactions have sequence numbers for ordering</li>
+                                <li><strong>Tool:</strong> <code>jls</code> and <code>jcat</code> from Sleuth Kit parse ext journals</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-ext4-1" onchange="updateProgress()">
+                        <label for="check-ext4-1">I understand the ext4 volume layout with block groups</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-ext4-2" onchange="updateProgress()">
+                        <label for="check-ext4-2">I can describe what information is stored in an inode</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-ext4-3" onchange="updateProgress()">
+                        <label for="check-ext4-3">I understand the advantage of extents over indirect blocks</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 4: ext4 Forensics -->
+        <section class="section" id="section-ext4-forensics">
+            <div class="section-header linux" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🔍</span> ext4 Forensic Analysis</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>ext4 provides rich forensic artifacts, including four timestamps per file and a journal that can reveal recent activity. Understanding these artifacts is essential for Linux forensics.</p>
+                
+                <h3 class="linux">ext4 Timestamps (MAC + B)</h3>
+                
+                <p>ext4 stores <strong>four timestamps</strong> per file, similar to NTFS but with different names and behaviors:</p>
+                
+                <div class="timestamp-grid">
+                    <div class="timestamp-item linux">
+                        <div class="timestamp-name">Modify Time</div>
+                        <div class="timestamp-abbrev">mtime</div>
+                        <div class="timestamp-desc">When file <em>content</em> was last changed</div>
+                    </div>
+                    
+                    <div class="timestamp-item linux">
+                        <div class="timestamp-name">Access Time</div>
+                        <div class="timestamp-abbrev">atime</div>
+                        <div class="timestamp-desc">When file was last read (may be disabled)</div>
+                    </div>
+                    
+                    <div class="timestamp-item linux">
+                        <div class="timestamp-name">Change Time</div>
+                        <div class="timestamp-abbrev">ctime</div>
+                        <div class="timestamp-desc">When <em>inode</em> was last modified (metadata change)</div>
+                    </div>
+                    
+                    <div class="timestamp-item linux">
+                        <div class="timestamp-name">Creation Time</div>
+                        <div class="timestamp-abbrev">crtime</div>
+                        <div class="timestamp-desc">When file was created (ext4 only!)</div>
+                    </div>
+                </div>
+                
+                <div class="info-box warning">
+                    <div class="info-box-title"><span aria-hidden="true">⚠️</span> ctime is NOT Creation Time!</div>
+                    <p>A common mistake: <strong>ctime does NOT mean "creation time"</strong> in Unix/Linux. It means "change time" and records when the inode metadata was last modified. This includes:</p>
+                    <ul>
+                        <li>Permission changes (chmod)</li>
+                        <li>Ownership changes (chown)</li>
+                        <li>Hard link creation/deletion</li>
+                        <li>File content changes (also updates mtime)</li>
+                    </ul>
+                    <p><strong>crtime</strong> (creation time) was added in ext4 and is the actual birth time of the file.</p>
+                </div>
+                
+                <h3 class="linux">Timestamp Comparison: ext4 vs. NTFS</h3>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Concept</th>
+                                <th>ext4</th>
+                                <th>NTFS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Content Modified</strong></td>
+                                <td>mtime</td>
+                                <td>$SI Modified / $FN Modified</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Last Accessed</strong></td>
+                                <td>atime</td>
+                                <td>$SI Accessed / $FN Accessed</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Metadata Changed</strong></td>
+                                <td>ctime</td>
+                                <td>$SI MFT Modified</td>
+                            </tr>
+                            <tr>
+                                <td><strong>File Created</strong></td>
+                                <td>crtime (ext4 only)</td>
+                                <td>$SI Created / $FN Created</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Resolution</strong></td>
+                                <td>1 nanosecond (ext4)</td>
+                                <td>100 nanoseconds</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Timezone</strong></td>
+                                <td>UTC</td>
+                                <td>UTC</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Easily Modified?</strong></td>
+                                <td>mtime/atime: Yes; ctime: No*</td>
+                                <td>$SI: Yes; $FN: No</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p><em>* ctime cannot be set directly by users but is updated automatically when inode changes.</em></p>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> Timestomping Detection in ext4</div>
+                    <p>Like NTFS, ext4 timestamp manipulation can be detected:</p>
+                    <ul>
+                        <li><strong>mtime before crtime:</strong> Impossible without manipulation (file can't be modified before creation)</li>
+                        <li><strong>ctime after mtime:</strong> Normal if only metadata changed; suspicious if content should have changed</li>
+                        <li><strong>crtime much older than ctime:</strong> May indicate file was copied (crtime = copy time, but mtime preserved)</li>
+                        <li><strong>Journal analysis:</strong> Journal may contain original timestamps</li>
+                    </ul>
+                </div>
+                
+                <h3 class="linux">ext4 File Deletion</h3>
+                
+                <p>When a file is deleted in ext4:</p>
+                
+                <div class="cards-grid">
+                    <div class="card linux">
+                        <div class="card-icon">1️⃣</div>
+                        <div class="card-title">Directory Entry Removed</div>
+                        <div class="card-content">The filename is removed from the parent directory. Unlike FAT (0xE5 marker), the entry is actually removed from the directory structure.</div>
+                    </div>
+                    
+                    <div class="card linux">
+                        <div class="card-icon">2️⃣</div>
+                        <div class="card-title">Link Count Decremented</div>
+                        <div class="card-content">The inode's hard link count is reduced by 1. If it reaches 0 and no process has the file open, the inode is marked for reuse.</div>
+                    </div>
+                    
+                    <div class="card linux">
+                        <div class="card-icon">3️⃣</div>
+                        <div class="card-title">Blocks Deallocated</div>
+                        <div class="card-content">The block bitmap is updated to mark the file's blocks as free. The extent/block pointers in the inode may be cleared.</div>
+                    </div>
+                    
+                    <div class="card linux">
+                        <div class="card-icon">4️⃣</div>
+                        <div class="card-title">Deletion Time Set</div>
+                        <div class="card-content">ext4 sets a deletion time (dtime) in the inode, recording when the file was deleted—useful for forensics!</div>
+                    </div>
+                </div>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> ext4 Recovery Challenges</div>
+                    <p>ext4 file recovery is generally <strong>harder than NTFS</strong> because:</p>
+                    <ul>
+                        <li><strong>Extent pointers may be cleared:</strong> Unlike NTFS (run lists often survive), ext4 may zero extent data</li>
+                        <li><strong>No equivalent to $FILE_NAME:</strong> Filename is only in directory, not in inode</li>
+                        <li><strong>Journal helps:</strong> Recent deletions may be recoverable from journal</li>
+                        <li><strong>extundelete tool:</strong> Specialized tool for ext3/ext4 recovery</li>
+                    </ul>
+                </div>
+                
+                <h3 class="linux">Useful Commands for ext4 Analysis</h3>
+                
+                <div class="info-box example">
+                    <div class="info-box-title"><span aria-hidden="true">💻</span> Sleuth Kit Commands for ext4</div>
+<pre><code># Display file system information (superblock)
+fsstat /dev/sda1
+
+# List files including deleted (shows inode numbers)
+fls -r /dev/sda1
+
+# Display inode information
+istat /dev/sda1 [inode_number]
+
+# Extract file by inode number
+icat /dev/sda1 [inode_number] > recovered_file
+
+# List journal entries
+jls /dev/sda1
+
+# Extract journal block
+jcat /dev/sda1 [journal_block]
+
+# Show all timestamps for a file
+stat /path/to/file</code></pre>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-ext4-forensics-1" onchange="updateProgress()">
+                        <label for="check-ext4-forensics-1">I understand the four ext4 timestamps (mtime, atime, ctime, crtime)</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-ext4-forensics-2" onchange="updateProgress()">
+                        <label for="check-ext4-forensics-2">I know that ctime is NOT creation time</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-ext4-forensics-3" onchange="updateProgress()">
+                        <label for="check-ext4-forensics-3">I understand ext4 deletion and recovery challenges</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 5: HFS+ -->
+        <section class="section" id="section-hfsplus">
+            <div class="section-header macos" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🍎</span> HFS+ (Mac OS Extended)</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>HFS+ (Hierarchical File System Plus) was Apple's primary file system from 1998 until 2017 when APFS was introduced. You'll still encounter HFS+ on older Macs, external drives, and Time Machine backups.</p>
+                
+                <div class="definition-card macos">
+                    <h4>HFS+ (Mac OS Extended)</h4>
+                    <p>Apple's file system introduced in Mac OS 8.1 (1998). Uses B-tree structures for efficient file lookup. Supports journaling (HFS+ Journaled), case sensitivity options, and resource forks for storing additional file data.</p>
+                </div>
+                
+                <h3 class="macos">HFS+ Key Structures</h3>
+                
+                <div class="diagram-container macos">
+                    <div class="diagram-title">HFS+ Volume Structure</div>
+<pre class="diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              HFS+ VOLUME                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │  Reserved (1024 bytes)  │  Volume Header  │  Reserved                  │ │
+│  │  (Boot blocks)          │  (512 bytes)    │                            │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │                      SPECIAL FILES (B-Trees)                           │ │
+│  │  ┌──────────────────┬──────────────────┬──────────────────┐           │ │
+│  │  │  Catalog File    │  Extents         │  Attributes      │           │ │
+│  │  │  (file/folder    │  Overflow File   │  File            │           │ │
+│  │  │   metadata)      │  (fragmentation) │  (extended attrs)│           │ │
+│  │  └──────────────────┴──────────────────┴──────────────────┘           │ │
+│  │  ┌──────────────────┬──────────────────┐                              │ │
+│  │  │  Allocation File │  Startup File    │                              │ │
+│  │  │  (block bitmap)  │  (boot info)     │                              │ │
+│  │  └──────────────────┴──────────────────┘                              │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │                         DATA AREA                                       │ │
+│  │              (Allocation blocks for file data)                         │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │  Alternate Volume Header (backup at end of volume)                     │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                </div>
+                
+                <h3 class="macos">HFS+ Key Components</h3>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Component</th>
+                                <th>Purpose</th>
+                                <th>Forensic Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Volume Header</strong></td>
+                                <td>File system metadata (like superblock)</td>
+                                <td>Volume name, creation date, block size</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Catalog File</strong></td>
+                                <td>B-tree of all files and folders</td>
+                                <td>⭐⭐⭐ Complete file listing, timestamps, metadata</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Extents Overflow</strong></td>
+                                <td>Additional extents for fragmented files</td>
+                                <td>Helps locate file data</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Attributes File</strong></td>
+                                <td>Extended attributes (like ADS)</td>
+                                <td>May contain hidden data, metadata</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Allocation File</strong></td>
+                                <td>Block allocation bitmap</td>
+                                <td>Shows allocated/free blocks</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Journal</strong></td>
+                                <td>Transaction log for crash recovery</td>
+                                <td>⭐⭐ Recent file operations</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h3 class="macos">HFS+ Forensic Features</h3>
+                
+                <div class="cards-grid">
+                    <div class="card macos">
+                        <div class="card-icon">📁</div>
+                        <div class="card-title">Catalog File</div>
+                        <div class="card-content">
+                            <p>The Catalog File is a B-tree containing records for every file and folder. Each record includes:</p>
+                            <ul>
+                                <li>Catalog Node ID (CNID) - unique file identifier</li>
+                                <li>Parent CNID</li>
+                                <li>File name</li>
+                                <li>Timestamps (created, modified, accessed, attribute modified)</li>
+                                <li>Data fork and resource fork info</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card macos">
+                        <div class="card-icon">🍴</div>
+                        <div class="card-title">Resource Forks</div>
+                        <div class="card-content">
+                            <p>HFS+ files can have two "forks":</p>
+                            <ul>
+                                <li><strong>Data Fork:</strong> Normal file content</li>
+                                <li><strong>Resource Fork:</strong> Structured data (icons, metadata, code)</li>
+                            </ul>
+                            <p>Resource forks are legacy but may contain hidden data.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card macos">
+                        <div class="card-icon">🔤</div>
+                        <div class="card-title">Case Sensitivity</div>
+                        <div class="card-content">
+                            <p>HFS+ has two variants:</p>
+                            <ul>
+                                <li><strong>Case-insensitive (default):</strong> "File.txt" = "FILE.TXT"</li>
+                                <li><strong>Case-sensitive:</strong> "File.txt" ≠ "FILE.TXT"</li>
+                            </ul>
+                            <p>Most Macs use case-insensitive, but case-sensitive exists.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> HFS+ Forensic Considerations</div>
+                    <ul>
+                        <li><strong>Catalog File:</strong> Provides complete file listing even for deleted files (if not overwritten)</li>
+                        <li><strong>Journal:</strong> May contain recently deleted file metadata</li>
+                        <li><strong>Resource forks:</strong> Check for hidden data in resource forks</li>
+                        <li><strong>Hard links:</strong> HFS+ supports hard links—check link counts</li>
+                        <li><strong>Timestamps:</strong> Stored in Mac absolute time (seconds since Jan 1, 1904)</li>
+                        <li><strong>Tools:</strong> Autopsy, BlackBag BlackLight, Cellebrite support HFS+</li>
+                    </ul>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-hfsplus-1" onchange="updateProgress()">
+                        <label for="check-hfsplus-1">I understand the key structures of HFS+</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-hfsplus-2" onchange="updateProgress()">
+                        <label for="check-hfsplus-2">I know what the Catalog File contains</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 6: APFS -->
+        <section class="section" id="section-apfs">
+            <div class="section-header macos" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🍎</span> APFS (Apple File System)</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>APFS (Apple File System) replaced HFS+ starting in 2017 and is now the default file system for all Apple devices: macOS, iOS, iPadOS, watchOS, and tvOS. Understanding APFS is essential for modern Apple forensics.</p>
+                
+                <div class="definition-card macos">
+                    <h4>APFS (Apple File System)</h4>
+                    <p>Apple's modern file system introduced in 2017, optimized for flash/SSD storage. Features include native encryption, space sharing between volumes, snapshots, clones, and nanosecond timestamps. Uses a copy-on-write design for data integrity.</p>
+                </div>
+                
+                <h3 class="macos">APFS Key Features</h3>
+                
+                <div class="cards-grid">
+                    <div class="card macos">
+                        <div class="card-icon">📦</div>
+                        <div class="card-title">Container Architecture</div>
+                        <div class="card-content">
+                            <p>APFS introduces "containers" that can hold multiple volumes sharing the same storage pool:</p>
+                            <ul>
+                                <li>Container = physical partition</li>
+                                <li>Volumes share free space dynamically</li>
+                                <li>No need to pre-allocate volume sizes</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card macos">
+                        <div class="card-icon">📸</div>
+                        <div class="card-title">Snapshots</div>
+                        <div class="card-content">
+                            <p>Point-in-time read-only copies of a volume:</p>
+                            <ul>
+                                <li>Used by Time Machine</li>
+                                <li>Created before macOS updates</li>
+                                <li>May contain deleted file data!</li>
+                                <li>Space-efficient (copy-on-write)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card macos">
+                        <div class="card-icon">🔐</div>
+                        <div class="card-title">Native Encryption</div>
+                        <div class="card-content">
+                            <p>Built-in encryption support:</p>
+                            <ul>
+                                <li>FileVault uses APFS encryption</li>
+                                <li>Per-file encryption keys possible</li>
+                                <li>Hardware-accelerated on Apple Silicon</li>
+                                <li>Forensic challenge: requires keys!</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card macos">
+                        <div class="card-icon">📋</div>
+                        <div class="card-title">Clones</div>
+                        <div class="card-content">
+                            <p>Instant file/directory copies:</p>
+                            <ul>
+                                <li>No data duplication initially</li>
+                                <li>Copy-on-write when modified</li>
+                                <li>Used by APFS for efficiency</li>
+                                <li>May preserve deleted data longer</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card macos">
+                        <div class="card-icon">⏱️</div>
+                        <div class="card-title">Nanosecond Timestamps</div>
+                        <div class="card-content">
+                            <p>High-precision timestamps:</p>
+                            <ul>
+                                <li>1 nanosecond resolution</li>
+                                <li>Created, Modified, Changed, Accessed</li>
+                                <li>Better than NTFS (100ns)</li>
+                                <li>Excellent for timeline analysis</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card macos">
+                        <div class="card-icon">⚡</div>
+                        <div class="card-title">SSD Optimization</div>
+                        <div class="card-content">
+                            <p>Designed for flash storage:</p>
+                            <ul>
+                                <li>TRIM support built-in</li>
+                                <li>Copy-on-write reduces writes</li>
+                                <li>Space-efficient metadata</li>
+                                <li>Challenge: TRIM may destroy evidence</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 class="macos">APFS Structure</h3>
+                
+                <div class="diagram-container macos">
+                    <div class="diagram-title">APFS Container and Volume Architecture</div>
+<pre class="diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           APFS CONTAINER                                     │
+│                    (Physical partition on disk)                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │                    Container Superblock                                 │ │
+│  │  • Container UUID                                                       │ │
+│  │  • Block size, block count                                             │ │
+│  │  • Checkpoint descriptor area                                          │ │
+│  │  • Space manager location                                              │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │                        SHARED SPACE POOL                                │ │
+│  │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐        │ │
+│  │  │    Volume 1     │  │    Volume 2     │  │    Volume 3     │        │ │
+│  │  │   "Macintosh    │  │   "Macintosh    │  │    "Preboot"    │        │ │
+│  │  │      HD"        │  │    HD - Data"   │  │                 │        │ │
+│  │  │                 │  │                 │  │                 │        │ │
+│  │  │  System files   │  │  User data      │  │  Boot files     │        │ │
+│  │  │  Applications   │  │  Documents      │  │                 │        │ │
+│  │  │                 │  │  Downloads      │  │                 │        │ │
+│  │  └─────────────────┘  └─────────────────┘  └─────────────────┘        │ │
+│  │                                                                         │ │
+│  │     ◄──────────── Space shared dynamically ────────────►               │ │
+│  │                                                                         │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │                          SNAPSHOTS                                      │ │
+│  │  • Snapshot 1: "Before macOS update" (2025-03-01)                      │ │
+│  │  • Snapshot 2: "Time Machine local" (2025-03-24)                       │ │
+│  │  • (Read-only, point-in-time volume states)                            │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+</pre>
+                </div>
+                
+                <h3 class="macos">APFS Forensic Challenges</h3>
+                
+                <div class="info-box danger">
+                    <div class="info-box-title"><span aria-hidden="true">⚠️</span> APFS Forensic Challenges</div>
+                    <ul>
+                        <li><strong>Encryption by default:</strong> FileVault encryption is standard on modern Macs; requires password or recovery key</li>
+                        <li><strong>T2/Apple Silicon security:</strong> Hardware encryption makes cold boot attacks ineffective</li>
+                        <li><strong>TRIM on SSDs:</strong> Deleted data may be immediately zeroed</li>
+                        <li><strong>Copy-on-write complexity:</strong> File history spread across multiple locations</li>
+                        <li><strong>Limited tool support:</strong> APFS is newer, fewer tools fully support it</li>
+                        <li><strong>Sealed System Volume:</strong> macOS Big Sur+ has read-only system volume</li>
+                    </ul>
+                </div>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> APFS Forensic Opportunities</div>
+                    <ul>
+                        <li><strong>Snapshots:</strong> May contain deleted files from before snapshot creation</li>
+                        <li><strong>Clones:</strong> Copy-on-write may preserve original data longer</li>
+                        <li><strong>Container metadata:</strong> Records of all volumes, even deleted ones</li>
+                        <li><strong>Timestamps:</strong> Nanosecond precision excellent for timeline analysis</li>
+                        <li><strong>Multiple volumes:</strong> User data often on separate volume from system</li>
+                        <li><strong>Tools:</strong> Autopsy (limited), BlackBag Mobilyze, Cellebrite UFED, mac_apt</li>
+                    </ul>
+                </div>
+                
+                <h3 class="macos">macOS Volume Layout (Big Sur+)</h3>
+                
+                <p>Modern macOS uses a specific APFS volume layout:</p>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Volume</th>
+                                <th>Purpose</th>
+                                <th>Forensic Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Macintosh HD</strong></td>
+                                <td>System volume (read-only, sealed)</td>
+                                <td>OS files, applications; cryptographically sealed</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Macintosh HD - Data</strong></td>
+                                <td>User data volume</td>
+                                <td>⭐⭐⭐ User files, documents, application data</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Preboot</strong></td>
+                                <td>Boot files</td>
+                                <td>Boot.efi, firmware data</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Recovery</strong></td>
+                                <td>macOS Recovery</td>
+                                <td>Recovery tools, reinstall capability</td>
+                            </tr>
+                            <tr>
+                                <td><strong>VM</strong></td>
+                                <td>Virtual memory</td>
+                                <td>Swap files, sleep image (may contain RAM data)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-apfs-1" onchange="updateProgress()">
+                        <label for="check-apfs-1">I understand APFS container and volume architecture</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-apfs-2" onchange="updateProgress()">
+                        <label for="check-apfs-2">I know the key features of APFS (snapshots, clones, encryption)</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-apfs-3" onchange="updateProgress()">
+                        <label for="check-apfs-3">I recognize APFS forensic challenges and opportunities</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 7: Comparison -->
+        <section class="section" id="section-comparison">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">📊</span> Cross-Platform File System Comparison</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>Understanding the differences between file systems helps forensic examiners know what to expect when analyzing evidence from different platforms.</p>
+                
+                <h3>Comprehensive Comparison</h3>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>NTFS</th>
+                                <th>ext4</th>
+                                <th>HFS+</th>
+                                <th>APFS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Platform</strong></td>
+                                <td>Windows</td>
+                                <td>Linux</td>
+                                <td>macOS (legacy)</td>
+                                <td>Apple (all)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Introduced</strong></td>
+                                <td>1993</td>
+                                <td>2008</td>
+                                <td>1998</td>
+                                <td>2017</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Max File Size</strong></td>
+                                <td>16 EB</td>
+                                <td>16 TB</td>
+                                <td>8 EB</td>
+                                <td>8 EB</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Timestamp Resolution</strong></td>
+                                <td>100 ns</td>
+                                <td>1 ns</td>
+                                <td>1 second</td>
+                                <td>1 ns</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Journaling</strong></td>
+                                <td>Yes ($LogFile)</td>
+                                <td>Yes</td>
+                                <td>Yes (optional)</td>
+                                <td>Yes (CoW)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Metadata Structure</strong></td>
+                                <td>MFT entries</td>
+                                <td>Inodes</td>
+                                <td>Catalog B-tree</td>
+                                <td>B-trees</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Filename in Metadata</strong></td>
+                                <td>Yes ($FILE_NAME)</td>
+                                <td>No (in directory)</td>
+                                <td>Yes (Catalog)</td>
+                                <td>Yes</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Timestamps</strong></td>
+                                <td>8 (SI+FN)</td>
+                                <td>4</td>
+                                <td>4</td>
+                                <td>4</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Creation Time</strong></td>
+                                <td>Yes</td>
+                                <td>Yes (crtime)</td>
+                                <td>Yes</td>
+                                <td>Yes</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Hidden Streams</strong></td>
+                                <td>ADS</td>
+                                <td>Extended attrs</td>
+                                <td>Resource forks</td>
+                                <td>Extended attrs</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Native Encryption</strong></td>
+                                <td>EFS</td>
+                                <td>External (LUKS)</td>
+                                <td>FileVault (external)</td>
+                                <td>Yes (native)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Snapshots</strong></td>
+                                <td>VSS (external)</td>
+                                <td>LVM (external)</td>
+                                <td>No</td>
+                                <td>Yes (native)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Deleted File Recovery</strong></td>
+                                <td>Excellent</td>
+                                <td>Moderate</td>
+                                <td>Good</td>
+                                <td>Variable</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h3>Forensic Tool Support</h3>
+                
+                <div class="os-comparison">
+                    <div class="os-card linux">
+                        <div class="os-card-header">🐧 Linux (ext4) Tools</div>
+                        <div class="os-card-body">
+                            <div class="os-card-item">
+                                <span class="os-card-label">Autopsy</span>
+                                <span class="os-card-value">Full support</span>
+                            </div>
+                            <div class="os-card-item">
+                                <span class="os-card-label">Sleuth Kit</span>
+                                <span class="os-card-value">Full support</span>
+                            </div>
+                            <div class="os-card-item">
+                                <span class="os-card-label">extundelete</span>
+                                <span class="os-card-value">Recovery tool</span>
+                            </div>
+                            <div class="os-card-item">
+                                <span class="os-card-label">X-Ways</span>
+                                <span class="os-card-value">Full support</span>
+                            </div>
+                            <div class="os-card-item">
+                                <span class="os-card-label">EnCase</span>
+                                <span class="os-card-value">Full support</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="os-card macos">
+                        <div class="os-card-header">🍎 macOS (APFS/HFS+) Tools</div>
+                        <div class="os-card-body">
+                            <div class="os-card-item">
+                                <span class="os-card-label">Autopsy</span>
+                                <span class="os-card-value">HFS+: Good; APFS: Limited</span>
+                            </div>
+                            <div class="os-card-item">
+                                <span class="os-card-label">BlackBag BlackLight</span>
+                                <span class="os-card-value">Full APFS support</span>
+                            </div>
+                            <div class="os-card-item">
+                                <span class="os-card-label">Cellebrite</span>
+                                <span class="os-card-value">Full APFS support</span>
+                            </div>
+                            <div class="os-card-item">
+                                <span class="os-card-label">mac_apt</span>
+                                <span class="os-card-value">Free APFS parser</span>
+                            </div>
+                            <div class="os-card-item">
+                                <span class="os-card-label">X-Ways</span>
+                                <span class="os-card-value">Good APFS support</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-box concept">
+                    <div class="info-box-title"><span aria-hidden="true">💡</span> Cross-Platform Investigation Tips</div>
+                    <ul>
+                        <li><strong>Identify the file system first:</strong> Use <code>fsstat</code> or examine boot sectors/superblocks</li>
+                        <li><strong>Use appropriate tools:</strong> Some tools work better with specific file systems</li>
+                        <li><strong>Understand timestamp differences:</strong> Resolution and meaning vary by file system</li>
+                        <li><strong>Check for hidden data:</strong> ADS (NTFS), extended attributes (ext4), resource forks (HFS+)</li>
+                        <li><strong>Consider encryption:</strong> APFS encryption is common; plan for key recovery</li>
+                        <li><strong>Document everything:</strong> Note file system type, version, and any anomalies</li>
+                    </ul>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-comparison-1" onchange="updateProgress()">
+                        <label for="check-comparison-1">I can compare key features across file systems</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-comparison-2" onchange="updateProgress()">
+                        <label for="check-comparison-2">I know which tools support which file systems</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 8: Practice Activities -->
+        <section class="section" id="section-practice">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🎮</span> Practice Activities & Knowledge Check</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>Test your understanding of Linux and macOS file systems with these activities.</p>
+                
+                <!-- Quiz -->
+                <div class="interactive-container">
+                    <div class="interactive-title"><span aria-hidden="true">📝</span> Knowledge Check Quiz</div>
+                    
+                    <div class="quiz-question" id="quiz-1">
+                        <p>1. In ext4, what does "ctime" represent?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-1" value="a">
+                                <span>Creation time</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-1" value="b">
+                                <span>Change time (inode metadata modification)</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-1" value="c">
+                                <span>Copy time</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-1" value="d">
+                                <span>Close time</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-1-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-2">
+                        <p>2. What is an inode in ext file systems?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-2" value="a">
+                                <span>A directory entry containing the filename</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-2" value="b">
+                                <span>A data structure containing file metadata (not the filename)</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-2" value="c">
+                                <span>A journal entry</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-2" value="d">
+                                <span>A block group descriptor</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-2-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-3">
+                        <p>3. What major feature did ext3 add over ext2?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-3" value="a">
+                                <span>Extents</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-3" value="b">
+                                <span>Journaling</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-3" value="c">
+                                <span>Nanosecond timestamps</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-3" value="d">
+                                <span>Creation time (crtime)</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-3-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-4">
+                        <p>4. What is an APFS "snapshot"?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-4" value="a">
+                                <span>A photograph stored on the device</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-4" value="b">
+                                <span>A point-in-time, read-only copy of a volume</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-4" value="c">
+                                <span>A backup stored on external media</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-4" value="d">
+                                <span>A compressed file</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-4-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-5">
+                        <p>5. Why is ext4 file recovery generally harder than NTFS recovery?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-5" value="a">
+                                <span>ext4 doesn't have timestamps</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-5" value="b">
+                                <span>ext4 may clear extent pointers on deletion, and filenames aren't in inodes</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-5" value="c">
+                                <span>ext4 immediately overwrites deleted data</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-5" value="d">
+                                <span>ext4 doesn't support deleted file recovery</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-5-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-6">
+                        <p>6. Which HFS+ structure provides a complete listing of all files and folders?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-6" value="a">
+                                <span>Volume Header</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-6" value="b">
+                                <span>Allocation File</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-6" value="c">
+                                <span>Catalog File</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-6" value="d">
+                                <span>Extents Overflow File</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-6-feedback"></div>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="checkAllQuizAnswers()" style="margin-top: 1rem;">Check All Answers</button>
+                    <button class="btn btn-secondary" onclick="resetQuiz()" style="margin-top: 1rem;">Reset Quiz</button>
+                    
+                    <div id="quiz-results" style="margin-top: 1rem; display: none;">
+                        <div class="info-box concept">
+                            <div class="info-box-title">Quiz Results</div>
+                            <p id="quiz-score"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-practice-1" onchange="updateProgress()">
+                        <label for="check-practice-1">I completed the knowledge check quiz</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-practice-2" onchange="updateProgress()">
+                        <label for="check-practice-2">I explored the interactive inode visualizer</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-practice-3" onchange="updateProgress()">
+                        <label for="check-practice-3">I reviewed the file system comparison table</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Module Summary -->
+        <section class="section" id="section-summary">
+            <div class="section-header" style="background: linear-gradient(135deg, var(--success-color), #059669);">
+                <h2><span aria-hidden="true">🎉</span> Module 5.4 Summary</h2>
+            </div>
+            <div class="section-content">
+                <div class="info-box concept">
+                    <div class="info-box-title"><span aria-hidden="true">📚</span> Key Takeaways</div>
+                    <ul>
+                        <li><strong>ext4</strong> is the standard Linux file system, using inodes for metadata and extents for efficient storage</li>
+                        <li><strong>ext4 has four timestamps:</strong> mtime (modified), atime (accessed), ctime (changed), crtime (created)</li>
+                        <li><strong>ctime is NOT creation time</strong>—it's the inode change time; crtime is creation time</li>
+                        <li><strong>HFS+</strong> was Apple's file system from 1998-2017; uses Catalog File B-tree for file metadata</li>
+                        <li><strong>APFS</strong> is Apple's modern file system with containers, snapshots, clones, and native encryption</li>
+                        <li><strong>APFS snapshots</strong> may contain deleted file data and are valuable for forensics</li>
+                        <li><strong>Encryption is a major challenge</strong> for APFS forensics—FileVault is common</li>
+                        <li><strong>Different tools support different file systems</strong>—choose appropriate tools for each platform</li>
+                    </ul>
+                </div>
+                
+                <h3>Connection to Future Weeks</h3>
+                <ul>
+                    <li><strong>Week 9 (Linux Forensics):</strong> Deep dive into ext4 analysis, Linux artifacts</li>
+                    <li><strong>Week 14 (Mobile Forensics):</strong> APFS on iOS devices</li>
+                </ul>
+                
+                <h3>What's Next?</h3>
+                <p>In <strong>Module 5.5: Deleted File Recovery & File Carving</strong>, you'll learn techniques for recovering deleted files using both metadata-based recovery and file carving from unallocated space.</p>
+                
+                <div class="footer-nav" style="margin-top: 1.5rem; justify-content: center;">
+                    <a href="#" class="btn btn-secondary" onclick="alert('Module 5.3 link')">← Module 5.3: NTFS</a>
+                    <a href="#" class="btn btn-primary" onclick="alert('Module 5.5 coming soon!')">Module 5.5: Recovery & Carving →</a>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer role="contentinfo">
+        <p><strong>CSC 156 - Digital Forensics Fundamentals</strong></p>
+        <p>Module 5.4: Linux & macOS File Systems | Week 5</p>
+        <p>Mendocino College</p>
+        <p style="margin-top: 1rem; font-size: 0.875rem; opacity: 0.8;">💾 Progress is saved for this session only</p>
+        <div class="footer-nav">
+            <a href="#">← Previous Module</a>
+            <a href="#">Module Index</a>
+            <a href="#">Next Module →</a>
+        </div>
+    </footer>
+    
+    <script>
+        // ==================== Progress Tracking ====================
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const checked = document.querySelectorAll('input[type="checkbox"]:checked').length;
+            const total = checkboxes.length;
+            const percentage = Math.round((checked / total) * 100);
+            
+            document.getElementById('progressPercent').textContent = percentage + '%';
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.querySelector('.progress-bar').setAttribute('aria-valuenow', percentage);
+            
+            checkboxes.forEach(cb => {
+                const item = cb.closest('.checklist-item');
+                if (item) {
+                    if (cb.checked) {
+                        item.classList.add('completed');
+                    } else {
+                        item.classList.remove('completed');
+                    }
+                }
+            });
+            
+            saveProgress();
+        }
+        
+        function saveProgress() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const state = {};
+            checkboxes.forEach(cb => {
+                state[cb.id] = cb.checked;
+            });
+            sessionStorage.setItem('module54Progress', JSON.stringify(state));
+        }
+        
+        function loadProgress() {
+            const saved = sessionStorage.getItem('module54Progress');
+            if (saved) {
+                const state = JSON.parse(saved);
+                Object.keys(state).forEach(id => {
+                    const cb = document.getElementById(id);
+                    if (cb) {
+                        cb.checked = state[id];
+                    }
+                });
+                updateProgress();
+            }
+        }
+        
+        // ==================== Section Toggle ====================
+        function toggleSection(header) {
+            const content = header.nextElementSibling;
+            const toggle = header.querySelector('.section-toggle');
+            const isExpanded = header.getAttribute('aria-expanded') === 'true';
+            
+            header.setAttribute('aria-expanded', !isExpanded);
+            content.classList.toggle('collapsed');
+            toggle.classList.toggle('collapsed');
+        }
+        
+        function handleKeyPress(event, element) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleSection(element);
+            }
+        }
+        
+        // ==================== Collapsible Sections ====================
+        function toggleCollapsible(id) {
+            const element = document.getElementById(id);
+            element.classList.toggle('open');
+            const header = element.querySelector('.collapsible-header');
+            const isExpanded = element.classList.contains('open');
+            header.setAttribute('aria-expanded', isExpanded);
+        }
+        
+        // ==================== Tabs ====================
+        function switchTab(event, tabId) {
+            const container = event.target.closest('.tabs-container');
+            
+            container.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-selected', 'false');
+            });
+            container.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            event.target.classList.add('active');
+            event.target.setAttribute('aria-selected', 'true');
+            document.getElementById(tabId).classList.add('active');
+        }
+        
+        // ==================== Inode Visualizer ====================
+        const inodeDescriptions = {
+            'mode': '<strong>Mode (2 bytes):</strong> Contains file type (regular file, directory, symlink, etc.) and permission bits (rwxrwxrwx). The first 4 bits indicate file type; remaining 12 bits are permissions.',
+            'uid': '<strong>UID (2 bytes):</strong> User ID of the file owner. Combined with i_uid_high for 32-bit UID support. Forensically identifies who created/owns the file.',
+            'gid': '<strong>GID (2 bytes):</strong> Group ID of the file. Combined with i_gid_high for 32-bit GID support. Shows group membership for access control.',
+            'size': '<strong>Size (4+4 bytes):</strong> File size in bytes. i_size_lo (low 32 bits) and i_size_high (high 32 bits) for files larger than 4GB.',
+            'atime': '<strong>atime - Access Time (4 bytes):</strong> Last time file was read. May be disabled (noatime mount option) for performance. Resolution: 1 second in ext2/3, nanoseconds in ext4.',
+            'ctime': '<strong>ctime - Change Time (4 bytes):</strong> Last time inode metadata was changed. NOT creation time! Updated when permissions, ownership, or links change. Cannot be set directly by users.',
+            'mtime': '<strong>mtime - Modify Time (4 bytes):</strong> Last time file content was modified. Updated when file data is written. Most commonly used timestamp.',
+            'crtime': '<strong>crtime - Creation Time (ext4 only):</strong> When the file was originally created. Added in ext4. Stored in extended inode fields. The actual "birth time" of the file.',
+            'links': '<strong>Hard Link Count (2 bytes):</strong> Number of directory entries pointing to this inode. When it reaches 0 and file is closed, inode is freed. Directories have at least 2 (. and parent reference).',
+            'blocks': '<strong>Block Count (4 bytes):</strong> Number of 512-byte blocks allocated to the file. May be larger than file size due to sparse files or preallocation.',
+            'flags': '<strong>Flags (4 bytes):</strong> Various flags including: immutable, append-only, no dump, sync updates, compressed, encrypted, indexed directory, journaled data.',
+            'extents': '<strong>Extents/Block Pointers (60 bytes):</strong> In ext4, this area contains an extent tree describing contiguous block ranges. In ext2/3, it contains direct block pointers and indirect block pointers.'
+        };
+        
+        function showInodeInfo(field) {
+            const infoDiv = document.getElementById('inode-info');
+            infoDiv.innerHTML = inodeDescriptions[field] || 'Click on a field to see details.';
+            infoDiv.classList.add('active');
+        }
+        
+        // ==================== Quiz ====================
+        const quizAnswers = {
+            'quiz-1': 'b',
+            'quiz-2': 'b',
+            'quiz-3': 'b',
+            'quiz-4': 'b',
+            'quiz-5': 'b',
+            'quiz-6': 'c'
+        };
+        
+        const quizExplanations = {
+            'quiz-1': 'In ext4 (and all Unix-like systems), ctime means "change time"—when the inode metadata was last modified. This is NOT creation time! Creation time is "crtime" and was only added in ext4.',
+            'quiz-2': 'An inode is a data structure that stores file metadata: permissions, ownership, timestamps, size, and pointers to data blocks. Importantly, the filename is NOT stored in the inode—it\'s stored in directory entries that point to the inode.',
+            'quiz-3': 'ext3 added journaling to ext2, providing crash recovery capability. The journal records metadata changes before they\'re committed, allowing recovery after unexpected shutdowns. ext4 later added extents, nanosecond timestamps, and crtime.',
+            'quiz-4': 'An APFS snapshot is a point-in-time, read-only copy of a volume. Snapshots are space-efficient (copy-on-write) and used by Time Machine. Forensically valuable because they may contain deleted files from before the snapshot was created.',
+            'quiz-5': 'ext4 recovery is harder because: (1) extent pointers may be cleared when files are deleted, unlike NTFS where run lists often survive; (2) filenames are stored in directories, not inodes, so deleted file names are harder to recover.',
+            'quiz-6': 'The Catalog File is a B-tree structure in HFS+ that contains records for every file and folder on the volume. It includes the filename, timestamps, and file metadata—similar to the MFT in NTFS.'
+        };
+        
+        function selectQuizOption(option) {
+            const question = option.closest('.quiz-question');
+            question.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            option.classList.add('selected');
+        }
+        
+        function checkAllQuizAnswers() {
+            let correct = 0;
+            const total = Object.keys(quizAnswers).length;
+            
+            Object.keys(quizAnswers).forEach(quizId => {
+                const question = document.getElementById(quizId);
+                const selected = question.querySelector('input:checked');
+                const feedback = document.getElementById(quizId + '-feedback');
+                const options = question.querySelectorAll('.quiz-option');
+                
+                options.forEach(opt => {
+                    opt.classList.remove('correct', 'incorrect');
+                });
+                
+                if (selected) {
+                    const selectedOption = selected.closest('.quiz-option');
+                    if (selected.value === quizAnswers[quizId]) {
+                        correct++;
+                        selectedOption.classList.add('correct');
+                        feedback.className = 'quiz-feedback show correct';
+                        feedback.innerHTML = '<strong>✓ Correct!</strong> ' + quizExplanations[quizId];
+                    } else {
+                        selectedOption.classList.add('incorrect');
+                        options.forEach(opt => {
+                            if (opt.querySelector('input').value === quizAnswers[quizId]) {
+                                opt.classList.add('correct');
+                            }
+                        });
+                        feedback.className = 'quiz-feedback show incorrect';
+                        feedback.innerHTML = '<strong>✗ Incorrect.</strong> ' + quizExplanations[quizId];
+                    }
+                } else {
+                    feedback.className = 'quiz-feedback show incorrect';
+                    feedback.innerHTML = '<strong>Please select an answer.</strong>';
+                }
+            });
+            
+            const resultsDiv = document.getElementById('quiz-results');
+            const scoreP = document.getElementById('quiz-score');
+            resultsDiv.style.display = 'block';
+            
+            const percentage = Math.round((correct / total) * 100);
+            let message = '';
+            if (percentage === 100) {
+                message = '🎉 Perfect score! Excellent understanding of Linux and macOS file systems!';
+            } else if (percentage >= 80) {
+                message = '👍 Great job! You have a solid grasp of these file systems.';
+            } else if (percentage >= 60) {
+                message = '📚 Good effort! Review the sections for topics you missed.';
+            } else {
+                message = '💪 Keep studying! These concepts are important for cross-platform forensics.';
+            }
+            
+            scoreP.innerHTML = `You got <strong>${correct} out of ${total}</strong> questions correct (${percentage}%).<br>${message}`;
+        }
+        
+        function resetQuiz() {
+            Object.keys(quizAnswers).forEach(quizId => {
+                const question = document.getElementById(quizId);
+                question.querySelectorAll('input').forEach(input => input.checked = false);
+                question.querySelectorAll('.quiz-option').forEach(opt => {
+                    opt.classList.remove('selected', 'correct', 'incorrect');
+                });
+                document.getElementById(quizId + '-feedback').className = 'quiz-feedback';
+            });
+            document.getElementById('quiz-results').style.display = 'none';
+        }
+        
+        // ==================== Navigation Highlighting ====================
+        function updateNavHighlight() {
+            const sections = document.querySelectorAll('.section');
+            const navLinks = document.querySelectorAll('.nav-list a');
+            
+            let currentSection = '';
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= 150) {
+                    currentSection = section.id;
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + currentSection) {
+                    link.classList.add('active');
+                }
+            });
+        }
+        
+        // ==================== Initialize ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+            window.addEventListener('scroll', updateNavHighlight);
+        });
+    </script>
+</body>
+</html>

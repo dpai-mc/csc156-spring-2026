@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CSC 156 Week 5 Lab Activity 5: Deleted File Recovery and File System Analysis. Hands-on practice for identifying file systems, recovering deleted files, and performing file carving.">
+    <title>Lab Activity 5: File System Analysis & Recovery | CSC 156</title>
+    <style>
+        /* Base Styles */
+        :root {
+            --primary-color: #059669; /* Green */
+            --primary-dark: #047857;
+            --primary-light: #10b981;
+            --secondary-color: #4f46e5; /* Indigo */
+            --secondary-dark: #4338ca;
+            --secondary-light: #6366f1;
+            --accent-color: #d97706; /* Amber */
+            --accent-dark: #b45309;
+            --accent-light: #f59e0b;
+            --text-color: #1f2937; /* Dark Gray */
+            --text-light: #4b5563;
+            --bg-color: #f9fafb; /* Lightest Gray */
+            --card-bg: #ffffff;
+            --border-color: #e5e7eb;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --font-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Layout */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* Skip Link for Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            font-weight: 600;
+            z-index: 1000;
+            border-radius: 0 0 var(--radius-md) 0;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+            border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+
+        header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: clamp(1.75rem, 5vw, 2.75rem);
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-subtitle {
+            font-size: clamp(1rem, 2.5vw, 1.25rem);
+            opacity: 0.9;
+            margin-top: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .course-info {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Navigation */
+        nav {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 2rem;
+            padding: 1rem;
+            position: sticky;
+            top: 1.5rem;
+            z-index: 99;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .nav-list a {
+            display: block;
+            padding: 0.6rem 1rem;
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            border-radius: var(--radius-md);
+            transition: all 0.2s ease;
+        }
+
+        .nav-list a:hover,
+        .nav-list a:focus {
+            background-color: var(--primary-light);
+            color: white;
+            outline: none;
+        }
+
+        .nav-list a.active {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Section Styling */
+        section {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            color: var(--primary-dark);
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--primary-light);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        h3 {
+            color: var(--secondary-dark);
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h4 {
+            color: var(--accent-dark);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+            color: var(--text-light);
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        li::marker {
+            color: var(--primary-color);
+        }
+
+        strong {
+            color: var(--text-color);
+        }
+
+        /* Info Box */
+        .info-box {
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            margin: 1.5rem 0;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .info-box.tip {
+            background: #e0f2fe; /* Light blue */
+            border: 1px solid #38bdf8;
+            color: #0369a1;
+        }
+
+        .info-box.warning {
+            background: #fef3c7; /* Light yellow */
+            border: 1px solid #f59e0b;
+            color: #a16207;
+        }
+
+        .info-box.forensic {
+            background: #f3e8ff; /* Light purple */
+            border: 1px solid #a78bfa;
+            color: #7c3aed;
+        }
+
+        .info-box-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .info-box-content {
+            flex-grow: 1;
+        }
+
+        .info-box-content strong {
+            color: inherit;
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: #1f2937; /* bg-dark */
+            color: #e5e7eb; /* text-lightest */
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin: 1rem 0;
+            white-space: pre;
+            word-wrap: normal;
+            border: 1px solid #374151;
+        }
+
+        code {
+            font-family: var(--font-mono);
+            background-color: var(--bg-color);
+            color: var(--primary-dark);
+            padding: 0.15rem 0.4rem;
+            border-radius: 0.25rem;
+            font-size: 0.875em;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.8rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--bg-color);
+            font-weight: 600;
+            color: var(--text-color);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f3f4f6; /* Light gray for zebra striping */
+        }
+
+        tr:hover {
+            background-color: #e5e7eb;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            margin-top: 1rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+
+        /* Checklist */
+        .checklist {
+            list-style: none;
+            padding: 0;
+            margin: 1.5rem 0;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background-color: #f3f4f6;
+            border-radius: var(--radius-md);
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border-color);
+            transition: background-color 0.2s ease;
+        }
+
+        .checklist-item:hover {
+            background-color: #e5e7eb;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .checklist-item label {
+            cursor: pointer;
+            flex: 1;
+            color: var(--text-light);
+        }
+
+        .checklist-item.completed label {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--text-color);
+            color: white;
+            text-align: center;
+            padding: 2rem 1.5rem;
+            margin-top: 3rem;
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        }
+
+        footer p {
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .footer-nav {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .footer-nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-md);
+            transition: background-color 0.2s ease;
+        }
+
+        .footer-nav a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Accessibility Focus Styles */
+        a:focus,
+        button:focus,
+        input[type="checkbox"]:focus,
+        input[type="radio"]:focus {
+            outline: 3px solid var(--accent-color);
+            outline-offset: 2px;
+        }
+
+        /* Screen Reader Only */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header>
+        <h1>🔬 Lab Activity 5</h1>
+        <p class="header-subtitle">Deleted File Recovery and File System Analysis</p>
+        <p class="course-info">CSC 156 - Digital Forensics Fundamentals | Week 5</p>
+    </header>
+
+    <div class="container">
+        <nav aria-label="Lab sections">
+            <ul class="nav-list">
+                <li><a href="#lab-overview" class="active">Overview</a></li>
+                <li><a href="#part1">Part 1: FS ID</a></li>
+                <li><a href="#part2">Part 2: Recovery</a></li>
+                <li><a href="#part3">Part 3: Carving</a></li>
+                <li><a href="#submission">Submission</a></li>
+            </ul>
+        </nav>
+
+        <main id="main-content">
+            <section id="lab-overview">
+                <h2>✨ Lab Overview & Objectives</h2>
+                <p>Welcome to Lab Activity 5! This lab is your opportunity to apply the theoretical knowledge gained in Week 5's modules on file systems, deleted file recovery, and file carving. You will work with a provided disk image to identify various file systems, recover deleted data using both metadata-based techniques and file carving, and thoroughly document your findings.</p>
+
+                <div class="info-box forensic">
+                    <span class="info-box-icon" aria-hidden="true">🎓</span>
+                    <div class="info-box-content">
+                        <strong>CSLO Alignment:</strong> This lab directly advances **CSLO 2: Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data.**
+                        <p style="margin-top:0.5rem;">**Course Objective Alignment:** This lab directly addresses the course objective: *"Analyze file systems and recover deleted files."*</p>
+                    </div>
+                </div>
+
+                <div class="info-box tip">
+                    <span class="info-box-icon" aria-hidden="true">💡</span>
+                    <div class="info-box-content">
+                        <strong>Required Tools:</strong> Ensure you have **Autopsy**, **The Sleuth Kit (TSK) command-line tools** (<code>mmls</code>, <code>fsstat</code>, <code>fls</code>, <code>istat</code>, <code>icat</code>), **Scalpel** (or PhotoRec), and **MFTECmd** installed and ready in your forensic workstation environment. A hex editor is also highly recommended.
+                    </div>
+                </div>
+
+                <h3>Total Points: 20 points</h3>
+                <p>This lab is divided into three parts, each contributing to your overall score.</p>
+            </section>
+
+            <section id="part1">
+                <h2>Part 1: File System Identification (6 points)</h2>
+                <p>In this section, you will examine the provided disk image to identify the various partitions and the file systems present on them. Proper identification is the first critical step in any forensic analysis.</p>
+
+                <h3>Tasks:</h3>
+                <ol>
+                    <li>Examine multiple partitions within the provided disk image.
+                        <ul>
+                            <li>Use <code>mmls</code> (TSK) to identify partition layout.</li>
+                            <li>Use Autopsy's data source manager to view partitions.</li>
+                        </ul>
+                    </li>
+                    <li>Identify the file system type (e.g., FAT32, NTFS, ext4, HFS+, APFS) for each relevant partition.
+                        <ul>
+                            <li>Use <code>fsstat</code> (TSK) and Autopsy's file system information views.</li>
+                        </ul>
+                    </li>
+                    <li>For **at least three distinct file systems** identified, document the following key characteristics:
+                        <ul>
+                            <li>File System Type (e.g., NTFS, FAT32, ext4)</li>
+                            <li>Volume Label (if present)</li>
+                            <li>Total Size</li>
+                            <li>Block/Cluster Size</li>
+                            <li>Total Number of Files and Directories</li>
+                            <li>Journaling Status (e.g., enabled/disabled, type of journal for ext4)</li>
+                            <li>Any other notable features relevant to forensics (e.g., NTFS version, HFS+ Journaled)</li>
+                        </ul>
+                    </li>
+                    <li>Provide **screenshots** as evidence for each identified file system, clearly showing the tool output and the documented characteristics.</li>
+                </ol>
+
+                <div class="info-box tip">
+                    <span class="info-box-icon" aria-hidden="true">🔍</span>
+                    <div class="info-box-content">
+                        <strong>Tip:</strong> Pay attention to the output of <code>mmls</code> for partition offsets, which are crucial for running subsequent TSK commands like <code>fsstat</code>. For example, if <code>mmls</code> shows a partition starting at sector 2048, you would use <code>fsstat -o 2048 image.dd</code>.
+                    </div>
+                </div>
+            </section>
+
+            <section id="part2">
+                <h2>Part 2: Deleted File Recovery (8 points)</h2>
+                <p>This section focuses on recovering logically deleted files using metadata-based techniques for different file systems. You will utilize both command-line and GUI tools.</p>
+
+                <h3>Tasks:</h3>
+                <h4>1. FAT32 Volume:</h4>
+                <ol>
+                    <li>Identify a FAT32 partition within your disk image (from Part 1).</li>
+                    <li>List deleted files using <code>fls -d -r -o [partition_offset] [image_file]</code>.</li>
+                    <li>Select **at least two deleted files** and attempt to recover them using <code>icat -o [partition_offset] [image_file] [inode_number] > [output_filename]</code>.</li>
+                    <li>Document the recovery success/failure for each file, explaining the reasons. Note any filename character loss and how you handled it.</li>
+                    <li>Provide screenshots of the <code>fls</code> output showing deleted files and the successful recovery of at least one file.</li>
+                </ol>
+
+                <h4>2. NTFS Volume:</h4>
+                <ol>
+                    <li>Identify an NTFS partition.</li>
+                    <li>Add the NTFS partition as a data source in **Autopsy**. Ensure the "Deleted File Finder" and "File System Analysis" ingest modules are enabled.</li>
+                    <li>Navigate to the "Deleted Files" section in Autopsy and select **at least two deleted files** for recovery. Export these files.</li>
+                    <li>For one of the recovered NTFS files, compare its **$STANDARD_INFORMATION** and **$FILE_NAME** timestamps. Discuss any discrepancies and their forensic implications (e.g., signs of timestomping). Provide screenshots of the timestamp comparison.</li>
+                    <li>Attempt to identify any **Alternate Data Streams (ADS)** on a file (recovered or active) within the NTFS volume using Autopsy or a relevant TSK command. Document your findings.</li>
+                    <li>Export and analyze **$UsnJrnl entries** related to a deleted file (or any significant file activity) from the NTFS volume using **MFTECmd**. Document how this journal entry provides historical context.</li>
+                    <li>Provide screenshots of Autopsy's deleted file view, timestamp comparison, ADS identification, and MFTECmd output.</li>
+                </ol>
+
+                <h4>3. ext4 Volume (if provided in your disk image):</h4>
+                <ol>
+                    <li>Identify an ext4 partition.</li>
+                    <li>Examine the inode table for deleted files using <code>fls -d</code> and <code>istat</code>.</li>
+                    <li>Attempt to recover **at least one deleted file** using <code>extundelete</code> or a similar specialized tool.</li>
+                    <li>Document the challenges specific to ext4 recovery (e.g., cleared block pointers, filename loss) and whether your recovery was successful.</li>
+                    <li>Provide screenshots of your attempts and results.</li>
+                </ol>
+
+                <div class="info-box warning">
+                    <span class="info-box-icon" aria-hidden="true">⚠️</span>
+                    <div class="info-box-content">
+                        <strong>Important:</strong> Remember that working directly on the original disk image with tools like <code>extundelete</code> can modify it. Always work on a **copy** of your forensic image if using tools that write changes.
+                    </div>
+                </div>
+            </section>
+
+            <section id="part3">
+                <h2>Part 3: File Carving Exercise (6 points)</h2>
+                <p>In this section, you will practice file carving techniques to recover files from unallocated space or where file system metadata is no longer available.</p>
+
+                <h3>Tasks:</h3>
+                <ol>
+                    <li>Configure **Scalpel** (or Autopsy's carving module if preferred).
+                        <ul>
+                            <li>Create or modify a <code>scalpel.conf</code> file to carve for the specified file types.</li>
+                            <li>If using Autopsy, ensure the "File Carver" ingest module is enabled and configured for the relevant file types.</li>
+                        </ul>
+                    </li>
+                    <li>Carve the provided disk image for the following file types:
+                        <ul>
+                            <li>JPEG images</li>
+                            <li>PDF documents</li>
+                            <li>Microsoft Office documents (DOCX, XLSX)</li>
+                            <li>ZIP archives</li>
+                        </ul>
+                    </li>
+                    <li>Review the carved files in your output directory (or Autopsy's "Carved Files" section). For **at least 3-5 unique carved files** (across different types):
+                        <ul>
+                            <li>Identify if they are **valid files** (open correctly) or **false positives**.</li>
+                            <li>Determine if the recovery is **complete** or **partial** (e.g., due to fragmentation).</li>
+                            <li>Document any observed **fragmentation effects** (e.g., extra data at end, corruption).</li>
+                        </ul>
+                    </li>
+                    <li>Document your carving methodology (tool used, configuration file/settings).</li>
+                    <li>Briefly compare the results of file carving to your metadata-based recovery in Part 2. Discuss when each method is most appropriate.</li>
+                    <li>Provide screenshots of your carving configuration (e.g., <code>scalpel.conf</code> or Autopsy module settings) and examples of your reviewed carved files.</li>
+                </ol>
+
+                <div class="info-box tip">
+                    <span class="info-box-icon" aria-hidden="true">🛠️</span>
+                    <div class="info-box-content">
+                        <strong>Scalpel Configuration Example:</strong>
+                        <pre><code># scalpel.conf snippet
+# extension  case_sensitive  max_size  header                      [footer]
+jpg          y               20000000  \xff\xd8\xff\xe0\x00\x10    \xff\xd9
+pdf          y               50000000  %PDF                        %%EOF
+docx         y               50000000  PK\x03\x04                  \x50\x4b\x05\x06
+zip          y               100000000 PK\x03\x04                  \x50\x4b\x05\x06</code></pre>
+                        Remember that DOCX (and XLSX, PPTX) files are essentially ZIP archives, so they share the same header and footer signatures.
+                    </div>
+                </div>
+            </section>
+
+            <section id="submission">
+                <h2>📦 Submission Requirements</h2>
+                <p>Compile all parts of your lab activity into a single, well-organized PDF document.</p>
+
+                <h3>Deliverables Checklist:</h3>
+                <ul class="checklist">
+                    <li class="checklist-item"><input type="checkbox" id="del-1"><label for="del-1"><strong>Part 1: File System Identification Report (6 points)</strong> - Including screenshots and documented characteristics for at least three file systems.</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="del-2"><label for="del-2"><strong>Part 2: Deleted File Recovery Report (8 points)</strong> - Including screenshots, metadata, and hashes of recovered files from FAT32 and NTFS (and ext4 if applicable).</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="del-3"><label for="del-3"><strong>Part 3: File Carving Report (6 points)</strong> - Including carving configuration, examples of reviewed carved files, and comparison to metadata recovery.</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="del-4"><label for="del-4">All screenshots are clear, labeled, and relevant.</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="del-5"><label for="del-5">All recovered files (or their hashes) are documented as evidence.</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="del-6"><label for="del-6">File Naming: <code>LastName_FirstName_Lab5.pdf</code></label></li>
+                    <li class="checklist-item"><input type="checkbox" id="del-7"><label for="del-7">Submitted via Canvas by the end of Week 5 deadline.</label></li>
+                </ul>
+
+                <div class="info-box warning">
+                    <span class="info-box-icon" aria-hidden="true">🚨</span>
+                    <div class="info-box-content">
+                        <strong>Late Policy:</strong> Refer to the course syllabus for the late submission policy. Plan your time accordingly to avoid penalties.
+                    </div>
+                </div>
+
+                <a href="#lab-overview" class="btn btn-primary">Back to Top</a>
+            </section>
+        </main>
+    </div>
+
+    <footer>
+        <p><strong>CSC 156 - Digital Forensics Fundamentals</strong></p>
+        <p>Lab Activity 5: File System Analysis & Recovery | Week 5</p>
+        <p>Mendocino College</p>
+        <div class="footer-nav">
+            <a href="#">Module Index</a>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Smooth scrolling for navigation
+            document.querySelectorAll('nav a').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+
+            // Highlight active nav link on scroll
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('nav .nav-list a');
+
+            function updateNavLinkActive() {
+                let currentSectionId = '';
+                sections.forEach(section => {
+                    const rect = section.getBoundingClientRect();
+                    if (rect.top <= 100 && rect.bottom >= 100) { // Adjust 100px offset as needed
+                        currentSectionId = section.id;
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').substring(1) === currentSectionId) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+
+            window.addEventListener('scroll', updateNavLinkActive);
+            updateNavLinkActive(); // Call on load to set initial active state
+
+            // Progress tracking for submission checklist (session-based)
+            const checklistItems = document.querySelectorAll('.checklist-item input[type="checkbox"]');
+            const labId = 'LabActivity5_SubmissionChecklist';
+
+            function saveChecklistProgress() {
+                const progress = {};
+                checklistItems.forEach(item => {
+                    progress[item.id] = item.checked;
+                });
+                sessionStorage.setItem(labId, JSON.stringify(progress));
+            }
+
+            function loadChecklistProgress() {
+                const savedProgress = sessionStorage.getItem(labId);
+                if (savedProgress) {
+                    const progress = JSON.parse(savedProgress);
+                    checklistItems.forEach(item => {
+                        if (progress[item.id]) {
+                            item.checked = true;
+                            item.closest('.checklist-item').classList.add('completed');
+                        } else {
+                            item.checked = false;
+                            item.closest('.checklist-item').classList.remove('completed');
+                        }
+                    });
+                }
+            }
+
+            checklistItems.forEach(item => {
+                item.addEventListener('change', function() {
+                    if (this.checked) {
+                        this.closest('.checklist-item').classList.add('completed');
+                    } else {
+                        this.closest('.checklist-item').classList.remove('completed');
+                    }
+                    saveChecklistProgress();
+                });
+            });
+
+            loadChecklistProgress();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,3657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CSC 156 Week 5 Module 5.2: FAT File Systems Deep Dive - Comprehensive study of FAT12, FAT16, FAT32, and exFAT file system structures for digital forensics">
+    <title>Module 5.2: FAT File Systems Deep Dive | CSC 156 Digital Forensics</title>
+    <style>
+        /* CSS Reset and Base Styles */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --secondary-color: #059669;
+            --secondary-dark: #047857;
+            --accent-color: #d97706;
+            --accent-light: #f59e0b;
+            --danger-color: #dc2626;
+            --danger-light: #ef4444;
+            --success-color: #16a34a;
+            --success-light: #22c55e;
+            --warning-color: #ca8a04;
+            --warning-light: #eab308;
+            --purple-color: #7c3aed;
+            --purple-light: #8b5cf6;
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --text-muted: #6b7280;
+            --text-light: #9ca3af;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f3f4f6;
+            --bg-tertiary: #e5e7eb;
+            --bg-dark: #1f2937;
+            --border-color: #d1d5db;
+            --border-light: #e5e7eb;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --font-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.7;
+            color: var(--text-primary);
+            background-color: var(--bg-secondary);
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Skip Link for Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            z-index: 1000;
+            text-decoration: none;
+            border-radius: 0 0 var(--radius-sm) 0;
+            font-weight: 600;
+        }
+        
+        .skip-link:focus {
+            top: 0;
+        }
+        
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-light) 50%, var(--warning-color) 100%);
+            color: white;
+            padding: 2.5rem 1rem;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+        
+        header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .header-meta {
+            font-size: 1rem;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header-meta span {
+            display: inline-block;
+            margin: 0.25rem 0.5rem;
+        }
+        
+        .header-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1.25rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(4px);
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            background: var(--bg-primary);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .progress-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .progress-percentage {
+            font-weight: 700;
+            color: var(--accent-color);
+            font-size: 1.1rem;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background: var(--bg-tertiary);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-color), var(--accent-light));
+            border-radius: 5px;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+        
+        .progress-note {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+        
+        /* Navigation */
+        .module-nav {
+            background: var(--bg-primary);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .nav-list a {
+            display: block;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+        
+        .nav-list a:hover,
+        .nav-list a:focus {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+            transform: translateY(-1px);
+        }
+        
+        .nav-list a.active {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+        
+        /* Main Content */
+        main {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        
+        /* Section Styles */
+        .section {
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+        }
+        
+        .section-header {
+            background: linear-gradient(135deg, var(--accent-color), var(--accent-light));
+            color: white;
+            padding: 1.25rem 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+        
+        .section-header:hover {
+            background: linear-gradient(135deg, var(--warning-color), var(--accent-color));
+        }
+        
+        .section-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .section-toggle {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            transition: transform 0.3s ease, background 0.2s ease;
+        }
+        
+        .section-toggle:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .section-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+        
+        .section-content {
+            padding: 1.5rem;
+            display: block;
+        }
+        
+        .section-content.collapsed {
+            display: none;
+        }
+        
+        /* Typography */
+        h3 {
+            color: var(--accent-color);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            border-bottom: 2px solid var(--bg-tertiary);
+            padding-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        h3:first-child {
+            margin-top: 0;
+        }
+        
+        h4 {
+            color: var(--text-primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 1.05rem;
+        }
+        
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+        
+        strong {
+            color: var(--text-primary);
+        }
+        
+        /* Definition Cards */
+        .definition-card {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border-left: 4px solid var(--accent-color);
+            padding: 1.25rem;
+            margin: 1.25rem 0;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        }
+        
+        .definition-card h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--accent-color);
+            font-size: 1.1rem;
+        }
+        
+        .definition-card p {
+            margin: 0;
+            color: var(--text-primary);
+        }
+        
+        .definition-card p:not(:last-child) {
+            margin-bottom: 0.75rem;
+        }
+        
+        /* Info Boxes */
+        .info-box {
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            margin: 1.25rem 0;
+        }
+        
+        .info-box.concept {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border: 1px solid #86efac;
+        }
+        
+        .info-box.warning {
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+            border: 1px solid #fcd34d;
+        }
+        
+        .info-box.forensic {
+            background: linear-gradient(135deg, #fdf4ff, #f3e8ff);
+            border: 1px solid #d8b4fe;
+        }
+        
+        .info-box.example {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 1px solid #7dd3fc;
+        }
+        
+        .info-box.danger {
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+            border: 1px solid #fca5a5;
+        }
+        
+        .info-box.history {
+            background: linear-gradient(135deg, #fefce8, #fef9c3);
+            border: 1px solid #fde047;
+        }
+        
+        .info-box-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .info-box.concept .info-box-title { color: #166534; }
+        .info-box.warning .info-box-title { color: #a16207; }
+        .info-box.forensic .info-box-title { color: #7c3aed; }
+        .info-box.example .info-box-title { color: #0369a1; }
+        .info-box.danger .info-box-title { color: #dc2626; }
+        .info-box.history .info-box-title { color: #a16207; }
+        
+        /* Code Blocks */
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin: 1rem 0;
+            white-space: pre;
+            word-wrap: normal;
+            border: 1px solid #334155;
+        }
+        
+        code {
+            font-family: var(--font-mono);
+            background: var(--bg-tertiary);
+            padding: 0.125rem 0.375rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.875em;
+            color: var(--danger-color);
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+        
+        /* Syntax Highlighting */
+        .code-keyword { color: #c792ea; }
+        .code-string { color: #c3e88d; }
+        .code-number { color: #f78c6c; }
+        .code-comment { color: #697098; font-style: italic; }
+        .code-function { color: #82aaff; }
+        .code-variable { color: #f07178; }
+        .code-hex { color: #ffcb6b; }
+        
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 1.25rem 0;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        
+        th, td {
+            padding: 0.875rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        th {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+            font-weight: 600;
+            color: var(--text-primary);
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover {
+            background: var(--bg-secondary);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* Diagrams */
+        .diagram-container {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+        
+        .diagram-title {
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            font-size: 1.05rem;
+        }
+        
+        .diagram {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            line-height: 1.4;
+            white-space: pre;
+            overflow-x: auto;
+            color: var(--text-primary);
+        }
+        
+        /* Visual Structure Diagram */
+        .structure-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-width: 100%;
+        }
+        
+        .structure-row {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .structure-block {
+            flex: 1;
+            min-width: 120px;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .structure-block:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .structure-block.boot {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            color: #1e40af;
+            border-color: #3b82f6;
+        }
+        
+        .structure-block.fat {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            color: #a16207;
+            border-color: #f59e0b;
+        }
+        
+        .structure-block.root {
+            background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+            color: #166534;
+            border-color: #22c55e;
+        }
+        
+        .structure-block.data {
+            background: linear-gradient(135deg, #f3e8ff, #e9d5ff);
+            color: #6b21a8;
+            border-color: #a855f7;
+        }
+        
+        .structure-block.selected {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .structure-description {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .structure-description.active {
+            display: block;
+            animation: fadeSlideIn 0.3s ease;
+        }
+        
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Byte Structure Visualizer */
+        .byte-visualizer {
+            background: var(--bg-dark);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        
+        .byte-row {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .byte-cell {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .byte-cell:hover {
+            transform: scale(1.1);
+            z-index: 1;
+        }
+        
+        .byte-cell.filename { background: #3b82f6; color: white; }
+        .byte-cell.extension { background: #8b5cf6; color: white; }
+        .byte-cell.attributes { background: #f59e0b; color: white; }
+        .byte-cell.reserved { background: #6b7280; color: white; }
+        .byte-cell.time { background: #10b981; color: white; }
+        .byte-cell.date { background: #06b6d4; color: white; }
+        .byte-cell.cluster { background: #ef4444; color: white; }
+        .byte-cell.size { background: #ec4899; color: white; }
+        
+        .byte-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #374151;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: #e2e8f0;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+        
+        /* Interactive Elements */
+        .interactive-container {
+            background: linear-gradient(135deg, #fefce8, #fef9c3);
+            border: 2px solid #facc15;
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .interactive-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* Quiz Styles */
+        .quiz-question {
+            background: var(--bg-primary);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+        }
+        
+        .quiz-question p {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .quiz-option:hover {
+            border-color: var(--accent-color);
+            background: #fffbeb;
+        }
+        
+        .quiz-option.selected {
+            border-color: var(--accent-color);
+            background: #fef3c7;
+        }
+        
+        .quiz-option.correct {
+            border-color: var(--success-color);
+            background: #dcfce7;
+        }
+        
+        .quiz-option.incorrect {
+            border-color: var(--danger-color);
+            background: #fee2e2;
+        }
+        
+        .quiz-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-color);
+        }
+        
+        .quiz-feedback {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            display: none;
+        }
+        
+        .quiz-feedback.show {
+            display: block;
+            animation: fadeSlideIn 0.3s ease;
+        }
+        
+        .quiz-feedback.correct {
+            background: #dcfce7;
+            border: 1px solid #86efac;
+            color: #166534;
+        }
+        
+        .quiz-feedback.incorrect {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: var(--accent-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--warning-color);
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+        
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: var(--secondary-dark);
+        }
+        
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+            margin: 1.25rem 0;
+        }
+        
+        .card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--accent-color);
+        }
+        
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .card-title {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .card-content {
+            color: var(--text-secondary);
+            font-size: 0.925rem;
+        }
+        
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+            margin: 1.5rem 0;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, var(--accent-color), var(--warning-color));
+            border-radius: 3px;
+        }
+        
+        .timeline-item {
+            position: relative;
+            padding-bottom: 1.5rem;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2rem;
+            top: 0.25rem;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            border: 3px solid var(--bg-primary);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .timeline-year {
+            font-weight: 700;
+            color: var(--accent-color);
+            font-size: 1.1rem;
+        }
+        
+        .timeline-content {
+            margin-top: 0.25rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Lists */
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+            color: var(--text-secondary);
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+        
+        li::marker {
+            color: var(--accent-color);
+        }
+        
+        /* Collapsible sections */
+        .collapsible {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+        
+        .collapsible-header {
+            background: var(--bg-secondary);
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: var(--text-primary);
+            transition: background 0.2s ease;
+        }
+        
+        .collapsible-header:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .collapsible-icon {
+            transition: transform 0.3s ease;
+            color: var(--accent-color);
+        }
+        
+        .collapsible.open .collapsible-icon {
+            transform: rotate(180deg);
+        }
+        
+        .collapsible-content {
+            padding: 0 1.25rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        
+        .collapsible.open .collapsible-content {
+            padding: 1.25rem;
+            max-height: 3000px;
+        }
+        
+        /* Tabs */
+        .tabs-container {
+            margin: 1.5rem 0;
+        }
+        
+        .tabs-header {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .tab-btn {
+            padding: 0.75rem 1.25rem;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+        }
+        
+        .tab-btn:hover {
+            color: var(--accent-color);
+        }
+        
+        .tab-btn.active {
+            color: var(--accent-color);
+            border-bottom-color: var(--accent-color);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 1.5rem 0;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeSlideIn 0.3s ease;
+        }
+        
+        /* Calculator Widget */
+        .calculator-widget {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .calculator-title {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .calculator-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .calculator-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .calculator-field label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .calculator-field input,
+        .calculator-field select {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+        
+        .calculator-field input:focus,
+        .calculator-field select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
+        }
+        
+        .calculator-result {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .calculator-result-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .calculator-result-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            font-family: var(--font-mono);
+        }
+        
+        /* Completion Checklist */
+        .checklist {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0;
+        }
+        
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: var(--radius-sm);
+            margin-bottom: 0.5rem;
+            transition: background 0.2s ease;
+        }
+        
+        .checklist-item:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .checklist-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--success-color);
+            cursor: pointer;
+        }
+        
+        .checklist-item label {
+            cursor: pointer;
+            flex: 1;
+        }
+        
+        .checklist-item.completed label {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+        
+        /* Hex Viewer */
+        .hex-viewer {
+            background: #0f172a;
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+        }
+        
+        .hex-row {
+            display: flex;
+            gap: 1rem;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #1e293b;
+        }
+        
+        .hex-offset {
+            color: #64748b;
+            min-width: 60px;
+        }
+        
+        .hex-bytes {
+            color: #e2e8f0;
+            flex: 1;
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .hex-byte {
+            cursor: pointer;
+            padding: 0 2px;
+            border-radius: 2px;
+            transition: all 0.2s ease;
+        }
+        
+        .hex-byte:hover {
+            background: #334155;
+        }
+        
+        .hex-byte.highlight-filename { background: #3b82f6; color: white; }
+        .hex-byte.highlight-ext { background: #8b5cf6; color: white; }
+        .hex-byte.highlight-attr { background: #f59e0b; color: white; }
+        .hex-byte.highlight-time { background: #10b981; color: white; }
+        .hex-byte.highlight-date { background: #06b6d4; color: white; }
+        .hex-byte.highlight-cluster { background: #ef4444; color: white; }
+        .hex-byte.highlight-size { background: #ec4899; color: white; }
+        
+        .hex-ascii {
+            color: #94a3b8;
+            min-width: 100px;
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--bg-dark);
+            color: white;
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 2rem;
+        }
+        
+        footer p {
+            color: rgba(255,255,255,0.8);
+            margin: 0.25rem 0;
+        }
+        
+        .footer-nav {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1.25rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: var(--radius-md);
+            transition: all 0.2s ease;
+        }
+        
+        .footer-nav a:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-1px);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .section-header h2 {
+                font-size: 1.1rem;
+            }
+            
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .byte-cell {
+                width: 24px;
+                height: 24px;
+                font-size: 0.6rem;
+            }
+            
+            .structure-block {
+                min-width: 100px;
+                padding: 0.75rem;
+                font-size: 0.8rem;
+            }
+            
+            .calculator-inputs {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Print Styles */
+        @media print {
+            .progress-container,
+            .module-nav,
+            .section-toggle,
+            .interactive-container,
+            .btn,
+            footer {
+                display: none !important;
+            }
+            
+            .section-content.collapsed {
+                display: block !important;
+            }
+            
+            .section {
+                break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid #ccc;
+            }
+        }
+        
+        /* Focus Styles for Accessibility */
+        *:focus {
+            outline: 3px solid var(--accent-color);
+            outline-offset: 2px;
+        }
+        
+        *:focus:not(:focus-visible) {
+            outline: none;
+        }
+        
+        *:focus-visible {
+            outline: 3px solid var(--accent-color);
+            outline-offset: 2px;
+        }
+        
+        /* Screen Reader Only */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <header role="banner">
+        <h1>💾 Module 5.2: FAT File Systems Deep Dive</h1>
+        <div class="header-meta">
+            <span>CSC 156 - Digital Forensics Fundamentals</span>
+            <span>|</span>
+            <span>Week 5: File Systems and Data Structures</span>
+        </div>
+        <div class="header-badge">⏱️ Estimated Time: 50-55 minutes</div>
+    </header>
+    
+    <div class="progress-container" role="region" aria-label="Module progress">
+        <div class="progress-header">
+            <span class="progress-label">📊 Module 5.2 Progress</span>
+            <span class="progress-percentage" id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <p class="progress-note">💾 Progress is saved for this session only</p>
+    </div>
+    
+    <nav class="module-nav" aria-label="Module sections">
+        <ul class="nav-list">
+            <li><a href="#section-overview" class="active">Overview</a></li>
+            <li><a href="#section-history">History</a></li>
+            <li><a href="#section-structure">Structure</a></li>
+            <li><a href="#section-directory">Directory Entries</a></li>
+            <li><a href="#section-timestamps">Timestamps</a></li>
+            <li><a href="#section-deletion">Deletion</a></li>
+            <li><a href="#section-forensic">Forensics</a></li>
+            <li><a href="#section-practice">Practice</a></li>
+        </ul>
+    </nav>
+    
+    <main id="main-content" role="main">
+        <!-- Section 1: Overview -->
+        <section class="section" id="section-overview">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🎯</span> Learning Overview & Objectives</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>The File Allocation Table (FAT) file system is one of the oldest and most widely understood file systems in computing. Despite its age, FAT remains critically important for digital forensics because it is still used on USB drives, memory cards, and embedded systems worldwide. Its relative simplicity makes it an excellent foundation for understanding more complex file systems like NTFS and ext4.</p>
+                
+                <div class="info-box concept">
+                    <div class="info-box-title"><span aria-hidden="true">🎓</span> Learning Objectives</div>
+                    <p>Upon completing this module, you will be able to:</p>
+                    <ol>
+                        <li><strong>Describe the history and current usage</strong> of FAT file systems</li>
+                        <li><strong>Explain the four major components</strong> of FAT structure (Boot Sector, FAT, Root Directory, Data Area)</li>
+                        <li><strong>Interpret FAT directory entries</strong> including all 32 bytes of metadata</li>
+                        <li><strong>Describe the FAT file deletion process</strong> and its forensic implications</li>
+                        <li><strong>Identify FAT timestamp limitations</strong> affecting forensic accuracy</li>
+                        <li><strong>Calculate cluster addresses</strong> and locate file data on disk</li>
+                    </ol>
+                </div>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> CSLO Alignment</div>
+                    <p><strong>This module supports CSLO 2:</strong> Describe the procedures for the collection, preservation, and analysis of digital evidence, including the use of forensic tools and techniques for data recovery and examination.</p>
+                </div>
+                
+                <h3>Why Study FAT File Systems?</h3>
+                
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-icon">📱</div>
+                        <div class="card-title">Ubiquitous Usage</div>
+                        <div class="card-content">FAT32 and exFAT are the default file systems for USB flash drives, SD cards, and portable media. Nearly every device you encounter will have FAT-formatted storage.</div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">🌐</div>
+                        <div class="card-title">Cross-Platform Compatibility</div>
+                        <div class="card-content">FAT is readable by virtually every operating system—Windows, macOS, Linux, Android, game consoles, cameras, and embedded systems.</div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">📚</div>
+                        <div class="card-title">Learning Foundation</div>
+                        <div class="card-content">FAT's straightforward design makes it ideal for learning file system concepts before tackling more complex systems like NTFS or APFS.</div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">🔓</div>
+                        <div class="card-title">Excellent Recovery Potential</div>
+                        <div class="card-content">FAT's simple deletion mechanism (marking first character) often allows complete recovery of deleted files with their original names.</div>
+                    </div>
+                </div>
+                
+                <div class="info-box warning">
+                    <div class="info-box-title"><span aria-hidden="true">⚠️</span> Prerequisites Check</div>
+                    <p>Before proceeding, ensure you understand these concepts from Module 5.1:</p>
+                    <ul>
+                        <li>What a file system is and its core functions</li>
+                        <li>The difference between sectors and clusters</li>
+                        <li>Concepts of slack space and unallocated space</li>
+                        <li>The four essential components of any file system</li>
+                    </ul>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-overview-1" onchange="updateProgress()">
+                        <label for="check-overview-1">I understand the learning objectives for this module</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-overview-2" onchange="updateProgress()">
+                        <label for="check-overview-2">I recognize why FAT file systems are important for forensics</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 2: History -->
+        <section class="section" id="section-history">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">📜</span> FAT History & Evolution</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>Understanding FAT's evolution helps explain its design decisions and limitations. The FAT file system family spans nearly five decades of computing history, evolving from floppy disks to modern flash storage.</p>
+                
+                <h3>Timeline of FAT Development</h3>
+                
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-year">1977 - FAT12</div>
+                        <div class="timeline-content">
+                            <strong>Created by Microsoft for floppy disks.</strong> The "12" refers to 12-bit cluster addresses, supporting up to 4,096 clusters. Maximum volume size: ~16 MB. Still used today in floppy disk images and small embedded systems.
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-year">1984 - FAT16</div>
+                        <div class="timeline-content">
+                            <strong>Introduced with MS-DOS 3.0 for hard disks.</strong> Uses 16-bit cluster addresses, supporting up to 65,536 clusters. Maximum volume size: 2 GB (4 GB with 64KB clusters). Became the standard for DOS and early Windows.
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-year">1996 - FAT32</div>
+                        <div class="timeline-content">
+                            <strong>Released with Windows 95 OSR2.</strong> Uses 28-bit cluster addresses (4 bits reserved), supporting up to 268 million clusters. Maximum volume size: 2 TB (Windows limits formatting to 32 GB). Maximum file size: 4 GB minus 1 byte. Most widely used FAT variant today.
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-year">2006 - exFAT</div>
+                        <div class="timeline-content">
+                            <strong>Extended FAT for flash drives and SDXC cards.</strong> Removes the 4 GB file size limit. Maximum file size: 16 EB (theoretically). Optimized for flash storage with reduced write amplification. Default for SDXC cards (64 GB+).
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>FAT Version Comparison</h3>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>FAT12</th>
+                                <th>FAT16</th>
+                                <th>FAT32</th>
+                                <th>exFAT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Year Introduced</strong></td>
+                                <td>1977</td>
+                                <td>1984</td>
+                                <td>1996</td>
+                                <td>2006</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Cluster Address Size</strong></td>
+                                <td>12 bits</td>
+                                <td>16 bits</td>
+                                <td>28 bits</td>
+                                <td>32 bits</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Max Clusters</strong></td>
+                                <td>4,084</td>
+                                <td>65,524</td>
+                                <td>268,435,444</td>
+                                <td>4,294,967,295</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Max Volume Size</strong></td>
+                                <td>16 MB</td>
+                                <td>2-4 GB</td>
+                                <td>2 TB</td>
+                                <td>128 PB</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Max File Size</strong></td>
+                                <td>16 MB</td>
+                                <td>2-4 GB</td>
+                                <td>4 GB - 1 byte</td>
+                                <td>16 EB</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Directory Entry Size</strong></td>
+                                <td>32 bytes</td>
+                                <td>32 bytes</td>
+                                <td>32 bytes</td>
+                                <td>Variable</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Long Filename Support</strong></td>
+                                <td>VFAT extension</td>
+                                <td>VFAT extension</td>
+                                <td>VFAT extension</td>
+                                <td>Native</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Common Use Today</strong></td>
+                                <td>Floppy images</td>
+                                <td>Legacy systems</td>
+                                <td>USB drives, SD cards</td>
+                                <td>SDXC, large USB</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="info-box example">
+                    <div class="info-box-title"><span aria-hidden="true">💡</span> Why "12", "16", and "32"?</div>
+                    <p>The numbers in FAT12, FAT16, and FAT32 refer to the <strong>bit width of cluster addresses</strong> in the File Allocation Table:</p>
+                    <ul>
+                        <li><strong>FAT12:</strong> Each FAT entry is 12 bits, allowing 2<sup>12</sup> = 4,096 possible values</li>
+                        <li><strong>FAT16:</strong> Each FAT entry is 16 bits, allowing 2<sup>16</sup> = 65,536 possible values</li>
+                        <li><strong>FAT32:</strong> Each FAT entry is 32 bits, but only 28 bits are used for addressing (4 bits reserved), allowing ~268 million clusters</li>
+                    </ul>
+                    <p>More bits = more addressable clusters = larger volume capacity.</p>
+                </div>
+                
+                <h3>Current FAT Usage Scenarios</h3>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> Forensic Relevance</div>
+                    <p>You will encounter FAT file systems in these common forensic scenarios:</p>
+                    <ul>
+                        <li><strong>USB Flash Drives:</strong> Most are formatted FAT32 or exFAT for cross-platform compatibility</li>
+                        <li><strong>SD/microSD Cards:</strong> SDHC cards (up to 32 GB) use FAT32; SDXC cards (64 GB+) use exFAT</li>
+                        <li><strong>Digital Cameras:</strong> Memory cards in cameras typically use FAT32 for DCF compatibility</li>
+                        <li><strong>Dash Cams & Body Cams:</strong> Often use FAT32-formatted SD cards</li>
+                        <li><strong>Gaming Consoles:</strong> External storage often requires FAT32</li>
+                        <li><strong>Embedded Systems:</strong> IoT devices, car infotainment, medical devices</li>
+                        <li><strong>Dual-Boot Systems:</strong> FAT32 partitions for sharing data between Windows and Linux</li>
+                    </ul>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-history-1" onchange="updateProgress()">
+                        <label for="check-history-1">I can explain the evolution of FAT file systems</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-history-2" onchange="updateProgress()">
+                        <label for="check-history-2">I understand the differences between FAT12, FAT16, FAT32, and exFAT</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-history-3" onchange="updateProgress()">
+                        <label for="check-history-3">I can identify common devices that use FAT file systems</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 3: FAT Structure -->
+        <section class="section" id="section-structure">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🏗️</span> FAT Structure Overview</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>A FAT volume is organized into four distinct regions, each serving a specific purpose. Understanding this layout is essential for manual forensic analysis and data recovery.</p>
+                
+                <h3>The Four Regions of a FAT Volume</h3>
+                
+                <div class="diagram-container">
+                    <div class="diagram-title">FAT Volume Layout (Click each region for details)</div>
+                    <div class="structure-diagram">
+                        <div class="structure-row">
+                            <div class="structure-block boot" onclick="showStructureInfo('boot')" tabindex="0" role="button" aria-label="Boot Sector region">
+                                📋 Boot Sector<br><small>(Reserved Region)</small>
+                            </div>
+                        </div>
+                        <div class="structure-row">
+                            <div class="structure-block fat" onclick="showStructureInfo('fat1')" tabindex="0" role="button" aria-label="FAT 1 region">
+                                📊 FAT #1<br><small>(Primary)</small>
+                            </div>
+                            <div class="structure-block fat" onclick="showStructureInfo('fat2')" tabindex="0" role="button" aria-label="FAT 2 region">
+                                📊 FAT #2<br><small>(Backup Copy)</small>
+                            </div>
+                        </div>
+                        <div class="structure-row">
+                            <div class="structure-block root" onclick="showStructureInfo('root')" tabindex="0" role="button" aria-label="Root Directory region">
+                                📁 Root Directory<br><small>(FAT12/16 only)</small>
+                            </div>
+                        </div>
+                        <div class="structure-row">
+                            <div class="structure-block data" onclick="showStructureInfo('data')" tabindex="0" role="button" aria-label="Data Area region">
+                                💾 Data Area<br><small>(Clusters 2 to n)</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="structure-description" id="structure-info-boot">
+                        <h4>📋 Boot Sector (Reserved Region)</h4>
+                        <p>The first sector(s) of the volume containing critical file system parameters:</p>
+                        <ul>
+                            <li><strong>Jump instruction:</strong> CPU instruction to skip over data to boot code</li>
+                            <li><strong>OEM Name:</strong> 8-byte identifier (e.g., "MSDOS5.0")</li>
+                            <li><strong>BIOS Parameter Block (BPB):</strong> Essential volume geometry
+                                <ul>
+                                    <li>Bytes per sector (usually 512)</li>
+                                    <li>Sectors per cluster (1, 2, 4, 8, 16, 32, or 64)</li>
+                                    <li>Number of FATs (usually 2)</li>
+                                    <li>Root directory entries (FAT12/16)</li>
+                                    <li>Total sectors</li>
+                                    <li>Sectors per FAT</li>
+                                </ul>
+                            </li>
+                            <li><strong>Volume Serial Number:</strong> Unique identifier created during formatting</li>
+                            <li><strong>Boot Code:</strong> Executable code for bootable volumes</li>
+                            <li><strong>Signature:</strong> 0x55AA at bytes 510-511</li>
+                        </ul>
+                        <p><strong>Forensic Value:</strong> Contains volume serial number, format date clues, and parameters needed to interpret the rest of the volume.</p>
+                    </div>
+                    <div class="structure-description" id="structure-info-fat1">
+                        <h4>📊 File Allocation Table #1 (Primary)</h4>
+                        <p>The heart of the FAT file system—a map showing how clusters are allocated:</p>
+                        <ul>
+                            <li>Array of entries, one for each cluster in the data area</li>
+                            <li>Entry values indicate cluster status:
+                                <ul>
+                                    <li><code>0x0000</code> = Free cluster</li>
+                                    <li><code>0x0002 - 0xFFEF</code> = Next cluster in chain</li>
+                                    <li><code>0xFFF7</code> = Bad cluster</li>
+                                    <li><code>0xFFF8 - 0xFFFF</code> = End of file (EOF)</li>
+                                </ul>
+                            </li>
+                            <li>Files spanning multiple clusters form a "chain" through the FAT</li>
+                        </ul>
+                        <p><strong>Forensic Value:</strong> Reveals file fragmentation patterns, can help recover files even with damaged directory entries.</p>
+                    </div>
+                    <div class="structure-description" id="structure-info-fat2">
+                        <h4>📊 File Allocation Table #2 (Backup)</h4>
+                        <p>An exact copy of FAT #1 for redundancy:</p>
+                        <ul>
+                            <li>Maintained by the operating system as a backup</li>
+                            <li>Should be identical to FAT #1 under normal operation</li>
+                            <li>Differences between FAT copies may indicate corruption or tampering</li>
+                        </ul>
+                        <p><strong>Forensic Value:</strong> If FAT #1 is damaged, FAT #2 may allow recovery. Discrepancies between copies warrant investigation.</p>
+                    </div>
+                    <div class="structure-description" id="structure-info-root">
+                        <h4>📁 Root Directory (FAT12/16 Only)</h4>
+                        <p>Fixed-size area containing directory entries for the root folder:</p>
+                        <ul>
+                            <li>Located immediately after the FAT area</li>
+                            <li>Fixed size determined at format time (typically 512 entries)</li>
+                            <li>Each entry is 32 bytes</li>
+                            <li><strong>FAT32 difference:</strong> Root directory is stored in the data area like any other directory (not fixed size)</li>
+                        </ul>
+                        <p><strong>Forensic Value:</strong> Contains deleted file entries that may be recoverable. Fixed location makes it easy to find.</p>
+                    </div>
+                    <div class="structure-description" id="structure-info-data">
+                        <h4>💾 Data Area</h4>
+                        <p>The largest region, containing actual file and directory contents:</p>
+                        <ul>
+                            <li>Divided into clusters (allocation units)</li>
+                            <li>Cluster numbering starts at 2 (0 and 1 are reserved)</li>
+                            <li>Cluster size = Sectors per cluster × Bytes per sector</li>
+                            <li>Contains both allocated (in-use) and unallocated (free) clusters</li>
+                            <li>Subdirectories stored as files containing 32-byte directory entries</li>
+                        </ul>
+                        <p><strong>Forensic Value:</strong> Unallocated clusters may contain deleted file data. Slack space at end of clusters may contain evidence.</p>
+                    </div>
+                </div>
+                
+                <h3>Boot Sector Structure (Detailed)</h3>
+                
+                <p>The Boot Sector (also called Volume Boot Record or VBR) contains the BIOS Parameter Block (BPB) with all the information needed to interpret the file system:</p>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Offset</th>
+                                <th>Size</th>
+                                <th>Field Name</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>0x00</td>
+                                <td>3 bytes</td>
+                                <td>Jump Instruction</td>
+                                <td>CPU jump to boot code (e.g., <code>EB 3C 90</code>)</td>
+                            </tr>
+                            <tr>
+                                <td>0x03</td>
+                                <td>8 bytes</td>
+                                <td>OEM Name</td>
+                                <td>Identifier string (e.g., "MSDOS5.0")</td>
+                            </tr>
+                            <tr>
+                                <td>0x0B</td>
+                                <td>2 bytes</td>
+                                <td>Bytes per Sector</td>
+                                <td>Usually 512 (0x0200)</td>
+                            </tr>
+                            <tr>
+                                <td>0x0D</td>
+                                <td>1 byte</td>
+                                <td>Sectors per Cluster</td>
+                                <td>Power of 2: 1, 2, 4, 8, 16, 32, or 64</td>
+                            </tr>
+                            <tr>
+                                <td>0x0E</td>
+                                <td>2 bytes</td>
+                                <td>Reserved Sectors</td>
+                                <td>Sectors before first FAT (includes boot sector)</td>
+                            </tr>
+                            <tr>
+                                <td>0x10</td>
+                                <td>1 byte</td>
+                                <td>Number of FATs</td>
+                                <td>Usually 2</td>
+                            </tr>
+                            <tr>
+                                <td>0x11</td>
+                                <td>2 bytes</td>
+                                <td>Root Entry Count</td>
+                                <td>Max root entries (FAT12/16); 0 for FAT32</td>
+                            </tr>
+                            <tr>
+                                <td>0x13</td>
+                                <td>2 bytes</td>
+                                <td>Total Sectors (16-bit)</td>
+                                <td>If 0, use 32-bit value at 0x20</td>
+                            </tr>
+                            <tr>
+                                <td>0x15</td>
+                                <td>1 byte</td>
+                                <td>Media Type</td>
+                                <td>0xF8 = fixed disk, 0xF0 = removable</td>
+                            </tr>
+                            <tr>
+                                <td>0x16</td>
+                                <td>2 bytes</td>
+                                <td>Sectors per FAT (16-bit)</td>
+                                <td>FAT12/16 only; 0 for FAT32</td>
+                            </tr>
+                            <tr>
+                                <td>0x20</td>
+                                <td>4 bytes</td>
+                                <td>Total Sectors (32-bit)</td>
+                                <td>Used if 16-bit value is 0</td>
+                            </tr>
+                            <tr>
+                                <td>0x24</td>
+                                <td>4 bytes</td>
+                                <td>Sectors per FAT (32-bit)</td>
+                                <td>FAT32 only</td>
+                            </tr>
+                            <tr>
+                                <td>0x43</td>
+                                <td>4 bytes</td>
+                                <td>Volume Serial Number</td>
+                                <td>Unique ID created during format</td>
+                            </tr>
+                            <tr>
+                                <td>0x47</td>
+                                <td>11 bytes</td>
+                                <td>Volume Label</td>
+                                <td>Volume name (space-padded)</td>
+                            </tr>
+                            <tr>
+                                <td>0x52</td>
+                                <td>8 bytes</td>
+                                <td>File System Type</td>
+                                <td>"FAT12   ", "FAT16   ", or "FAT32   "</td>
+                            </tr>
+                            <tr>
+                                <td>0x1FE</td>
+                                <td>2 bytes</td>
+                                <td>Signature</td>
+                                <td>Must be <code>0x55AA</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h3>File Allocation Table Entries</h3>
+                
+                <p>The FAT is essentially an array where each entry corresponds to a cluster in the data area. The value in each entry indicates the cluster's status:</p>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Entry Value</th>
+                                <th>FAT16 Hex</th>
+                                <th>FAT32 Hex</th>
+                                <th>Meaning</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Free</td>
+                                <td><code>0x0000</code></td>
+                                <td><code>0x00000000</code></td>
+                                <td>Cluster is available for allocation</td>
+                            </tr>
+                            <tr>
+                                <td>Reserved</td>
+                                <td><code>0x0001</code></td>
+                                <td><code>0x00000001</code></td>
+                                <td>Reserved, do not use</td>
+                            </tr>
+                            <tr>
+                                <td>Used</td>
+                                <td><code>0x0002-0xFFEF</code></td>
+                                <td><code>0x00000002-0x0FFFFFEF</code></td>
+                                <td>Next cluster number in chain</td>
+                            </tr>
+                            <tr>
+                                <td>Bad</td>
+                                <td><code>0xFFF7</code></td>
+                                <td><code>0x0FFFFFF7</code></td>
+                                <td>Bad cluster (defective)</td>
+                            </tr>
+                            <tr>
+                                <td>End of File</td>
+                                <td><code>0xFFF8-0xFFFF</code></td>
+                                <td><code>0x0FFFFFF8-0x0FFFFFFF</code></td>
+                                <td>Last cluster of file</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="info-box example">
+                    <div class="info-box-title"><span aria-hidden="true">💡</span> Example: Following a Cluster Chain</div>
+                    <p>Suppose a file starts at cluster 5 and spans 4 clusters. The FAT entries might look like:</p>
+                    <pre><code>Cluster Index:    2     3     4     5     6     7     8     9    10
+FAT Entry:     0000  0000  0000  0006  0008  0000  0009  0000  FFFF
+               free  free  free  →6    →8    free  →9    free  EOF</code></pre>
+                    <p><strong>Reading the chain:</strong></p>
+                    <ol>
+                        <li>Directory entry says file starts at cluster 5</li>
+                        <li>FAT[5] = 6 → next cluster is 6</li>
+                        <li>FAT[6] = 8 → next cluster is 8</li>
+                        <li>FAT[8] = 9 → next cluster is 9</li>
+                        <li>FAT[9] = FFFF → end of file</li>
+                    </ol>
+                    <p>The file data is in clusters: 5 → 6 → 8 → 9 (note: cluster 7 is skipped—the file is fragmented)</p>
+                </div>
+                
+                <h3>Calculating Key Addresses</h3>
+                
+                <div class="calculator-widget">
+                    <div class="calculator-title">🧮 FAT Address Calculator</div>
+                    <p>Enter the boot sector parameters to calculate key addresses:</p>
+                    <div class="calculator-inputs">
+                        <div class="calculator-field">
+                            <label for="calc-bytes-sector">Bytes per Sector:</label>
+                            <input type="number" id="calc-bytes-sector" value="512" min="512" step="512">
+                        </div>
+                        <div class="calculator-field">
+                            <label for="calc-sectors-cluster">Sectors per Cluster:</label>
+                            <select id="calc-sectors-cluster">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="4">4</option>
+                                <option value="8" selected>8</option>
+                                <option value="16">16</option>
+                                <option value="32">32</option>
+                                <option value="64">64</option>
+                            </select>
+                        </div>
+                        <div class="calculator-field">
+                            <label for="calc-reserved">Reserved Sectors:</label>
+                            <input type="number" id="calc-reserved" value="32" min="1">
+                        </div>
+                        <div class="calculator-field">
+                            <label for="calc-num-fats">Number of FATs:</label>
+                            <input type="number" id="calc-num-fats" value="2" min="1" max="2">
+                        </div>
+                        <div class="calculator-field">
+                            <label for="calc-sectors-fat">Sectors per FAT:</label>
+                            <input type="number" id="calc-sectors-fat" value="1024" min="1">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="calculateFATAddresses()">Calculate Addresses</button>
+                    <div class="calculator-result" id="calc-results" style="display: none;">
+                        <div class="calculator-result-title">Calculated Addresses:</div>
+                        <div id="calc-output"></div>
+                    </div>
+                </div>
+                
+                <div class="info-box concept">
+                    <div class="info-box-title"><span aria-hidden="true">📐</span> Key Formulas</div>
+                    <ul>
+                        <li><strong>Cluster Size:</strong> Sectors per Cluster × Bytes per Sector</li>
+                        <li><strong>FAT Start:</strong> Reserved Sectors × Bytes per Sector</li>
+                        <li><strong>Root Directory Start (FAT12/16):</strong> (Reserved + (NumFATs × SectorsPerFAT)) × BytesPerSector</li>
+                        <li><strong>Data Area Start:</strong> Root Directory Start + (RootEntries × 32)</li>
+                        <li><strong>Cluster N Address:</strong> Data Area Start + ((N - 2) × Cluster Size)</li>
+                    </ul>
+                    <p><em>Note: Cluster numbering starts at 2 because entries 0 and 1 in the FAT are reserved.</em></p>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-structure-1" onchange="updateProgress()">
+                        <label for="check-structure-1">I can identify the four regions of a FAT volume</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-structure-2" onchange="updateProgress()">
+                        <label for="check-structure-2">I understand what the Boot Sector contains</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-structure-3" onchange="updateProgress()">
+                        <label for="check-structure-3">I can explain how the FAT tracks cluster allocation</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-structure-4" onchange="updateProgress()">
+                        <label for="check-structure-4">I can follow a cluster chain through the FAT</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 4: Directory Entries -->
+        <section class="section" id="section-directory">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">📄</span> FAT Directory Entries</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>Directory entries are 32-byte structures that store metadata about files and subdirectories. Understanding their format is crucial for forensic analysis, especially when recovering deleted files.</p>
+                
+                <h3>Standard Directory Entry Structure (32 Bytes)</h3>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Offset</th>
+                                <th>Size</th>
+                                <th>Field</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>0x00</td>
+                                <td>8 bytes</td>
+                                <td>Filename</td>
+                                <td>8-character name (space-padded)</td>
+                            </tr>
+                            <tr>
+                                <td>0x08</td>
+                                <td>3 bytes</td>
+                                <td>Extension</td>
+                                <td>3-character extension (space-padded)</td>
+                            </tr>
+                            <tr>
+                                <td>0x0B</td>
+                                <td>1 byte</td>
+                                <td>Attributes</td>
+                                <td>File attribute flags</td>
+                            </tr>
+                            <tr>
+                                <td>0x0C</td>
+                                <td>1 byte</td>
+                                <td>Reserved (NT)</td>
+                                <td>Case information (Windows NT)</td>
+                            </tr>
+                            <tr>
+                                <td>0x0D</td>
+                                <td>1 byte</td>
+                                <td>Create Time (ms)</td>
+                                <td>10ms units (0-199)</td>
+                            </tr>
+                            <tr>
+                                <td>0x0E</td>
+                                <td>2 bytes</td>
+                                <td>Create Time</td>
+                                <td>Hour/minute/second (2-sec resolution)</td>
+                            </tr>
+                            <tr>
+                                <td>0x10</td>
+                                <td>2 bytes</td>
+                                <td>Create Date</td>
+                                <td>Year/month/day</td>
+                            </tr>
+                            <tr>
+                                <td>0x12</td>
+                                <td>2 bytes</td>
+                                <td>Last Access Date</td>
+                                <td>Date only (no time)</td>
+                            </tr>
+                            <tr>
+                                <td>0x14</td>
+                                <td>2 bytes</td>
+                                <td>First Cluster (High)</td>
+                                <td>High 16 bits (FAT32 only)</td>
+                            </tr>
+                            <tr>
+                                <td>0x16</td>
+                                <td>2 bytes</td>
+                                <td>Last Write Time</td>
+                                <td>Hour/minute/second (2-sec resolution)</td>
+                            </tr>
+                            <tr>
+                                <td>0x18</td>
+                                <td>2 bytes</td>
+                                <td>Last Write Date</td>
+                                <td>Year/month/day</td>
+                            </tr>
+                            <tr>
+                                <td>0x1A</td>
+                                <td>2 bytes</td>
+                                <td>First Cluster (Low)</td>
+                                <td>Low 16 bits of starting cluster</td>
+                            </tr>
+                            <tr>
+                                <td>0x1C</td>
+                                <td>4 bytes</td>
+                                <td>File Size</td>
+                                <td>Size in bytes (0 for directories)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h3>Interactive Directory Entry Visualizer</h3>
+                
+                <div class="interactive-container">
+                    <div class="interactive-title"><span aria-hidden="true">🔬</span> 32-Byte Directory Entry Structure</div>
+                    <p>Hover over each byte to see its purpose. This example shows a file named "REPORT.TXT":</p>
+                    
+                    <div class="byte-visualizer">
+                        <div class="byte-row" id="byte-row-1">
+                            <!-- Bytes 0-15 -->
+                        </div>
+                        <div class="byte-row" id="byte-row-2">
+                            <!-- Bytes 16-31 -->
+                        </div>
+                        <div class="byte-legend">
+                            <div class="legend-item"><div class="legend-color" style="background: #3b82f6;"></div> Filename (8)</div>
+                            <div class="legend-item"><div class="legend-color" style="background: #8b5cf6;"></div> Extension (3)</div>
+                            <div class="legend-item"><div class="legend-color" style="background: #f59e0b;"></div> Attributes (1)</div>
+                            <div class="legend-item"><div class="legend-color" style="background: #6b7280;"></div> Reserved (2)</div>
+                            <div class="legend-item"><div class="legend-color" style="background: #10b981;"></div> Time (2 each)</div>
+                            <div class="legend-item"><div class="legend-color" style="background: #06b6d4;"></div> Date (2 each)</div>
+                            <div class="legend-item"><div class="legend-color" style="background: #ef4444;"></div> Cluster (2+2)</div>
+                            <div class="legend-item"><div class="legend-color" style="background: #ec4899;"></div> Size (4)</div>
+                        </div>
+                    </div>
+                    <div id="byte-info" class="calculator-result" style="margin-top: 1rem;">
+                        <div class="calculator-result-title">Byte Information:</div>
+                        <p id="byte-info-text">Hover over a byte to see details</p>
+                    </div>
+                </div>
+                
+                <h3>File Attributes</h3>
+                
+                <p>The attribute byte (offset 0x0B) contains flags that define the file's characteristics:</p>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Bit</th>
+                                <th>Hex Value</th>
+                                <th>Attribute</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>0</td>
+                                <td><code>0x01</code></td>
+                                <td>Read-Only</td>
+                                <td>File cannot be written or deleted</td>
+                            </tr>
+                            <tr>
+                                <td>1</td>
+                                <td><code>0x02</code></td>
+                                <td>Hidden</td>
+                                <td>File hidden from normal directory listings</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td><code>0x04</code></td>
+                                <td>System</td>
+                                <td>Operating system file</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td><code>0x08</code></td>
+                                <td>Volume Label</td>
+                                <td>Entry is volume label (not a file)</td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td><code>0x10</code></td>
+                                <td>Directory</td>
+                                <td>Entry is a subdirectory</td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td><code>0x20</code></td>
+                                <td>Archive</td>
+                                <td>File has been modified since last backup</td>
+                            </tr>
+                            <tr>
+                                <td>-</td>
+                                <td><code>0x0F</code></td>
+                                <td>Long Filename</td>
+                                <td>Special: LFN entry (combination of first 4 bits)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="info-box example">
+                    <div class="info-box-title"><span aria-hidden="true">💡</span> Attribute Examples</div>
+                    <ul>
+                        <li><code>0x20</code> (00100000) = Normal file with Archive bit set</li>
+                        <li><code>0x10</code> (00010000) = Directory</li>
+                        <li><code>0x07</code> (00000111) = Read-only + Hidden + System (common for protected OS files)</li>
+                        <li><code>0x22</code> (00100010) = Hidden file with Archive bit</li>
+                        <li><code>0x0F</code> (00001111) = Long filename entry (not a real file)</li>
+                    </ul>
+                </div>
+                
+                <h3>Long Filename (LFN) Entries</h3>
+                
+                <p>The original FAT format only supported 8.3 filenames (8 characters + 3 character extension). Windows 95 introduced Long Filename support through a clever workaround using multiple directory entries:</p>
+                
+                <div class="collapsible" id="collapse-lfn">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-lfn')" role="button" aria-expanded="false" tabindex="0">
+                        <span>📝 How Long Filenames Work</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p>Long filenames are stored using additional 32-byte entries placed <em>before</em> the standard directory entry. These LFN entries have a special attribute value of <code>0x0F</code>.</p>
+                        
+                        <h4>LFN Entry Structure:</h4>
+                        <ul>
+                            <li><strong>Byte 0:</strong> Sequence number (1-20, with 0x40 added to last entry)</li>
+                            <li><strong>Bytes 1-10:</strong> Characters 1-5 of name segment (Unicode, 2 bytes each)</li>
+                            <li><strong>Byte 11:</strong> Attribute = 0x0F</li>
+                            <li><strong>Byte 12:</strong> Reserved (0x00)</li>
+                            <li><strong>Byte 13:</strong> Checksum of 8.3 name</li>
+                            <li><strong>Bytes 14-25:</strong> Characters 6-11 of name segment</li>
+                            <li><strong>Bytes 26-27:</strong> First cluster (always 0x0000)</li>
+                            <li><strong>Bytes 28-31:</strong> Characters 12-13 of name segment</li>
+                        </ul>
+                        
+                        <p>Each LFN entry stores 13 characters of the filename. Entries are stored in reverse order (last segment first).</p>
+                        
+                        <div class="diagram-container">
+                            <div class="diagram-title">Example: "My Document.docx" Storage</div>
+<pre class="diagram">
+Entry 1 (LFN):  Seq=0x42  "nt.docx"     (last segment, 0x40 flag)
+Entry 2 (LFN):  Seq=0x01  "My Docume"   (first segment)
+Entry 3 (SFN):  "MYDOCU~1.DOC"          (8.3 short name)
+                ↑ This is the actual directory entry
+</pre>
+                        </div>
+                        
+                        <div class="info-box forensic">
+                            <div class="info-box-title"><span aria-hidden="true">🔍</span> Forensic Significance</div>
+                            <p>When a file with a long filename is deleted, the LFN entries are also marked as deleted (first byte set to 0xE5). However, the long filename data often remains intact and can be recovered along with the file.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>Special Directory Entry Values</h3>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>First Byte Value</th>
+                                <th>Meaning</th>
+                                <th>Forensic Significance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>0x00</code></td>
+                                <td>Entry never used</td>
+                                <td>End of directory entries; no more entries follow</td>
+                            </tr>
+                            <tr>
+                                <td><code>0xE5</code></td>
+                                <td>Deleted entry</td>
+                                <td>File was deleted; rest of entry may be intact for recovery</td>
+                            </tr>
+                            <tr>
+                                <td><code>0x05</code></td>
+                                <td>First char is actually 0xE5</td>
+                                <td>Escape sequence for Japanese Kanji character</td>
+                            </tr>
+                            <tr>
+                                <td><code>0x2E</code></td>
+                                <td>Dot entry ("." or "..")</td>
+                                <td>Current directory or parent directory reference</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> The 0xE5 Marker</div>
+                    <p>The <code>0xE5</code> deletion marker is one of the most important values in FAT forensics:</p>
+                    <ul>
+                        <li>When a file is deleted, <strong>only the first byte</strong> of the filename is changed to 0xE5</li>
+                        <li>The remaining 31 bytes of the directory entry typically remain unchanged</li>
+                        <li>This means timestamps, file size, starting cluster, and most of the filename are preserved</li>
+                        <li>Recovery tools can often reconstruct the original filename (only first character is lost)</li>
+                    </ul>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-directory-1" onchange="updateProgress()">
+                        <label for="check-directory-1">I understand the 32-byte directory entry structure</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-directory-2" onchange="updateProgress()">
+                        <label for="check-directory-2">I can interpret file attribute flags</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-directory-3" onchange="updateProgress()">
+                        <label for="check-directory-3">I understand how long filenames are stored</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-directory-4" onchange="updateProgress()">
+                        <label for="check-directory-4">I know what the 0xE5 marker indicates</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 5: Timestamps -->
+        <section class="section" id="section-timestamps">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">⏰</span> FAT Timestamps</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>FAT timestamps are encoded in a compact format to save space. Understanding this encoding is essential for forensic timeline analysis and recognizing the limitations of FAT timestamp precision.</p>
+                
+                <h3>FAT Timestamp Storage</h3>
+                
+                <p>FAT stores three timestamps for each file, but with significant limitations compared to modern file systems:</p>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Offset</th>
+                                <th>Resolution</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Created</strong></td>
+                                <td>0x0D-0x11</td>
+                                <td>10 milliseconds</td>
+                                <td>Most precise FAT timestamp (with ms byte)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Last Accessed</strong></td>
+                                <td>0x12-0x13</td>
+                                <td>1 day</td>
+                                <td>Date only—no time component!</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Last Modified</strong></td>
+                                <td>0x16-0x19</td>
+                                <td>2 seconds</td>
+                                <td>Standard resolution for FAT times</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h3>Time and Date Encoding</h3>
+                
+                <p>FAT uses a packed binary format to store date and time in just 2 bytes each:</p>
+                
+                <div class="diagram-container">
+                    <div class="diagram-title">FAT Time Format (16 bits)</div>
+<pre class="diagram">
+Bits:    15 14 13 12 11 | 10  9  8  7  6  5 |  4  3  2  1  0
+         ─────────────────────────────────────────────────────
+Field:   │    Hour     │ │     Minute      │ │   Second/2   │
+         │   (0-23)    │ │     (0-59)      │ │    (0-29)    │
+         └─────────────┘ └─────────────────┘ └──────────────┘
+              5 bits          6 bits             5 bits
+
+Example: 0x4B24 = 0100 1011 0010 0100
+         Hour = 01001 = 9
+         Minute = 011001 = 25
+         Second = 00100 × 2 = 8
+         Time = 09:25:08
+</pre>
+                </div>
+                
+                <div class="diagram-container">
+                    <div class="diagram-title">FAT Date Format (16 bits)</div>
+<pre class="diagram">
+Bits:    15 14 13 12 11 10  9 |  8  7  6  5 |  4  3  2  1  0
+         ─────────────────────────────────────────────────────
+Field:   │    Year + 1980    │ │   Month   │ │     Day      │
+         │     (0-127)       │ │   (1-12)  │ │    (1-31)    │
+         └───────────────────┘ └───────────┘ └──────────────┘
+               7 bits            4 bits          5 bits
+
+Example: 0x5A95 = 0101 1010 1001 0101
+         Year = 0101101 = 45 + 1980 = 2025
+         Month = 0100 = 4 (April)
+         Day = 10101 = 21
+         Date = April 21, 2025
+</pre>
+                </div>
+                
+                <h3>Interactive Timestamp Converter</h3>
+                
+                <div class="interactive-container">
+                    <div class="interactive-title"><span aria-hidden="true">🔄</span> FAT Timestamp Decoder/Encoder</div>
+                    
+                    <div class="tabs-container">
+                        <div class="tabs-header" role="tablist">
+                            <button class="tab-btn active" onclick="switchTab(event, 'tab-decode')" role="tab" aria-selected="true">Decode Hex → Date/Time</button>
+                            <button class="tab-btn" onclick="switchTab(event, 'tab-encode')" role="tab" aria-selected="false">Encode Date/Time → Hex</button>
+                        </div>
+                        
+                        <div class="tab-content active" id="tab-decode" role="tabpanel">
+                            <div class="calculator-inputs">
+                                <div class="calculator-field">
+                                    <label for="decode-date">Date (Hex, e.g., 5A95):</label>
+                                    <input type="text" id="decode-date" value="5A95" maxlength="4" placeholder="XXXX">
+                                </div>
+                                <div class="calculator-field">
+                                    <label for="decode-time">Time (Hex, e.g., 4B24):</label>
+                                    <input type="text" id="decode-time" value="4B24" maxlength="4" placeholder="XXXX">
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" onclick="decodeFATTimestamp()">Decode Timestamp</button>
+                            <div class="calculator-result" id="decode-result" style="display: none;">
+                                <div class="calculator-result-title">Decoded Result:</div>
+                                <div id="decode-output"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-content" id="tab-encode" role="tabpanel">
+                            <div class="calculator-inputs">
+                                <div class="calculator-field">
+                                    <label for="encode-year">Year (1980-2107):</label>
+                                    <input type="number" id="encode-year" value="2025" min="1980" max="2107">
+                                </div>
+                                <div class="calculator-field">
+                                    <label for="encode-month">Month (1-12):</label>
+                                    <input type="number" id="encode-month" value="4" min="1" max="12">
+                                </div>
+                                <div class="calculator-field">
+                                    <label for="encode-day">Day (1-31):</label>
+                                    <input type="number" id="encode-day" value="21" min="1" max="31">
+                                </div>
+                                <div class="calculator-field">
+                                    <label for="encode-hour">Hour (0-23):</label>
+                                    <input type="number" id="encode-hour" value="9" min="0" max="23">
+                                </div>
+                                <div class="calculator-field">
+                                    <label for="encode-minute">Minute (0-59):</label>
+                                    <input type="number" id="encode-minute" value="25" min="0" max="59">
+                                </div>
+                                <div class="calculator-field">
+                                    <label for="encode-second">Second (0-58, even):</label>
+                                    <input type="number" id="encode-second" value="8" min="0" max="58" step="2">
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" onclick="encodeFATTimestamp()">Encode Timestamp</button>
+                            <div class="calculator-result" id="encode-result" style="display: none;">
+                                <div class="calculator-result-title">Encoded Result:</div>
+                                <div id="encode-output"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>Timestamp Limitations & Forensic Implications</h3>
+                
+                <div class="info-box warning">
+                    <div class="info-box-title"><span aria-hidden="true">⚠️</span> Critical Limitations</div>
+                    <ul>
+                        <li><strong>2-second resolution:</strong> Modified time can only represent even seconds. Two files modified 1 second apart may show the same timestamp.</li>
+                        <li><strong>No access time:</strong> Last access only records the date, not time. You cannot determine when during the day a file was accessed.</li>
+                        <li><strong>Year 2107 problem:</strong> FAT dates cannot represent years beyond 2107 (1980 + 127).</li>
+                        <li><strong>Local time only:</strong> FAT stores local time without timezone information. A file created in New York and copied to London will show different "times" depending on system settings.</li>
+                        <li><strong>No change tracking:</strong> Unlike NTFS, FAT has no metadata change timestamp.</li>
+                    </ul>
+                </div>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> Forensic Considerations</div>
+                    <ul>
+                        <li><strong>Timeline gaps:</strong> The 2-second resolution means precise event ordering may be impossible</li>
+                        <li><strong>Timezone ambiguity:</strong> Without timezone data, correlating FAT timestamps with other evidence requires knowing the system's timezone setting</li>
+                        <li><strong>Access date only:</strong> Cannot prove exact time of file access, only the date</li>
+                        <li><strong>Timestamp manipulation:</strong> FAT timestamps are easily modified; look for inconsistencies (e.g., modified date before created date)</li>
+                        <li><strong>USB drives:</strong> Timestamps may reflect the timezone of whatever computer last wrote the file</li>
+                    </ul>
+                </div>
+                
+                <h3>Comparison with Other File Systems</h3>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>FAT32</th>
+                                <th>NTFS</th>
+                                <th>ext4</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Time Resolution</strong></td>
+                                <td>2 seconds</td>
+                                <td>100 nanoseconds</td>
+                                <td>1 nanosecond</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Timezone</strong></td>
+                                <td>Local (none stored)</td>
+                                <td>UTC</td>
+                                <td>UTC</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Created Time</strong></td>
+                                <td>Yes (10ms)</td>
+                                <td>Yes</td>
+                                <td>Yes (crtime)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Modified Time</strong></td>
+                                <td>Yes (2s)</td>
+                                <td>Yes</td>
+                                <td>Yes (mtime)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Accessed Time</strong></td>
+                                <td>Date only</td>
+                                <td>Yes</td>
+                                <td>Yes (atime)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Metadata Changed</strong></td>
+                                <td>No</td>
+                                <td>Yes (MFT modified)</td>
+                                <td>Yes (ctime)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Year Range</strong></td>
+                                <td>1980-2107</td>
+                                <td>1601-30828</td>
+                                <td>1901-2514</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-timestamp-1" onchange="updateProgress()">
+                        <label for="check-timestamp-1">I understand FAT time and date encoding formats</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-timestamp-2" onchange="updateProgress()">
+                        <label for="check-timestamp-2">I can decode FAT timestamps from hexadecimal</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-timestamp-3" onchange="updateProgress()">
+                        <label for="check-timestamp-3">I recognize the forensic limitations of FAT timestamps</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 6: File Deletion -->
+        <section class="section" id="section-deletion">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🗑️</span> FAT File Deletion Process</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>Understanding how FAT handles file deletion is crucial for forensic recovery. The FAT deletion process is remarkably simple, which is both a weakness (data is easily recoverable) and a strength (for forensic investigators).</p>
+                
+                <h3>What Happens When You Delete a File</h3>
+                
+                <p>When a file is deleted on a FAT file system, the operating system performs only two operations:</p>
+                
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-icon">1️⃣</div>
+                        <div class="card-title">Directory Entry Marked</div>
+                        <div class="card-content">
+                            <p>The first byte of the filename in the directory entry is changed to <code>0xE5</code>.</p>
+                            <p><strong>Before:</strong> <code>52 45 50 4F 52 54 20 20</code> ("REPORT  ")</p>
+                            <p><strong>After:</strong> <code>E5 45 50 4F 52 54 20 20</code> ("åEPORT  ")</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">2️⃣</div>
+                        <div class="card-title">FAT Entries Zeroed</div>
+                        <div class="card-content">
+                            <p>The cluster chain entries in the FAT are set to <code>0x0000</code> (free).</p>
+                            <p><strong>Before:</strong> Cluster 5→6→8→EOF</p>
+                            <p><strong>After:</strong> Clusters 5,6,8 all show 0x0000</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-box danger">
+                    <div class="info-box-title"><span aria-hidden="true">❗</span> What Does NOT Happen</div>
+                    <ul>
+                        <li><strong>File data is NOT erased</strong> — The actual content in the data clusters remains completely intact</li>
+                        <li><strong>Directory entry is NOT removed</strong> — Only the first character is changed; all other metadata remains</li>
+                        <li><strong>Timestamps are NOT updated</strong> — Deletion time is not recorded anywhere</li>
+                        <li><strong>File size is NOT cleared</strong> — The original file size is still in the directory entry</li>
+                    </ul>
+                </div>
+                
+                <h3>Visual Deletion Process</h3>
+                
+                <div class="diagram-container">
+                    <div class="diagram-title">FAT Deletion: Before and After</div>
+<pre class="diagram">
+BEFORE DELETION:
+================
+
+Directory Entry for "REPORT.TXT":
+┌────────────────────────────────────────────────────────────────┐
+│ 52 45 50 4F 52 54 20 20 │ 54 58 54 │ 20 │ ... │ 05 00 │ 2048  │
+│ R  E  P  O  R  T  ␣  ␣  │ T  X  T  │Attr│     │Clust5│ Size  │
+└────────────────────────────────────────────────────────────────┘
+
+FAT Table:
+┌──────┬──────┬──────┬──────┬──────┬──────┬──────┬──────┬──────┐
+│  0   │  1   │  2   │  3   │  4   │  5   │  6   │  7   │  8   │
+│ rsv  │ rsv  │ 0000 │ 0000 │ 0000 │ 0006 │ 0008 │ 0000 │ FFFF │
+│      │      │ free │ free │ free │  →6  │  →8  │ free │ EOF  │
+└──────┴──────┴──────┴──────┴──────┴──────┴──────┴──────┴──────┘
+
+Data Clusters:
+┌──────────────────────────────────────────────────────────────┐
+│ Cluster 5: [File data: "This is my report content..."]      │
+│ Cluster 6: [File data: "More content here..."]              │
+│ Cluster 8: [File data: "End of file content"]               │
+└──────────────────────────────────────────────────────────────┘
+
+
+AFTER DELETION:
+===============
+
+Directory Entry (only first byte changed!):
+┌────────────────────────────────────────────────────────────────┐
+│ E5 45 50 4F 52 54 20 20 │ 54 58 54 │ 20 │ ... │ 05 00 │ 2048  │
+│ å  E  P  O  R  T  ␣  ␣  │ T  X  T  │Attr│     │Clust5│ Size  │
+└────────────────────────────────────────────────────────────────┘
+  ↑ Only this byte changed to 0xE5!
+
+FAT Table (cluster entries zeroed):
+┌──────┬──────┬──────┬──────┬──────┬──────┬──────┬──────┬──────┐
+│  0   │  1   │  2   │  3   │  4   │  5   │  6   │  7   │  8   │
+│ rsv  │ rsv  │ 0000 │ 0000 │ 0000 │ 0000 │ 0000 │ 0000 │ 0000 │
+│      │      │ free │ free │ free │ free │ free │ free │ free │
+└──────┴──────┴──────┴──────┴──────┴──────┴──────┴──────┴──────┘
+                             ↑ These were zeroed
+
+Data Clusters (UNCHANGED!):
+┌──────────────────────────────────────────────────────────────┐
+│ Cluster 5: [File data: "This is my report content..."]      │ ← Still there!
+│ Cluster 6: [File data: "More content here..."]              │ ← Still there!
+│ Cluster 8: [File data: "End of file content"]               │ ← Still there!
+└──────────────────────────────────────────────────────────────┘
+</pre>
+                </div>
+                
+                <h3>Recovery Possibilities</h3>
+                
+                <div class="tabs-container">
+                    <div class="tabs-header" role="tablist">
+                        <button class="tab-btn active" onclick="switchTab(event, 'tab-easy')" role="tab" aria-selected="true">Easy Recovery</button>
+                        <button class="tab-btn" onclick="switchTab(event, 'tab-moderate')" role="tab" aria-selected="false">Moderate Difficulty</button>
+                        <button class="tab-btn" onclick="switchTab(event, 'tab-difficult')" role="tab" aria-selected="false">Difficult/Impossible</button>
+                    </div>
+                    
+                    <div class="tab-content active" id="tab-easy" role="tabpanel">
+                        <h4>✅ Easy Recovery Scenarios</h4>
+                        <ul>
+                            <li><strong>Recently deleted, contiguous file:</strong> Directory entry intact, clusters not overwritten, file was stored in sequential clusters</li>
+                            <li><strong>Small file (single cluster):</strong> No cluster chain to reconstruct</li>
+                            <li><strong>Low disk activity since deletion:</strong> Clusters haven't been reallocated</li>
+                        </ul>
+                        <p><strong>Recovery method:</strong></p>
+                        <ol>
+                            <li>Find deleted directory entry (first byte = 0xE5)</li>
+                            <li>Read starting cluster from entry</li>
+                            <li>Read file size from entry</li>
+                            <li>Copy data from starting cluster for [file size] bytes</li>
+                            <li>Guess first character of filename (or use LFN entries if present)</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="tab-content" id="tab-moderate" role="tabpanel">
+                        <h4>⚠️ Moderately Difficult Recovery</h4>
+                        <ul>
+                            <li><strong>Fragmented file:</strong> FAT chain is lost; must identify which clusters belong to the file</li>
+                            <li><strong>Partial overwrite:</strong> Some clusters have been reallocated to new files</li>
+                            <li><strong>Damaged directory entry:</strong> Must rely on file carving techniques</li>
+                        </ul>
+                        <p><strong>Recovery method:</strong></p>
+                        <ol>
+                            <li>Use file signatures (magic numbers) to identify file type</li>
+                            <li>Search unallocated clusters for file content</li>
+                            <li>Attempt to reconstruct file from fragments</li>
+                            <li>May result in partial recovery</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="tab-content" id="tab-difficult" role="tabpanel">
+                        <h4>❌ Difficult or Impossible Recovery</h4>
+                        <ul>
+                            <li><strong>Clusters overwritten:</strong> New data has been written to the file's former clusters</li>
+                            <li><strong>Secure deletion used:</strong> File was wiped with zeros or random data before deletion</li>
+                            <li><strong>SSD with TRIM:</strong> SSD may have zeroed the blocks immediately</li>
+                            <li><strong>Directory entry overwritten:</strong> New file created in same directory slot</li>
+                            <li><strong>Volume reformatted:</strong> All directory entries and FAT cleared</li>
+                        </ul>
+                        <p><strong>Possible approaches:</strong></p>
+                        <ul>
+                            <li>File carving from raw disk image</li>
+                            <li>Search for file fragments in slack space</li>
+                            <li>Check for backup copies elsewhere</li>
+                            <li>Professional data recovery services (physical recovery)</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <h3>Forensic Recovery Workflow</h3>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> Step-by-Step Recovery Process</div>
+                    <ol>
+                        <li><strong>Create forensic image</strong> — Never work on original evidence</li>
+                        <li><strong>Parse boot sector</strong> — Get cluster size, FAT location, data area start</li>
+                        <li><strong>Scan directory entries</strong> — Look for entries starting with 0xE5</li>
+                        <li><strong>Extract metadata</strong> — Record filename (minus first char), size, starting cluster, timestamps</li>
+                        <li><strong>Check cluster status</strong> — Verify if starting cluster is still unallocated</li>
+                        <li><strong>Calculate cluster addresses</strong> — Convert cluster numbers to byte offsets</li>
+                        <li><strong>Extract file data</strong> — Copy bytes from clusters based on file size</li>
+                        <li><strong>Validate recovery</strong> — Check file headers, attempt to open file</li>
+                        <li><strong>Document findings</strong> — Record all steps and results</li>
+                    </ol>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-deletion-1" onchange="updateProgress()">
+                        <label for="check-deletion-1">I understand what happens when a file is deleted in FAT</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-deletion-2" onchange="updateProgress()">
+                        <label for="check-deletion-2">I know why deleted file data often remains recoverable</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-deletion-3" onchange="updateProgress()">
+                        <label for="check-deletion-3">I can identify factors that affect recovery success</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 7: Forensic Analysis -->
+        <section class="section" id="section-forensic">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🔬</span> FAT Forensic Analysis Techniques</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>This section covers practical forensic analysis techniques specific to FAT file systems, including artifact locations, analysis strategies, and common investigation scenarios.</p>
+                
+                <h3>Key Forensic Artifacts in FAT</h3>
+                
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-icon">📋</div>
+                        <div class="card-title">Boot Sector Artifacts</div>
+                        <div class="card-content">
+                            <ul>
+                                <li>Volume serial number (unique per format)</li>
+                                <li>OEM name (formatting tool identifier)</li>
+                                <li>Volume label</li>
+                                <li>Format date clues from serial number</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">📁</div>
+                        <div class="card-title">Directory Entry Artifacts</div>
+                        <div class="card-content">
+                            <ul>
+                                <li>Deleted file entries (0xE5 marker)</li>
+                                <li>Timestamps (created, modified, accessed)</li>
+                                <li>File attributes (hidden, system)</li>
+                                <li>Long filename entries</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">📊</div>
+                        <div class="card-title">FAT Table Artifacts</div>
+                        <div class="card-content">
+                            <ul>
+                                <li>Allocation patterns</li>
+                                <li>Bad cluster markers</li>
+                                <li>FAT1 vs FAT2 discrepancies</li>
+                                <li>Orphan cluster chains</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-icon">💾</div>
+                        <div class="card-title">Data Area Artifacts</div>
+                        <div class="card-content">
+                            <ul>
+                                <li>Unallocated cluster content</li>
+                                <li>File slack space</li>
+                                <li>Volume slack (end of volume)</li>
+                                <li>Carved files from unallocated space</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>Slack Space Analysis</h3>
+                
+                <p>Slack space in FAT volumes contains two types of potentially recoverable data:</p>
+                
+                <div class="diagram-container">
+                    <div class="diagram-title">Types of Slack Space</div>
+<pre class="diagram">
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         ALLOCATED CLUSTER                                │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌──────────────────────────────────────────┬──────────────────────────┐│
+│  │           FILE DATA                       │      SLACK SPACE         ││
+│  │        (File Content)                     │                          ││
+│  │                                           │  ┌──────────┬──────────┐ ││
+│  │  "This is the actual                      │  │  RAM     │  DISK    │ ││
+│  │   content of my file..."                  │  │  Slack   │  Slack   │ ││
+│  │                                           │  │          │          │ ││
+│  │                                           │  │ (random  │ (previous│ ││
+│  │                                           │  │  memory) │  file    │ ││
+│  │                                           │  │          │  data)   │ ││
+│  └──────────────────────────────────────────┴──┴──────────┴──────────┘ ││
+│                                                                          │
+│  ◄────────── Sector Boundary ──────────────►◄─────────────────────────► │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+
+RAM Slack: Space from end of file to end of sector
+           May contain random data from memory at time of write
+
+Disk Slack: Space from end of sector to end of cluster
+            Contains data from previously deleted file that occupied this cluster
+</pre>
+                </div>
+                
+                <div class="info-box forensic">
+                    <div class="info-box-title"><span aria-hidden="true">🔍</span> Slack Space Forensic Value</div>
+                    <ul>
+                        <li><strong>RAM Slack:</strong> May contain fragments of data that was in memory when the file was written—potentially passwords, document fragments, or other sensitive data</li>
+                        <li><strong>Disk Slack:</strong> Contains remnants of the previous file that used this cluster—can reveal deleted file content even when the original file's clusters have been reallocated</li>
+                        <li><strong>Analysis tip:</strong> Extract all slack space from a volume and search for keywords, email addresses, or file signatures</li>
+                    </ul>
+                </div>
+                
+                <h3>Common Investigation Scenarios</h3>
+                
+                <div class="collapsible" id="collapse-scenario1">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-scenario1')" role="button" aria-expanded="false" tabindex="0">
+                        <span>📷 Scenario 1: Digital Camera SD Card Analysis</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <h4>Context:</h4>
+                        <p>An SD card from a digital camera is submitted as evidence. The investigator needs to recover deleted photos and establish a timeline of when photos were taken.</p>
+                        
+                        <h4>Analysis Steps:</h4>
+                        <ol>
+                            <li><strong>Image the card</strong> using write-blocker</li>
+                            <li><strong>Identify file system</strong> — Most cameras use FAT32</li>
+                            <li><strong>Parse DCIM directory</strong> — Standard camera photo location</li>
+                            <li><strong>Recover deleted entries</strong> — Look for 0xE5 markers in directory</li>
+                            <li><strong>Carve unallocated space</strong> — Search for JPEG headers (0xFFD8FFE0)</li>
+                            <li><strong>Extract EXIF metadata</strong> — Camera model, GPS coordinates, timestamps</li>
+                            <li><strong>Build timeline</strong> — Correlate FAT timestamps with EXIF timestamps</li>
+                        </ol>
+                        
+                        <h4>Key Artifacts:</h4>
+                        <ul>
+                            <li>DCIM folder structure (100CANON, 101NIKON, etc.)</li>
+                            <li>Thumbnail database files (may contain deleted image previews)</li>
+                            <li>EXIF data in recovered images</li>
+                            <li>Sequential file numbering gaps (indicate deleted files)</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="collapsible" id="collapse-scenario2">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-scenario2')" role="button" aria-expanded="false" tabindex="0">
+                        <span>💼 Scenario 2: USB Drive Data Exfiltration</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <h4>Context:</h4>
+                        <p>A company suspects an employee copied confidential files to a USB drive. The drive has been recovered and appears empty.</p>
+                        
+                        <h4>Analysis Steps:</h4>
+                        <ol>
+                            <li><strong>Create forensic image</strong></li>
+                            <li><strong>Analyze boot sector</strong> — Check volume serial number and format date</li>
+                            <li><strong>Scan all directory entries</strong> — Including deleted entries in root and subdirectories</li>
+                            <li><strong>Search unallocated space</strong> — Carve for office documents (DOCX, XLSX, PDF)</li>
+                            <li><strong>Extract slack space</strong> — May contain document fragments</li>
+                            <li><strong>Keyword search</strong> — Company names, project names, confidential markers</li>
+                            <li><strong>Timeline analysis</strong> — When were files created/modified/deleted?</li>
+                        </ol>
+                        
+                        <h4>Evidence Indicators:</h4>
+                        <ul>
+                            <li>Deleted directory entries with corporate file names</li>
+                            <li>Office document signatures in unallocated space</li>
+                            <li>Timestamps correlating with employee's work hours</li>
+                            <li>Volume label matching company naming conventions</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="collapsible" id="collapse-scenario3">
+                    <div class="collapsible-header" onclick="toggleCollapsible('collapse-scenario3')" role="button" aria-expanded="false" tabindex="0">
+                        <span>🚗 Scenario 3: Dash Cam Footage Recovery</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <h4>Context:</h4>
+                        <p>A dash cam's SD card from a vehicle involved in an accident needs analysis. The camera uses loop recording, which overwrites old footage.</p>
+                        
+                        <h4>Analysis Steps:</h4>
+                        <ol>
+                            <li><strong>Image immediately</strong> — Loop recording continues to overwrite</li>
+                            <li><strong>Identify video format</strong> — Common: AVI, MP4, MOV</li>
+                            <li><strong>Parse existing files</strong> — Extract all current recordings</li>
+                            <li><strong>Carve for video files</strong> — Search for video headers in unallocated space</li>
+                            <li><strong>Analyze file timestamps</strong> — Determine recording times</li>
+                            <li><strong>Check for protected/locked files</strong> — Many dash cams lock files during impacts</li>
+                        </ol>
+                        
+                        <h4>Challenges:</h4>
+                        <ul>
+                            <li>Loop recording actively overwrites old footage</li>
+                            <li>Video files are large and fragment easily</li>
+                            <li>Partial video recovery may produce corrupted files</li>
+                            <li>Timestamps may be wrong if dash cam clock wasn't set</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <h3>FAT Analysis Tools</h3>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tool</th>
+                                <th>Type</th>
+                                <th>FAT Capabilities</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Autopsy</strong></td>
+                                <td>Open Source</td>
+                                <td>Full FAT parsing, deleted file recovery, timeline analysis</td>
+                            </tr>
+                            <tr>
+                                <td><strong>FTK Imager</strong></td>
+                                <td>Free</td>
+                                <td>Imaging, basic FAT browsing, deleted file viewing</td>
+                            </tr>
+                            <tr>
+                                <td><strong>The Sleuth Kit</strong></td>
+                                <td>Open Source</td>
+                                <td>Command-line FAT analysis (fls, icat, blkcat)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>X-Ways Forensics</strong></td>
+                                <td>Commercial</td>
+                                <td>Advanced FAT analysis, file carving, reporting</td>
+                            </tr>
+                            <tr>
+                                <td><strong>EnCase</strong></td>
+                                <td>Commercial</td>
+                                <td>Enterprise FAT analysis, scripting, court-ready reports</td>
+                            </tr>
+                            <tr>
+                                <td><strong>PhotoRec</strong></td>
+                                <td>Open Source</td>
+                                <td>File carving from FAT unallocated space</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Recuva</strong></td>
+                                <td>Free</td>
+                                <td>Simple deleted file recovery from FAT</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-forensic-1" onchange="updateProgress()">
+                        <label for="check-forensic-1">I can identify key forensic artifacts in FAT volumes</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-forensic-2" onchange="updateProgress()">
+                        <label for="check-forensic-2">I understand the difference between RAM slack and disk slack</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-forensic-3" onchange="updateProgress()">
+                        <label for="check-forensic-3">I can describe a forensic workflow for FAT analysis</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 8: Practice Activities -->
+        <section class="section" id="section-practice">
+            <div class="section-header" onclick="toggleSection(this)" role="button" aria-expanded="true" tabindex="0" onkeypress="handleKeyPress(event, this)">
+                <h2><span aria-hidden="true">🎮</span> Practice Activities & Knowledge Check</h2>
+                <button class="section-toggle" aria-label="Toggle section">▼</button>
+            </div>
+            <div class="section-content">
+                <p>Test your understanding of FAT file systems with these interactive activities.</p>
+                
+                <!-- Quiz -->
+                <div class="interactive-container">
+                    <div class="interactive-title"><span aria-hidden="true">📝</span> Knowledge Check Quiz</div>
+                    
+                    <div class="quiz-question" id="quiz-1">
+                        <p>1. What is the maximum file size supported by FAT32?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-1" value="a">
+                                <span>2 GB</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-1" value="b">
+                                <span>4 GB minus 1 byte</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-1" value="c">
+                                <span>16 GB</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-1" value="d">
+                                <span>No limit</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-1-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-2">
+                        <p>2. What value marks a deleted file's directory entry in FAT?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-2" value="a">
+                                <span>0x00</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-2" value="b">
+                                <span>0xFF</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-2" value="c">
+                                <span>0xE5</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-2" value="d">
+                                <span>0xDE</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-2-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-3">
+                        <p>3. What is the time resolution of FAT's "last modified" timestamp?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-3" value="a">
+                                <span>1 second</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-3" value="b">
+                                <span>2 seconds</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-3" value="c">
+                                <span>1 minute</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-3" value="d">
+                                <span>100 nanoseconds</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-3-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-4">
+                        <p>4. How many bytes is a standard FAT directory entry?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-4" value="a">
+                                <span>16 bytes</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-4" value="b">
+                                <span>32 bytes</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-4" value="c">
+                                <span>64 bytes</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-4" value="d">
+                                <span>128 bytes</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-4-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-5">
+                        <p>5. What information does FAT's "last access" timestamp record?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-5" value="a">
+                                <span>Date and time with 2-second precision</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-5" value="b">
+                                <span>Date only, no time</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-5" value="c">
+                                <span>Time only, no date</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-5" value="d">
+                                <span>FAT doesn't track last access</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-5-feedback"></div>
+                    </div>
+                    
+                    <div class="quiz-question" id="quiz-6">
+                        <p>6. When a file is deleted in FAT, what happens to the actual file data?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-6" value="a">
+                                <span>It is immediately overwritten with zeros</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-6" value="b">
+                                <span>It is encrypted and moved to a hidden area</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-6" value="c">
+                                <span>It remains intact until overwritten by new data</span>
+                            </label>
+                            <label class="quiz-option" onclick="selectQuizOption(this)">
+                                <input type="radio" name="quiz-6" value="d">
+                                <span>It is moved to the Recycle Bin</span>
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="quiz-6-feedback"></div>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="checkAllQuizAnswers()" style="margin-top: 1rem;">Check All Answers</button>
+                    <button class="btn btn-secondary" onclick="resetQuiz()" style="margin-top: 1rem;">Reset Quiz</button>
+                    
+                    <div id="quiz-results" style="margin-top: 1rem; display: none;">
+                        <div class="info-box concept">
+                            <div class="info-box-title">Quiz Results</div>
+                            <p id="quiz-score"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Hex Analysis Activity -->
+                <div class="interactive-container">
+                    <div class="interactive-title"><span aria-hidden="true">🔬</span> Activity: Analyze a Directory Entry</div>
+                    <p>Examine this hex dump of a FAT directory entry and answer the questions below:</p>
+                    
+                    <div class="hex-viewer">
+                        <div class="hex-row">
+                            <span class="hex-offset">00:</span>
+                            <span class="hex-bytes">
+                                <span class="hex-byte highlight-filename" title="R">52</span>
+                                <span class="hex-byte highlight-filename" title="E">45</span>
+                                <span class="hex-byte highlight-filename" title="P">50</span>
+                                <span class="hex-byte highlight-filename" title="O">4F</span>
+                                <span class="hex-byte highlight-filename" title="R">52</span>
+                                <span class="hex-byte highlight-filename" title="T">54</span>
+                                <span class="hex-byte highlight-filename" title="Space">20</span>
+                                <span class="hex-byte highlight-filename" title="Space">20</span>
+                                <span class="hex-byte highlight-ext" title="T">54</span>
+                                <span class="hex-byte highlight-ext" title="X">58</span>
+                                <span class="hex-byte highlight-ext" title="T">54</span>
+                                <span class="hex-byte highlight-attr" title="Archive">20</span>
+                                <span class="hex-byte" title="Reserved">00</span>
+                                <span class="hex-byte highlight-time" title="Create ms">64</span>
+                                <span class="hex-byte highlight-time" title="Create time low">24</span>
+                                <span class="hex-byte highlight-time" title="Create time high">4B</span>
+                            </span>
+                            <span class="hex-ascii">REPORT  TXT .</span>
+                        </div>
+                        <div class="hex-row">
+                            <span class="hex-offset">10:</span>
+                            <span class="hex-bytes">
+                                <span class="hex-byte highlight-date" title="Create date low">95</span>
+                                <span class="hex-byte highlight-date" title="Create date high">5A</span>
+                                <span class="hex-byte highlight-date" title="Access date low">95</span>
+                                <span class="hex-byte highlight-date" title="Access date high">5A</span>
+                                <span class="hex-byte highlight-cluster" title="Cluster high">00</span>
+                                <span class="hex-byte highlight-cluster" title="Cluster high">00</span>
+                                <span class="hex-byte highlight-time" title="Modify time low">24</span>
+                                <span class="hex-byte highlight-time" title="Modify time high">4B</span>
+                                <span class="hex-byte highlight-date" title="Modify date low">95</span>
+                                <span class="hex-byte highlight-date" title="Modify date high">5A</span>
+                                <span class="hex-byte highlight-cluster" title="Cluster low">05</span>
+                                <span class="hex-byte highlight-cluster" title="Cluster low">00</span>
+                                <span class="hex-byte highlight-size" title="Size">00</span>
+                                <span class="hex-byte highlight-size" title="Size">08</span>
+                                <span class="hex-byte highlight-size" title="Size">00</span>
+                                <span class="hex-byte highlight-size" title="Size">00</span>
+                            </span>
+                            <span class="hex-ascii">..........Z...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="calculator-result" style="margin-top: 1rem;">
+                        <div class="calculator-result-title">Analysis Questions:</div>
+                        <ol>
+                            <li><strong>Filename:</strong> <span id="analysis-filename">REPORT.TXT</span></li>
+                            <li><strong>Starting Cluster:</strong> <span id="analysis-cluster">5 (0x0005)</span></li>
+                            <li><strong>File Size:</strong> <span id="analysis-size">2,048 bytes (0x00000800)</span></li>
+                            <li><strong>Attributes:</strong> <span id="analysis-attr">0x20 = Archive (normal file)</span></li>
+                        </ol>
+                        <p><em>Use the timestamp converter above to decode the date (0x5A95) and time (0x4B24) values!</em></p>
+                    </div>
+                </div>
+                
+                <div class="checklist" role="list" aria-label="Section completion checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-practice-1" onchange="updateProgress()">
+                        <label for="check-practice-1">I completed the knowledge check quiz</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-practice-2" onchange="updateProgress()">
+                        <label for="check-practice-2">I analyzed the sample directory entry</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-practice-3" onchange="updateProgress()">
+                        <label for="check-practice-3">I used the timestamp converter</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Module Summary -->
+        <section class="section" id="section-summary">
+            <div class="section-header" style="background: linear-gradient(135deg, var(--secondary-color), var(--secondary-dark));">
+                <h2><span aria-hidden="true">🎉</span> Module 5.2 Summary</h2>
+            </div>
+            <div class="section-content">
+                <div class="info-box concept">
+                    <div class="info-box-title"><span aria-hidden="true">📚</span> Key Takeaways</div>
+                    <ul>
+                        <li><strong>FAT file systems</strong> (FAT12, FAT16, FAT32, exFAT) remain widely used on removable media and are essential knowledge for forensic examiners</li>
+                        <li>FAT volumes have <strong>four main regions:</strong> Boot Sector, FAT(s), Root Directory, and Data Area</li>
+                        <li><strong>Directory entries are 32 bytes</strong> containing filename, attributes, timestamps, starting cluster, and file size</li>
+                        <li>FAT timestamps have <strong>significant limitations:</strong> 2-second resolution for modified time, date-only for access time, no timezone information</li>
+                        <li>File deletion only <strong>marks the first byte as 0xE5</strong> and zeros FAT entries—actual data remains until overwritten</li>
+                        <li><strong>Slack space</strong> (RAM slack and disk slack) can contain valuable forensic evidence from previous files</li>
+                        <li>FAT's simple structure makes it <strong>excellent for learning</strong> file system forensics before moving to NTFS and ext4</li>
+                    </ul>
+                </div>
+                
+                <h3>Preparation for Lab</h3>
+                <p>In the Week 5 lab, you will apply these concepts using Autopsy to:</p>
+                <ul>
+                    <li>Analyze a FAT32-formatted USB drive image</li>
+                    <li>Recover deleted files using directory entry analysis</li>
+                    <li>Interpret FAT timestamps and build a timeline</li>
+                    <li>Extract and examine slack space for evidence</li>
+                </ul>
+                
+                <h3>What's Next?</h3>
+                <p>In <strong>Module 5.3: NTFS Deep Dive</strong>, you'll explore the Windows NTFS file system, including the Master File Table (MFT), file attributes, alternate data streams, and the powerful forensic artifacts available in NTFS journals.</p>
+                
+                <div class="footer-nav" style="margin-top: 1.5rem; justify-content: center;">
+                    <a href="#" class="btn btn-secondary" onclick="alert('Module 5.1 link')">← Module 5.1: Fundamentals</a>
+                    <a href="#" class="btn btn-primary" onclick="alert('Module 5.3 coming soon!')">Module 5.3: NTFS Deep Dive →</a>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer role="contentinfo">
+        <p><strong>CSC 156 - Digital Forensics Fundamentals</strong></p>
+        <p>Module 5.2: FAT File Systems Deep Dive | Week 5</p>
+        <p>Mendocino College</p>
+        <p style="margin-top: 1rem; font-size: 0.875rem; opacity: 0.8;">💾 Progress is saved for this session only</p>
+        <div class="footer-nav">
+            <a href="#">← Previous Module</a>
+            <a href="#">Module Index</a>
+            <a href="#">Next Module →</a>
+        </div>
+    </footer>
+    
+    <script>
+        // ==================== Progress Tracking ====================
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const checked = document.querySelectorAll('input[type="checkbox"]:checked').length;
+            const total = checkboxes.length;
+            const percentage = Math.round((checked / total) * 100);
+            
+            document.getElementById('progressPercent').textContent = percentage + '%';
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.querySelector('.progress-bar').setAttribute('aria-valuenow', percentage);
+            
+            // Update checklist item styling
+            checkboxes.forEach(cb => {
+                const item = cb.closest('.checklist-item');
+                if (item) {
+                    if (cb.checked) {
+                        item.classList.add('completed');
+                    } else {
+                        item.classList.remove('completed');
+                    }
+                }
+            });
+            
+            saveProgress();
+        }
+        
+        function saveProgress() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const state = {};
+            checkboxes.forEach(cb => {
+                state[cb.id] = cb.checked;
+            });
+            sessionStorage.setItem('module52Progress', JSON.stringify(state));
+        }
+        
+        function loadProgress() {
+            const saved = sessionStorage.getItem('module52Progress');
+            if (saved) {
+                const state = JSON.parse(saved);
+                Object.keys(state).forEach(id => {
+                    const cb = document.getElementById(id);
+                    if (cb) {
+                        cb.checked = state[id];
+                    }
+                });
+                updateProgress();
+            }
+        }
+        
+        // ==================== Section Toggle ====================
+        function toggleSection(header) {
+            const content = header.nextElementSibling;
+            const toggle = header.querySelector('.section-toggle');
+            const isExpanded = header.getAttribute('aria-expanded') === 'true';
+            
+            header.setAttribute('aria-expanded', !isExpanded);
+            content.classList.toggle('collapsed');
+            toggle.classList.toggle('collapsed');
+        }
+        
+        function handleKeyPress(event, element) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleSection(element);
+            }
+        }
+        
+        // ==================== Collapsible Sections ====================
+        function toggleCollapsible(id) {
+            const element = document.getElementById(id);
+            element.classList.toggle('open');
+            const header = element.querySelector('.collapsible-header');
+            const isExpanded = element.classList.contains('open');
+            header.setAttribute('aria-expanded', isExpanded);
+        }
+        
+        // ==================== Tabs ====================
+        function switchTab(event, tabId) {
+            const container = event.target.closest('.tabs-container');
+            
+            container.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-selected', 'false');
+            });
+            container.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            event.target.classList.add('active');
+            event.target.setAttribute('aria-selected', 'true');
+            document.getElementById(tabId).classList.add('active');
+        }
+        
+        // ==================== Structure Diagram ====================
+        function showStructureInfo(region) {
+            // Hide all descriptions
+            document.querySelectorAll('.structure-description').forEach(desc => {
+                desc.classList.remove('active');
+            });
+            
+            // Remove selected class from all blocks
+            document.querySelectorAll('.structure-block').forEach(block => {
+                block.classList.remove('selected');
+            });
+            
+            // Show selected description
+            const infoElement = document.getElementById('structure-info-' + region);
+            if (infoElement) {
+                infoElement.classList.add('active');
+            }
+            
+            // Add selected class to clicked block
+            event.target.classList.add('selected');
+        }
+        
+        // ==================== FAT Address Calculator ====================
+        function calculateFATAddresses() {
+            const bytesPerSector = parseInt(document.getElementById('calc-bytes-sector').value);
+            const sectorsPerCluster = parseInt(document.getElementById('calc-sectors-cluster').value);
+            const reservedSectors = parseInt(document.getElementById('calc-reserved').value);
+            const numFATs = parseInt(document.getElementById('calc-num-fats').value);
+            const sectorsPerFAT = parseInt(document.getElementById('calc-sectors-fat').value);
+            
+            const clusterSize = sectorsPerCluster * bytesPerSector;
+            const fatStart = reservedSectors * bytesPerSector;
+            const fat2Start = fatStart + (sectorsPerFAT * bytesPerSector);
+            const dataAreaStart = fatStart + (numFATs * sectorsPerFAT * bytesPerSector);
+            
+            const output = `
+                <p><strong>Cluster Size:</strong> ${clusterSize.toLocaleString()} bytes (${clusterSize / 1024} KB)</p>
+                <p><strong>FAT #1 Start:</strong> Byte ${fatStart.toLocaleString()} (Sector ${reservedSectors})</p>
+                <p><strong>FAT #2 Start:</strong> Byte ${fat2Start.toLocaleString()} (Sector ${reservedSectors + sectorsPerFAT})</p>
+                <p><strong>Data Area Start:</strong> Byte ${dataAreaStart.toLocaleString()} (Sector ${reservedSectors + (numFATs * sectorsPerFAT)})</p>
+                <p><strong>Cluster 2 Address:</strong> Byte ${dataAreaStart.toLocaleString()}</p>
+                <p><strong>Cluster 3 Address:</strong> Byte ${(dataAreaStart + clusterSize).toLocaleString()}</p>
+                <p><strong>Cluster N Formula:</strong> ${dataAreaStart} + ((N - 2) × ${clusterSize})</p>
+            `;
+            
+            document.getElementById('calc-output').innerHTML = output;
+            document.getElementById('calc-results').style.display = 'block';
+        }
+        
+        // ==================== Timestamp Converter ====================
+        function decodeFATTimestamp() {
+            const dateHex = document.getElementById('decode-date').value.toUpperCase();
+            const timeHex = document.getElementById('decode-time').value.toUpperCase();
+            
+            try {
+                const dateVal = parseInt(dateHex, 16);
+                const timeVal = parseInt(timeHex, 16);
+                
+                // Decode date
+                const day = dateVal & 0x1F;
+                const month = (dateVal >> 5) & 0x0F;
+                const year = ((dateVal >> 9) & 0x7F) + 1980;
+                
+                // Decode time
+                const seconds = (timeVal & 0x1F) * 2;
+                const minutes = (timeVal >> 5) & 0x3F;
+                const hours = (timeVal >> 11) & 0x1F;
+                
+                const output = `
+                    <p><strong>Date:</strong> ${month}/${day}/${year} (${year}-${month.toString().padStart(2,'0')}-${day.toString().padStart(2,'0')})</p>
+                    <p><strong>Time:</strong> ${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}</p>
+                    <hr style="margin: 1rem 0; border-color: var(--border-color);">
+                    <p><strong>Date Breakdown:</strong></p>
+                    <ul>
+                        <li>Year bits: ${((dateVal >> 9) & 0x7F)} + 1980 = ${year}</li>
+                        <li>Month bits: ${month}</li>
+                        <li>Day bits: ${day}</li>
+                    </ul>
+                    <p><strong>Time Breakdown:</strong></p>
+                    <ul>
+                        <li>Hour bits: ${hours}</li>
+                        <li>Minute bits: ${minutes}</li>
+                        <li>Second bits: ${(timeVal & 0x1F)} × 2 = ${seconds}</li>
+                    </ul>
+                `;
+                
+                document.getElementById('decode-output').innerHTML = output;
+                document.getElementById('decode-result').style.display = 'block';
+            } catch (e) {
+                document.getElementById('decode-output').innerHTML = '<p style="color: var(--danger-color);">Invalid hex value. Please enter 4 hex characters.</p>';
+                document.getElementById('decode-result').style.display = 'block';
+            }
+        }
+        
+        function encodeFATTimestamp() {
+            const year = parseInt(document.getElementById('encode-year').value);
+            const month = parseInt(document.getElementById('encode-month').value);
+            const day = parseInt(document.getElementById('encode-day').value);
+            const hour = parseInt(document.getElementById('encode-hour').value);
+            const minute = parseInt(document.getElementById('encode-minute').value);
+            const second = parseInt(document.getElementById('encode-second').value);
+            
+            // Encode date
+            const yearBits = year - 1980;
+            const dateVal = (yearBits << 9) | (month << 5) | day;
+            
+            // Encode time
+            const secondBits = Math.floor(second / 2);
+            const timeVal = (hour << 11) | (minute << 5) | secondBits;
+            
+            const output = `
+                <p><strong>Date Hex:</strong> <code>${dateVal.toString(16).toUpperCase().padStart(4, '0')}</code></p>
+                <p><strong>Time Hex:</strong> <code>${timeVal.toString(16).toUpperCase().padStart(4, '0')}</code></p>
+                <hr style="margin: 1rem 0; border-color: var(--border-color);">
+                <p><strong>Date Binary:</strong> ${dateVal.toString(2).padStart(16, '0')}</p>
+                <p><strong>Time Binary:</strong> ${timeVal.toString(2).padStart(16, '0')}</p>
+                <p><em>Note: Seconds are stored with 2-second precision. ${second} → ${secondBits * 2}</em></p>
+            `;
+            
+            document.getElementById('encode-output').innerHTML = output;
+            document.getElementById('encode-result').style.display = 'block';
+        }
+        
+        // ==================== Byte Visualizer ====================
+        function initByteVisualizer() {
+            const row1 = document.getElementById('byte-row-1');
+            const row2 = document.getElementById('byte-row-2');
+            
+            // Example directory entry for REPORT.TXT
+            const bytes = [
+                { hex: '52', type: 'filename', desc: 'Filename byte 1: "R" (0x52)' },
+                { hex: '45', type: 'filename', desc: 'Filename byte 2: "E" (0x45)' },
+                { hex: '50', type: 'filename', desc: 'Filename byte 3: "P" (0x50)' },
+                { hex: '4F', type: 'filename', desc: 'Filename byte 4: "O" (0x4F)' },
+                { hex: '52', type: 'filename', desc: 'Filename byte 5: "R" (0x52)' },
+                { hex: '54', type: 'filename', desc: 'Filename byte 6: "T" (0x54)' },
+                { hex: '20', type: 'filename', desc: 'Filename byte 7: Space (0x20)' },
+                { hex: '20', type: 'filename', desc: 'Filename byte 8: Space (0x20)' },
+                { hex: '54', type: 'extension', desc: 'Extension byte 1: "T" (0x54)' },
+                { hex: '58', type: 'extension', desc: 'Extension byte 2: "X" (0x58)' },
+                { hex: '54', type: 'extension', desc: 'Extension byte 3: "T" (0x54)' },
+                { hex: '20', type: 'attributes', desc: 'Attributes: 0x20 = Archive flag set' },
+                { hex: '00', type: 'reserved', desc: 'Reserved (NT case info)' },
+                { hex: '64', type: 'time', desc: 'Create time 10ms: 100 (1 second)' },
+                { hex: '24', type: 'time', desc: 'Create time low byte' },
+                { hex: '4B', type: 'time', desc: 'Create time high byte (09:25:08)' },
+                { hex: '95', type: 'date', desc: 'Create date low byte' },
+                { hex: '5A', type: 'date', desc: 'Create date high byte (Apr 21, 2025)' },
+                { hex: '95', type: 'date', desc: 'Access date low byte' },
+                { hex: '5A', type: 'date', desc: 'Access date high byte (Apr 21, 2025)' },
+                { hex: '00', type: 'cluster', desc: 'First cluster high word (FAT32)' },
+                { hex: '00', type: 'cluster', desc: 'First cluster high word (FAT32)' },
+                { hex: '24', type: 'time', desc: 'Modify time low byte' },
+                { hex: '4B', type: 'time', desc: 'Modify time high byte (09:25:08)' },
+                { hex: '95', type: 'date', desc: 'Modify date low byte' },
+                { hex: '5A', type: 'date', desc: 'Modify date high byte (Apr 21, 2025)' },
+                { hex: '05', type: 'cluster', desc: 'First cluster low word: 5' },
+                { hex: '00', type: 'cluster', desc: 'First cluster low word' },
+                { hex: '00', type: 'size', desc: 'File size byte 1: 2048 bytes' },
+                { hex: '08', type: 'size', desc: 'File size byte 2' },
+                { hex: '00', type: 'size', desc: 'File size byte 3' },
+                { hex: '00', type: 'size', desc: 'File size byte 4' }
+            ];
+            
+            bytes.forEach((byte, index) => {
+                const cell = document.createElement('div');
+                cell.className = `byte-cell ${byte.type}`;
+                cell.textContent = byte.hex;
+                cell.setAttribute('data-desc', byte.desc);
+                cell.addEventListener('mouseenter', function() {
+                    document.getElementById('byte-info-text').textContent = byte.desc;
+                });
+                
+                if (index < 16) {
+                    row1.appendChild(cell);
+                } else {
+                    row2.appendChild(cell);
+                }
+            });
+        }
+        
+        // ==================== Quiz ====================
+        const quizAnswers = {
+            'quiz-1': 'b',
+            'quiz-2': 'c',
+            'quiz-3': 'b',
+            'quiz-4': 'b',
+            'quiz-5': 'b',
+            'quiz-6': 'c'
+        };
+        
+        const quizExplanations = {
+            'quiz-1': 'FAT32 has a maximum file size of 4 GB minus 1 byte (4,294,967,295 bytes). This is because the file size field in the directory entry is 4 bytes (32 bits).',
+            'quiz-2': 'When a file is deleted in FAT, the first byte of the filename in the directory entry is changed to 0xE5. This marks the entry as deleted while preserving the rest of the metadata.',
+            'quiz-3': 'FAT stores the "last modified" timestamp with 2-second resolution. The seconds field is only 5 bits, storing values 0-29 which are multiplied by 2.',
+            'quiz-4': 'A standard FAT directory entry is exactly 32 bytes, containing the filename (8), extension (3), attributes (1), timestamps (various), starting cluster (4), and file size (4).',
+            'quiz-5': 'FAT\'s "last access" timestamp only records the date, not the time. This is a significant forensic limitation—you can only determine which day a file was accessed, not when during that day.',
+            'quiz-6': 'When a file is deleted in FAT, the actual file data remains completely intact in the data clusters. Only the directory entry is marked (first byte → 0xE5) and the FAT entries are zeroed. The data persists until those clusters are allocated to a new file.'
+        };
+        
+        function selectQuizOption(option) {
+            const question = option.closest('.quiz-question');
+            question.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            option.classList.add('selected');
+        }
+        
+        function checkAllQuizAnswers() {
+            let correct = 0;
+            const total = Object.keys(quizAnswers).length;
+            
+            Object.keys(quizAnswers).forEach(quizId => {
+                const question = document.getElementById(quizId);
+                const selected = question.querySelector('input:checked');
+                const feedback = document.getElementById(quizId + '-feedback');
+                const options = question.querySelectorAll('.quiz-option');
+                
+                options.forEach(opt => {
+                    opt.classList.remove('correct', 'incorrect');
+                });
+                
+                if (selected) {
+                    const selectedOption = selected.closest('.quiz-option');
+                    if (selected.value === quizAnswers[quizId]) {
+                        correct++;
+                        selectedOption.classList.add('correct');
+                        feedback.className = 'quiz-feedback show correct';
+                        feedback.innerHTML = '<strong>✓ Correct!</strong> ' + quizExplanations[quizId];
+                    } else {
+                        selectedOption.classList.add('incorrect');
+                        options.forEach(opt => {
+                            if (opt.querySelector('input').value === quizAnswers[quizId]) {
+                                opt.classList.add('correct');
+                            }
+                        });
+                        feedback.className = 'quiz-feedback show incorrect';
+                        feedback.innerHTML = '<strong>✗ Incorrect.</strong> ' + quizExplanations[quizId];
+                    }
+                } else {
+                    feedback.className = 'quiz-feedback show incorrect';
+                    feedback.innerHTML = '<strong>Please select an answer.</strong>';
+                }
+            });
+            
+            const resultsDiv = document.getElementById('quiz-results');
+            const scoreP = document.getElementById('quiz-score');
+            resultsDiv.style.display = 'block';
+            
+            const percentage = Math.round((correct / total) * 100);
+            let message = '';
+            if (percentage === 100) {
+                message = '🎉 Perfect score! Excellent understanding of FAT file systems!';
+            } else if (percentage >= 80) {
+                message = '👍 Great job! You have a solid grasp of FAT concepts.';
+            } else if (percentage >= 60) {
+                message = '📚 Good effort! Review the sections for topics you missed.';
+            } else {
+                message = '💪 Keep studying! Re-read the module and try again.';
+            }
+            
+            scoreP.innerHTML = `You got <strong>${correct} out of ${total}</strong> questions correct (${percentage}%).<br>${message}`;
+        }
+        
+        function resetQuiz() {
+            Object.keys(quizAnswers).forEach(quizId => {
+                const question = document.getElementById(quizId);
+                question.querySelectorAll('input').forEach(input => input.checked = false);
+                question.querySelectorAll('.quiz-option').forEach(opt => {
+                    opt.classList.remove('selected', 'correct', 'incorrect');
+                });
+                document.getElementById(quizId + '-feedback').className = 'quiz-feedback';
+            });
+            document.getElementById('quiz-results').style.display = 'none';
+        }
+        
+        // ==================== Navigation Highlighting ====================
+        function updateNavHighlight() {
+            const sections = document.querySelectorAll('.section');
+            const navLinks = document.querySelectorAll('.nav-list a');
+            
+            let currentSection = '';
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= 150) {
+                    currentSection = section.id;
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + currentSection) {
+                    link.classList.add('active');
+                }
+            });
+        }
+        
+        // ==================== Initialize ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+            initByteVisualizer();
+            window.addEventListener('scroll', updateNavHighlight);
+        });
+    </script>
+</body>
+</html>

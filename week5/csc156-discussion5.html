@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CSC 156 Week 5 Discussion Post 5: File System Forensic Challenges. Reflect on recovery challenges and tool selection across different file systems.">
+    <title>Discussion Post 5: FS Forensic Challenges | CSC 156</title>
+    <style>
+        /* Base Styles */
+        :root {
+            --primary-color: #0ea5e9; /* Sky Blue */
+            --primary-dark: #0284c7;
+            --primary-light: #38bdf8;
+            --secondary-color: #8b5cf6; /* Violet */
+            --secondary-dark: #7c3aed;
+            --secondary-light: #a78bfa;
+            --accent-color: #f59e0b; /* Amber */
+            --accent-dark: #d97706;
+            --accent-light: #fbbf24;
+            --text-color: #1e293b; /* Slate */
+            --text-light: #475569;
+            --bg-color: #f8fafc; /* Lightest Gray */
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --font-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Layout */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* Skip Link for Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            font-weight: 600;
+            z-index: 1000;
+            border-radius: 0 0 var(--radius-md) 0;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+            border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+
+        header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: clamp(1.75rem, 5vw, 2.75rem);
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-subtitle {
+            font-size: clamp(1rem, 2.5vw, 1.25rem);
+            opacity: 0.9;
+            margin-top: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .course-info {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Section Styling */
+        section {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            color: var(--primary-dark);
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--primary-light);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        h3 {
+            color: var(--secondary-dark);
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h4 {
+            color: var(--accent-dark);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+            color: var(--text-light);
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        li::marker {
+            color: var(--primary-color);
+        }
+
+        strong {
+            color: var(--text-color);
+        }
+
+        /* Info Box */
+        .info-box {
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            margin: 1.5rem 0;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .info-box.tip {
+            background: #e0f2fe; /* Light blue */
+            border: 1px solid #38bdf8;
+            color: #0369a1;
+        }
+
+        .info-box.warning {
+            background: #fef3c7; /* Light yellow */
+            border: 1px solid #f59e0b;
+            color: #a16207;
+        }
+
+        .info-box.forensic {
+            background: #f3e8ff; /* Light purple */
+            border: 1px solid #a78bfa;
+            color: #7c3aed;
+        }
+
+        .info-box-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .info-box-content {
+            flex-grow: 1;
+        }
+
+        .info-box-content strong {
+            color: inherit;
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: #1f2937; /* bg-dark */
+            color: #e5e7eb; /* text-lightest */
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin: 1rem 0;
+            white-space: pre;
+            word-wrap: normal;
+            border: 1px solid #374151;
+        }
+
+        code {
+            font-family: var(--font-mono);
+            background-color: var(--bg-color);
+            color: var(--primary-dark);
+            padding: 0.15rem 0.4rem;
+            border-radius: 0.25rem;
+            font-size: 0.875em;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.8rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--bg-color);
+            font-weight: 600;
+            color: var(--text-color);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f3f4f6; /* Light gray for zebra striping */
+        }
+
+        tr:hover {
+            background-color: #e5e7eb;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            margin-top: 1rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+
+        /* Checklist */
+        .checklist {
+            list-style: none;
+            padding: 0;
+            margin: 1.5rem 0;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background-color: #f3f4f6;
+            border-radius: var(--radius-md);
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border-color);
+            transition: background-color 0.2s ease;
+        }
+
+        .checklist-item:hover {
+            background-color: #e5e7eb;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .checklist-item label {
+            cursor: pointer;
+            flex: 1;
+            color: var(--text-light);
+        }
+
+        .checklist-item.completed label {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--text-color);
+            color: white;
+            text-align: center;
+            padding: 2rem 1.5rem;
+            margin-top: 3rem;
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        }
+
+        footer p {
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .footer-nav {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .footer-nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-md);
+            transition: background-color 0.2s ease;
+        }
+
+        .footer-nav a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Accessibility Focus Styles */
+        a:focus,
+        button:focus,
+        input[type="checkbox"]:focus,
+        input[type="radio"]:focus {
+            outline: 3px solid var(--accent-color);
+            outline-offset: 2px;
+        }
+
+        /* Screen Reader Only */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header>
+        <h1>💬 Discussion Post 5</h1>
+        <p class="header-subtitle">File System Forensic Challenges</p>
+        <p class="course-info">CSC 156 - Digital Forensics Fundamentals | Week 5</p>
+    </header>
+
+    <div class="container">
+        <main id="main-content">
+            <section id="assignment-overview">
+                <h2>✨ Assignment Overview</h2>
+                <div class="info-box forensic">
+                    <span class="info-box-icon" aria-hidden="true">📊</span>
+                    <div class="info-box-content">
+                        <strong>Course:</strong> CSC 156 - Digital Forensics Fundamentals<br>
+                        <strong>Week:</strong> Week 5 - File Systems and Data Structures<br>
+                        <strong>Time:</strong> 30-45 minutes (for initial post and responses)<br>
+                        <strong>Points:</strong> 3 points (Initial Post: 2 pts, Responses: 1 pt)<br>
+                        <strong>Initial Post Due:</strong> Day 3 of Week 5 (check Canvas for specific deadline)<br>
+                        <strong>Responses Due:</strong> Day 5 of Week 5 (check Canvas for specific deadline)
+                    </div>
+                </div>
+
+                <div class="info-box tip">
+                    <span class="info-box-icon" aria-hidden="true">🎯</span>
+                    <div class="info-box-content">
+                        <strong>Learning Objectives:</strong> By completing this discussion, you will:
+                        <ul>
+                            <li>Reflect on the unique forensic challenges posed by different file systems.</li>
+                            <li>Connect Week 5 concepts to practical recovery scenarios.</li>
+                            <li>Share insights about effective recovery strategies with peers.</li>
+                            <li>Develop critical thinking about tool selection and recovery limitations.</li>
+                        </ul>
+                        <p style="margin-top:0.5rem;">**CSLO Alignment:** This discussion supports **CSLO 2: Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data.**</p>
+                    </div>
+                </div>
+
+                <h3>Background Context: Week 5 Recap</h3>
+                <p>This week, you've delved deep into the intricacies of various file systems, understanding how they organize data and metadata. You've explored:</p>
+                <ul>
+                    <li>FAT, NTFS, ext4, HFS+, and APFS architectures.</li>
+                    <li>Key metadata structures like MFT entries and inodes.</li>
+                    <li>The nuances of timestamps across different file systems.</li>
+                    <li>Advanced features like Alternate Data Streams (ADS) and journaling.</li>
+                    <li>The critical techniques of metadata-based file recovery and file carving.</li>
+                    <li>The significant impact of storage types (HDD vs. SSD) and TRIM on recovery success.</li>
+                </ul>
+                <p>These concepts highlight that there's no "one-size-fits-all" approach to digital forensics. Each file system and storage medium presents its own set of challenges and opportunities for evidence recovery.</p>
+            </section>
+
+            <section id="discussion-prompt">
+                <h2>💭 Discussion Prompt</h2>
+                <p>Choose **ONE** of the following prompts to address in your initial post:</p>
+
+                <h3>Option A: Cross-File System Recovery Challenges</h3>
+                <p>You've learned about FAT, NTFS, and ext4 (and briefly HFS+/APFS). Each has unique characteristics that affect deleted file recovery. Reflect on the metadata structures and deletion processes of these file systems.</p>
+                <p><strong>Discuss:</strong> Which file system do you believe presents the **most significant challenge** for metadata-based deleted file recovery, and why? Conversely, which one offers the **best recovery potential**? Use specific examples from Week 5 modules (e.g., MFT flags, FAT chain zeroing, inode clearing, journal presence) to support your reasoning.</p>
+
+                <h3>Option B: SSDs, TRIM, and the Future of Recovery</h3>
+                <p>Module 5.5 highlighted the critical impact of Solid State Drives (SSDs) and the TRIM command on deleted file recovery, drastically shortening the "recovery window."</p>
+                <p><strong>Discuss:</strong> How fundamentally has TRIM changed the landscape of deleted file recovery for forensic examiners? What strategies or tools might become more critical (or less effective) as SSDs become even more prevalent? Consider the implications for both metadata-based recovery and file carving.</p>
+
+                <h3>Option C: Metadata vs. Carving - When and Why?</h3>
+                <p>You've explored two primary methods for recovering deleted files: metadata-based recovery and file carving. Each has distinct advantages and limitations.</p>
+                <p><strong>Discuss:</strong> Describe a forensic scenario where metadata-based recovery would be the **clearly superior choice**, and explain why. Then, describe a different scenario where file carving would be **absolutely essential**, and explain why. Highlight the specific trade-offs (e.g., filename, timestamps, fragmentation, file system corruption) that drive your choice in each scenario.</p>
+            </section>
+
+            <section id="requirements">
+                <h2>✅ Requirements</h2>
+                <h3>Initial Post Requirements</h3>
+                <p><strong>Due: Day 3 of Week 5 (check Canvas for specific deadline)</strong></p>
+                <ul>
+                    <li><strong>Length:</strong> 250-400 words (approximately 2-3 well-developed paragraphs)</li>
+                    <li><strong>Content:</strong> Choose **ONE** prompt and address it thoroughly.</li>
+                    <li><strong>Support:</strong> Reference specific concepts from Week 5 modules (e.g., Module 5.2 on FAT, Module 5.3 on NTFS, Module 5.4 on ext4/APFS, Module 5.5 on recovery/carving).</li>
+                    <li><strong>Depth:</strong> Go beyond surface-level observations—analyze, explain, and connect ideas.</li>
+                    <li><strong>Professionalism:</strong> Use proper grammar, spelling, and formatting.</li>
+                </ul>
+
+                <h3>Response Requirements</h3>
+                <p><strong>Due: Day 5 of Week 5 (check Canvas for specific deadline)</strong></p>
+                <ul>
+                    <li><strong>Quantity:</strong> Respond to at least **TWO** classmates' posts.</li>
+                    <li><strong>Length:</strong> 100-150 words per response (approximately 1 substantial paragraph).</li>
+                    <li><strong>Quality:</strong> Add value—don't just agree or disagree.
+                        <ul>
+                            <li>Ask thoughtful follow-up questions.</li>
+                            <li>Share a different perspective or additional insight.</li>
+                            <li>Connect their ideas to other course concepts.</li>
+                            <li>Provide constructive feedback or suggestions.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Respect:</strong> Maintain a professional, respectful tone even when disagreeing.</li>
+                </ul>
+
+                <div class="info-box warning">
+                    <span class="info-box-icon" aria-hidden="true">⚠️</span>
+                    <div class="info-box-content">
+                        <strong>What NOT to Do:</strong>
+                        <ul>
+                            <li>Do not simply summarize module content without analysis.</li>
+                            <li>Do not write generic responses like "I agree" or "Good point."</li>
+                            <li>Do not wait until the response deadline to post everything.</li>
+                            <li>Do not copy examples directly from modules—use your own analysis.</li>
+                            <li>Do not exceed 400 words for your initial post (be concise and focused).</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="grading-rubric">
+                <h2>📊 Grading Rubric (3 points)</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Component</th>
+                                <th>Points</th>
+                                <th>Criteria</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Initial Post - Content & Depth</strong></td>
+                                <td>2 points</td>
+                                <td>
+                                    <ul>
+                                        <li><strong>Full credit (2.0):</strong> Thoroughly addresses chosen prompt with in-depth analysis and insight. References specific Week 5 course concepts. Shows critical thinking beyond surface level.</li>
+                                        <li><strong>Partial credit (1.0-1.5):</strong> Addresses prompt but lacks depth or sufficient connection to course concepts. Limited critical thinking.</li>
+                                        <li><strong>Minimal credit (0.5):</strong> Superficial response. Mostly summary without analysis.</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Responses to Peers</strong></td>
+                                <td>1 point</td>
+                                <td>
+                                    <ul>
+                                        <li><strong>Full credit (1.0):</strong> Two substantive responses (100-150 words each) that add value—ask questions, provide insights, make connections, or offer constructive feedback.</li>
+                                        <li><strong>Partial credit (0.5):</strong> Two responses but superficial ("I agree" or "good point" without elaboration) OR only one substantive response.</li>
+                                        <li><strong>No credit (0):</strong> Fewer than two responses or responses posted after the deadline.</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total:</strong></td>
+                                <td><strong>3 points</strong></td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p>Remember that quality of writing, professionalism, and adherence to deadlines are always expected.</p>
+            </section>
+
+            <section id="submission-instructions">
+                <h2>📤 Submission Instructions & Tips</h2>
+                <h3>How to Participate:</h3>
+                <ol>
+                    <li><strong>Write your initial post:</strong> Draft in a word processor first (easier to check word count and proofread).</li>
+                    <li><strong>Post to Canvas:</strong> Navigate to Canvas → Discussions → Week 5: File System Forensic Challenges.</li>
+                    <li><strong>Submit by Day 3:</strong> Initial post must be submitted by the Day 3 deadline.</li>
+                    <li><strong>Read classmates' posts:</strong> Review posts from Day 3 through Day 4.</li>
+                    <li><strong>Respond to two peers:</strong> Submit substantive responses by the Day 5 deadline.</li>
+                </ol>
+
+                <h3>Tips for Success:</h3>
+                <ul>
+                    <li><strong>Writing Your Initial Post:</strong>
+                        <ul>
+                            <li>Start with a clear thesis statement answering your chosen prompt.</li>
+                            <li>Use specific module references ("Module 5.3 showed..." or "As discussed in Module 5.5...").</li>
+                            <li>Explain your reasoning—don't just state opinions.</li>
+                            <li>Connect to practical implications for forensic examiners.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Writing Effective Responses:</strong>
+                        <ul>
+                            <li>Read the post carefully and identify the key argument.</li>
+                            <li>Ask a thoughtful follow-up question that extends the discussion.</li>
+                            <li>Share a different perspective or additional insight.</li>
+                            <li>Provide constructive feedback or alternative viewpoints respectfully.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Time Management:</strong>
+                        <ul>
+                            <li>**Early Week:** Review Week 5 modules and choose your prompt.</li>
+                            <li>**Day 3:** Write and post your initial response.</li>
+                            <li>**Days 4-5:** Read classmates' posts and identify two to respond to.</li>
+                            <li>**Day 5:** Write and post your two responses.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+        </main>
+    </div>
+
+    <footer>
+        <p><strong>CSC 156 - Digital Forensics Fundamentals</strong></p>
+        <p>Discussion Post 5: File System Forensic Challenges | Week 5</p>
+        <p>Mendocino College</p>
+        <div class="footer-nav">
+            <a href="#">Course Home</a>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Smooth scrolling for navigation (if any, though this is a single page without internal nav)
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+
+            // Accessibility: Focus outline for interactive elements
+            document.querySelectorAll('a, button, input[type="checkbox"], input[type="radio"]').forEach(el => {
+                el.addEventListener('focus', function() {
+                    this.style.outline = '3px solid var(--accent-color)';
+                    this.style.outlineOffset = '2px';
+                });
+                el.addEventListener('blur', function() {
+                    this.style.outline = 'none';
+                    this.style.outlineOffset = '0';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CSC 156 Week 5 Homework 5: File System Comparison Analysis. Compare different file systems, analyze forensic scenarios, and discuss challenges.">
+    <title>Homework 5: FS Comparison Analysis | CSC 156</title>
+    <style>
+        /* Base Styles */
+        :root {
+            --primary-color: #10b981; /* Emerald Green */
+            --primary-dark: #059669;
+            --primary-light: #34d399;
+            --secondary-color: #2563eb; /* Blue */
+            --secondary-dark: #1d4ed8;
+            --secondary-light: #3b82f6;
+            --accent-color: #f97316; /* Orange */
+            --accent-dark: #ea580c;
+            --accent-light: #fb923c;
+            --text-color: #1e293b; /* Slate */
+            --text-light: #475569;
+            --bg-color: #f0fdf4; /* Lightest Green */
+            --card-bg: #ffffff;
+            --border-color: #d1fae5;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --font-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Layout */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* Skip Link for Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            font-weight: 600;
+            z-index: 1000;
+            border-radius: 0 0 var(--radius-md) 0;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+            border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+
+        header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: clamp(1.75rem, 5vw, 2.75rem);
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-subtitle {
+            font-size: clamp(1rem, 2.5vw, 1.25rem);
+            opacity: 0.9;
+            margin-top: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .course-info {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Navigation */
+        nav {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 2rem;
+            padding: 1rem;
+            position: sticky;
+            top: 1.5rem;
+            z-index: 99;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .nav-list a {
+            display: block;
+            padding: 0.6rem 1rem;
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            border-radius: var(--radius-md);
+            transition: all 0.2s ease;
+        }
+
+        .nav-list a:hover,
+        .nav-list a:focus {
+            background-color: var(--primary-light);
+            color: white;
+            outline: none;
+        }
+
+        .nav-list a.active {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Section Styling */
+        section {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            color: var(--primary-dark);
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--primary-light);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        h3 {
+            color: var(--secondary-dark);
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h4 {
+            color: var(--accent-dark);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+            color: var(--text-light);
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        li::marker {
+            color: var(--primary-color);
+        }
+
+        strong {
+            color: var(--text-color);
+        }
+
+        /* Info Box */
+        .info-box {
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            margin: 1.5rem 0;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .info-box.tip {
+            background: #e0f2fe; /* Light blue */
+            border: 1px solid #38bdf8;
+            color: #0369a1;
+        }
+
+        .info-box.warning {
+            background: #fef3c7; /* Light yellow */
+            border: 1px solid #f59e0b;
+            color: #a16207;
+        }
+
+        .info-box.forensic {
+            background: #f3e8ff; /* Light purple */
+            border: 1px solid #a78bfa;
+            color: #7c3aed;
+        }
+
+        .info-box-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .info-box-content {
+            flex-grow: 1;
+        }
+
+        .info-box-content strong {
+            color: inherit;
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: #1f2937; /* bg-dark */
+            color: #e5e7eb; /* text-lightest */
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin: 1rem 0;
+            white-space: pre;
+            word-wrap: normal;
+            border: 1px solid #374151;
+        }
+
+        code {
+            font-family: var(--font-mono);
+            background-color: var(--bg-color);
+            color: var(--primary-dark);
+            padding: 0.15rem 0.4rem;
+            border-radius: 0.25rem;
+            font-size: 0.875em;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.8rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--bg-color);
+            font-weight: 600;
+            color: var(--text-color);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f3f4f6; /* Light gray for zebra striping */
+        }
+
+        tr:hover {
+            background-color: #e5e7eb;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            margin-top: 1rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+
+        /* Checklist */
+        .checklist {
+            list-style: none;
+            padding: 0;
+            margin: 1.5rem 0;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background-color: #f3f4f6;
+            border-radius: var(--radius-md);
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border-color);
+            transition: background-color 0.2s ease;
+        }
+
+        .checklist-item:hover {
+            background-color: #e5e7eb;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .checklist-item label {
+            cursor: pointer;
+            flex: 1;
+            color: var(--text-light);
+        }
+
+        .checklist-item.completed label {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--text-color);
+            color: white;
+            text-align: center;
+            padding: 2rem 1.5rem;
+            margin-top: 3rem;
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        }
+
+        footer p {
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .footer-nav {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .footer-nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-md);
+            transition: background-color 0.2s ease;
+        }
+
+        .footer-nav a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Accessibility Focus Styles */
+        a:focus,
+        button:focus,
+        input[type="checkbox"]:focus,
+        input[type="radio"]:focus {
+            outline: 3px solid var(--accent-color);
+            outline-offset: 2px;
+        }
+
+        /* Screen Reader Only */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header>
+        <h1>📝 Homework 5</h1>
+        <p class="header-subtitle">File System Comparison Analysis</p>
+        <p class="course-info">CSC 156 - Digital Forensics Fundamentals | Week 5</p>
+    </header>
+
+    <div class="container">
+        <nav aria-label="Homework sections">
+            <ul class="nav-list">
+                <li><a href="#hw-overview" class="active">Overview</a></li>
+                <li><a href="#parta">Part A: Comparison</a></li>
+                <li><a href="#partb">Part B: Scenario</a></li>
+                <li><a href="#partc">Part C: Critical Analysis</a></li>
+                <li><a href="#submission">Submission</a></li>
+            </ul>
+        </nav>
+
+        <main id="main-content">
+            <section id="hw-overview">
+                <h2>✨ Assignment Overview</h2>
+                <div class="info-box forensic">
+                    <span class="info-box-icon" aria-hidden="true">📊</span>
+                    <div class="info-box-content">
+                        <strong>Course:</strong> CSC 156 - Digital Forensics Fundamentals<br>
+                        <strong>Week:</strong> Week 5 - File Systems and Data Structures<br>
+                        <strong>Time:</strong> 2-3 hours<br>
+                        <strong>Points:</strong> 20 points<br>
+                        <strong>Due:</strong> End of Week 5 (check Canvas for specific deadline)
+                    </div>
+                </div>
+
+                <div class="info-box tip">
+                    <span class="info-box-icon" aria-hidden="true">🎯</span>
+                    <div class="info-box-content">
+                        <strong>Learning Objectives:</strong> By completing this homework, you will:
+                        <ul>
+                            <li>Demonstrate a comprehensive understanding of various file system architectures.</li>
+                            <li>Compare and contrast the forensic relevance of different file system features.</li>
+                            <li>Apply file system knowledge to analyze realistic forensic scenarios.</li>
+                            <li>Critically evaluate the impact of modern storage technologies on digital forensics.</li>
+                        </ul>
+                        <p style="margin-top:0.5rem;">**CSLO Alignment:** This homework supports **CSLO 2: Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data.**</p>
+                    </div>
+                </div>
+
+                <h3>Background Context: Week 5 Recap</h3>
+                <p>Throughout Week 5, you've gained in-depth knowledge of several critical file systems: FAT (Module 5.2), NTFS (Module 5.3), and Linux/macOS file systems (ext4, HFS+, APFS) (Module 5.4). You've also learned about deleted file recovery and carving techniques (Module 5.5). This homework challenges you to synthesize this information, comparing their structures, forensic artifacts, and recovery potential to deepen your analytical skills.</p>
+            </section>
+
+            <section id="parta">
+                <h2>Part A: File System Comparison Table (8 points)</h2>
+                <p>Create a detailed comparison table of the major file systems covered this week. Focus on features that are most relevant to digital forensics. You should use your own words and understanding, not simply copy definitions from modules.</p>
+
+                <h3>Tasks:</h3>
+                <ol>
+                    <li>Create a table comparing **FAT32**, **NTFS**, **ext4**, **HFS+**, and **APFS**.</li>
+                    <li>For each file system, include a concise comparison for the following forensic-relevant features:
+                        <ul>
+                            <li><strong>Primary Use Case / OS:</strong> (e.g., removable drives, Windows, Linux, macOS)</li>
+                            <li><strong>Key Metadata Structure:</strong> (e.g., directory entry, MFT, inode, Catalog File, B-trees)</li>
+                            <li><strong>Number of Timestamps:</strong> (e.g., 3, 4, 8) and their common names (e.g., MACE, mtime/ctime/atime/crtime)</li>
+                            <li><strong>Journaling:</strong> (Yes/No, purpose/type if applicable)</li>
+                            <li><strong>Max File Size (approx.):</strong></li>
+                            <li><strong>Max Volume Size (approx.):</strong></li>
+                            <li><strong>Deleted File Recovery Potential (metadata-based):</strong> (e.g., Excellent, Good, Moderate, Poor) and a **brief reason** why (e.g., "MFT entry flags + run list intact").</li>
+                            <li><strong>Support for Alternate Data Streams / Resource Forks / Extended Attributes:</strong> (Yes/No, explain briefly)</li>
+                            <li><strong>TRIM / SSD Impact:</strong> (High impact, Low impact, N/A)</li>
+                        </ul>
+                    </li>
+                    <li>Ensure your table is well-formatted and easy to read.</li>
+                </ol>
+
+                <div class="info-box tip">
+                    <span class="info-box-icon" aria-hidden="true">📝</span>
+                    <div class="info-box-content">
+                        <strong>Tip:</strong> You can create tables in a word processor or use Markdown table syntax if you're comfortable with it. Focus on clarity and conciseness.
+                    </div>
+                </div>
+            </section>
+
+            <section id="partb">
+                <h2>Part B: Forensic Scenario Analysis (8 points)</h2>
+                <p>Analyze the following two forensic scenarios. For each scenario, describe the most likely file system(s) involved, the expected recovery challenges, and your recommended approach for deleted file recovery, justifying your choices with concepts from Week 5.</p>
+
+                <h3>Scenario 1: The Old USB Drive</h3>
+                <p>An old 16GB USB flash drive was found in a suspect's drawer. It was last used on a Windows XP machine. The suspect claims it's empty, but a quick check shows it was recently "quick formatted." You suspect important documents were deleted from it.</p>
+                <ul>
+                    <li><strong>Identify:</strong> What file system(s) are most likely to be present on this drive? Justify your answer.</li>
+                    <li><strong>Challenges:</strong> What specific challenges would you anticipate for deleted file recovery given the file system type, the quick format, and the age of the OS?</li>
+                    <li><strong>Approach:</strong> Outline your primary and secondary approaches for recovering deleted files. Explain why you would choose these methods (e.g., metadata-based, file carving) and what specific tools (e.g., <code>fls</code>, Scalpel) you would use, referencing their strengths and weaknesses.</li>
+                </ul>
+
+                <h3>Scenario 2: The Modern Laptop</h3>
+                <p>A modern MacBook Pro (running macOS Ventura) is seized from a suspect. The primary internal drive is an SSD. The suspect claims they deleted all incriminating evidence hours before seizure. You need to recover any deleted files, especially documents and images.</p>
+                <ul>
+                    <li><strong>Identify:</strong> What file system(s) are most likely on the internal SSD?</li>
+                    <li><strong>Challenges:</strong> What are the most significant challenges for deleted file recovery in this scenario, considering the storage type (SSD) and operating system? How does TRIM impact your expectations?</li>
+                    <li><strong>Approach:</strong> Describe your recommended approach for attempting deleted file recovery. Discuss the likelihood of success for metadata-based recovery versus file carving. What specific features of the macOS file system (e.g., snapshots, encryption) might offer opportunities or additional challenges?</li>
+                </ul>
+            </section>
+
+            <section id="partc">
+                <h2>Part C: Critical Analysis (4 points)</h2>
+                <p>Reflect on the evolution of file systems and storage technologies discussed this week.</p>
+
+                <h3>Tasks:</h3>
+                <ol>
+                    <li>Identify what you believe is the **single most impactful challenge** that modern file systems and storage technologies (e.g., SSDs, TRIM, native encryption, complex metadata structures) pose to digital forensic investigations today.</li>
+                    <li>Explain **why** this challenge is so significant, drawing on specific examples from the Week 5 modules.</li>
+                    <li>Propose **two concrete strategies or countermeasures** that forensic examiners can employ to mitigate this challenge in their investigations.</li>
+                </ol>
+            </section>
+
+            <section id="submission">
+                <h2>📦 Submission Requirements</h2>
+                <p>Compile all parts of your homework into a single, well-organized PDF document.</p>
+
+                <h3>Deliverables Checklist:</h3>
+                <ul class="checklist">
+                    <li class="checklist-item"><input type="checkbox" id="del-1"><label for="del-1"><strong>Part A: File System Comparison Table (8 points)</strong> - Complete with all required features for each file system.</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="del-2"><label for="del-2"><strong>Part B: Forensic Scenario Analysis (8 points)</strong> - Thoroughly addressed both scenarios with justifications.</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="del-3"><label for="del-3"><strong>Part C: Critical Analysis (4 points)</strong> - Identified key challenge, explained its significance, and proposed strategies.</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="del-4"><label for="del-4">All answers are in your own words, demonstrating understanding.</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="del-5"><label for="del-5">Proper grammar, spelling, and formatting.</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="del-6"><label for="del-6">File Naming: <code>LastName_FirstName_HW5.pdf</code></label></li>
+                    <li class="checklist-item"><input type="checkbox" id="del-7"><label for="del-7">Submitted via Canvas by the end of Week 5 deadline.</label></li>
+                </ul>
+
+                <div class="info-box warning">
+                    <span class="info-box-icon" aria-hidden="true">🚨</span>
+                    <div class="info-box-content">
+                        <strong>Late Policy:</strong> Refer to the course syllabus for the late submission policy. Plan your time accordingly to avoid penalties.
+                    </div>
+                </div>
+
+                <a href="#hw-overview" class="btn btn-primary">Back to Top</a>
+            </section>
+        </main>
+    </div>
+
+    <footer>
+        <p><strong>CSC 156 - Digital Forensics Fundamentals</strong></p>
+        <p>Homework 5: File System Comparison Analysis | Week 5</p>
+        <p>Mendocino College</p>
+        <div class="footer-nav">
+            <a href="#">Course Home</a>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Smooth scrolling for navigation
+            document.querySelectorAll('nav a').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+
+            // Highlight active nav link on scroll
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('nav .nav-list a');
+
+            function updateNavLinkActive() {
+                let currentSectionId = '';
+                sections.forEach(section => {
+                    const rect = section.getBoundingClientRect();
+                    if (rect.top <= 100 && rect.bottom >= 100) { // Adjust 100px offset as needed
+                        currentSectionId = section.id;
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').substring(1) === currentSectionId) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+
+            window.addEventListener('scroll', updateNavLinkActive);
+            updateNavLinkActive(); // Call on load to set initial active state
+
+            // Progress tracking for submission checklist (session-based)
+            const checklistItems = document.querySelectorAll('.checklist-item input[type="checkbox"]');
+            const hwId = 'Homework5_SubmissionChecklist';
+
+            function saveChecklistProgress() {
+                const progress = {};
+                checklistItems.forEach(item => {
+                    progress[item.id] = item.checked;
+                });
+                sessionStorage.setItem(hwId, JSON.stringify(progress));
+            }
+
+            function loadChecklistProgress() {
+                const savedProgress = sessionStorage.getItem(hwId);
+                if (savedProgress) {
+                    const progress = JSON.parse(savedProgress);
+                    checklistItems.forEach(item => {
+                        if (progress[item.id]) {
+                            item.checked = true;
+                            item.closest('.checklist-item').classList.add('completed');
+                        } else {
+                            item.checked = false;
+                            item.closest('.checklist-item').classList.remove('completed');
+                        }
+                    });
+                }
+            }
+
+            checklistItems.forEach(item => {
+                item.addEventListener('change', function() {
+                    if (this.checked) {
+                        this.closest('.checklist-item').classList.add('completed');
+                    } else {
+                        this.closest('.checklist-item').classList.remove('completed');
+                    }
+                    saveChecklistProgress();
+                });
+            });
+
+            loadChecklistProgress();
+        });
+    </script>
+</body>
+</html>
