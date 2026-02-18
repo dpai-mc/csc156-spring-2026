@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CSC 156 Week 5 Overview: File Systems and Data Structures. Explore how operating systems organize data, deleted file recovery, and file carving techniques.">
+    <title>Week 5 Overview: File Systems & Data Structures | CSC 156</title>
+    <style>
+        /* CSS Reset and Base Styles */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-color: #059669; /* Green */
+            --primary-dark: #047857;
+            --primary-light: #10b981;
+            --secondary-color: #2563eb; /* Blue */
+            --secondary-dark: #1d4ed8;
+            --secondary-light: #3b82f6;
+            --accent-color: #d97706; /* Amber */
+            --accent-dark: #b45309;
+            --accent-light: #f59e0b;
+            --text-color: #1f2937; /* Dark Gray */
+            --text-light: #4b5563;
+            --bg-color: #f9fafb; /* Lightest Gray */
+            --card-bg: #ffffff;
+            --border-color: #e5e7eb;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --font-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Layout */
+        .container {
+            max-width: 800px; /* Maximum width as specified */
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* Skip Link for Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            font-weight: 600;
+            z-index: 1000;
+            border-radius: 0 0 var(--radius-md) 0;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+            border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+
+        header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: clamp(1.75rem, 5vw, 2.75rem);
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-subtitle {
+            font-size: clamp(1rem, 2.5vw, 1.25rem);
+            opacity: 0.9;
+            margin-top: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .course-info {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            background-color: var(--card-bg);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+            border-radius: var(--radius-lg);
+            margin-bottom: 1.5rem;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .progress-label {
+            font-weight: 600;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .progress-percentage {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background: var(--border-color);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-light), var(--secondary-light));
+            border-radius: 5px;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+        
+        .progress-note {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        /* Navigation */
+        nav {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 2rem;
+            padding: 1rem;
+            position: sticky;
+            top: 1.5rem;
+            z-index: 99;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .nav-list a {
+            display: block;
+            padding: 0.6rem 1rem;
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            border-radius: var(--radius-md);
+            transition: all 0.2s ease;
+        }
+
+        .nav-list a:hover,
+        .nav-list a:focus {
+            background-color: var(--primary-light);
+            color: white;
+            outline: none;
+        }
+
+        .nav-list a.active {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Section Styling */
+        section {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            color: var(--primary-dark);
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--primary-light);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        h3 {
+            color: var(--secondary-dark);
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h4 {
+            color: var(--accent-dark);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+            color: var(--text-light);
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        li::marker {
+            color: var(--primary-color);
+        }
+
+        strong {
+            color: var(--text-color);
+        }
+
+        /* Info Box */
+        .info-box {
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            margin: 1.5rem 0;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .info-box.tip {
+            background: #e0f2fe; /* Light blue */
+            border: 1px solid #38bdf8;
+            color: #0369a1;
+        }
+
+        .info-box.warning {
+            background: #fef3c7; /* Light yellow */
+            border: 1px solid #f59e0b;
+            color: #a16207;
+        }
+
+        .info-box.forensic {
+            background: #f3e8ff; /* Light purple */
+            border: 1px solid #a78bfa;
+            color: #7c3aed;
+        }
+        
+        .info-box.module {
+            background: #ecfdf5; /* Light green */
+            border: 1px solid #6ee7b7;
+            color: #0d9488;
+        }
+        
+        .info-box.assignment {
+            background: #eef2ff; /* Lighter blue */
+            border: 1px solid #818cf8;
+            color: #4f46e5;
+        }
+
+
+        .info-box-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .info-box-content {
+            flex-grow: 1;
+        }
+
+        .info-box-content strong {
+            color: inherit;
+        }
+
+        /* Collapsible Sections */
+        .collapsible {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin: 1rem 0;
+            overflow: hidden;
+            background-color: var(--bg-color);
+        }
+        
+        .collapsible-header {
+            background: var(--card-bg);
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: var(--text-color);
+            transition: background 0.2s ease;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .collapsible-header:hover {
+            background: #f3f4f6;
+        }
+
+        .collapsible.open .collapsible-header {
+            border-bottom: none;
+        }
+        
+        .collapsible-icon {
+            transition: transform 0.3s ease;
+            color: var(--primary-color);
+        }
+        
+        .collapsible.open .collapsible-icon {
+            transform: rotate(180deg);
+        }
+        
+        .collapsible-content {
+            padding: 0 1.25rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        
+        .collapsible.open .collapsible-content {
+            padding: 1.25rem;
+            max-height: 2000px; /* Arbitrarily large to allow content to show */
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.8rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--bg-color);
+            font-weight: 600;
+            color: var(--text-color);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f3f4f6; /* Light gray for zebra striping */
+        }
+
+        tr:hover {
+            background-color: #e5e7eb;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            margin-top: 1rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+
+        /* Checklist */
+        .checklist {
+            list-style: none;
+            padding: 0;
+            margin: 1.5rem 0;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background-color: #f3f4f6;
+            border-radius: var(--radius-md);
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border-color);
+            transition: background-color 0.2s ease;
+        }
+
+        .checklist-item:hover {
+            background-color: #e5e7eb;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .checklist-item label {
+            cursor: pointer;
+            flex: 1;
+            color: var(--text-light);
+        }
+
+        .checklist-item.completed label {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--text-color);
+            color: white;
+            text-align: center;
+            padding: 2rem 1.5rem;
+            margin-top: 3rem;
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        }
+
+        footer p {
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .footer-nav {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .footer-nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-md);
+            transition: background-color 0.2s ease;
+        }
+
+        .footer-nav a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Accessibility Focus Styles */
+        a:focus,
+        button:focus,
+        input[type="checkbox"]:focus,
+        input[type="radio"]:focus {
+            outline: 3px solid var(--accent-color);
+            outline-offset: 2px;
+        }
+
+        /* Screen Reader Only */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header>
+        <h1>📚 Week 5 Overview</h1>
+        <p class="header-subtitle">File Systems and Data Structures</p>
+        <p class="course-info">CSC 156 - Digital Forensics Fundamentals</p>
+    </header>
+
+    <div class="container">
+        <div class="progress-container" role="region" aria-label="Module progress">
+            <div class="progress-header">
+                <span class="progress-label">📊 Week Progress</span>
+                <span class="progress-percentage" id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p class="progress-note">💾 Progress is saved for this session only</p>
+        </div>
+
+        <nav aria-label="Week sections">
+            <ul class="nav-list">
+                <li><a href="#week-summary" class="active">Summary</a></li>
+                <li><a href="#learning-modules">Modules</a></li>
+                <li><a href="#assignments">Assignments</a></li>
+                <li><a href="#schedule">Schedule</a></li>
+                <li><a href="#help">Get Help</a></li>
+            </ul>
+        </nav>
+
+        <main id="main-content">
+            <section id="week-summary">
+                <h2>✨ Week 5: Overview</h2>
+                <p>Week 5 builds directly on Week 4's hardware and storage foundation by exploring how operating systems logically organize data on physical storage devices. This week introduces file system architectures, metadata structures, and the critical forensic techniques of deleted file recovery and file carving.</p>
+                <p>Understanding file systems is the cornerstone of digital forensics. Every piece of digital evidence resides within a file system, and a forensic examiner's ability to locate, preserve, and recover this evidence hinges on a deep understanding of these structures.</p>
+
+                <div class="info-box forensic">
+                    <span class="info-box-icon" aria-hidden="true">🎓</span>
+                    <div class="info-box-content">
+                        <strong>CSLO Alignment:</strong> This week directly addresses **CSLO 2: Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data.** You will learn the fundamental mechanisms by which digital evidence is stored and retrieved.
+                    </div>
+                </div>
+
+                <h3>Week at a Glance:</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Week Duration</strong></td>
+                                <td>5 Days</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Lecture Hours</strong></td>
+                                <td>2 Hours</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Lab Hours</strong></td>
+                                <td>3 Hours</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Student Time</strong></td>
+                                <td>~14 Hours</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Points Available</strong></td>
+                                <td>43 points</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="learning-modules">
+                <h2>📖 Week 5 Learning Modules</h2>
+                <p>This week consists of **six comprehensive learning modules** that progress from foundational file system concepts to advanced recovery techniques. Each module builds upon the previous, creating a complete understanding of how operating systems organize data and how forensic examiners can leverage this knowledge to recover evidence.</p>
+
+                <h3>Module Breakdown:</h3>
+                <div class="collapsible open" id="module-5-1">
+                    <div class="collapsible-header" onclick="toggleCollapsible('module-5-1')" role="button" aria-expanded="true" tabindex="0">
+                        <span>5.1 File System Fundamentals</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="info-box module">
+                            <span class="info-box-icon" aria-hidden="true">⏰</span>
+                            <div class="info-box-content">
+                                <strong>Estimated Time:</strong> 50 minutes<br>
+                                <strong>Description:</strong> Introduction to what file systems are, their purpose, core components (boot sector, allocation structures, metadata, data area), and their overall forensic relevance.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapsible" id="module-5-2">
+                    <div class="collapsible-header" onclick="toggleCollapsible('module-5-2')" role="button" aria-expanded="false" tabindex="0">
+                        <span>5.2 FAT File System Deep Dive</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="info-box module">
+                            <span class="info-box-icon" aria-hidden="true">⏰</span>
+                            <div class="info-box-content">
+                                <strong>Estimated Time:</strong> 55 minutes<br>
+                                <strong>Description:</strong> Detailed examination of the FAT12, FAT16, and FAT32 file systems, including their structures, metadata, deletion process, and forensic recovery considerations.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapsible" id="module-5-3">
+                    <div class="collapsible-header" onclick="toggleCollapsible('module-5-3')" role="button" aria-expanded="false" tabindex="0">
+                        <span>5.3 NTFS Deep Dive</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="info-box module">
+                            <span class="info-box-icon" aria-hidden="true">⏰</span>
+                            <div class="info-box-content">
+                                <strong>Estimated Time:</strong> 70 minutes<br>
+                                <strong>Description:</strong> In-depth study of the NTFS file system, focusing on the Master File Table (MFT), attributes, journaling, Alternate Data Streams (ADS), and advanced forensic analysis techniques.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapsible" id="module-5-4">
+                    <div class="collapsible-header" onclick="toggleCollapsible('module-5-4')" role="button" aria-expanded="false" tabindex="0">
+                        <span>5.4 Linux & macOS File Systems</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="info-box module">
+                            <span class="info-box-icon" aria-hidden="true">⏰</span>
+                            <div class="info-box-content">
+                                <strong>Estimated Time:</strong> 50 minutes<br>
+                                <strong>Description:</strong> Overview of ext2/ext3/ext4 for Linux and HFS+/APFS for macOS, including their unique structures (inodes, snapshots), timestamps, and specific forensic challenges.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapsible" id="module-5-5">
+                    <div class="collapsible-header" onclick="toggleCollapsible('module-5-5')" role="button" aria-expanded="false" tabindex="0">
+                        <span>5.5 Deleted File Recovery & File Carving</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="info-box module">
+                            <span class="info-box-icon" aria-hidden="true">⏰</span>
+                            <div class="info-box-content">
+                                <strong>Estimated Time:</strong> 55-60 minutes<br>
+                                <strong>Description:</strong> Covers the critical techniques of metadata-based deleted file recovery and file carving, including file signatures, tool configuration, and challenges posed by SSDs and TRIM.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapsible" id="module-5-6">
+                    <div class="collapsible-header" onclick="toggleCollapsible('module-5-6')" role="button" aria-expanded="false" tabindex="0">
+                        <span>5.6 Practical Application & Lab Preparation</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="info-box module">
+                            <span class="info-box-icon" aria-hidden="true">⏰</span>
+                            <div class="info-box-content">
+                                <strong>Estimated Time:</strong> 40-45 minutes<br>
+                                <strong>Description:</strong> Hands-on preparation for Lab Activity 5, focusing on using Autopsy, The Sleuth Kit (TSK), and carving tools to analyze file systems and recover deleted data.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="assignments">
+                <h2>📝 Week 5 Assignments</h2>
+                <p>This week features one lab activity, one discussion post, and one homework assignment, totaling 43 points. These assignments will allow you to apply the concepts learned in the modules and develop practical forensic skills.</p>
+
+                <h3>Required Assignments:</h3>
+                <div class="info-box assignment">
+                    <span class="info-box-icon" aria-hidden="true">📋</span>
+                    <div class="info-box-content">
+                        <strong>Lab Activity 5: Deleted File Recovery and File System Analysis</strong>
+                        <p><strong>Points:</strong> 20 points<br>
+                        <strong>Due:</strong> End of Week 5 (check Canvas for specific deadline)<br>
+                        <strong>Description:</strong> Develop practical skills in analyzing file systems, recovering deleted files, and interpreting file system metadata for forensic investigations. This lab involves identifying file systems, performing metadata-based recovery on FAT32, NTFS, and ext4 (if applicable), and conducting file carving.</p>
+                        <a href="lab_activity_5.html" class="btn btn-secondary" target="_blank">View Lab Activity 5 Details</a>
+                    </div>
+                </div>
+
+                <div class="info-box assignment">
+                    <span class="info-box-icon" aria-hidden="true">💬</span>
+                    <div class="info-box-content">
+                        <strong>Discussion Post 5: File System Forensic Challenges</strong>
+                        <p><strong>Points:</strong> 3 points (Initial Post: 2 pts, Responses: 1 pt)<br>
+                        <strong>Due:</strong> Day 3 (Initial Post) & Day 5 (Responses) of Week 5 (check Canvas for specific deadlines)<br>
+                        <strong>Description:</strong> Reflect on the unique forensic challenges posed by different file systems, the impact of SSDs and TRIM on recovery, and the strategic choice between metadata-based recovery and file carving.</p>
+                        <a href="discussion_post_5.html" class="btn btn-secondary" target="_blank">View Discussion Post 5 Details</a>
+                    </div>
+                </div>
+
+                <div class="info-box assignment">
+                    <span class="info-box-icon" aria-hidden="true">✍️</span>
+                    <div class="info-box-content">
+                        <strong>Homework 5: File System Comparison Analysis</strong>
+                        <p><strong>Points:</strong> 20 points<br>
+                        <strong>Due:</strong> End of Week 5 (check Canvas for specific deadline)<br>
+                        <strong>Description:</strong> Create a detailed comparison of major file systems, analyze forensic scenarios, and critically evaluate the impact of modern storage technologies on investigations.</p>
+                        <a href="homework_5.html" class="btn btn-secondary" target="_blank">View Homework 5 Details</a>
+                    </div>
+                </div>
+
+                <h3 style="margin-top:2.5rem;">Reading Assignment:</h3>
+                <div class="info-box tip">
+                    <span class="info-box-icon" aria-hidden="true">📚</span>
+                    <div class="info-box-content">
+                        <strong>Reading: File system structures and recovery techniques</strong>
+                        <p><strong>Due:</strong> Before Lab Activity 5<br>
+                        <strong>Description:</strong> Review relevant textbook chapters or supplementary materials on file system internals, deleted file structures, and data recovery methodologies. This reading will enhance your understanding of the technical details discussed in the modules.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="schedule">
+                <h2>📅 Suggested Study Schedule</h2>
+                <p>This schedule is a recommendation to help you manage your time effectively. Adjust it based on your learning style and other commitments. Remember, consistency is key!</p>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Day</th>
+                                <th>Estimated Time</th>
+                                <th>Activities</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Day 1</strong></td>
+                                <td>4 hours</td>
+                                <td>
+                                    <ul>
+                                        <li>Complete Module 5.1: File System Fundamentals (50 min)</li>
+                                        <li>Complete Module 5.2: FAT File Systems (55 min)</li>
+                                        <li>Begin required readings (1 hour)</li>
+                                        <li>Attend lecture (2 hours)</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Day 2</strong></td>
+                                <td>3 hours</td>
+                                <td>
+                                    <ul>
+                                        <li>Complete Module 5.3: NTFS Deep Dive (70 min)</li>
+                                        <li>Begin Lab Activity 5, Part 1 (1.5 hours)</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Day 3</strong></td>
+                                <td>3.5 hours</td>
+                                <td>
+                                    <ul>
+                                        <li>Complete Module 5.4: Linux & macOS File Systems (50 min)</li>
+                                        <li>Post initial discussion response (30 min) - <strong>Discussion Post 5 Due</strong></li>
+                                        <li>Continue Lab Activity 5, Part 2 (2 hours)</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Day 4</strong></td>
+                                <td>3.5 hours</td>
+                                <td>
+                                    <ul>
+                                        <li>Complete Module 5.5: Deleted File Recovery & File Carving (60 min)</li>
+                                        <li>Complete Module 5.6: Practical Application & Lab Preparation (45 min)</li>
+                                        <li>Work on Homework 5 (2 hours)</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Day 5</strong></td>
+                                <td>(Flexible)</td>
+                                <td>
+                                    <ul>
+                                        <li>Complete Lab Activity 5 (remaining time) - <strong>Lab Activity 5 Due</strong></li>
+                                        <li>Complete Homework 5 (remaining time) - <strong>Homework 5 Due</strong></li>
+                                        <li>Post peer responses (1 hour) - <strong>Discussion Post 5 Responses Due</strong></li>
+                                        <li>Review Week 5 concepts</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="info-box warning">
+                    <span class="info-box-icon" aria-hidden="true">🚨</span>
+                    <div class="info-box-content">
+                        <strong>Important:</strong> Always refer to Canvas for the most accurate and up-to-date deadlines for all assignments.
+                    </div>
+                </div>
+            </section>
+
+            <section id="help">
+                <h2>🤝 Getting Help</h2>
+                <p>Don't hesitate to reach out if you encounter any difficulties or have questions. Your success is our priority!</p>
+
+                <h3>Contact Information:</h3>
+                <ul>
+                    <li><strong>Instructor Office Hours:</strong> [Insert your office hours and location]</li>
+                    <li><strong>Virtual Office Hours:</strong> Available by appointment via Zoom</li>
+                    <li><strong>Email:</strong> [Insert your email] - Response within 24 hours on weekdays</li>
+                </ul>
+
+                <h3>Lab Assistance:</h3>
+                <ul>
+                    <li><strong>Lab Hours:</strong> [Insert lab hours and location]</li>
+                    <li><strong>Lab Assistants:</strong> Available during scheduled lab times for technical questions</li>
+                    <li><strong>Canvas Discussion Board:</strong> Post questions for peer and instructor response</li>
+                </ul>
+
+                <h3>Additional Resources:</h3>
+                <ul>
+                    <li><strong>Online File System References:</strong> Access documentation for FAT, NTFS, ext4, HFS+, APFS (e.g., Microsoft Docs, Linux Kernel Docs, Apple Developer Docs).</li>
+                    <li><strong>Forensic Tool Documentation:</strong> Autopsy User Guide, The Sleuth Kit (TSK) man pages, Scalpel/PhotoRec documentation.</li>
+                    <li><strong>Study Groups:</strong> Form study groups through Canvas or Discord to collaborate with peers.</li>
+                </ul>
+
+                <h3>Accommodations:</h3>
+                <ul>
+                    <li><strong>Disabled Student Programs and Services (DSPS):</strong> Contact within the first two weeks for accommodations.</li>
+                    <li><strong>Extended Time:</strong> Available for students with documented needs.</li>
+                    <li><strong>Alternative Formats:</strong> Materials available in accessible formats upon request.</li>
+                </ul>
+            </section>
+
+            <section id="completion-checklist">
+                <h2>✅ Week Completion Checklist</h2>
+                <p>Use this checklist to track your progress and ensure you've completed all required activities for Week 5.</p>
+                <ul class="checklist">
+                    <li class="checklist-item"><input type="checkbox" id="check-mod-5-1" onchange="updateProgress()"> <label for="check-mod-5-1">Completed Module 5.1: File System Fundamentals</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="check-mod-5-2" onchange="updateProgress()"> <label for="check-mod-5-2">Completed Module 5.2: FAT File System Deep Dive</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="check-mod-5-3" onchange="updateProgress()"> <label for="check-mod-5-3">Completed Module 5.3: NTFS Deep Dive</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="check-mod-5-4" onchange="updateProgress()"> <label for="check-mod-5-4">Completed Module 5.4: Linux & macOS File Systems</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="check-mod-5-5" onchange="updateProgress()"> <label for="check-mod-5-5">Completed Module 5.5: Deleted File Recovery & File Carving</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="check-mod-5-6" onchange="updateProgress()"> <label for="check-mod-5-6">Completed Module 5.6: Practical Application & Lab Preparation</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="check-readings" onchange="updateProgress()"> <label for="check-readings">Completed required readings</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="check-discussion-initial" onchange="updateProgress()"> <label for="check-discussion-initial">Submitted initial post for Discussion Post 5</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="check-discussion-responses" onchange="updateProgress()"> <label for="check-discussion-responses">Submitted responses for Discussion Post 5</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="check-homework-5" onchange="updateProgress()"> <label for="check-homework-5">Completed and submitted Homework 5: File System Comparison Analysis</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="check-lab-5" onchange="updateProgress()"> <label for="check-lab-5">Completed and submitted Lab Activity 5: Deleted File Recovery and File System Analysis</label></li>
+                </ul>
+            </section>
+        </main>
+    </div>
+
+    <footer>
+        <p><strong>CSC 156 - Digital Forensics Fundamentals</strong></p>
+        <p>Week 5: File Systems and Data Structures | Mendocino College</p>
+        <p>Date: Tue Feb 17 2026</p>
+        <div class="footer-nav">
+            <a href="#">Course Home</a>
+            <a href="#">Previous Week</a>
+            <a href="#">Next Week</a>
+        </div>
+    </footer>
+
+    <script>
+        // ==================== Progress Tracking ====================
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('#completion-checklist input[type="checkbox"]');
+            const checked = document.querySelectorAll('#completion-checklist input[type="checkbox"]:checked').length;
+            const total = checkboxes.length;
+            const percentage = total > 0 ? Math.round((checked / total) * 100) : 0;
+            
+            document.getElementById('progressPercent').textContent = percentage + '%';
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.querySelector('.progress-bar').setAttribute('aria-valuenow', percentage);
+            
+            checkboxes.forEach(cb => {
+                const item = cb.closest('.checklist-item');
+                if (item) {
+                    if (cb.checked) {
+                        item.classList.add('completed');
+                    } else {
+                        item.classList.remove('completed');
+                    }
+                }
+            });
+            
+            saveProgress();
+        }
+        
+        function saveProgress() {
+            const checkboxes = document.querySelectorAll('#completion-checklist input[type="checkbox"]');
+            const state = {};
+            checkboxes.forEach(cb => {
+                state[cb.id] = cb.checked;
+            });
+            sessionStorage.setItem('week5OverviewProgress', JSON.stringify(state));
+        }
+        
+        function loadProgress() {
+            const saved = sessionStorage.getItem('week5OverviewProgress');
+            if (saved) {
+                const state = JSON.parse(saved);
+                Object.keys(state).forEach(id => {
+                    const cb = document.getElementById(id);
+                    if (cb) {
+                        cb.checked = state[id];
+                    }
+                });
+                updateProgress(); // Call to update UI after loading
+            }
+        }
+        
+        // ==================== Section Toggle (Collapsible) ====================
+        function toggleCollapsible(id) {
+            const element = document.getElementById(id);
+            element.classList.toggle('open');
+            const header = element.querySelector('.collapsible-header');
+            const isExpanded = element.classList.contains('open');
+            header.setAttribute('aria-expanded', isExpanded);
+        }
+
+        // ==================== Navigation Highlighting ====================
+        function updateNavHighlight() {
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('nav .nav-list a');
+            
+            let currentSectionId = '';
+            // Determine which section is currently in view
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                // If the top of the section is within the top 150px of the viewport
+                // and the bottom of the section is below the top of the viewport
+                if (rect.top <= 150 && rect.bottom > 150) {
+                    currentSectionId = section.id;
+                }
+            });
+            
+            // Apply active class to the corresponding nav link
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href').substring(1) === currentSectionId) {
+                    link.classList.add('active');
+                }
+            });
+        }
+        
+        // ==================== Initialize on DOM Load ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProgress(); // Load saved progress
+            window.addEventListener('scroll', updateNavHighlight); // Update nav on scroll
+            updateNavHighlight(); // Set initial active nav item on load
+
+            // Smooth scrolling for internal navigation links
+            document.querySelectorAll('nav a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start' // Scroll to the top of the section
+                        });
+                    }
+                });
+            });
+
+            // Accessibility: Keyboard navigation for collapsible headers
+            document.querySelectorAll('.collapsible-header').forEach(header => {
+                header.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        const collapsibleId = this.closest('.collapsible').id;
+                        toggleCollapsible(collapsibleId);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
