@@ -500,7 +500,7 @@
         <main id="main-content">
             <section id="lab-overview">
                 <h2>✨ Lab Overview & Objectives</h2>
-                <p>Welcome to Lab Activity 5! This lab is your opportunity to apply the theoretical knowledge gained in Week 5's modules on file systems, deleted file recovery, and file carving. You will work with a provided disk image to identify various file systems, recover deleted data using both metadata-based techniques and file carving, and thoroughly document your findings.</p>
+                <p>Welcome to Lab Activity 5! This lab is your opportunity to apply the theoretical knowledge gained in Week 5's modules on file systems, deleted file recovery, and file carving. You will work with four forensic disk images — three from the NIST CFReDS Deleted File Recovery test suite and one from the Naval Postgraduate School (NPS) Digital Corpora — to identify file systems, recover deleted data using metadata-based techniques, perform file carving, and thoroughly document your findings.</p>
 
                 <div class="info-box forensic">
                     <span class="info-box-icon" aria-hidden="true">🎓</span>
@@ -513,7 +513,54 @@
                 <div class="info-box tip">
                     <span class="info-box-icon" aria-hidden="true">💡</span>
                     <div class="info-box-content">
-                        <strong>Required Tools:</strong> Ensure you have **Autopsy**, **The Sleuth Kit (TSK) command-line tools** (<code>mmls</code>, <code>fsstat</code>, <code>fls</code>, <code>istat</code>, <code>icat</code>), **Scalpel** (or PhotoRec), and **MFTECmd** installed and ready in your forensic workstation environment. A hex editor is also highly recommended.
+                        <strong>Required Tools:</strong> Ensure you have <strong>Autopsy</strong>, <strong>The Sleuth Kit (TSK) command-line tools</strong> (<code>mmls</code>, <code>fsstat</code>, <code>fls</code>, <code>istat</code>, <code>icat</code>), <strong>Scalpel</strong> (or PhotoRec), and <strong>MFTECmd</strong> installed and ready in your forensic workstation environment. A hex editor is also highly recommended.
+                    </div>
+                </div>
+
+                <div class="info-box warning">
+                    <span class="info-box-icon" aria-hidden="true">📥</span>
+                    <div class="info-box-content">
+                        <strong>Lab Disk Images — Download Before Lab:</strong> This lab uses four forensic disk images. Download all four from the course file server and save them to a working folder (e.g., <code>C:\CSC156\Lab5\</code> on Windows or <code>~/csc156/lab5/</code> on Linux) <em>before</em> your lab session begins.
+                        <br><br>
+                        <strong>Download Location:</strong> <a href="https://1drv.ms/f/c/447200bab10d3ac2/IgBKLd7eX_3BRIEW-sfZ8p9aAS-NYrxnjMiAHN8Qjk5AO3g?e=UnfswH" style="color: inherit; font-weight: bold;">Lab 5 Image Files</a>
+                        <br><br>
+                        <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:0.5rem;">
+                            <thead>
+                                <tr style="background:rgba(124,58,237,0.1);">
+                                    <th style="padding:0.5rem 0.75rem; text-align:left; border-bottom:2px solid #a78bfa;">Filename</th>
+                                    <th style="padding:0.5rem 0.75rem; text-align:left; border-bottom:2px solid #a78bfa;">File System</th>
+                                    <th style="padding:0.5rem 0.75rem; text-align:left; border-bottom:2px solid #a78bfa;">Source</th>
+                                    <th style="padding:0.5rem 0.75rem; text-align:left; border-bottom:2px solid #a78bfa;">Used In</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding:0.5rem 0.75rem; border-bottom:1px solid #e5e7eb;"><code>dfr-05-fat.dd</code></td>
+                                    <td style="padding:0.5rem 0.75rem; border-bottom:1px solid #e5e7eb;">FAT (FAT12/16/32 partitions)</td>
+                                    <td style="padding:0.5rem 0.75rem; border-bottom:1px solid #e5e7eb;">NIST CFReDS DFR-05</td>
+                                    <td style="padding:0.5rem 0.75rem; border-bottom:1px solid #e5e7eb;">Parts 1 &amp; 2</td>
+                                </tr>
+                                <tr style="background:#f9fafb;">
+                                    <td style="padding:0.5rem 0.75rem; border-bottom:1px solid #e5e7eb;"><code>dfr-05-ntfs.dd</code></td>
+                                    <td style="padding:0.5rem 0.75rem; border-bottom:1px solid #e5e7eb;">NTFS</td>
+                                    <td style="padding:0.5rem 0.75rem; border-bottom:1px solid #e5e7eb;">NIST CFReDS DFR-05</td>
+                                    <td style="padding:0.5rem 0.75rem; border-bottom:1px solid #e5e7eb;">Parts 1 &amp; 2</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:0.5rem 0.75rem; border-bottom:1px solid #e5e7eb;"><code>dfr-05-ext.dd</code></td>
+                                    <td style="padding:0.5rem 0.75rem; border-bottom:1px solid #e5e7eb;">ext2 / ext3 / ext4 partitions</td>
+                                    <td style="padding:0.5rem 0.75rem; border-bottom:1px solid #e5e7eb;">NIST CFReDS DFR-05</td>
+                                    <td style="padding:0.5rem 0.75rem; border-bottom:1px solid #e5e7eb;">Parts 1 &amp; 2</td>
+                                </tr>
+                                <tr style="background:#f9fafb;">
+                                    <td style="padding:0.5rem 0.75rem;"><code>nps-2009-canon2-gen6.E01</code></td>
+                                    <td style="padding:0.5rem 0.75rem;">FAT32 (Canon SD card)</td>
+                                    <td style="padding:0.5rem 0.75rem;">NPS Digital Corpora</td>
+                                    <td style="padding:0.5rem 0.75rem;">Part 3 only</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p style="margin-top:0.75rem; margin-bottom:0;"><strong>Note on file formats:</strong> The three NIST images are raw <code>.dd</code> files. The Canon image is in EnCase E01 format — Autopsy supports both formats natively. Do <em>not</em> rename or convert any image file before use.</p>
                     </div>
                 </div>
 
@@ -523,22 +570,19 @@
 
             <section id="part1">
                 <h2>Part 1: File System Identification (6 points)</h2>
-                <p>In this section, you will examine the provided disk image to identify the various partitions and the file systems present on them. Proper identification is the first critical step in any forensic analysis.</p>
+                <p>In this section, you will load and examine all three NIST DFR-05 disk images — <code>dfr-05-fat.dd</code>, <code>dfr-05-ntfs.dd</code>, and <code>dfr-05-ext.dd</code> — to identify the partitions and file systems present in each. Each image is a single disk containing multiple partitions of the same file system family, giving you hands-on exposure to FAT variants, NTFS, and the ext family in a single lab. Proper identification is the first critical step in any forensic analysis.</p>
 
                 <h3>Tasks:</h3>
                 <ol>
-                    <li>Examine multiple partitions within the provided disk image.
+                    <li>Add each of the three images as a separate data source in Autopsy, or examine them individually on the command line. Work through <code>dfr-05-fat.dd</code>, <code>dfr-05-ntfs.dd</code>, and <code>dfr-05-ext.dd</code> in turn.
                         <ul>
-                            <li>Use <code>mmls</code> (TSK) to identify partition layout.</li>
-                            <li>Use Autopsy's data source manager to view partitions.</li>
+                            <li>Use <code>mmls</code> (TSK) to display the partition layout of each image. For example: <code>mmls dfr-05-fat.dd</code></li>
+                            <li>Use Autopsy's data source manager to add and view each image's partitions.</li>
+                            <li><strong>Note:</strong> The FAT image (<code>dfr-05-fat.dd</code>) contains three partitions (FAT12/16/32). The NTFS image contains one NTFS partition. The EXT image contains three partitions (ext2, ext3, ext4). You are not expected to document every partition — focus on the most forensically relevant one per image.</li>
                         </ul>
                     </li>
-                    <li>Identify the file system type (e.g., FAT32, NTFS, ext4, HFS+, APFS) for each relevant partition.
-                        <ul>
-                            <li>Use <code>fsstat</code> (TSK) and Autopsy's file system information views.</li>
-                        </ul>
-                    </li>
-                    <li>For **at least three distinct file systems** identified, document the following key characteristics:
+                    <li>Identify the file system type for the primary partition(s) in each image using <code>fsstat</code> (TSK) and Autopsy's file system information views. Example: <code>fsstat -o [partition_offset] dfr-05-fat.dd</code></li>
+                    <li>For <strong>at least three distinct file systems</strong> (one FAT variant, NTFS, and one ext variant), document the following key characteristics:
                         <ul>
                             <li>File System Type (e.g., NTFS, FAT32, ext4)</li>
                             <li>Volume Label (if present)</li>
@@ -546,105 +590,127 @@
                             <li>Block/Cluster Size</li>
                             <li>Total Number of Files and Directories</li>
                             <li>Journaling Status (e.g., enabled/disabled, type of journal for ext4)</li>
-                            <li>Any other notable features relevant to forensics (e.g., NTFS version, HFS+ Journaled)</li>
+                            <li>Any other notable features relevant to forensics (e.g., NTFS version, ext4 journal type)</li>
                         </ul>
                     </li>
-                    <li>Provide **screenshots** as evidence for each identified file system, clearly showing the tool output and the documented characteristics.</li>
+                    <li>Provide <strong>screenshots</strong> as evidence for each identified file system, clearly showing the <code>mmls</code> and <code>fsstat</code> tool output and the documented characteristics.</li>
                 </ol>
 
                 <div class="info-box tip">
                     <span class="info-box-icon" aria-hidden="true">🔍</span>
                     <div class="info-box-content">
-                        <strong>Tip:</strong> Pay attention to the output of <code>mmls</code> for partition offsets, which are crucial for running subsequent TSK commands like <code>fsstat</code>. For example, if <code>mmls</code> shows a partition starting at sector 2048, you would use <code>fsstat -o 2048 image.dd</code>.
+                        <strong>Tip:</strong> The partition offsets reported by <code>mmls</code> are in sectors. Pass the offset to subsequent TSK commands with the <code>-o</code> flag. For example, if <code>mmls dfr-05-fat.dd</code> shows a FAT32 partition starting at sector 2048, run: <code>fsstat -o 2048 dfr-05-fat.dd</code>. For images with only one partition, the offset is often 0 — confirm with <code>mmls</code> first.
                     </div>
                 </div>
             </section>
 
             <section id="part2">
                 <h2>Part 2: Deleted File Recovery (8 points)</h2>
-                <p>This section focuses on recovering logically deleted files using metadata-based techniques for different file systems. You will utilize both command-line and GUI tools.</p>
+                <p>This section focuses on recovering logically deleted files using metadata-based techniques across three different file systems. You will use <code>dfr-05-fat.dd</code>, <code>dfr-05-ntfs.dd</code>, and <code>dfr-05-ext.dd</code> — each image was specifically constructed by NIST with known deleted files and documented MAC times, making it possible to verify your recovery results. You will use both command-line TSK tools and Autopsy's GUI.</p>
+
+                <div class="info-box tip">
+                    <span class="info-box-icon" aria-hidden="true">📋</span>
+                    <div class="info-box-content">
+                        <strong>About the DFR-05 Images:</strong> The DFR-05 test case was designed to practice recovering <em>several fragmented files</em>. Each image contains files that were deliberately created, fragmented across non-contiguous clusters/blocks, and then deleted. This means you will encounter cases where recovery is partial or where the file allocation chain must be carefully reconstructed — exactly the challenge discussed in Module 5.5.
+                    </div>
+                </div>
 
                 <h3>Tasks:</h3>
-                <h4>1. FAT32 Volume:</h4>
+                <h4>1. FAT32 Volume — <code>dfr-05-fat.dd</code>:</h4>
                 <ol>
-                    <li>Identify a FAT32 partition within your disk image (from Part 1).</li>
-                    <li>List deleted files using <code>fls -d -r -o [partition_offset] [image_file]</code>.</li>
-                    <li>Select **at least two deleted files** and attempt to recover them using <code>icat -o [partition_offset] [image_file] [inode_number] > [output_filename]</code>.</li>
-                    <li>Document the recovery success/failure for each file, explaining the reasons. Note any filename character loss and how you handled it.</li>
-                    <li>Provide screenshots of the <code>fls</code> output showing deleted files and the successful recovery of at least one file.</li>
+                    <li>Run <code>mmls dfr-05-fat.dd</code> to identify the partition layout. Note the starting sector offset of the FAT32 partition (the largest partition — the FAT12 and FAT16 partitions are smaller and at lower offsets).</li>
+                    <li>List deleted files in the FAT32 partition using:
+                        <br><code>fls -d -r -o [FAT32_partition_offset] dfr-05-fat.dd</code>
+                    </li>
+                    <li>Select <strong>at least two deleted files</strong> from the <code>fls</code> output and attempt to recover each using:
+                        <br><code>icat -o [FAT32_partition_offset] dfr-05-fat.dd [inode_number] &gt; recovered_filename.ext</code>
+                    </li>
+                    <li>Document the recovery success or failure for each file and explain why. Note: FAT deletes the first character of the filename (replaced with 0xE5) — document how you handled the missing character when naming recovered files.</li>
+                    <li>Because DFR-05 contains fragmented files, attempt recovery of at least one fragmented file. Document whether the recovered content is complete or truncated, and explain what fragmentation does to FAT recovery.</li>
+                    <li>Provide screenshots of the <code>fls</code> output showing deleted entries and the terminal output confirming at least one successful recovery.</li>
                 </ol>
 
-                <h4>2. NTFS Volume:</h4>
+                <h4>2. NTFS Volume — <code>dfr-05-ntfs.dd</code>:</h4>
                 <ol>
-                    <li>Identify an NTFS partition.</li>
-                    <li>Add the NTFS partition as a data source in **Autopsy**. Ensure the "Deleted File Finder" and "File System Analysis" ingest modules are enabled.</li>
-                    <li>Navigate to the "Deleted Files" section in Autopsy and select **at least two deleted files** for recovery. Export these files.</li>
-                    <li>For one of the recovered NTFS files, compare its **$STANDARD_INFORMATION** and **$FILE_NAME** timestamps. Discuss any discrepancies and their forensic implications (e.g., signs of timestomping). Provide screenshots of the timestamp comparison.</li>
-                    <li>Attempt to identify any **Alternate Data Streams (ADS)** on a file (recovered or active) within the NTFS volume using Autopsy or a relevant TSK command. Document your findings.</li>
-                    <li>Export and analyze **$UsnJrnl entries** related to a deleted file (or any significant file activity) from the NTFS volume using **MFTECmd**. Document how this journal entry provides historical context.</li>
-                    <li>Provide screenshots of Autopsy's deleted file view, timestamp comparison, ADS identification, and MFTECmd output.</li>
+                    <li>Add <code>dfr-05-ntfs.dd</code> as a new data source in <strong>Autopsy</strong>. When configuring ingest modules, ensure <strong>Deleted File Finder</strong> and <strong>File System Analysis</strong> are enabled.</li>
+                    <li>Navigate to the <strong>Deleted Files</strong> section in Autopsy's tree panel and select <strong>at least two deleted files</strong> for recovery. Right-click and export these files to your working folder.</li>
+                    <li>For one of the recovered NTFS files, use Autopsy's file properties view to compare the <strong>$STANDARD_INFORMATION</strong> and <strong>$FILE_NAME</strong> timestamps. Discuss any discrepancies and their forensic implications (e.g., $SI timestamps are user-modifiable and commonly targeted in timestomping, while $FN timestamps are harder to alter). Provide screenshots of the timestamp comparison.</li>
+                    <li>Attempt to identify any <strong>Alternate Data Streams (ADS)</strong> on a file within the NTFS volume using Autopsy's file attributes view or the TSK command:
+                        <br><code>fls -o [NTFS_partition_offset] dfr-05-ntfs.dd</code>
+                        <br>Document your findings — note that the DFR-05 NTFS image may not contain ADS, which is itself a valid forensic observation to record.
+                    </li>
+                    <li>Use <strong>MFTECmd</strong> to extract and analyze <strong>$UsnJrnl</strong> entries related to deleted file activity. Run MFTECmd against the image and filter for relevant entries. Document how the journal entries provide historical context about file operations beyond what the MFT alone can show.</li>
+                    <li>Provide screenshots of: Autopsy's deleted file view, the timestamp comparison, ADS findings, and MFTECmd output.</li>
                 </ol>
 
-                <h4>3. ext4 Volume (if provided in your disk image):</h4>
+                <h4>3. ext4 Volume — <code>dfr-05-ext.dd</code>:</h4>
                 <ol>
-                    <li>Identify an ext4 partition.</li>
-                    <li>Examine the inode table for deleted files using <code>fls -d</code> and <code>istat</code>.</li>
-                    <li>Attempt to recover **at least one deleted file** using <code>extundelete</code> or a similar specialized tool.</li>
-                    <li>Document the challenges specific to ext4 recovery (e.g., cleared block pointers, filename loss) and whether your recovery was successful.</li>
-                    <li>Provide screenshots of your attempts and results.</li>
+                    <li>Run <code>mmls dfr-05-ext.dd</code> to identify the three ext partitions (ext2, ext3, ext4). Focus your work on the <strong>ext4 partition</strong> (typically the third and largest partition). Note its starting sector offset.</li>
+                    <li>List deleted files in the ext4 partition using:
+                        <br><code>fls -d -r -o [ext4_partition_offset] dfr-05-ext.dd</code>
+                    </li>
+                    <li>Examine inode details for a deleted file using:
+                        <br><code>istat -o [ext4_partition_offset] dfr-05-ext.dd [inode_number]</code>
+                        <br>Note whether the block pointers have been cleared — this is the primary challenge for ext4 metadata recovery.
+                    </li>
+                    <li>Attempt to recover <strong>at least one deleted file</strong> using <code>extundelete</code> or Autopsy's recovery export. Because ext4 clears block pointers on deletion, success will depend on whether the journal still holds the original inode data.</li>
+                    <li>Document the specific challenges observed (e.g., cleared block pointers, loss of filename in directory entry, journal state). Record whether your recovery was successful or partial, and explain why.</li>
+                    <li>Provide screenshots of your <code>fls</code> output, <code>istat</code> output, and recovery attempt results.</li>
                 </ol>
 
                 <div class="info-box warning">
                     <span class="info-box-icon" aria-hidden="true">⚠️</span>
                     <div class="info-box-content">
-                        <strong>Important:</strong> Remember that working directly on the original disk image with tools like <code>extundelete</code> can modify it. Always work on a **copy** of your forensic image if using tools that write changes.
+                        <strong>Important:</strong> Tools like <code>extundelete</code> may write changes when run against a disk image directly. Always work on a <strong>copy</strong> of the image file if using tools that modify the target. Keep your original downloaded images intact as your reference copies.
                     </div>
                 </div>
             </section>
 
             <section id="part3">
                 <h2>Part 3: File Carving Exercise (6 points)</h2>
-                <p>In this section, you will practice file carving techniques to recover files from unallocated space or where file system metadata is no longer available.</p>
+                <p>In this section, you will perform file carving on <code>nps-2009-canon2-gen6.E01</code> — a forensic image of a Canon PowerShot SD800IS camera memory card captured at the sixth stage of use. This image was created by the Naval Postgraduate School specifically for teaching file carving: it contains a mix of intact JPEG images still visible in the FAT32 file system, deleted JPEGs that are recoverable via metadata, and JPEGs that can <em>only</em> be recovered by carving because their file system metadata is gone — including at least two fragmented JPEGs whose fragments are interleaved on disk.</p>
+
+                <div class="info-box tip">
+                    <span class="info-box-icon" aria-hidden="true">📷</span>
+                    <div class="info-box-content">
+                        <strong>About nps-2009-canon2-gen6.E01:</strong> This is an EnCase E01 format image. Autopsy opens E01 files natively — add it as a new data source just as you would a <code>.dd</code> file. The image is a FAT32 file system (Canon camera cards use FAT32 by convention). It contains JPEG image files only — do not expect PDFs, Office documents, or ZIP files to be present. The carving exercise for this lab focuses on JPEGs. The Scalpel configuration tip below has been updated accordingly.
+                    </div>
+                </div>
 
                 <h3>Tasks:</h3>
                 <ol>
-                    <li>Configure **Scalpel** (or Autopsy's carving module if preferred).
+                    <li>Add <code>nps-2009-canon2-gen6.E01</code> as a new data source in Autopsy. This is a separate case from your Part 1/2 work — create a new Autopsy case or add it as an additional data source in your existing case.
+                    </li>
+                    <li>Before running any carving tools, first browse the active (non-deleted) files in Autopsy's file tree to note how many JPEG images are currently visible. This is your baseline — carving will attempt to recover images <em>beyond</em> what the file system currently shows.
+                    </li>
+                    <li>Configure <strong>Scalpel</strong> (or use Autopsy's built-in File Carver ingest module) to carve for JPEG images.
                         <ul>
-                            <li>Create or modify a <code>scalpel.conf</code> file to carve for the specified file types.</li>
-                            <li>If using Autopsy, ensure the "File Carver" ingest module is enabled and configured for the relevant file types.</li>
+                            <li>If using Scalpel: edit your <code>scalpel.conf</code> file to enable the JPEG rule (uncomment or add the line below). Run Scalpel against the image file directly:
+                                <br><code>scalpel nps-2009-canon2-gen6.E01 -o ./carved_output/</code>
+                            </li>
+                            <li>If using Autopsy's File Carver: right-click the data source → Run Ingest Modules → enable <strong>File Carver</strong> and configure it for JPEG file types.</li>
                         </ul>
                     </li>
-                    <li>Carve the provided disk image for the following file types:
+                    <li>Review the carved output. For <strong>at least 5 carved JPEG files</strong>, examine each and document:
                         <ul>
-                            <li>JPEG images</li>
-                            <li>PDF documents</li>
-                            <li>Microsoft Office documents (DOCX, XLSX)</li>
-                            <li>ZIP archives</li>
+                            <li>Whether the file opens correctly (<strong>valid</strong>) or is corrupted (<strong>false positive or partial recovery</strong>).</li>
+                            <li>Whether the recovery appears <strong>complete</strong> or <strong>partial</strong> — partial JPEGs will open but show truncation, color banding, or corrupted lower sections due to fragmentation.</li>
+                            <li>Any observable <strong>fragmentation effects</strong> — for example, extra image data appended from a different file, or color block artifacts mid-image indicating where the carver lost track of the file's data.</li>
                         </ul>
                     </li>
-                    <li>Review the carved files in your output directory (or Autopsy's "Carved Files" section). For **at least 3-5 unique carved files** (across different types):
-                        <ul>
-                            <li>Identify if they are **valid files** (open correctly) or **false positives**.</li>
-                            <li>Determine if the recovery is **complete** or **partial** (e.g., due to fragmentation).</li>
-                            <li>Document any observed **fragmentation effects** (e.g., extra data at end, corruption).</li>
-                        </ul>
-                    </li>
-                    <li>Document your carving methodology (tool used, configuration file/settings).</li>
-                    <li>Briefly compare the results of file carving to your metadata-based recovery in Part 2. Discuss when each method is most appropriate.</li>
-                    <li>Provide screenshots of your carving configuration (e.g., <code>scalpel.conf</code> or Autopsy module settings) and examples of your reviewed carved files.</li>
+                    <li>Document your carving methodology: which tool you used, your configuration settings, and the total number of files carved vs. files that opened successfully.</li>
+                    <li>Compare your carving results to the metadata-based recovery you performed in Part 2. Specifically: which method recovered more files? Which produced higher-quality (more complete) results? Under what circumstances would each method be the right choice for a forensic examiner?</li>
+                    <li>Provide screenshots of: your Scalpel configuration (or Autopsy File Carver settings), the carved output directory or Autopsy carved files view, and examples of both a valid carved JPEG and a partially corrupted one (if present).</li>
                 </ol>
 
                 <div class="info-box tip">
                     <span class="info-box-icon" aria-hidden="true">🛠️</span>
                     <div class="info-box-content">
-                        <strong>Scalpel Configuration Example:</strong>
-                        <pre><code># scalpel.conf snippet
-# extension  case_sensitive  max_size  header                      [footer]
-jpg          y               20000000  \xff\xd8\xff\xe0\x00\x10    \xff\xd9
-pdf          y               50000000  %PDF                        %%EOF
-docx         y               50000000  PK\x03\x04                  \x50\x4b\x05\x06
-zip          y               100000000 PK\x03\x04                  \x50\x4b\x05\x06</code></pre>
-                        Remember that DOCX (and XLSX, PPTX) files are essentially ZIP archives, so they share the same header and footer signatures.
+                        <strong>Scalpel Configuration for JPEGs:</strong>
+                        <pre><code># scalpel.conf — enable this line for JPEG carving
+# extension  case_sensitive  max_size  header            footer
+jpg          y               10000000  \xff\xd8\xff      \xff\xd9</code></pre>
+                        JPEG files begin with the magic bytes <code>FF D8 FF</code> and end with <code>FF D9</code>. The max size of 10MB is appropriate for camera JPEGs from this era. Note that JPEGs do not have a fixed-length footer — Scalpel will carve from each header to the next <code>FF D9</code> marker it finds, which means fragmented JPEGs may include data from neighboring files between fragments.
                     </div>
                 </div>
             </section>
@@ -655,11 +721,11 @@ zip          y               100000000 PK\x03\x04                  \x50\x4b\x05\
 
                 <h3>Deliverables Checklist:</h3>
                 <ul class="checklist">
-                    <li class="checklist-item"><input type="checkbox" id="del-1"><label for="del-1"><strong>Part 1: File System Identification Report (6 points)</strong> - Including screenshots and documented characteristics for at least three file systems.</label></li>
-                    <li class="checklist-item"><input type="checkbox" id="del-2"><label for="del-2"><strong>Part 2: Deleted File Recovery Report (8 points)</strong> - Including screenshots, metadata, and hashes of recovered files from FAT32 and NTFS (and ext4 if applicable).</label></li>
-                    <li class="checklist-item"><input type="checkbox" id="del-3"><label for="del-3"><strong>Part 3: File Carving Report (6 points)</strong> - Including carving configuration, examples of reviewed carved files, and comparison to metadata recovery.</label></li>
-                    <li class="checklist-item"><input type="checkbox" id="del-4"><label for="del-4">All screenshots are clear, labeled, and relevant.</label></li>
-                    <li class="checklist-item"><input type="checkbox" id="del-5"><label for="del-5">All recovered files (or their hashes) are documented as evidence.</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="del-1"><label for="del-1"><strong>Part 1: File System Identification Report (6 points)</strong> — Screenshots and documented characteristics for FAT (from <code>dfr-05-fat.dd</code>), NTFS (from <code>dfr-05-ntfs.dd</code>), and ext4 (from <code>dfr-05-ext.dd</code>), including <code>mmls</code> and <code>fsstat</code> output for each.</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="del-2"><label for="del-2"><strong>Part 2: Deleted File Recovery Report (8 points)</strong> — Screenshots and documentation of deleted file recovery from all three images: FAT32 via <code>fls</code>/<code>icat</code>, NTFS via Autopsy (with timestamp comparison and MFTECmd output), and ext4 via <code>istat</code>/<code>extundelete</code>.</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="del-3"><label for="del-3"><strong>Part 3: File Carving Report (6 points)</strong> — Carving methodology using <code>nps-2009-canon2-gen6.E01</code>, review of at least 5 carved JPEGs (valid vs. partial/corrupt), and comparison to metadata-based recovery.</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="del-4"><label for="del-4">All screenshots are clear, labeled with the image filename and tool used, and directly support your written findings.</label></li>
+                    <li class="checklist-item"><input type="checkbox" id="del-5"><label for="del-5">All recovered files (or their hashes) are documented as evidence with file size and any notes on completeness.</label></li>
                     <li class="checklist-item"><input type="checkbox" id="del-6"><label for="del-6">File Naming: <code>LastName_FirstName_Lab5.pdf</code></label></li>
                     <li class="checklist-item"><input type="checkbox" id="del-7"><label for="del-7">Submitted via Canvas by the end of Week 5 deadline.</label></li>
                 </ul>
