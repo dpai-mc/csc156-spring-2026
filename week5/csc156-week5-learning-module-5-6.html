@@ -141,14 +141,20 @@
             backdrop-filter: blur(4px);
         }
         
+        /* Sticky header wrapper — holds progress bar + nav together */
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            background: var(--bg-primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+
         /* Progress Bar */
         .progress-container {
             background: var(--bg-primary);
             padding: 1rem 1.5rem;
             border-bottom: 1px solid var(--border-color);
-            position: sticky;
-            top: 0;
-            z-index: 100;
             box-shadow: var(--shadow-sm);
         }
         
@@ -200,7 +206,7 @@
         /* Navigation */
         .module-nav {
             background: var(--bg-primary);
-            padding: 1rem;
+            padding: 0.75rem 1rem;
             border-bottom: 1px solid var(--border-color);
         }
         
@@ -270,6 +276,7 @@
             margin-bottom: 2rem;
             overflow: hidden;
             border: 1px solid var(--border-light);
+            scroll-margin-top: 130px; /* offset for sticky progress bar + nav */
         }
         
         .section-header {
@@ -1186,10 +1193,24 @@
             .tool-comparison {
                 grid-template-columns: 1fr;
             }
+
+            .nav-list a {
+                padding: 0.4rem 0.7rem;
+                font-size: 0.8rem;
+            }
+
+            .progress-container {
+                padding: 0.75rem 1rem;
+            }
+
+            .section {
+                scroll-margin-top: 160px; /* taller on mobile as nav may wrap */
+            }
         }
         
         /* Print Styles */
         @media print {
+            .sticky-header,
             .progress-container,
             .module-nav,
             .section-toggle,
@@ -1253,28 +1274,30 @@
         <div class="header-badge">⏱️ Estimated Time: 40-45 minutes</div>
     </header>
     
-    <div class="progress-container" role="region" aria-label="Module progress">
-        <div class="progress-header">
-            <span class="progress-label">📊 Module 5.6 Progress</span>
-            <span class="progress-percentage" id="progressPercent">0%</span>
+    <div class="sticky-header">
+        <div class="progress-container" role="region" aria-label="Module progress">
+            <div class="progress-header">
+                <span class="progress-label">📊 Module 5.6 Progress</span>
+                <span class="progress-percentage" id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p class="progress-note">💾 Progress is saved for this session only</p>
         </div>
-        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-            <div class="progress-fill" id="progressFill"></div>
-        </div>
-        <p class="progress-note">💾 Progress is saved for this session only</p>
+        
+        <nav class="module-nav" aria-label="Module sections">
+            <ul class="nav-list">
+                <li><a href="#section-overview" class="active">Overview</a></li>
+                <li><a href="#section-autopsy" class="autopsy">Autopsy</a></li>
+                <li><a href="#section-tsk" class="tsk">The Sleuth Kit</a></li>
+                <li><a href="#section-mft-tools" class="tsk">MFT Tools</a></li>
+                <li><a href="#section-carving-tools" class="carving">Carving Tools</a></li>
+                <li><a href="#section-lab-prep" class="lab">Lab Prep</a></li>
+                <li><a href="#section-practice">Practice</a></li>
+            </ul>
+        </nav>
     </div>
-    
-    <nav class="module-nav" aria-label="Module sections">
-        <ul class="nav-list">
-            <li><a href="#section-overview" class="active">Overview</a></li>
-            <li><a href="#section-autopsy" class="autopsy">Autopsy</a></li>
-            <li><a href="#section-tsk" class="tsk">The Sleuth Kit</a></li>
-            <li><a href="#section-mft-tools" class="tsk">MFT Tools</a></li>
-            <li><a href="#section-carving-tools" class="carving">Carving Tools</a></li>
-            <li><a href="#section-lab-prep" class="lab">Lab Prep</a></li>
-            <li><a href="#section-practice">Practice</a></li>
-        </ul>
-    </nav>
     
     <main id="main-content" role="main">
         <!-- Section 1: Overview -->
@@ -2345,11 +2368,12 @@ photorec image.dd
         function updateNavHighlight() {
             const sections = document.querySelectorAll('.section');
             const navLinks = document.querySelectorAll('.nav-list a');
+            const stickyHeaderHeight = document.querySelector('.sticky-header').offsetHeight + 20;
             
             let currentSection = '';
             sections.forEach(section => {
                 const rect = section.getBoundingClientRect();
-                if (rect.top <= 150) {
+                if (rect.top <= stickyHeaderHeight) {
                     currentSection = section.id;
                 }
             });
