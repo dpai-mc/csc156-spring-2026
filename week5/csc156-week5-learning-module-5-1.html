@@ -90,14 +90,20 @@
             margin: 0.25rem 0.75rem;
         }
         
+        /* Sticky header wrapper — holds progress bar + nav together */
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            background: var(--bg-primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+
         /* Progress Bar */
         .progress-container {
             background: var(--bg-primary);
             padding: 1rem 1.5rem;
             border-bottom: 1px solid var(--border-color);
-            position: sticky;
-            top: 0;
-            z-index: 100;
         }
         
         .progress-header {
@@ -137,7 +143,7 @@
         /* Navigation */
         .module-nav {
             background: var(--bg-primary);
-            padding: 1rem;
+            padding: 0.75rem 1rem;
             border-bottom: 1px solid var(--border-color);
         }
         
@@ -190,6 +196,7 @@
             box-shadow: var(--shadow-md);
             margin-bottom: 2rem;
             overflow: hidden;
+            scroll-margin-top: 130px; /* offset for sticky progress bar + nav */
         }
         
         .section-header {
@@ -884,10 +891,24 @@
             .matching-column {
                 max-width: 100%;
             }
+
+            .nav-list a {
+                padding: 0.4rem 0.7rem;
+                font-size: 0.8rem;
+            }
+
+            .progress-container {
+                padding: 0.75rem 1rem;
+            }
+
+            .section {
+                scroll-margin-top: 160px; /* taller on mobile as nav may wrap */
+            }
         }
         
         /* Print Styles */
         @media print {
+            .sticky-header,
             .progress-container,
             .module-nav,
             .section-toggle,
@@ -949,27 +970,29 @@
         </div>
     </header>
     
-    <div class="progress-container" role="region" aria-label="Module progress">
-        <div class="progress-header">
-            <span class="progress-label">📊 Module Progress</span>
-            <span class="progress-percentage" id="progressPercent">0%</span>
+    <div class="sticky-header">
+        <div class="progress-container" role="region" aria-label="Module progress">
+            <div class="progress-header">
+                <span class="progress-label">📊 Module Progress</span>
+                <span class="progress-percentage" id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
         </div>
-        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-            <div class="progress-fill" id="progressFill"></div>
-        </div>
+        
+        <nav class="module-nav" aria-label="Module sections">
+            <ul class="nav-list">
+                <li><a href="#section-overview" class="active">Overview</a></li>
+                <li><a href="#section-definitions">Definitions</a></li>
+                <li><a href="#section-purpose">Purpose</a></li>
+                <li><a href="#section-components">Components</a></li>
+                <li><a href="#section-types">Types</a></li>
+                <li><a href="#section-forensic">Forensic Relevance</a></li>
+                <li><a href="#section-practice">Practice</a></li>
+            </ul>
+        </nav>
     </div>
-    
-    <nav class="module-nav" aria-label="Module sections">
-        <ul class="nav-list">
-            <li><a href="#section-overview" class="active">Overview</a></li>
-            <li><a href="#section-definitions">Definitions</a></li>
-            <li><a href="#section-purpose">Purpose</a></li>
-            <li><a href="#section-components">Components</a></li>
-            <li><a href="#section-types">Types</a></li>
-            <li><a href="#section-forensic">Forensic Relevance</a></li>
-            <li><a href="#section-practice">Practice</a></li>
-        </ul>
-    </nav>
     
     <main id="main-content" role="main">
         <!-- Section 1: Overview -->
@@ -2578,11 +2601,12 @@ File A Detail (Cluster 2):
         function updateNavHighlight() {
             const sections = document.querySelectorAll('.section');
             const navLinks = document.querySelectorAll('.nav-list a');
+            const stickyHeaderHeight = document.querySelector('.sticky-header').offsetHeight + 20;
             
             let currentSection = '';
             sections.forEach(section => {
                 const rect = section.getBoundingClientRect();
-                if (rect.top <= 150) {
+                if (rect.top <= stickyHeaderHeight) {
                     currentSection = section.id;
                 }
             });
