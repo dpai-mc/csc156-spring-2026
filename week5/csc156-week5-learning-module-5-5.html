@@ -148,14 +148,20 @@
             z-index: 1;
         }
         
+        /* Sticky header wrapper — holds progress bar + nav together */
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            background: var(--bg-primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+
         /* Progress Bar */
         .progress-container {
             background: var(--bg-primary);
             padding: 1rem 1.5rem;
             border-bottom: 1px solid var(--border-color);
-            position: sticky;
-            top: 0;
-            z-index: 100;
             box-shadow: var(--shadow-sm);
         }
         
@@ -207,7 +213,7 @@
         /* Navigation */
         .module-nav {
             background: var(--bg-primary);
-            padding: 1rem;
+            padding: 0.75rem 1rem;
             border-bottom: 1px solid var(--border-color);
         }
         
@@ -273,6 +279,7 @@
             margin-bottom: 2rem;
             overflow: hidden;
             border: 1px solid var(--border-light);
+            scroll-margin-top: 130px; /* offset for sticky progress bar + nav */
         }
         
         .section-header {
@@ -601,7 +608,7 @@
             line-height: 1.4;
             white-space: pre;
             overflow-x: auto;
-            color: var(--text-primary);
+            color: #e2e8f0; /* light text to match pre's dark bg-code background — was var(--text-primary) causing dark-on-dark contrast failure */
         }
         
         /* Recovery Method Cards */
@@ -859,6 +866,54 @@
         .decision-node.carving-answer {
             background: linear-gradient(135deg, #fffbeb, #fef3c7);
             border-color: var(--carving-color);
+        }
+        
+        .decision-node.danger {
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+            border-color: var(--danger-color);
+            cursor: default;
+        }
+        .decision-node.danger:hover {
+            transform: none;
+            border-color: var(--danger-color);
+        }
+
+        /* Yes/No answer buttons inside decision nodes */
+        .decision-btn-row {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            margin-top: 0.875rem;
+            flex-wrap: wrap;
+        }
+        .decision-btn {
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .decision-btn.yes {
+            background: var(--recovery-color);
+            color: white;
+        }
+        .decision-btn.yes:hover { background: var(--recovery-dark); transform: translateY(-1px); }
+        .decision-btn.no {
+            background: var(--carving-color);
+            color: white;
+        }
+        .decision-btn.no:hover { background: var(--carving-dark); transform: translateY(-1px); }
+
+        /* Result nodes should not be clickable */
+        .decision-node.recovery-answer,
+        .decision-node.carving-answer {
+            cursor: default;
+        }
+        .decision-node.recovery-answer:hover,
+        .decision-node.carving-answer:hover {
+            transform: none;
         }
         
         .decision-arrow {
@@ -1357,10 +1412,24 @@
             .decision-branches {
                 grid-template-columns: 1fr;
             }
+
+            .nav-list a {
+                padding: 0.4rem 0.7rem;
+                font-size: 0.8rem;
+            }
+
+            .progress-container {
+                padding: 0.75rem 1rem;
+            }
+
+            .section {
+                scroll-margin-top: 160px; /* taller on mobile as nav may wrap */
+            }
         }
         
         /* Print Styles */
         @media print {
+            .sticky-header,
             .progress-container,
             .module-nav,
             .section-toggle,
@@ -1424,29 +1493,31 @@
         <div class="header-badge">⏱️ Estimated Time: 55-60 minutes</div>
     </header>
     
-    <div class="progress-container" role="region" aria-label="Module progress">
-        <div class="progress-header">
-            <span class="progress-label">📊 Module 5.5 Progress</span>
-            <span class="progress-percentage" id="progressPercent">0%</span>
+    <div class="sticky-header">
+        <div class="progress-container" role="region" aria-label="Module progress">
+            <div class="progress-header">
+                <span class="progress-label">📊 Module 5.5 Progress</span>
+                <span class="progress-percentage" id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p class="progress-note">💾 Progress is saved for this session only</p>
         </div>
-        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-            <div class="progress-fill" id="progressFill"></div>
-        </div>
-        <p class="progress-note">💾 Progress is saved for this session only</p>
+        
+        <nav class="module-nav" aria-label="Module sections">
+            <ul class="nav-list">
+                <li><a href="#section-overview" class="active">Overview</a></li>
+                <li><a href="#section-deletion">Deletion</a></li>
+                <li><a href="#section-metadata-recovery" class="recovery">Metadata Recovery</a></li>
+                <li><a href="#section-carving" class="carving">File Carving</a></li>
+                <li><a href="#section-signatures" class="carving">Signatures</a></li>
+                <li><a href="#section-challenges">Challenges</a></li>
+                <li><a href="#section-decision">Decision Guide</a></li>
+                <li><a href="#section-practice">Practice</a></li>
+            </ul>
+        </nav>
     </div>
-    
-    <nav class="module-nav" aria-label="Module sections">
-        <ul class="nav-list">
-            <li><a href="#section-overview" class="active">Overview</a></li>
-            <li><a href="#section-deletion">Deletion</a></li>
-            <li><a href="#section-metadata-recovery" class="recovery">Metadata Recovery</a></li>
-            <li><a href="#section-carving" class="carving">File Carving</a></li>
-            <li><a href="#section-signatures" class="carving">Signatures</a></li>
-            <li><a href="#section-challenges">Challenges</a></li>
-            <li><a href="#section-decision">Decision Guide</a></li>
-            <li><a href="#section-practice">Practice</a></li>
-        </ul>
-    </nav>
     
     <main id="main-content" role="main">
         <!-- Section 1: Overview -->
@@ -2603,93 +2674,98 @@ $ xxd suspicious_document.pdf | head -1
                     <div class="interactive-title"><span aria-hidden="true">🤔</span> Which Recovery Method Should I Use?</div>
                     <p>Answer the questions below to navigate the decision tree.</p>
                     
-                    <div class="decision-tree">
-                        <div class="decision-node question" id="q1" data-state="initial">
-                            <h4>Is the file system intact and mostly uncorrupted?</h4>
-                        </div>
-                        <div class="decision-arrow">↓</div>
-                        <div class="decision-branches" id="branch1">
-                            <div class="decision-branch">
-                                <div class="decision-label">Yes</div>
-                                <div class="decision-node question" id="q2_yes" data-state="q2">
-                                    <h4>Do you need original filenames, timestamps, and full metadata?</h4>
-                                </div>
-                            </div>
-                            <div class="decision-branch">
-                                <div class="decision-label">No</div>
-                                <div class="decision-node question" id="q2_no" data-state="q2">
-                                    <h4>Is the data in unallocated space or on a formatted/damaged drive?</h4>
-                                </div>
+                    <div class="decision-tree" id="decision-tree">
+
+                        <!-- Q1 -->
+                        <div class="decision-node question" id="dt-q1">
+                            <h4>❓ Is the file system intact and mostly uncorrupted?</h4>
+                            <div class="decision-btn-row">
+                                <button class="decision-btn yes" onclick="dtAnswer('q1','yes')">✅ Yes</button>
+                                <button class="decision-btn no"  onclick="dtAnswer('q1','no')">❌ No</button>
                             </div>
                         </div>
-                        <div class="decision-arrow">↓</div>
-                        <div class="decision-branches" id="branch2">
-                            <div class="decision-branch">
-                                <div class="decision-label">Yes (from Q2_Yes)</div>
-                                <div class="decision-node recovery-answer" id="result_metadata">
-                                    <h4>✅ Use Metadata-Based Recovery!</h4>
-                                    <p>This method offers the best chance for complete recovery with all original file system artifacts.</p>
-                                    <button class="btn btn-recovery" onclick="resetDecisionTree()">Start Over</button>
-                                </div>
-                            </div>
-                            <div class="decision-branch">
-                                <div class="decision-label">No (from Q2_Yes)</div>
-                                <div class="decision-node question" id="q3_no_q2yes" data-state="q3">
-                                    <h4>Is the file fragmented?</h4>
-                                </div>
-                            </div>
-                            <div class="decision-branch">
-                                <div class="decision-label">Yes (from Q2_No)</div>
-                                <div class="decision-node carving-answer" id="result_carving_q2no">
-                                    <h4>🔪 Use File Carving!</h4>
-                                    <p>When metadata is lost or unavailable, carving is your best option to recover data by signature.</p>
-                                    <button class="btn btn-carving" onclick="resetDecisionTree()">Start Over</button>
-                                </div>
-                            </div>
-                            <div class="decision-branch">
-                                <div class="decision-label">No (from Q2_No)</div>
-                                <div class="decision-node question" id="q3_no_q2no" data-state="q3">
-                                    <h4>Is the storage an SSD with TRIM active?</h4>
-                                </div>
+
+                        <div class="decision-arrow" id="dt-arrow-1" style="display:none;">↓</div>
+
+                        <!-- Q2a — shown when Q1=Yes -->
+                        <div class="decision-node question" id="dt-q2a" style="display:none;">
+                            <h4>❓ Do you need original filenames, timestamps, and full metadata?</h4>
+                            <div class="decision-btn-row">
+                                <button class="decision-btn yes" onclick="dtAnswer('q2a','yes')">✅ Yes</button>
+                                <button class="decision-btn no"  onclick="dtAnswer('q2a','no')">❌ No</button>
                             </div>
                         </div>
-                        <div class="decision-arrow" id="arrow3" style="display:none;">↓</div>
-                        <div class="decision-branches" id="branch3" style="display:none;">
-                            <div class="decision-branch">
-                                <div class="decision-label">Yes (from Q3_no_q2yes)</div>
-                                <div class="decision-node carving-answer" id="result_carving_frag">
-                                    <h4>🔪 Try File Carving (with fragmentation awareness)!</h4>
-                                    <p>Metadata recovery struggles with fragmentation. Carving might recover partial files. Advanced tools may reassemble.</p>
-                                    <button class="btn btn-carving" onclick="resetDecisionTree()">Start Over</button>
-                                </div>
-                            </div>
-                            <div class="decision-branch">
-                                <div class="decision-label">No (from Q3_no_q2yes)</div>
-                                <div class="decision-node recovery-answer" id="result_metadata_nofrag">
-                                    <h4>✅ Use Metadata-Based Recovery!</h4>
-                                    <p>With intact metadata and no fragmentation, this is the most reliable method.</p>
-                                    <button class="btn btn-recovery" onclick="resetDecisionTree()">Start Over</button>
-                                </div>
-                            </div>
-                            <div class="decision-branch">
-                                <div class="decision-label">Yes (from Q3_no_q2no)</div>
-                                <div class="decision-node danger" id="result_trim_loss">
-                                    <h4>❌ Data Likely Unrecoverable!</h4>
-                                    <p>TRIM on SSDs often zeroes deleted data immediately. Recovery chances are very low.</p>
-                                    <button class="btn btn-primary" onclick="resetDecisionTree()">Start Over</button>
-                                </div>
-                            </div>
-                            <div class="decision-branch">
-                                <div class="decision-label">No (from Q3_no_q2no)</div>
-                                <div class="decision-node carving-answer" id="result_carving_no_trim">
-                                    <h4>🔪 Use File Carving!</h4>
-                                    <p>If metadata is gone but TRIM isn't active, carving is your best bet for raw data recovery.</p>
-                                    <button class="btn btn-carving" onclick="resetDecisionTree()">Start Over</button>
-                                </div>
+
+                        <!-- Q2b — shown when Q1=No -->
+                        <div class="decision-node question" id="dt-q2b" style="display:none;">
+                            <h4>❓ Is the data in unallocated space or on a formatted / damaged drive?</h4>
+                            <div class="decision-btn-row">
+                                <button class="decision-btn yes" onclick="dtAnswer('q2b','yes')">✅ Yes</button>
+                                <button class="decision-btn no"  onclick="dtAnswer('q2b','no')">❌ No</button>
                             </div>
                         </div>
+
+                        <div class="decision-arrow" id="dt-arrow-2" style="display:none;">↓</div>
+
+                        <!-- Q3a — shown when Q1=Yes AND Q2a=No -->
+                        <div class="decision-node question" id="dt-q3a" style="display:none;">
+                            <h4>❓ Is the file fragmented across non-contiguous clusters?</h4>
+                            <div class="decision-btn-row">
+                                <button class="decision-btn yes" onclick="dtAnswer('q3a','yes')">✅ Yes</button>
+                                <button class="decision-btn no"  onclick="dtAnswer('q3a','no')">❌ No</button>
+                            </div>
+                        </div>
+
+                        <!-- Q3b — shown when Q1=No AND Q2b=No -->
+                        <div class="decision-node question" id="dt-q3b" style="display:none;">
+                            <h4>❓ Is the storage device an SSD with TRIM enabled?</h4>
+                            <div class="decision-btn-row">
+                                <button class="decision-btn yes" onclick="dtAnswer('q3b','yes')">✅ Yes</button>
+                                <button class="decision-btn no"  onclick="dtAnswer('q3b','no')">❌ No</button>
+                            </div>
+                        </div>
+
+                        <div class="decision-arrow" id="dt-arrow-3" style="display:none;">↓</div>
+
+                        <!-- Results -->
+                        <div class="decision-node recovery-answer" id="dt-result-metadata" style="display:none;">
+                            <h4>✅ Use Metadata-Based Recovery!</h4>
+                            <p>The file system is intact and you need full metadata. This method offers the best chance for complete recovery with all original file system artifacts — filenames, timestamps, and directory structure.</p>
+                            <button class="btn btn-secondary" onclick="dtReset()" style="margin-top:0.5rem;">🔄 Start Over</button>
+                        </div>
+
+                        <div class="decision-node carving-answer" id="dt-result-carving-q2b" style="display:none;">
+                            <h4>🔪 Use File Carving!</h4>
+                            <p>When the file system is damaged or you're working on a formatted drive, carving scans raw data for file signatures — no metadata needed.</p>
+                            <button class="btn btn-secondary" onclick="dtReset()" style="margin-top:0.5rem;">🔄 Start Over</button>
+                        </div>
+
+                        <div class="decision-node carving-answer" id="dt-result-carving-frag" style="display:none;">
+                            <h4>🔪 Try File Carving (with fragmentation awareness)!</h4>
+                            <p>Metadata recovery struggles with fragmented files. File carving may recover partial files; advanced tools like Scalpel can attempt reassembly from fragments.</p>
+                            <button class="btn btn-secondary" onclick="dtReset()" style="margin-top:0.5rem;">🔄 Start Over</button>
+                        </div>
+
+                        <div class="decision-node recovery-answer" id="dt-result-metadata-nofrag" style="display:none;">
+                            <h4>✅ Use Metadata-Based Recovery!</h4>
+                            <p>Intact metadata with no fragmentation — this is the most reliable method. The complete run list or FAT chain lets tools reconstruct the file perfectly.</p>
+                            <button class="btn btn-secondary" onclick="dtReset()" style="margin-top:0.5rem;">🔄 Start Over</button>
+                        </div>
+
+                        <div class="decision-node danger" id="dt-result-trim" style="display:none;">
+                            <h4>❌ Data Likely Unrecoverable!</h4>
+                            <p>TRIM on SSDs immediately zeroes deleted blocks and notifies the controller to erase them. By the time you acquire the image, the data is typically gone. Acquire immediately and manage expectations.</p>
+                            <button class="btn btn-secondary" onclick="dtReset()" style="margin-top:0.5rem;">🔄 Start Over</button>
+                        </div>
+
+                        <div class="decision-node carving-answer" id="dt-result-carving-notrim" style="display:none;">
+                            <h4>🔪 Use File Carving!</h4>
+                            <p>Metadata is gone but TRIM is not active, so raw data likely still exists on disk. File carving is your best option — scan unallocated space for file signatures.</p>
+                            <button class="btn btn-secondary" onclick="dtReset()" style="margin-top:0.5rem;">🔄 Start Over</button>
+                        </div>
+
                     </div>
-                    <button class="btn btn-secondary" onclick="resetDecisionTree()" style="margin-top: 1rem;">Reset Guide</button>
+                    <button class="btn btn-secondary" onclick="dtReset()" style="margin-top: 1rem;">↺ Reset Guide</button>
                 </div>
                 
                 <div class="checklist" role="list" aria-label="Section completion checklist">
@@ -3077,267 +3153,119 @@ $ xxd suspicious_document.pdf | head -1
         }
         
         // ==================== Decision Tree ====================
-        const decisionStates = {
-            'initial': {
-                question: 'q1',
-                yes: 'q2_yes',
-                no: 'q2_no'
-            },
-            'q2': {
-                yes_q2yes: 'result_metadata',
-                no_q2yes: 'q3_no_q2yes',
-                yes_q2no: 'result_carving_q2no',
-                no_q2no: 'q3_no_q2no'
-            },
-            'q3': {
-                yes_q3no_q2yes: 'result_carving_frag',
-                no_q3no_q2yes: 'result_metadata_nofrag',
-                yes_q3no_q2no: 'result_trim_loss',
-                no_q3no_q2no: 'result_carving_no_trim'
-            }
-        };
+        // Clean step-by-step implementation using explicit Yes/No buttons.
+        // Each question has its own node; answers show the next relevant node only.
 
-        let currentDecisionState = 'initial';
+        const DT_ALL = [
+            'dt-q1','dt-q2a','dt-q2b','dt-q3a','dt-q3b',
+            'dt-result-metadata','dt-result-carving-q2b',
+            'dt-result-carving-frag','dt-result-metadata-nofrag',
+            'dt-result-trim','dt-result-carving-notrim',
+            'dt-arrow-1','dt-arrow-2','dt-arrow-3'
+        ];
 
-        function hideAllDecisionNodes() {
-            document.querySelectorAll('.decision-node').forEach(node => node.style.display = 'none');
-            document.querySelectorAll('.decision-branches').forEach(branch => branch.style.display = 'none');
-            document.getElementById('arrow3').style.display = 'none';
-        }
-
-        function showNode(nodeId) {
-            const node = document.getElementById(nodeId);
-            if (node) {
-                node.style.display = 'block';
-            }
-        }
-
-        function handleDecision(response, fromQuestionId) {
-            hideAllDecisionNodes();
-            
-            if (fromQuestionId === 'q1') {
-                if (response === 'yes') {
-                    currentDecisionState = 'q2';
-                    showNode('q2_yes');
-                    document.getElementById('branch2').style.display = 'grid';
-                    document.getElementById('result_metadata').style.display = 'none'; // Ensure results are hidden initially
-                    document.getElementById('q3_no_q2yes').style.display = 'none';
-                    // Only show the relevant branch options
-                    document.getElementById('branch2').children[0].style.display = 'block'; // Yes from q2_yes
-                    document.getElementById('branch2').children[1].style.display = 'block'; // No from q2_yes
-                    document.getElementById('branch2').children[2].style.display = 'none'; // Hide other branch 2 options
-                    document.getElementById('branch2').children[3].style.display = 'none'; // Hide other branch 2 options
-                } else { // response === 'no'
-                    currentDecisionState = 'q2';
-                    showNode('q2_no');
-                    document.getElementById('branch2').style.display = 'grid';
-                    document.getElementById('result_carving_q2no').style.display = 'none'; // Ensure results are hidden initially
-                    document.getElementById('q3_no_q2no').style.display = 'none';
-                    // Only show the relevant branch options
-                    document.getElementById('branch2').children[0].style.display = 'none'; // Hide other branch 2 options
-                    document.getElementById('branch2').children[1].style.display = 'none'; // Hide other branch 2 options
-                    document.getElementById('branch2').children[2].style.display = 'block'; // Yes from q2_no
-                    document.getElementById('branch2').children[3].style.display = 'block'; // No from q2_no
-                }
-            } else if (fromQuestionId === 'q2_yes') {
-                if (response === 'yes') {
-                    showNode('result_metadata');
-                } else { // response === 'no'
-                    currentDecisionState = 'q3';
-                    showNode('q3_no_q2yes');
-                    document.getElementById('arrow3').style.display = 'block';
-                    document.getElementById('branch3').style.display = 'grid';
-                    document.getElementById('branch3').children[0].style.display = 'block'; // Yes from q3_no_q2yes
-                    document.getElementById('branch3').children[1].style.display = 'block'; // No from q3_no_q2yes
-                    document.getElementById('branch3').children[2].style.display = 'none'; // Hide other branch 3 options
-                    document.getElementById('branch3').children[3].style.display = 'none'; // Hide other branch 3 options
-                }
-            } else if (fromQuestionId === 'q2_no') {
-                if (response === 'yes') {
-                    showNode('result_carving_q2no');
-                } else { // response === 'no'
-                    currentDecisionState = 'q3';
-                    showNode('q3_no_q2no');
-                    document.getElementById('arrow3').style.display = 'block';
-                    document.getElementById('branch3').style.display = 'grid';
-                    document.getElementById('branch3').children[0].style.display = 'none'; // Hide other branch 3 options
-                    document.getElementById('branch3').children[1].style.display = 'none'; // Hide other branch 3 options
-                    document.getElementById('branch3').children[2].style.display = 'block'; // Yes from q3_no_q2no
-                    document.getElementById('branch3').children[3].style.display = 'block'; // No from q3_no_q2no
-                }
-            } else if (fromQuestionId === 'q3_no_q2yes') {
-                if (response === 'yes') {
-                    showNode('result_carving_frag');
-                } else { // response === 'no'
-                    showNode('result_metadata_nofrag');
-                }
-            } else if (fromQuestionId === 'q3_no_q2no') {
-                if (response === 'yes') {
-                    showNode('result_trim_loss');
-                } else { // response === 'no'
-                    showNode('result_carving_no_trim');
-                }
-            }
-        }
-
-        function resetDecisionTree() {
-            hideAllDecisionNodes();
-            showNode('q1');
-            currentDecisionState = 'initial';
-            document.querySelectorAll('.decision-node.question').forEach(node => {
-                node.onclick = function() {
-                    let response = this.textContent.toLowerCase().includes('yes') ? 'yes' : 'no';
-                    handleDecision(response, this.id);
-                };
+        function dtHideAll() {
+            DT_ALL.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
             });
-            // Re-attach specific handlers for q1
-            document.getElementById('q1').onclick = function() {
-                // For the initial question, we need to show the next layer with its questions
-                hideAllDecisionNodes();
-                document.getElementById('branch1').style.display = 'grid';
-                showNode('q2_yes');
-                showNode('q2_no');
-                currentDecisionState = 'q2';
-            };
-            document.getElementById('q2_yes').onclick = function() { handleDecision('yes', 'q2_yes'); };
-            document.getElementById('q2_no').onclick = function() { handleDecision('no', 'q2_no'); };
-            document.getElementById('q3_no_q2yes').onclick = function() { handleDecision('yes', 'q3_no_q2yes'); }; // This is technically a question, but here it acts as a decision point for the branch
-            document.getElementById('q3_no_q2no').onclick = function() { handleDecision('yes', 'q3_no_q2no'); }; // Same here
-            
-            // Re-enable click for the inner decision nodes
-            document.getElementById('q2_yes').onclick = function() {
-                hideAllDecisionNodes();
-                document.getElementById('branch2').style.display = 'grid';
-                showNode('result_metadata'); // Yes path
-                document.getElementById('branch2').children[1].style.display = 'block'; // No path
-                document.getElementById('q3_no_q2yes').style.display = 'block';
-                document.getElementById('arrow3').style.display = 'block';
-                document.getElementById('branch3').style.display = 'grid';
-                document.getElementById('branch3').children[0].style.display = 'block';
-                document.getElementById('branch3').children[1].style.display = 'block';
-                document.getElementById('branch3').children[2].style.display = 'none';
-                document.getElementById('branch3').children[3].style.display = 'none';
-            };
-             document.getElementById('q2_no').onclick = function() {
-                hideAllDecisionNodes();
-                document.getElementById('branch2').style.display = 'grid';
-                showNode('result_carving_q2no'); // Yes path
-                document.getElementById('branch2').children[3].style.display = 'block'; // No path
-                document.getElementById('q3_no_q2no').style.display = 'block';
-                document.getElementById('arrow3').style.display = 'block';
-                document.getElementById('branch3').style.display = 'grid';
-                document.getElementById('branch3').children[0].style.display = 'none';
-                document.getElementById('branch3').children[1].style.display = 'none';
-                document.getElementById('branch3').children[2].style.display = 'block';
-                document.getElementById('branch3').children[3].style.display = 'block';
-            };
-            document.getElementById('q3_no_q2yes').onclick = function() {
-                hideAllDecisionNodes();
-                document.getElementById('branch3').style.display = 'grid';
-                showNode('result_carving_frag'); // Yes path
-                document.getElementById('branch3').children[1].style.display = 'block'; // No path
-                showNode('result_metadata_nofrag');
-            };
-            document.getElementById('q3_no_q2no').onclick = function() {
-                hideAllDecisionNodes();
-                document.getElementById('branch3').style.display = 'grid';
-                showNode('result_trim_loss'); // Yes path
-                document.getElementById('branch3').children[3].style.display = 'block'; // No path
-                showNode('result_carving_no_trim');
-            };
-            
-            document.getElementById('q1').onclick = function() {
-                hideAllDecisionNodes();
-                document.getElementById('branch1').style.display = 'grid';
-                document.getElementById('branch1').children[0].innerHTML = '<div class="decision-label">Yes</div><div class="decision-node question" id="q2_yes" onclick="handleDecision(\'yes\', \'q1\')"><h4>Do you need original filenames, timestamps, and full metadata?</h4></div>';
-                document.getElementById('branch1').children[1].innerHTML = '<div class="decision-label">No</div><div class="decision-node question" id="q2_no" onclick="handleDecision(\'no\', \'q1\')"><h4>Is the data in unallocated space or on a formatted/damaged drive?</h4></div>';
-                showNode('q2_yes');
-                showNode('q2_no');
-            };
-            
-            // Re-assign listeners for the newly created dynamic nodes
-            document.getElementById('branch1').children[0].querySelector('.decision-node').onclick = function() {
-                hideAllDecisionNodes();
-                document.getElementById('branch2').style.display = 'grid';
-                document.getElementById('branch2').children[0].innerHTML = '<div class="decision-label">Yes</div><div class="decision-node recovery-answer" id="result_metadata"><h4>✅ Use Metadata-Based Recovery!</h4><p>This method offers the best chance for complete recovery with all original file system artifacts.</p><button class="btn btn-recovery" onclick="resetDecisionTree()">Start Over</button></div>';
-                document.getElementById('branch2').children[1].innerHTML = '<div class="decision-label">No</div><div class="decision-node question" id="q3_no_q2yes" onclick="handleDecision(\'no\', \'q2_yes\')"><h4>Is the file fragmented?</h4></div>';
-                showNode('result_metadata');
-                showNode('q3_no_q2yes');
-                document.getElementById('arrow3').style.display = 'block';
-                document.getElementById('branch3').style.display = 'grid';
-                document.getElementById('branch3').children[0].innerHTML = '<div class="decision-label">Yes</div><div class="decision-node carving-answer" id="result_carving_frag"><h4>🔪 Try File Carving (with fragmentation awareness)!</h4><p>Metadata recovery struggles with fragmentation. Carving might recover partial files. Advanced tools may reassemble.</p><button class="btn btn-carving" onclick="resetDecisionTree()">Start Over</button></div>';
-                document.getElementById('branch3').children[1].innerHTML = '<div class="decision-label">No</div><div class="decision-node recovery-answer" id="result_metadata_nofrag"><h4>✅ Use Metadata-Based Recovery!</h4><p>With intact metadata and no fragmentation, this is the most reliable method.</p><button class="btn btn-recovery" onclick="resetDecisionTree()">Start Over</button></div>';
-                document.getElementById('branch3').children[2].style.display = 'none';
-                document.getElementById('branch3').children[3].style.display = 'none';
-                
-                document.getElementById('q3_no_q2yes').onclick = function() {
-                    hideAllDecisionNodes();
-                    document.getElementById('branch3').style.display = 'grid';
-                    document.getElementById('branch3').children[0].style.display = 'block';
-                    document.getElementById('branch3').children[1].style.display = 'block';
-                    document.getElementById('branch3').children[2].style.display = 'none';
-                    document.getElementById('branch3').children[3].style.display = 'none';
-                };
-            };
-            
-            document.getElementById('branch1').children[1].querySelector('.decision-node').onclick = function() {
-                hideAllDecisionNodes();
-                document.getElementById('branch2').style.display = 'grid';
-                document.getElementById('branch2').children[2].innerHTML = '<div class="decision-label">Yes</div><div class="decision-node carving-answer" id="result_carving_q2no"><h4>🔪 Use File Carving!</h4><p>When metadata is lost or unavailable, carving is your best option to recover data by signature.</p><button class="btn btn-carving" onclick="resetDecisionTree()">Start Over</button></div>';
-                document.getElementById('branch2').children[3].innerHTML = '<div class="decision-label">No</div><div class="decision-node question" id="q3_no_q2no" onclick="handleDecision(\'no\', \'q2_no\')"><h4>Is the storage an SSD with TRIM active?</h4></div>';
-                showNode('result_carving_q2no');
-                showNode('q3_no_q2no');
-                document.getElementById('arrow3').style.display = 'block';
-                document.getElementById('branch3').style.display = 'grid';
-                document.getElementById('branch3').children[0].style.display = 'none';
-                document.getElementById('branch3').children[1].style.display = 'none';
-                document.getElementById('branch3').children[2].innerHTML = '<div class="decision-label">Yes</div><div class="decision-node danger" id="result_trim_loss"><h4>❌ Data Likely Unrecoverable!</h4><p>TRIM on SSDs often zeroes deleted data immediately. Recovery chances are very low.</p><button class="btn btn-primary" onclick="resetDecisionTree()">Start Over</button></div>';
-                document.getElementById('branch3').children[3].innerHTML = '<div class="decision-label">No</div><div class="decision-node carving-answer" id="result_carving_no_trim"><h4>🔪 Use File Carving!</h4><p>If metadata is gone but TRIM isn\'t active, carving is your best bet for raw data recovery.</p><button class="btn btn-carving" onclick="resetDecisionTree()">Start Over</button></div>';
-                
-                document.getElementById('q3_no_q2no').onclick = function() {
-                    hideAllDecisionNodes();
-                    document.getElementById('branch3').style.display = 'grid';
-                    document.getElementById('branch3').children[0].style.display = 'none';
-                    document.getElementById('branch3').children[1].style.display = 'none';
-                    document.getElementById('branch3').children[2].style.display = 'block';
-                    document.getElementById('branch3').children[3].style.display = 'block';
-                };
-            };
-
-            // Reset the content to ensure all buttons are present for re-binding
-            document.getElementById('branch1').children[0].innerHTML = '<div class="decision-label">Yes</div><div class="decision-node question" id="q2_yes"><h4>Do you need original filenames, timestamps, and full metadata?</h4></div>';
-            document.getElementById('branch1').children[1].innerHTML = '<div class="decision-label">No</div><div class="decision-node question" id="q2_no"><h4>Is the data in unallocated space or on a formatted/damaged drive?</h4></div>';
-            
-            document.getElementById('branch2').children[0].innerHTML = '<div class="decision-label">Yes</div><div class="decision-node recovery-answer" id="result_metadata"><h4>✅ Use Metadata-Based Recovery!</h4><p>This method offers the best chance for complete recovery with all original file system artifacts.</p><button class="btn btn-recovery" onclick="resetDecisionTree()">Start Over</button></div>';
-            document.getElementById('branch2').children[1].innerHTML = '<div class="decision-label">No</div><div class="decision-node question" id="q3_no_q2yes"><h4>Is the file fragmented?</h4></div>';
-            document.getElementById('branch2').children[2].innerHTML = '<div class="decision-label">Yes</div><div class="decision-node carving-answer" id="result_carving_q2no"><h4>🔪 Use File Carving!</h4><p>When metadata is lost or unavailable, carving is your best option to recover data by signature.</p><button class="btn btn-carving" onclick="resetDecisionTree()">Start Over</button></div>';
-            document.getElementById('branch2').children[3].innerHTML = '<div class="decision-label">No</div><div class="decision-node question" id="q3_no_q2no"><h4>Is the storage an SSD with TRIM active?</h4></div>';
-
-            document.getElementById('branch3').children[0].innerHTML = '<div class="decision-label">Yes</div><div class="decision-node carving-answer" id="result_carving_frag"><h4>🔪 Try File Carving (with fragmentation awareness)!</h4><p>Metadata recovery struggles with fragmentation. Carving might recover partial files. Advanced tools may reassemble.</p><button class="btn btn-carving" onclick="resetDecisionTree()">Start Over</button></div>';
-            document.getElementById('branch3').children[1].innerHTML = '<div class="decision-label">No</div><div class="decision-node recovery-answer" id="result_metadata_nofrag"><h4>✅ Use Metadata-Based Recovery!</h4><p>With intact metadata and no fragmentation, this is the most reliable method.</p><button class="btn btn-recovery" onclick="resetDecisionTree()">Start Over</button></div>';
-            document.getElementById('branch3').children[2].innerHTML = '<div class="decision-label">Yes</div><div class="decision-node danger" id="result_trim_loss"><h4>❌ Data Likely Unrecoverable!</h4><p>TRIM on SSDs often zeroes deleted data immediately. Recovery chances are very low.</p><button class="btn btn-primary" onclick="resetDecisionTree()">Start Over</button></div>';
-            document.getElementById('branch3').children[3].innerHTML = '<div class="decision-label">No</div><div class="decision-node carving-answer" id="result_carving_no_trim"><h4>🔪 Use File Carving!</h4><p>If metadata is gone but TRIM isn\'t active, carving is your best bet for raw data recovery.</p><button class="btn btn-carving" onclick="resetDecisionTree()">Start Over</button></div>';
-
-            // Re-bind click handlers for all nodes
-            document.querySelectorAll('.decision-node').forEach(node => {
-                if (node.id.startsWith('q')) {
-                    node.onclick = function() {
-                        const response = this.textContent.toLowerCase().includes('yes') ? 'yes' : 'no';
-                        handleDecision(response, this.id);
-                    };
-                }
-            });
-            // Initial state: only Q1 visible
-            hideAllDecisionNodes();
-            showNode('q1');
         }
 
-        // Initial setup for the decision tree
-        document.addEventListener('DOMContentLoaded', function() {
-            loadProgress();
-            window.addEventListener('scroll', updateNavHighlight);
-            resetDecisionTree(); // Initialize the decision tree
-        });
+        function dtShow(id) {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'block';
+        }
+
+        function dtReset() {
+            dtHideAll();
+            dtShow('dt-q1');
+        }
+
+        function dtAnswer(question, answer) {
+            if (question === 'q1') {
+                if (answer === 'yes') {
+                    // File system intact → ask about metadata needs
+                    dtHideAll();
+                    dtShow('dt-q1');
+                    dtShow('dt-arrow-1');
+                    dtShow('dt-q2a');
+                } else {
+                    // File system corrupt/formatted → ask about unallocated/formatted
+                    dtHideAll();
+                    dtShow('dt-q1');
+                    dtShow('dt-arrow-1');
+                    dtShow('dt-q2b');
+                }
+            } else if (question === 'q2a') {
+                if (answer === 'yes') {
+                    // Need full metadata, FS intact → use metadata recovery
+                    dtHideAll();
+                    dtShow('dt-q1');
+                    dtShow('dt-arrow-1');
+                    dtShow('dt-q2a');
+                    dtShow('dt-arrow-2');
+                    dtShow('dt-result-metadata');
+                } else {
+                    // Don't need full metadata → check for fragmentation
+                    dtHideAll();
+                    dtShow('dt-q1');
+                    dtShow('dt-arrow-1');
+                    dtShow('dt-q2a');
+                    dtShow('dt-arrow-2');
+                    dtShow('dt-q3a');
+                }
+            } else if (question === 'q2b') {
+                if (answer === 'yes') {
+                    // Unallocated/formatted → file carving
+                    dtHideAll();
+                    dtShow('dt-q1');
+                    dtShow('dt-arrow-1');
+                    dtShow('dt-q2b');
+                    dtShow('dt-arrow-2');
+                    dtShow('dt-result-carving-q2b');
+                } else {
+                    // Not unallocated, but FS damaged → check TRIM
+                    dtHideAll();
+                    dtShow('dt-q1');
+                    dtShow('dt-arrow-1');
+                    dtShow('dt-q2b');
+                    dtShow('dt-arrow-2');
+                    dtShow('dt-q3b');
+                }
+            } else if (question === 'q3a') {
+                if (answer === 'yes') {
+                    // Fragmented → file carving with fragmentation awareness
+                    dtHideAll();
+                    dtShow('dt-q1'); dtShow('dt-arrow-1'); dtShow('dt-q2a');
+                    dtShow('dt-arrow-2'); dtShow('dt-q3a');
+                    dtShow('dt-arrow-3');
+                    dtShow('dt-result-carving-frag');
+                } else {
+                    // Not fragmented, metadata intact → use metadata recovery
+                    dtHideAll();
+                    dtShow('dt-q1'); dtShow('dt-arrow-1'); dtShow('dt-q2a');
+                    dtShow('dt-arrow-2'); dtShow('dt-q3a');
+                    dtShow('dt-arrow-3');
+                    dtShow('dt-result-metadata-nofrag');
+                }
+            } else if (question === 'q3b') {
+                if (answer === 'yes') {
+                    // SSD with TRIM → likely unrecoverable
+                    dtHideAll();
+                    dtShow('dt-q1'); dtShow('dt-arrow-1'); dtShow('dt-q2b');
+                    dtShow('dt-arrow-2'); dtShow('dt-q3b');
+                    dtShow('dt-arrow-3');
+                    dtShow('dt-result-trim');
+                } else {
+                    // No TRIM, metadata gone → file carving
+                    dtHideAll();
+                    dtShow('dt-q1'); dtShow('dt-arrow-1'); dtShow('dt-q2b');
+                    dtShow('dt-arrow-2'); dtShow('dt-q3b');
+                    dtShow('dt-arrow-3');
+                    dtShow('dt-result-carving-notrim');
+                }
+            }
+        }
         
         // ==================== Quiz ====================
         const quizAnswers = {
@@ -3438,11 +3366,12 @@ $ xxd suspicious_document.pdf | head -1
         function updateNavHighlight() {
             const sections = document.querySelectorAll('.section');
             const navLinks = document.querySelectorAll('.nav-list a');
+            const stickyHeaderHeight = document.querySelector('.sticky-header').offsetHeight + 20;
             
             let currentSection = '';
             sections.forEach(section => {
                 const rect = section.getBoundingClientRect();
-                if (rect.top <= 150) {
+                if (rect.top <= stickyHeaderHeight) {
                     currentSection = section.id;
                 }
             });
@@ -3459,7 +3388,7 @@ $ xxd suspicious_document.pdf | head -1
         document.addEventListener('DOMContentLoaded', function() {
             loadProgress();
             window.addEventListener('scroll', updateNavHighlight);
-            resetDecisionTree(); // Initialize the decision tree
+            dtReset(); // Initialize the decision tree
         });
     </script>
 </body>
