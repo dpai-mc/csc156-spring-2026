@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="The Sleuth Kit (TSK) Command-Line Tools Guide for Digital Forensics - CSC 156">
+    <meta name="author" content="CSC 156 Digital Forensic Fundamentals">
+    <title>The Sleuth Kit (TSK) Command-Line Tools Guide | CSC 156</title>
+    <style>
+        /* CSS Reset and Base Styles */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #1a5276;
+            --secondary-color: #2980b9;
+            --accent-color: #148f77;
+            --warning-color: #d68910;
+            --error-color: #c0392b;
+            --success-color: #1e8449;
+            --background-color: #ffffff;
+            --surface-color: #f8f9fa;
+            --text-color: #212529;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --code-bg: #2d3748;
+            --code-text: #e2e8f0;
+            --focus-ring: #3182ce;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Skip Link for Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: #ffffff;
+            padding: 8px 16px;
+            z-index: 1000;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .skip-link:focus {
+            top: 0;
+            outline: 3px solid var(--focus-ring);
+            outline-offset: 2px;
+        }
+
+        /* Focus Styles for Accessibility */
+        a:focus,
+        button:focus,
+        input:focus,
+        select:focus,
+        textarea:focus,
+        [tabindex]:focus {
+            outline: 3px solid var(--focus-ring);
+            outline-offset: 2px;
+        }
+
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: #ffffff;
+            padding: 2rem 1rem;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        header p {
+            margin: 0;
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .course-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            margin-top: 0.75rem;
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--surface-color);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        nav a {
+            display: block;
+            padding: 0.5rem 1rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+
+        nav a:hover {
+            background: var(--border-color);
+        }
+
+        nav a:focus {
+            background: var(--border-color);
+        }
+
+        /* Main Content */
+        main {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        section {
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            font-size: 1.75rem;
+            border-bottom: 3px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        h3 {
+            color: var(--text-color);
+            font-size: 1.35rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        h4 {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-top: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Info Boxes */
+        .info-box {
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid;
+        }
+
+        .info-box-note {
+            background: #e8f4fd;
+            border-color: var(--secondary-color);
+        }
+
+        .info-box-warning {
+            background: #fef5e7;
+            border-color: var(--warning-color);
+        }
+
+        .info-box-tip {
+            background: #e8f6f3;
+            border-color: var(--accent-color);
+        }
+
+        .info-box-important {
+            background: #fdedec;
+            border-color: var(--error-color);
+        }
+
+        .info-box-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            white-space: pre;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        code {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        p code,
+        li code,
+        td code {
+            background: var(--surface-color);
+            color: var(--error-color);
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1a202c;
+            color: var(--code-text);
+            padding: 0.5rem 1rem;
+            border-radius: 8px 8px 0 0;
+            font-size: 0.85rem;
+            margin-bottom: 0;
+        }
+
+        .code-header + pre {
+            border-radius: 0 0 8px 8px;
+            margin-top: 0;
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: 1px solid var(--code-text);
+            color: var(--code-text);
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            background: var(--code-text);
+            color: var(--code-bg);
+        }
+
+        .copy-btn:focus {
+            outline: 2px solid var(--focus-ring);
+            outline-offset: 2px;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        thead {
+            background: var(--primary-color);
+            color: #ffffff;
+        }
+
+        th {
+            padding: 0.875rem 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tbody tr:nth-child(even) {
+            background: var(--surface-color);
+        }
+
+        tbody tr:hover {
+            background: #e8f4fd;
+        }
+
+        /* Accordion/Collapsible Sections */
+        .accordion {
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            width: 100%;
+            background: var(--surface-color);
+            border: none;
+            padding: 1rem 1.25rem;
+            text-align: left;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .accordion-header:hover {
+            background: var(--border-color);
+        }
+
+        .accordion-header::after {
+            content: '+';
+            font-size: 1.5rem;
+            font-weight: 400;
+            transition: transform 0.3s ease;
+        }
+
+        .accordion-header[aria-expanded="true"]::after {
+            content: '−';
+        }
+
+        .accordion-content {
+            display: none;
+            padding: 1.25rem;
+            background: #ffffff;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .accordion-content.active {
+            display: block;
+        }
+
+        /* Tabs */
+        .tabs-container {
+            margin-bottom: 2rem;
+        }
+
+        .tab-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .tab-button {
+            background: transparent;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s ease;
+        }
+
+        .tab-button:hover {
+            color: var(--primary-color);
+            background: var(--surface-color);
+        }
+
+        .tab-button[aria-selected="true"] {
+            color: var(--primary-color);
+            border-bottom-color: var(--secondary-color);
+        }
+
+        .tab-panel {
+            display: none;
+            padding: 1.5rem 0;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 0 0 0.75rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-description {
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        /* Workflow Steps */
+        .workflow {
+            counter-reset: step;
+        }
+
+        .workflow-step {
+            position: relative;
+            padding-left: 3.5rem;
+            padding-bottom: 1.5rem;
+            border-left: 2px solid var(--border-color);
+            margin-left: 1rem;
+        }
+
+        .workflow-step:last-child {
+            border-left: 2px solid transparent;
+            padding-bottom: 0;
+        }
+
+        .workflow-step::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: -1rem;
+            top: 0;
+            width: 2rem;
+            height: 2rem;
+            background: var(--secondary-color);
+            color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .workflow-step h4 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--surface-color);
+            border-top: 1px solid var(--border-color);
+            padding: 2rem 1rem;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        footer a {
+            color: var(--secondary-color);
+        }
+
+        /* Utility Classes */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-2 {
+            margin-top: 2rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            nav a {
+                text-align: center;
+            }
+
+            .tab-list {
+                flex-direction: column;
+            }
+
+            .tab-button {
+                border-bottom: none;
+                border-left: 3px solid transparent;
+                margin-bottom: 0;
+                margin-left: 0;
+            }
+
+            .tab-button[aria-selected="true"] {
+                border-left-color: var(--secondary-color);
+                border-bottom-color: transparent;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            nav,
+            .copy-btn {
+                display: none;
+            }
+
+            .accordion-content {
+                display: block !important;
+            }
+
+            .tab-panel {
+                display: block !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header role="banner">
+        <h1>The Sleuth Kit (TSK) Command-Line Tools</h1>
+        <p>A Comprehensive Guide for Digital Forensic Analysis</p>
+        <span class="course-badge">CSC 156 - Digital Forensic Fundamentals</span>
+    </header>
+
+    <nav role="navigation" aria-label="Main navigation">
+        <ul>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#installation">Installation</a></li>
+            <li><a href="#tools">Core Tools</a></li>
+            <li><a href="#workflow">Workflow</a></li>
+            <li><a href="#examples">Examples</a></li>
+            <li><a href="#resources">Resources</a></li>
+        </ul>
+    </nav>
+
+    <main id="main-content" role="main">
+        <!-- Overview Section -->
+        <section id="overview" aria-labelledby="overview-heading">
+            <h2 id="overview-heading">Overview</h2>
+            
+            <p>The Sleuth Kit (TSK) is an open-source collection of command-line tools for digital forensic analysis. Originally developed by Brian Carrier, TSK allows forensic investigators to examine disk images and recover evidence from file systems. It serves as the foundation for the popular Autopsy forensic browser.</p>
+
+            <div class="info-box info-box-note">
+                <div class="info-box-title">
+                    <span aria-hidden="true">📘</span> Learning Connection
+                </div>
+                <p>This guide supports <strong>CSLO 4</strong>: Apply file system analysis techniques to examine storage media and recover digital evidence. TSK tools are referenced in NIST SP 800-86 as recommended forensic software for file system analysis.</p>
+            </div>
+
+            <h3>Key Capabilities</h3>
+            <ul>
+                <li><strong>Volume System Analysis</strong> - Examine partition layouts and volume structures</li>
+                <li><strong>File System Analysis</strong> - Analyze FAT, NTFS, ext2/3/4, HFS+, and other file systems</li>
+                <li><strong>Deleted File Recovery</strong> - Locate and recover deleted files and directories</li>
+                <li><strong>Metadata Examination</strong> - Extract detailed file metadata including timestamps</li>
+                <li><strong>Data Extraction</strong> - Extract file content by inode or block number</li>
+            </ul>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4 class="card-title"><span aria-hidden="true">🔍</span> Non-Invasive</h4>
+                    <p class="card-description">TSK operates in read-only mode, preserving the integrity of evidence during analysis.</p>
+                </div>
+                <div class="card">
+                    <h4 class="card-title"><span aria-hidden="true">📊</span> Comprehensive</h4>
+                    <p class="card-description">Supports multiple file systems and provides detailed metadata extraction capabilities.</p>
+                </div>
+                <div class="card">
+                    <h4 class="card-title"><span aria-hidden="true">⚙️</span> Scriptable</h4>
+                    <p class="card-description">Command-line interface enables automation and integration with other forensic tools.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Installation Section -->
+        <section id="installation" aria-labelledby="installation-heading">
+            <h2 id="installation-heading">Installation</h2>
+
+            <div class="tabs-container">
+                <div role="tablist" class="tab-list" aria-label="Installation instructions by operating system">
+                    <button role="tab" class="tab-button" id="tab-linux" aria-selected="true" aria-controls="panel-linux">Linux</button>
+                    <button role="tab" class="tab-button" id="tab-windows" aria-selected="false" aria-controls="panel-windows">Windows</button>
+                    <button role="tab" class="tab-button" id="tab-macos" aria-selected="false" aria-controls="panel-macos">macOS</button>
+                    <button role="tab" class="tab-button" id="tab-sift" aria-selected="false" aria-controls="panel-sift">SIFT Workstation</button>
+                </div>
+
+                <div role="tabpanel" class="tab-panel active" id="panel-linux" aria-labelledby="tab-linux">
+                    <h3>Linux Installation</h3>
+                    
+                    <h4>Ubuntu/Debian (Package Manager)</h4>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Update package list
+sudo apt update
+
+# Install The Sleuth Kit
+sudo apt install sleuthkit
+
+# Verify installation
+mmls -V</code></pre>
+
+                    <h4>From Source (Latest Version)</h4>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Install dependencies
+sudo apt install build-essential automake libtool libafflib-dev libewf-dev zlib1g-dev
+
+# Download and extract source
+wget https://github.com/sleuthkit/sleuthkit/releases/download/sleuthkit-4.12.1/sleuthkit-4.12.1.tar.gz
+tar -xzf sleuthkit-4.12.1.tar.gz
+cd sleuthkit-4.12.1
+
+# Configure and build
+./configure
+make
+sudo make install
+
+# Update library cache
+sudo ldconfig</code></pre>
+
+                    <div class="info-box info-box-tip">
+                        <div class="info-box-title"><span aria-hidden="true">💡</span> Tip</div>
+                        <p>The package manager version may not be the latest. For the newest features, compile from source or use the SIFT Workstation.</p>
+                    </div>
+                </div>
+
+                <div role="tabpanel" class="tab-panel" id="panel-windows" aria-labelledby="tab-windows">
+                    <h3>Windows Installation</h3>
+                    
+                    <h4>Pre-compiled Binaries</h4>
+                    <ol>
+                        <li>Visit the official download page: <a href="https://www.sleuthkit.org/sleuthkit/download.php" target="_blank" rel="noopener noreferrer">sleuthkit.org/sleuthkit/download.php</a></li>
+                        <li>Download the Windows ZIP package (e.g., <code>sleuthkit-4.12.1-win32.zip</code>)</li>
+                        <li>Extract to a folder (e.g., <code>C:\Tools\sleuthkit</code>)</li>
+                        <li>Add the <code>bin</code> folder to your system PATH</li>
+                    </ol>
+
+                    <h4>Adding to System PATH</h4>
+                    <div class="code-header">
+                        <span>PowerShell (Administrator)</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Add TSK to PATH for current session
+$env:PATH += ";C:\Tools\sleuthkit\bin"
+
+# Verify installation
+mmls -V
+
+# To make permanent, add to system environment variables:
+# System Properties > Advanced > Environment Variables > Path > Edit</code></pre>
+
+                    <div class="info-box info-box-warning">
+                        <div class="info-box-title"><span aria-hidden="true">⚠️</span> Note</div>
+                        <p>Windows Defender may flag forensic tools. You may need to add an exclusion for the TSK folder.</p>
+                    </div>
+                </div>
+
+                <div role="tabpanel" class="tab-panel" id="panel-macos" aria-labelledby="tab-macos">
+                    <h3>macOS Installation</h3>
+                    
+                    <h4>Using Homebrew</h4>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Install Homebrew if not already installed
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install The Sleuth Kit
+brew install sleuthkit
+
+# Verify installation
+mmls -V</code></pre>
+
+                    <h4>From Source</h4>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Install Xcode command line tools
+xcode-select --install
+
+# Install dependencies via Homebrew
+brew install automake libtool afflib libewf
+
+# Download, configure, and build (same as Linux)
+./configure
+make
+sudo make install</code></pre>
+                </div>
+
+                <div role="tabpanel" class="tab-panel" id="panel-sift" aria-labelledby="tab-sift">
+                    <h3>SIFT Workstation</h3>
+                    
+                    <p>The SANS Investigative Forensics Toolkit (SIFT) Workstation comes with The Sleuth Kit pre-installed and configured.</p>
+
+                    <h4>Option 1: Virtual Machine</h4>
+                    <ol>
+                        <li>Download SIFT VM from <a href="https://www.sans.org/tools/sift-workstation/" target="_blank" rel="noopener noreferrer">sans.org/tools/sift-workstation</a></li>
+                        <li>Import into VirtualBox or VMware</li>
+                        <li>TSK tools are immediately available in the terminal</li>
+                    </ol>
+
+                    <h4>Option 2: Install on Ubuntu</h4>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Download and run SIFT CLI installer
+sudo apt install curl
+curl -Lo /tmp/sift-cli-linux https://github.com/teamdfir/sift-cli/releases/latest/download/sift-cli-linux
+sudo mv /tmp/sift-cli-linux /usr/local/bin/sift
+sudo chmod +x /usr/local/bin/sift
+
+# Install SIFT (includes TSK)
+sudo sift install</code></pre>
+
+                    <div class="info-box info-box-tip">
+                        <div class="info-box-title"><span aria-hidden="true">💡</span> Recommended</div>
+                        <p>SIFT Workstation is the recommended environment for this course as it includes TSK, Autopsy, and many other forensic tools pre-configured.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Core Tools Section -->
+        <section id="tools" aria-labelledby="tools-heading">
+            <h2 id="tools-heading">Core TSK Tools</h2>
+
+            <p>The following five tools form the foundation of file system analysis with The Sleuth Kit. Each tool serves a specific purpose in the forensic examination workflow.</p>
+
+            <div class="table-container">
+                <table>
+                    <caption class="visually-hidden">Summary of core TSK command-line tools</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Tool</th>
+                            <th scope="col">Function</th>
+                            <th scope="col">Primary Use</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>mmls</code></td>
+                            <td>Display partition layout</td>
+                            <td>Identify partitions and calculate offsets</td>
+                        </tr>
+                        <tr>
+                            <td><code>fsstat</code></td>
+                            <td>File system statistics</td>
+                            <td>Examine file system metadata and configuration</td>
+                        </tr>
+                        <tr>
+                            <td><code>fls</code></td>
+                            <td>List files and directories</td>
+                            <td>Browse file system contents including deleted files</td>
+                        </tr>
+                        <tr>
+                            <td><code>istat</code></td>
+                            <td>Display inode/MFT entry details</td>
+                            <td>Examine file metadata and timestamps</td>
+                        </tr>
+                        <tr>
+                            <td><code>icat</code></td>
+                            <td>Extract file by inode number</td>
+                            <td>Recover file content from disk image</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tool Accordions -->
+            <div class="accordion">
+                <button class="accordion-header" aria-expanded="false" aria-controls="mmls-content" id="mmls-header">
+                    <span>mmls - Media Management List</span>
+                </button>
+                <div class="accordion-content" id="mmls-content" role="region" aria-labelledby="mmls-header">
+                    <p><code>mmls</code> displays the partition layout of a disk image. It's typically the first tool used when examining a disk image to identify partitions and their sector offsets.</p>
+                    
+                    <h4>Syntax</h4>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code>mmls [options] image_file</code></pre>
+
+                    <h4>Common Options</h4>
+                    <ul>
+                        <li><code>-t type</code> - Specify partition type (dos, gpt, mac, sun)</li>
+                        <li><code>-o offset</code> - Sector offset to volume system</li>
+                        <li><code>-B</code> - Display sizes in bytes</li>
+                        <li><code>-r</code> - Recurse into nested partition tables</li>
+                        <li><code>-V</code> - Display version</li>
+                    </ul>
+
+                    <h4>Example Usage</h4>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># List partitions in a disk image
+mmls evidence.dd
+
+# Example output:
+DOS Partition Table
+Offset Sector: 0
+Units are in 512-byte sectors
+
+      Slot      Start        End          Length       Description
+000:  Meta      0000000000   0000000000   0000000001   Primary Table (#0)
+001:  -------   0000000000   0000002047   0000002048   Unallocated
+002:  000:000   0000002048   0001026047   0001024000   NTFS / exFAT (0x07)
+003:  000:001   0001026048   0002097151   0001071104   Linux (0x83)</code></pre>
+
+                    <div class="info-box info-box-important">
+                        <div class="info-box-title"><span aria-hidden="true">🔑</span> Key Concept</div>
+                        <p>The <strong>Start</strong> sector value is crucial—it becomes the <code>-o</code> (offset) parameter for other TSK tools when analyzing specific partitions.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion">
+                <button class="accordion-header" aria-expanded="false" aria-controls="fsstat-content" id="fsstat-header">
+                    <span>fsstat - File System Statistics</span>
+                </button>
+                <div class="accordion-content" id="fsstat-content" role="region" aria-labelledby="fsstat-header">
+                    <p><code>fsstat</code> displays detailed information about a file system, including type, size, cluster configuration, and metadata structures.</p>
+                    
+                    <h4>Syntax</h4>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code>fsstat [options] -o offset image_file</code></pre>
+
+                    <h4>Common Options</h4>
+                    <ul>
+                        <li><code>-o offset</code> - Sector offset to file system (required for partitioned images)</li>
+                        <li><code>-f fstype</code> - Force file system type (ntfs, fat, ext, etc.)</li>
+                        <li><code>-i imgtype</code> - Image format type (raw, ewf, aff)</li>
+                    </ul>
+
+                    <h4>Example Usage</h4>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Get file system statistics (using offset from mmls)
+fsstat -o 2048 evidence.dd
+
+# Example output for NTFS:
+FILE SYSTEM INFORMATION
+--------------------------------------------
+File System Type: NTFS
+Volume Serial Number: 1234567890ABCDEF
+OEM Name: NTFS    
+Volume Name: Evidence
+Version: Windows XP
+
+METADATA INFORMATION
+--------------------------------------------
+First Cluster of MFT: 786432
+First Cluster of MFT Mirror: 2
+Size of File Record: 1024 bytes
+Size of Index Record: 4096 bytes
+
+CONTENT INFORMATION
+--------------------------------------------
+Sector Size: 512
+Cluster Size: 4096
+Total Cluster Range: 0 - 127999
+Total Sector Range: 0 - 1023999</code></pre>
+
+                    <div class="info-box info-box-note">
+                        <div class="info-box-title"><span aria-hidden="true">📘</span> Forensic Value</div>
+                        <p>The cluster size is important for understanding slack space. The MFT location helps identify where file metadata is stored.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion">
+                <button class="accordion-header" aria-expanded="false" aria-controls="fls-content" id="fls-header">
+                    <span>fls - File List</span>
+                </button>
+                <div class="accordion-content" id="fls-content" role="region" aria-labelledby="fls-header">
+                    <p><code>fls</code> lists files and directories in a file system, including deleted entries. This is essential for identifying files of interest and locating deleted files for recovery.</p>
+                    
+                    <h4>Syntax</h4>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code>fls [options] -o offset image_file [inode]</code></pre>
+
+                    <h4>Common Options</h4>
+                    <ul>
+                        <li><code>-o offset</code> - Sector offset to file system</li>
+                        <li><code>-r</code> - Recurse into subdirectories</li>
+                        <li><code>-d</code> - Show only deleted entries</li>
+                        <li><code>-u</code> - Show only undeleted entries</li>
+                        <li><code>-p</code> - Display full path</li>
+                        <li><code>-m prefix</code> - Output in mactime format (for timeline)</li>
+                        <li><code>-l</code> - Long listing (more details)</li>
+                    </ul>
+
+                    <h4>Output Format</h4>
+                    <p>Each line shows: <code>type/name inode: filename</code></p>
+                    <ul>
+                        <li><code>r/r</code> - Regular file (allocated)</li>
+                        <li><code>d/d</code> - Directory (allocated)</li>
+                        <li><code>r/r *</code> - Regular file (deleted) - asterisk indicates deleted</li>
+                        <li><code>d/d *</code> - Directory (deleted)</li>
+                    </ul>
+
+                    <h4>Example Usage</h4>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># List root directory contents
+fls -o 2048 evidence.dd
+
+# Example output:
+r/r 4-128-3:    $AttrDef
+r/r 8-128-2:    $BadClus
+r/r 8-128-1:    $BadClus:$Bad
+d/d 11-144-4:   Documents
+d/d 25-144-4:   Users
+r/r * 67-128-1: deleted_file.docx
+
+# Recursively list all files with full paths
+fls -o 2048 -r -p evidence.dd
+
+# List only deleted files
+fls -o 2048 -r -d evidence.dd
+
+# List contents of specific directory (inode 25)
+fls -o 2048 evidence.dd 25</code></pre>
+
+                    <div class="info-box info-box-tip">
+                        <div class="info-box-title"><span aria-hidden="true">💡</span> Pro Tip</div>
+                        <p>The inode number (e.g., <code>67-128-1</code>) is used with <code>istat</code> to view metadata and <code>icat</code> to extract file contents.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion">
+                <button class="accordion-header" aria-expanded="false" aria-controls="istat-content" id="istat-header">
+                    <span>istat - Inode Statistics</span>
+                </button>
+                <div class="accordion-content" id="istat-content" role="region" aria-labelledby="istat-header">
+                    <p><code>istat</code> displays detailed metadata about a specific file using its inode (or MFT entry) number. This includes timestamps, size, permissions, and data block locations.</p>
+                    
+                    <h4>Syntax</h4>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code>istat [options] -o offset image_file inode</code></pre>
+
+                    <h4>Common Options</h4>
+                    <ul>
+                        <li><code>-o offset</code> - Sector offset to file system</li>
+                        <li><code>-f fstype</code> - Force file system type</li>
+                        <li><code>-B</code> - Display sizes in bytes</li>
+                        <li><code>-s seconds</code> - Display times in seconds since epoch</li>
+                    </ul>
+
+                    <h4>Example Usage</h4>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># View metadata for inode 67 (from fls output)
+istat -o 2048 evidence.dd 67
+
+# Example output for NTFS:
+MFT Entry Header Values:
+Entry: 67        Sequence: 1
+$LogFile Sequence Number: 12345678
+Allocated File
+Links: 1
+
+$STANDARD_INFORMATION Attribute Values:
+Flags: ARCHIVE
+Owner ID: 0
+Created:        2026-01-15 09:23:45 (UTC)
+File Modified:  2026-01-20 14:30:22 (UTC)
+MFT Modified:   2026-01-20 14:30:22 (UTC)
+Accessed:       2026-02-01 08:15:00 (UTC)
+
+$FILE_NAME Attribute Values:
+Flags: ARCHIVE
+Name: confidential_report.docx
+Parent MFT Entry: 25     Sequence: 1
+Created:        2026-01-15 09:23:45 (UTC)
+File Modified:  2026-01-15 09:23:45 (UTC)
+MFT Modified:   2026-01-15 09:23:45 (UTC)
+Accessed:       2026-01-15 09:23:45 (UTC)
+
+$DATA Attribute Values:
+Type: $DATA (128-3)   Name: N/A   Resident
+Size: 45678   Init Size: 45678
+
+Attributes:
+Type: $STANDARD_INFORMATION (16-0)   Name: N/A   Resident   size: 72
+Type: $FILE_NAME (48-2)   Name: N/A   Resident   size: 104
+Type: $DATA (128-3)   Name: N/A   Non-Resident   size: 45678
+    12345 12346 12347 12348</code></pre>
+
+                    <div class="info-box info-box-important">
+                        <div class="info-box-title"><span aria-hidden="true">🔑</span> MACB Timestamps</div>
+                        <p><strong>M</strong>odified, <strong>A</strong>ccessed, <strong>C</strong>hanged (MFT), <strong>B</strong>orn (Created) - These timestamps are critical evidence for establishing file activity timelines.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion">
+                <button class="accordion-header" aria-expanded="false" aria-controls="icat-content" id="icat-header">
+                    <span>icat - Inode Cat (Extract File)</span>
+                </button>
+                <div class="accordion-content" id="icat-content" role="region" aria-labelledby="icat-header">
+                    <p><code>icat</code> extracts the contents of a file using its inode number. This is essential for recovering deleted files or extracting files without mounting the image.</p>
+                    
+                    <h4>Syntax</h4>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code>icat [options] -o offset image_file inode > output_file</code></pre>
+
+                    <h4>Common Options</h4>
+                    <ul>
+                        <li><code>-o offset</code> - Sector offset to file system</li>
+                        <li><code>-f fstype</code> - Force file system type</li>
+                        <li><code>-r</code> - Recover deleted file (use slack space)</li>
+                        <li><code>-s</code> - Display slack space only</li>
+                    </ul>
+
+                    <h4>Example Usage</h4>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Extract file to current directory
+icat -o 2048 evidence.dd 67 > recovered_document.docx
+
+# Extract deleted file (with recovery mode)
+icat -o 2048 -r evidence.dd 67 > recovered_deleted.docx
+
+# Calculate hash of extracted file
+icat -o 2048 evidence.dd 67 | md5sum
+icat -o 2048 evidence.dd 67 | sha256sum
+
+# Extract and immediately view text file
+icat -o 2048 evidence.dd 42 | less
+
+# Extract file and check file type
+icat -o 2048 evidence.dd 67 > unknown_file
+file unknown_file</code></pre>
+
+                    <div class="info-box info-box-warning">
+                        <div class="info-box-title"><span aria-hidden="true">⚠️</span> Important</div>
+                        <p>Always hash extracted files immediately to document their integrity. Use redirection (<code>&gt;</code>) to save output—without it, binary content displays in the terminal.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Workflow Section -->
+        <section id="workflow" aria-labelledby="workflow-heading">
+            <h2 id="workflow-heading">Forensic Analysis Workflow</h2>
+
+            <p>The following workflow demonstrates the typical sequence of TSK commands used during a file system forensic examination.</p>
+
+            <div class="workflow">
+                <div class="workflow-step">
+                    <h4>Identify Partitions</h4>
+                    <p>Use <code>mmls</code> to examine the disk image and identify all partitions. Note the starting sector offset for each partition.</p>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code>mmls evidence.dd</code></pre>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Examine File System</h4>
+                    <p>Use <code>fsstat</code> with the partition offset to understand the file system structure, type, and configuration.</p>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code>fsstat -o 2048 evidence.dd</code></pre>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>List Files and Directories</h4>
+                    <p>Use <code>fls</code> to browse the file system, identify files of interest, and locate deleted files.</p>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># List all files recursively
+fls -o 2048 -r -p evidence.dd
+
+# Find deleted files only
+fls -o 2048 -r -d evidence.dd</code></pre>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Examine File Metadata</h4>
+                    <p>Use <code>istat</code> to view detailed metadata for files of interest, including timestamps and data locations.</p>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code>istat -o 2048 evidence.dd 67</code></pre>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Extract Evidence Files</h4>
+                    <p>Use <code>icat</code> to extract files for further analysis. Hash all extracted files to document integrity.</p>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Extract file
+icat -o 2048 evidence.dd 67 > recovered_file.docx
+
+# Generate hash
+sha256sum recovered_file.docx > recovered_file.docx.sha256</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Examples Section -->
+        <section id="examples" aria-labelledby="examples-heading">
+            <h2 id="examples-heading">Practical Examples</h2>
+
+            <div class="info-box info-box-note">
+                <div class="info-box-title"><span aria-hidden="true">📘</span> Scenario Context</div>
+                <p>These examples use a hypothetical intellectual property theft investigation where a suspect's workstation containing an NTFS partition has been imaged.</p>
+            </div>
+
+            <h3>Example 1: Complete Analysis of a Disk Image</h3>
+            <div class="code-header">
+                <span>Bash - Complete Workflow</span>
+                <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+            </div>
+<pre><code># Step 1: Identify partitions
+mmls suspect_workstation.dd
+
+# Output shows NTFS partition starting at sector 2048
+
+# Step 2: Get file system details
+fsstat -o 2048 suspect_workstation.dd
+
+# Step 3: List files in the Projects folder (assume inode 150)
+fls -o 2048 suspect_workstation.dd 150
+
+# Step 4: Find all deleted files
+fls -o 2048 -r -d -p suspect_workstation.dd > deleted_files.txt
+
+# Step 5: Examine a suspicious deleted file
+istat -o 2048 suspect_workstation.dd 67
+
+# Step 6: Recover the deleted file
+icat -o 2048 -r suspect_workstation.dd 67 > recovered_project.docx
+sha256sum recovered_project.docx</code></pre>
+
+            <h3>Example 2: Generate Timeline Data</h3>
+            <div class="code-header">
+                <span>Bash - Timeline Generation</span>
+                <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+            </div>
+<pre><code># Generate body file for timeline (mactime format)
+fls -o 2048 -r -m "C:" suspect_workstation.dd > timeline_body.txt
+
+# Create timeline with mactime (part of TSK)
+mactime -b timeline_body.txt -d > timeline.csv
+
+# Filter timeline for specific date range
+mactime -b timeline_body.txt -d 2026-01-01..2026-01-31 > january_timeline.csv</code></pre>
+
+            <h3>Example 3: Batch File Extraction</h3>
+            <div class="code-header">
+                <span>Bash - Batch Recovery Script</span>
+                <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+            </div>
+<pre><code>#!/bin/bash
+# Script to extract all deleted files from a partition
+
+IMAGE="suspect_workstation.dd"
+OFFSET=2048
+OUTPUT_DIR="./recovered_files"
+
+mkdir -p "$OUTPUT_DIR"
+
+# Get list of deleted files with inodes
+fls -o $OFFSET -r -d "$IMAGE" | while read line; do
+    # Extract inode number (first field before colon)
+    inode=$(echo "$line" | grep -oP '\d+-\d+-\d+' | head -1)
+    # Extract filename
+    filename=$(echo "$line" | awk -F: '{print $2}' | xargs)
+    
+    if [ ! -z "$inode" ]; then
+        echo "Recovering: $filename (inode: $inode)"
+        icat -o $OFFSET -r "$IMAGE" "$inode" > "$OUTPUT_DIR/${inode}_${filename}"
+    fi
+done
+
+# Hash all recovered files
+cd "$OUTPUT_DIR"
+sha256sum * > ../recovered_files_hashes.txt</code></pre>
+        </section>
+
+        <!-- Resources Section -->
+        <section id="resources" aria-labelledby="resources-heading">
+            <h2 id="resources-heading">Additional Resources</h2>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4 class="card-title"><span aria-hidden="true">🌐</span> Official Documentation</h4>
+                    <ul>
+                        <li><a href="https://www.sleuthkit.org/sleuthkit/" target="_blank" rel="noopener noreferrer">The Sleuth Kit Official Site</a></li>
+                        <li><a href="https://wiki.sleuthkit.org/" target="_blank" rel="noopener noreferrer">TSK Wiki Documentation</a></li>
+                        <li><a href="https://www.sleuthkit.org/sleuthkit/man/" target="_blank" rel="noopener noreferrer">Man Pages</a></li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4 class="card-title"><span aria-hidden="true">📚</span> Related Standards</h4>
+                    <ul>
+                        <li><a href="https://csrc.nist.gov/publications/detail/sp/800-86/final" target="_blank" rel="noopener noreferrer">NIST SP 800-86: Guide to Integrating Forensic Techniques</a></li>
+                        <li><a href="https://www.nist.gov/itl/ssd/software-quality-group/computer-forensics-tool-testing-program-cftt" target="_blank" rel="noopener noreferrer">NIST CFTT Program</a></li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4 class="card-title"><span aria-hidden="true">🔧</span> Related Tools</h4>
+                    <ul>
+                        <li><a href="https://www.autopsy.com/" target="_blank" rel="noopener noreferrer">Autopsy</a> - GUI built on TSK</li>
+                        <li><a href="https://www.sans.org/tools/sift-workstation/" target="_blank" rel="noopener noreferrer">SIFT Workstation</a> - Forensic VM with TSK</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Quick Reference Card</h3>
+            <div class="table-container">
+                <table>
+                    <caption class="visually-hidden">TSK Quick Reference Commands</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Task</th>
+                            <th scope="col">Command</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>List partitions</td>
+                            <td><code>mmls image.dd</code></td>
+                        </tr>
+                        <tr>
+                            <td>File system info</td>
+                            <td><code>fsstat -o 2048 image.dd</code></td>
+                        </tr>
+                        <tr>
+                            <td>List all files</td>
+                            <td><code>fls -o 2048 -r -p image.dd</code></td>
+                        </tr>
+                        <tr>
+                            <td>List deleted files</td>
+                            <td><code>fls -o 2048 -r -d image.dd</code></td>
+                        </tr>
+                        <tr>
+                            <td>View file metadata</td>
+                            <td><code>istat -o 2048 image.dd [inode]</code></td>
+                        </tr>
+                        <tr>
+                            <td>Extract file</td>
+                            <td><code>icat -o 2048 image.dd [inode] > file</code></td>
+                        </tr>
+                        <tr>
+                            <td>Recover deleted file</td>
+                            <td><code>icat -o 2048 -r image.dd [inode] > file</code></td>
+                        </tr>
+                        <tr>
+                            <td>Generate timeline data</td>
+                            <td><code>fls -o 2048 -r -m "C:" image.dd</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer role="contentinfo">
+        <p><strong>CSC 156 - Digital Forensic Fundamentals</strong></p>
+        <p>The Sleuth Kit is open-source software developed by Brian Carrier and contributors.</p>
+        <p>Reference: <a href="https://www.sleuthkit.org/" target="_blank" rel="noopener noreferrer">sleuthkit.org</a> | NIST SP 800-86</p>
+        <p><small>Last updated: February 2026</small></p>
+    </footer>
+
+    <script>
+        // Tab functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabPanels = document.querySelectorAll('.tab-panel');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const targetId = this.getAttribute('aria-controls');
+
+                    // Update button states
+                    tabButtons.forEach(btn => {
+                        btn.setAttribute('aria-selected', 'false');
+                    });
+                    this.setAttribute('aria-selected', 'true');
+
+                    // Update panel visibility
+                    tabPanels.forEach(panel => {
+                        panel.classList.remove('active');
+                    });
+                    document.getElementById(targetId).classList.add('active');
+                });
+
+                // Keyboard navigation for tabs
+                button.addEventListener('keydown', function(e) {
+                    const tabs = Array.from(tabButtons);
+                    const currentIndex = tabs.indexOf(this);
+                    let newIndex;
+
+                    switch(e.key) {
+                        case 'ArrowRight':
+                        case 'ArrowDown':
+                            newIndex = (currentIndex + 1) % tabs.length;
+                            tabs[newIndex].focus();
+                            tabs[newIndex].click();
+                            e.preventDefault();
+                            break;
+                        case 'ArrowLeft':
+                        case 'ArrowUp':
+                            newIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+                            tabs[newIndex].focus();
+                            tabs[newIndex].click();
+                            e.preventDefault();
+                            break;
+                        case 'Home':
+                            tabs[0].focus();
+                            tabs[0].click();
+                            e.preventDefault();
+                            break;
+                        case 'End':
+                            tabs[tabs.length - 1].focus();
+                            tabs[tabs.length - 1].click();
+                            e.preventDefault();
+                            break;
+                    }
+                });
+            });
+
+            // Accordion functionality
+            const accordionHeaders = document.querySelectorAll('.accordion-header');
+
+            accordionHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                    const content = document.getElementById(this.getAttribute('aria-controls'));
+
+                    // Toggle current accordion
+                    this.setAttribute('aria-expanded', !isExpanded);
+                    content.classList.toggle('active');
+                });
+
+                // Keyboard support for accordions
+                header.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+
+            // Smooth scroll for navigation links
+            document.querySelectorAll('nav a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                        // Set focus to the section for accessibility
+                        targetElement.setAttribute('tabindex', '-1');
+                        targetElement.focus();
+                    }
+                });
+            });
+        });
+
+        // Copy code functionality
+        function copyCode(button) {
+            const codeBlock = button.closest('.code-header').nextElementSibling;
+            const code = codeBlock.textContent;
+
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.setAttribute('aria-label', 'Code copied to clipboard');
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.setAttribute('aria-label', 'Copy code to clipboard');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy code:', err);
+                button.textContent = 'Error';
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+
+        // Announce dynamic content changes for screen readers
+        function announceToScreenReader(message) {
+            const announcement = document.createElement('div');
+            announcement.setAttribute('role', 'status');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.setAttribute('aria-atomic', 'true');
+            announcement.className = 'visually-hidden';
+            announcement.textContent = message;
+            document.body.appendChild(announcement);
+            
+            setTimeout(() => {
+                document.body.removeChild(announcement);
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

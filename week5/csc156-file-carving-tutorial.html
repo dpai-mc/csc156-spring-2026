@@ -1,0 +1,2266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="File Carving and MFT Analysis Tools Guide - Scalpel, PhotoRec, and MFTECmd for Digital Forensics - CSC 156">
+    <meta name="author" content="CSC 156 Digital Forensic Fundamentals">
+    <title>File Carving &amp; MFT Analysis Tools Guide | CSC 156</title>
+    <style>
+        /* CSS Reset and Base Styles */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #1a5276;
+            --secondary-color: #2980b9;
+            --accent-color: #148f77;
+            --warning-color: #d68910;
+            --error-color: #c0392b;
+            --success-color: #1e8449;
+            --background-color: #ffffff;
+            --surface-color: #f8f9fa;
+            --text-color: #212529;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --code-bg: #2d3748;
+            --code-text: #e2e8f0;
+            --focus-ring: #3182ce;
+            --scalpel-color: #8e44ad;
+            --photorec-color: #27ae60;
+            --mftecmd-color: #e67e22;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Skip Link for Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: #ffffff;
+            padding: 8px 16px;
+            z-index: 1000;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .skip-link:focus {
+            top: 0;
+            outline: 3px solid var(--focus-ring);
+            outline-offset: 2px;
+        }
+
+        /* Focus Styles for Accessibility */
+        a:focus,
+        button:focus,
+        input:focus,
+        select:focus,
+        textarea:focus,
+        [tabindex]:focus {
+            outline: 3px solid var(--focus-ring);
+            outline-offset: 2px;
+        }
+
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: #ffffff;
+            padding: 2rem 1rem;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        header p {
+            margin: 0;
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .course-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            margin-top: 0.75rem;
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--surface-color);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        nav a {
+            display: block;
+            padding: 0.5rem 1rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+
+        nav a:hover {
+            background: var(--border-color);
+        }
+
+        nav a:focus {
+            background: var(--border-color);
+        }
+
+        /* Main Content */
+        main {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        section {
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            font-size: 1.75rem;
+            border-bottom: 3px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        h3 {
+            color: var(--text-color);
+            font-size: 1.35rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        h4 {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-top: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Info Boxes */
+        .info-box {
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid;
+        }
+
+        .info-box-note {
+            background: #e8f4fd;
+            border-color: var(--secondary-color);
+        }
+
+        .info-box-warning {
+            background: #fef5e7;
+            border-color: var(--warning-color);
+        }
+
+        .info-box-tip {
+            background: #e8f6f3;
+            border-color: var(--accent-color);
+        }
+
+        .info-box-important {
+            background: #fdedec;
+            border-color: var(--error-color);
+        }
+
+        .info-box-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            white-space: pre;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        code {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        p code,
+        li code,
+        td code {
+            background: var(--surface-color);
+            color: var(--error-color);
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1a202c;
+            color: var(--code-text);
+            padding: 0.5rem 1rem;
+            border-radius: 8px 8px 0 0;
+            font-size: 0.85rem;
+            margin-bottom: 0;
+        }
+
+        .code-header + pre {
+            border-radius: 0 0 8px 8px;
+            margin-top: 0;
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: 1px solid var(--code-text);
+            color: var(--code-text);
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            background: var(--code-text);
+            color: var(--code-bg);
+        }
+
+        .copy-btn:focus {
+            outline: 2px solid var(--focus-ring);
+            outline-offset: 2px;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        thead {
+            background: var(--primary-color);
+            color: #ffffff;
+        }
+
+        th {
+            padding: 0.875rem 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tbody tr:nth-child(even) {
+            background: var(--surface-color);
+        }
+
+        tbody tr:hover {
+            background: #e8f4fd;
+        }
+
+        /* Tool Cards */
+        .tool-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .tool-card {
+            background: #ffffff;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .tool-card:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .tool-card--scalpel {
+            border-top: 4px solid var(--scalpel-color);
+        }
+
+        .tool-card--photorec {
+            border-top: 4px solid var(--photorec-color);
+        }
+
+        .tool-card--mftecmd {
+            border-top: 4px solid var(--mftecmd-color);
+        }
+
+        .tool-card__icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .tool-card__title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 0 0.5rem 0;
+            color: var(--primary-color);
+        }
+
+        .tool-card__subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .tool-card__features {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .tool-card__features li {
+            padding: 0.25rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .tool-card__features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success-color);
+            font-weight: bold;
+        }
+
+        /* Tabs */
+        .tabs-container {
+            margin-bottom: 2rem;
+        }
+
+        .tab-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .tab-button {
+            background: transparent;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s ease;
+        }
+
+        .tab-button:hover {
+            color: var(--primary-color);
+            background: var(--surface-color);
+        }
+
+        .tab-button[aria-selected="true"] {
+            color: var(--primary-color);
+            border-bottom-color: var(--secondary-color);
+        }
+
+        .tab-panel {
+            display: none;
+            padding: 1.5rem 0;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* Accordion/Collapsible Sections */
+        .accordion {
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            width: 100%;
+            background: var(--surface-color);
+            border: none;
+            padding: 1rem 1.25rem;
+            text-align: left;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .accordion-header:hover {
+            background: var(--border-color);
+        }
+
+        .accordion-header::after {
+            content: '+';
+            font-size: 1.5rem;
+            font-weight: 400;
+            transition: transform 0.3s ease;
+        }
+
+        .accordion-header[aria-expanded="true"]::after {
+            content: '−';
+        }
+
+        .accordion-content {
+            display: none;
+            padding: 1.25rem;
+            background: #ffffff;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .accordion-content.active {
+            display: block;
+        }
+
+        /* Config File Display */
+        .config-block {
+            background: #1e1e1e;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .config-header {
+            background: #333;
+            color: #fff;
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .config-content {
+            padding: 1rem;
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        .config-comment {
+            color: #6a9955;
+        }
+
+        .config-keyword {
+            color: #569cd6;
+        }
+
+        .config-value {
+            color: #ce9178;
+        }
+
+        /* Workflow Steps */
+        .workflow {
+            counter-reset: step;
+        }
+
+        .workflow-step {
+            position: relative;
+            padding-left: 3.5rem;
+            padding-bottom: 1.5rem;
+            border-left: 2px solid var(--border-color);
+            margin-left: 1rem;
+        }
+
+        .workflow-step:last-child {
+            border-left: 2px solid transparent;
+            padding-bottom: 0;
+        }
+
+        .workflow-step::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: -1rem;
+            top: 0;
+            width: 2rem;
+            height: 2rem;
+            background: var(--secondary-color);
+            color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .workflow-step h4 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            font-size: 0.9rem;
+        }
+
+        .comparison-table th {
+            background: var(--primary-color);
+            position: sticky;
+            top: 0;
+        }
+
+        .comparison-table .tool-header {
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .comparison-table .feature-name {
+            font-weight: 600;
+            background: var(--surface-color);
+        }
+
+        .comparison-table .check {
+            color: var(--success-color);
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .comparison-table .cross {
+            color: var(--error-color);
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .comparison-table .partial {
+            color: var(--warning-color);
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        /* Interactive Demo */
+        .demo-container {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .demo-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .demo-input-group {
+            margin-bottom: 1rem;
+        }
+
+        .demo-input-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .demo-input-group select,
+        .demo-input-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .demo-output {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            min-height: 60px;
+        }
+
+        /* File Signature Table */
+        .signature-table td:first-child {
+            font-weight: 600;
+        }
+
+        .signature-table code {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--surface-color);
+            border-top: 1px solid var(--border-color);
+            padding: 2rem 1rem;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        footer a {
+            color: var(--secondary-color);
+        }
+
+        /* Utility Classes */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-2 {
+            margin-top: 2rem;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .badge--scalpel {
+            background: var(--scalpel-color);
+            color: #fff;
+        }
+
+        .badge--photorec {
+            background: var(--photorec-color);
+            color: #fff;
+        }
+
+        .badge--mftecmd {
+            background: var(--mftecmd-color);
+            color: #fff;
+        }
+
+        .badge--linux {
+            background: #f4a020;
+            color: #000;
+        }
+
+        .badge--windows {
+            background: #0078d4;
+            color: #fff;
+        }
+
+        .badge--cross-platform {
+            background: var(--accent-color);
+            color: #fff;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            nav a {
+                text-align: center;
+            }
+
+            .tab-list {
+                flex-direction: column;
+            }
+
+            .tab-button {
+                border-bottom: none;
+                border-left: 3px solid transparent;
+                margin-bottom: 0;
+                margin-left: 0;
+            }
+
+            .tab-button[aria-selected="true"] {
+                border-left-color: var(--secondary-color);
+                border-bottom-color: transparent;
+            }
+
+            .tool-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            nav,
+            .copy-btn,
+            .demo-container {
+                display: none;
+            }
+
+            .accordion-content {
+                display: block !important;
+            }
+
+            .tab-panel {
+                display: block !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header role="banner">
+        <h1>File Carving &amp; MFT Analysis Tools</h1>
+        <p>Scalpel, PhotoRec, and MFTECmd for Digital Forensic Investigations</p>
+        <span class="course-badge">CSC 156 - Digital Forensic Fundamentals</span>
+    </header>
+
+    <nav role="navigation" aria-label="Main navigation">
+        <ul>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#scalpel">Scalpel</a></li>
+            <li><a href="#photorec">PhotoRec</a></li>
+            <li><a href="#mftecmd">MFTECmd</a></li>
+            <li><a href="#comparison">Comparison</a></li>
+            <li><a href="#workflow">Workflow</a></li>
+            <li><a href="#resources">Resources</a></li>
+        </ul>
+    </nav>
+
+    <main id="main-content" role="main">
+        <!-- Overview Section -->
+        <section id="overview" aria-labelledby="overview-heading">
+            <h2 id="overview-heading">Overview</h2>
+            
+            <p>File carving and MFT analysis are essential techniques in digital forensics for recovering deleted files and examining file system metadata. This guide covers three powerful tools that complement The Sleuth Kit in your forensic toolkit.</p>
+
+            <div class="info-box info-box-note">
+                <div class="info-box-title">
+                    <span aria-hidden="true">📘</span> Learning Connection
+                </div>
+                <p>These tools support <strong>CSLO 4</strong>: Apply file system analysis techniques to examine storage media and recover digital evidence. As referenced in NIST SP 800-86, analysts should have a forensic toolkit containing various tools that provide the ability to perform quick reviews of data as well as in-depth analysis.</p>
+            </div>
+
+            <div class="tool-cards">
+                <div class="tool-card tool-card--scalpel">
+                    <div class="tool-card__icon" aria-hidden="true">🔪</div>
+                    <h3 class="tool-card__title">Scalpel</h3>
+                    <p class="tool-card__subtitle">High-performance file carver</p>
+                    <ul class="tool-card__features">
+                        <li>Header/footer based carving</li>
+                        <li>Highly configurable signatures</li>
+                        <li>Fast processing speed</li>
+                        <li>Minimal dependencies</li>
+                    </ul>
+                </div>
+
+                <div class="tool-card tool-card--photorec">
+                    <div class="tool-card__icon" aria-hidden="true">📷</div>
+                    <h3 class="tool-card__title">PhotoRec</h3>
+                    <p class="tool-card__subtitle">Multi-format file recovery</p>
+                    <ul class="tool-card__features">
+                        <li>500+ file format support</li>
+                        <li>Cross-platform compatibility</li>
+                        <li>Interactive and command-line modes</li>
+                        <li>Read-only operation</li>
+                    </ul>
+                </div>
+
+                <div class="tool-card tool-card--mftecmd">
+                    <div class="tool-card__icon" aria-hidden="true">📊</div>
+                    <h3 class="tool-card__title">MFTECmd</h3>
+                    <p class="tool-card__subtitle">NTFS MFT parser</p>
+                    <ul class="tool-card__features">
+                        <li>Complete MFT parsing</li>
+                        <li>CSV/JSON output formats</li>
+                        <li>$I30 and $J parsing</li>
+                        <li>Timeline-friendly output</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>When to Use Each Tool</h3>
+            <div class="table-container">
+                <table>
+                    <caption class="visually-hidden">Tool selection guide based on forensic scenario</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Scenario</th>
+                            <th scope="col">Recommended Tool</th>
+                            <th scope="col">Rationale</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Recover specific file types with known signatures</td>
+                            <td><span class="badge badge--scalpel">Scalpel</span></td>
+                            <td>Configurable signatures, fast targeted recovery</td>
+                        </tr>
+                        <tr>
+                            <td>Broad recovery of multiple file types</td>
+                            <td><span class="badge badge--photorec">PhotoRec</span></td>
+                            <td>Extensive format support, minimal configuration</td>
+                        </tr>
+                        <tr>
+                            <td>NTFS file system metadata analysis</td>
+                            <td><span class="badge badge--mftecmd">MFTECmd</span></td>
+                            <td>Complete MFT parsing, timestamp analysis</td>
+                        </tr>
+                        <tr>
+                            <td>Unallocated space carving</td>
+                            <td><span class="badge badge--scalpel">Scalpel</span> / <span class="badge badge--photorec">PhotoRec</span></td>
+                            <td>Both excel at carving from raw data</td>
+                        </tr>
+                        <tr>
+                            <td>Timeline creation from NTFS</td>
+                            <td><span class="badge badge--mftecmd">MFTECmd</span></td>
+                            <td>CSV output integrates with timeline tools</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Scalpel Section -->
+        <section id="scalpel" aria-labelledby="scalpel-heading">
+            <h2 id="scalpel-heading">Scalpel</h2>
+
+            <p>Scalpel is a fast, filesystem-independent file carving tool originally based on Foremost. It reads a database of header and footer definitions and extracts matching files from a disk image or raw device. Scalpel is noted for its speed and configurability.</p>
+
+            <div class="info-box info-box-tip">
+                <div class="info-box-title"><span aria-hidden="true">💡</span> Key Advantage</div>
+                <p>Scalpel's strength lies in its highly configurable signature file, allowing forensic examiners to define custom file types and fine-tune carving parameters for specific investigations.</p>
+            </div>
+
+            <h3>Installation</h3>
+            <div class="tabs-container">
+                <div role="tablist" class="tab-list" aria-label="Scalpel installation by operating system">
+                    <button role="tab" class="tab-button" id="scalpel-tab-linux" aria-selected="true" aria-controls="scalpel-panel-linux">Linux</button>
+                    <button role="tab" class="tab-button" id="scalpel-tab-source" aria-selected="false" aria-controls="scalpel-panel-source">From Source</button>
+                    <button role="tab" class="tab-button" id="scalpel-tab-sift" aria-selected="false" aria-controls="scalpel-panel-sift">SIFT Workstation</button>
+                </div>
+
+                <div role="tabpanel" class="tab-panel active" id="scalpel-panel-linux" aria-labelledby="scalpel-tab-linux">
+                    <h4>Ubuntu/Debian Installation</h4>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Update package list
+sudo apt update
+
+# Install Scalpel
+sudo apt install scalpel
+
+# Verify installation
+scalpel -V
+
+# Locate configuration file
+ls /etc/scalpel/scalpel.conf</code></pre>
+
+                    <h4>Fedora/RHEL Installation</h4>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Install via DNF
+sudo dnf install scalpel
+
+# Verify installation
+scalpel -V</code></pre>
+                </div>
+
+                <div role="tabpanel" class="tab-panel" id="scalpel-panel-source" aria-labelledby="scalpel-tab-source">
+                    <h4>Building from Source</h4>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Install dependencies
+sudo apt install build-essential libtre-dev
+
+# Clone repository
+git clone https://github.com/sleuthkit/scalpel.git
+cd scalpel
+
+# Build and install
+./configure
+make
+sudo make install
+
+# Copy default configuration
+sudo mkdir -p /etc/scalpel
+sudo cp scalpel.conf /etc/scalpel/</code></pre>
+                </div>
+
+                <div role="tabpanel" class="tab-panel" id="scalpel-panel-sift" aria-labelledby="scalpel-tab-sift">
+                    <h4>SIFT Workstation</h4>
+                    <p>Scalpel comes pre-installed on the SIFT Workstation. Verify installation:</p>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Check Scalpel version
+scalpel -V
+
+# Configuration file location on SIFT
+ls /etc/scalpel/scalpel.conf</code></pre>
+                </div>
+            </div>
+
+            <h3>Configuration</h3>
+            <p>Scalpel uses a configuration file (<code>scalpel.conf</code>) to define file signatures. By default, all signatures are commented out—you must uncomment the file types you want to carve.</p>
+
+            <div class="accordion">
+                <button class="accordion-header" aria-expanded="true" aria-controls="scalpel-config-content" id="scalpel-config-header">
+                    <span>Configuration File Format</span>
+                </button>
+                <div class="accordion-content active" id="scalpel-config-content" role="region" aria-labelledby="scalpel-config-header">
+                    <p>Each line in the configuration file defines a file type with the following format:</p>
+                    <div class="code-header">
+                        <span>Configuration Format</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># extension  case_sensitive  max_size  header                    footer
+#
+# extension:      File extension for carved files
+# case_sensitive: y/n for header/footer matching
+# max_size:       Maximum file size to carve
+# header:         Hex or ASCII signature at file start
+# footer:         Hex or ASCII signature at file end (optional)</code></pre>
+
+                    <h4>Example Configuration Entries</h4>
+                    <div class="code-header">
+                        <span>scalpel.conf</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># JPEG images (standard JFIF)
+jpg     y       200000000       \xff\xd8\xff\xe0\x00\x10        \xff\xd9
+
+# JPEG images (EXIF format - digital cameras)
+jpg     y       200000000       \xff\xd8\xff\xe1                \xff\xd9
+
+# PNG images
+png     y       20000000        \x89\x50\x4e\x47\x0d\x0a\x1a\x0a        \x49\x45\x4e\x44\xae\x42\x60\x82
+
+# PDF documents
+pdf     y       50000000        %PDF                            %EOF\x0d
+pdf     y       50000000        %PDF                            %EOF\x0a
+
+# Microsoft Office (DOCX, XLSX, PPTX - ZIP-based)
+docx    y       50000000        \x50\x4b\x03\x04                \x50\x4b\x05\x06
+
+# ZIP archives
+zip     y       100000000       \x50\x4b\x03\x04                \x50\x4b\x05\x06
+
+# Windows executables
+exe     y       50000000        \x4d\x5a
+
+# SQLite databases
+sqlite  y       50000000        \x53\x51\x4c\x69\x74\x65\x20\x66\x6f\x72\x6d\x61\x74</code></pre>
+
+                    <div class="info-box info-box-warning">
+                        <div class="info-box-title"><span aria-hidden="true">⚠️</span> Important</div>
+                        <p>Only uncomment the file types you need. Enabling too many signatures increases processing time and may generate false positives.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Basic Usage</h3>
+            <div class="code-header">
+                <span>Bash</span>
+                <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+            </div>
+<pre><code># Basic syntax
+scalpel [options] image_file
+
+# Common options:
+#   -c config_file   Specify configuration file
+#   -o output_dir    Specify output directory (required)
+#   -b               Carve files from unallocated space only
+#   -q clustersize   Carve only cluster-aligned files
+#   -v               Verbose mode
+#   -n               Don't add extensions to carved files
+#   -p               Perform preview/dry run</code></pre>
+
+            <h4>Example Commands</h4>
+            <div class="code-header">
+                <span>Bash</span>
+                <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+            </div>
+<pre><code># Basic carving with default config
+scalpel -o ./carved_files evidence.dd
+
+# Use custom configuration file
+scalpel -c ./my_scalpel.conf -o ./carved_files evidence.dd
+
+# Verbose output for monitoring progress
+scalpel -v -o ./carved_files evidence.dd
+
+# Preview mode (don't actually carve)
+scalpel -p -o ./preview evidence.dd
+
+# Carve from raw device (requires root)
+sudo scalpel -o ./carved_files /dev/sdb</code></pre>
+
+            <h3>Output Structure</h3>
+            <p>Scalpel creates a directory structure organizing carved files by type:</p>
+            <div class="code-header">
+                <span>Output Directory Structure</span>
+                <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+            </div>
+<pre><code>carved_files/
+├── audit.txt           # Log of carving operations
+├── jpg-0-0/            # JPEG files (first signature)
+│   ├── 00000000.jpg
+│   ├── 00000001.jpg
+│   └── 00000002.jpg
+├── jpg-1-0/            # JPEG files (second signature)
+│   └── 00000000.jpg
+├── pdf-2-0/            # PDF files
+│   ├── 00000000.pdf
+│   └── 00000001.pdf
+└── docx-3-0/           # DOCX files
+    └── 00000000.docx</code></pre>
+
+            <div class="info-box info-box-tip">
+                <div class="info-box-title"><span aria-hidden="true">💡</span> Audit File</div>
+                <p>Always review <code>audit.txt</code>—it contains the offset where each file was found, which is crucial for documenting evidence location.</p>
+            </div>
+        </section>
+
+        <!-- PhotoRec Section -->
+        <section id="photorec" aria-labelledby="photorec-heading">
+            <h2 id="photorec-heading">PhotoRec</h2>
+
+            <p>PhotoRec is a powerful, open-source file recovery tool designed to recover lost files including video, documents, and archives from hard disks, CD-ROMs, and memory cards. Despite its name, PhotoRec recovers far more than just photos—it supports over 500 file formats.</p>
+
+            <div class="info-box info-box-note">
+                <div class="info-box-title"><span aria-hidden="true">📘</span> Course Reference</div>
+                <p>As noted in the Week 5 course materials, PhotoRec provides "multi-format recovery" with "wide format support," making it ideal for comprehensive file carving operations.</p>
+            </div>
+
+            <h3>Installation</h3>
+            <div class="tabs-container">
+                <div role="tablist" class="tab-list" aria-label="PhotoRec installation by operating system">
+                    <button role="tab" class="tab-button" id="photorec-tab-linux" aria-selected="true" aria-controls="photorec-panel-linux">Linux</button>
+                    <button role="tab" class="tab-button" id="photorec-tab-windows" aria-selected="false" aria-controls="photorec-panel-windows">Windows</button>
+                    <button role="tab" class="tab-button" id="photorec-tab-macos" aria-selected="false" aria-controls="photorec-panel-macos">macOS</button>
+                </div>
+
+                <div role="tabpanel" class="tab-panel active" id="photorec-panel-linux" aria-labelledby="photorec-tab-linux">
+                    <h4>Ubuntu/Debian Installation</h4>
+                    <p>PhotoRec is part of the TestDisk package:</p>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Install TestDisk (includes PhotoRec)
+sudo apt update
+sudo apt install testdisk
+
+# Verify installation
+photorec --version
+
+# Alternative: Latest version from source
+wget https://www.cgsecurity.org/testdisk-7.2.linux26-x86_64.tar.bz2
+tar -xjf testdisk-7.2.linux26-x86_64.tar.bz2
+cd testdisk-7.2
+./photorec_static</code></pre>
+                </div>
+
+                <div role="tabpanel" class="tab-panel" id="photorec-panel-windows" aria-labelledby="photorec-tab-windows">
+                    <h4>Windows Installation</h4>
+                    <ol>
+                        <li>Download from <a href="https://www.cgsecurity.org/wiki/TestDisk_Download" target="_blank" rel="noopener noreferrer">cgsecurity.org/wiki/TestDisk_Download</a></li>
+                        <li>Extract the ZIP file to a folder (e.g., <code>C:\Tools\testdisk</code>)</li>
+                        <li>Run <code>photorec_win.exe</code> from the extracted folder</li>
+                    </ol>
+                    <div class="code-header">
+                        <span>PowerShell</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Run PhotoRec from command line
+cd C:\Tools\testdisk
+.\photorec_win.exe
+
+# Or add to PATH and run from anywhere
+$env:PATH += ";C:\Tools\testdisk"
+photorec_win.exe</code></pre>
+
+                    <div class="info-box info-box-tip">
+                        <div class="info-box-title"><span aria-hidden="true">💡</span> Tip</div>
+                        <p>Run as Administrator when accessing physical drives or disk images in protected locations.</p>
+                    </div>
+                </div>
+
+                <div role="tabpanel" class="tab-panel" id="photorec-panel-macos" aria-labelledby="photorec-tab-macos">
+                    <h4>macOS Installation</h4>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Install via Homebrew
+brew install testdisk
+
+# Verify installation
+photorec --version
+
+# Run PhotoRec
+photorec</code></pre>
+                </div>
+            </div>
+
+            <h3>Interactive Mode</h3>
+            <p>PhotoRec features an interactive text-based interface for guided file recovery:</p>
+
+            <div class="accordion">
+                <button class="accordion-header" aria-expanded="false" aria-controls="photorec-interactive-content" id="photorec-interactive-header">
+                    <span>Interactive Mode Walkthrough</span>
+                </button>
+                <div class="accordion-content" id="photorec-interactive-content" role="region" aria-labelledby="photorec-interactive-header">
+                    <div class="workflow">
+                        <div class="workflow-step">
+                            <h4>Select Media</h4>
+                            <p>Launch PhotoRec and select the disk image or device to analyze:</p>
+                            <div class="code-header">
+                                <span>Bash</span>
+                                <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                            </div>
+<pre><code># Launch with disk image
+photorec evidence.dd
+
+# Or launch and select from menu
+photorec</code></pre>
+                        </div>
+
+                        <div class="workflow-step">
+                            <h4>Select Partition</h4>
+                            <p>Choose the partition to recover files from, or select "No partition" to scan the entire image.</p>
+                        </div>
+
+                        <div class="workflow-step">
+                            <h4>Choose File System Type</h4>
+                            <p>Select the appropriate file system:</p>
+                            <ul>
+                                <li><strong>ext2/ext3/ext4</strong> - Linux file systems</li>
+                                <li><strong>Other</strong> - FAT, NTFS, HFS+, and others</li>
+                            </ul>
+                        </div>
+
+                        <div class="workflow-step">
+                            <h4>Select Search Space</h4>
+                            <ul>
+                                <li><strong>Free</strong> - Search only unallocated space (faster)</li>
+                                <li><strong>Whole</strong> - Search entire partition (more thorough)</li>
+                            </ul>
+                        </div>
+
+                        <div class="workflow-step">
+                            <h4>Choose Output Directory</h4>
+                            <p>Navigate to the destination folder and press <kbd>C</kbd> to confirm.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Command-Line Mode</h3>
+            <p>PhotoRec also supports non-interactive command-line operation:</p>
+            <div class="code-header">
+                <span>Bash</span>
+                <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+            </div>
+<pre><code># Basic syntax
+photorec /log /d output_directory image_file
+
+# Common options:
+#   /log             Create photorec.log file
+#   /d directory     Specify output directory
+#   /cmd             Command-line mode (non-interactive)
+
+# Example: Recover from disk image
+photorec /log /d ./recovered evidence.dd
+
+# Command-line mode with specific options
+photorec /cmd evidence.dd partition_type,search,options</code></pre>
+
+            <h3>File Type Selection</h3>
+            <p>PhotoRec can be configured to search for specific file types, improving speed and reducing false positives:</p>
+
+            <div class="accordion">
+                <button class="accordion-header" aria-expanded="false" aria-controls="photorec-filetypes-content" id="photorec-filetypes-header">
+                    <span>Supported File Types (Partial List)</span>
+                </button>
+                <div class="accordion-content" id="photorec-filetypes-content" role="region" aria-labelledby="photorec-filetypes-header">
+                    <div class="table-container">
+                        <table class="signature-table">
+                            <caption class="visually-hidden">PhotoRec supported file types by category</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Category</th>
+                                    <th scope="col">Extensions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Images</td>
+                                    <td><code>jpg</code>, <code>png</code>, <code>gif</code>, <code>bmp</code>, <code>tiff</code>, <code>raw</code>, <code>cr2</code>, <code>nef</code>, <code>psd</code></td>
+                                </tr>
+                                <tr>
+                                    <td>Documents</td>
+                                    <td><code>pdf</code>, <code>doc</code>, <code>docx</code>, <code>xls</code>, <code>xlsx</code>, <code>ppt</code>, <code>pptx</code>, <code>odt</code>, <code>rtf</code></td>
+                                </tr>
+                                <tr>
+                                    <td>Archives</td>
+                                    <td><code>zip</code>, <code>rar</code>, <code>7z</code>, <code>tar</code>, <code>gz</code>, <code>bz2</code></td>
+                                </tr>
+                                <tr>
+                                    <td>Video</td>
+                                    <td><code>mp4</code>, <code>avi</code>, <code>mov</code>, <code>mkv</code>, <code>wmv</code>, <code>flv</code>, <code>3gp</code></td>
+                                </tr>
+                                <tr>
+                                    <td>Audio</td>
+                                    <td><code>mp3</code>, <code>wav</code>, <code>flac</code>, <code>ogg</code>, <code>aac</code>, <code>wma</code>, <code>m4a</code></td>
+                                </tr>
+                                <tr>
+                                    <td>Databases</td>
+                                    <td><code>sqlite</code>, <code>mdb</code>, <code>accdb</code></td>
+                                </tr>
+                                <tr>
+                                    <td>Email</td>
+                                    <td><code>pst</code>, <code>ost</code>, <code>eml</code>, <code>mbox</code></td>
+                                </tr>
+                                <tr>
+                                    <td>Executables</td>
+                                    <td><code>exe</code>, <code>dll</code>, <code>elf</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p>In interactive mode, press <kbd>[</kbd> to access file type options and enable/disable specific formats.</p>
+                </div>
+            </div>
+
+            <h3>Output and Validation</h3>
+            <div class="code-header">
+                <span>Output Directory Structure</span>
+                <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+            </div>
+<pre><code>recovered/
+├── recup_dir.1/        # First batch of recovered files
+│   ├── f0000000.jpg
+│   ├── f0000001.jpg
+│   ├── f0000002.pdf
+│   └── f0000003.docx
+├── recup_dir.2/        # Second batch (created when dir.1 fills)
+│   ├── f0001000.jpg
+│   └── f0001001.png
+└── report.xml          # Recovery report (if enabled)</code></pre>
+
+            <div class="code-header">
+                <span>Bash - Post-Recovery Validation</span>
+                <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+            </div>
+<pre><code># Count recovered files by type
+find ./recovered -name "*.jpg" | wc -l
+find ./recovered -name "*.pdf" | wc -l
+
+# Validate file integrity
+file ./recovered/recup_dir.1/f0000000.jpg
+
+# Generate hashes for documentation
+find ./recovered -type f -exec sha256sum {} \; > recovered_hashes.txt
+
+# Check for corrupted images (requires ImageMagick)
+find ./recovered -name "*.jpg" -exec identify {} \; 2>&1 | grep -i error</code></pre>
+        </section>
+
+        <!-- MFTECmd Section -->
+        <section id="mftecmd" aria-labelledby="mftecmd-heading">
+            <h2 id="mftecmd-heading">MFTECmd</h2>
+
+            <p>MFTECmd is a powerful command-line tool developed by Eric Zimmerman for parsing NTFS Master File Table ($MFT) records. It extracts comprehensive file system metadata and outputs it in formats suitable for timeline analysis and forensic examination.</p>
+
+            <div class="info-box info-box-note">
+                <div class="info-box-title"><span aria-hidden="true">📘</span> Course Reference</div>
+                <p>MFT analysis is covered in Module 5.6.3 of the course materials. MFTECmd enables you to "Perform MFT analysis using specialized tools" and examine NTFS file system metadata including $STANDARD_INFORMATION and $FILE_NAME timestamps.</p>
+            </div>
+
+            <h3>Installation</h3>
+            <div class="tabs-container">
+                <div role="tablist" class="tab-list" aria-label="MFTECmd installation by operating system">
+                    <button role="tab" class="tab-button" id="mftecmd-tab-windows" aria-selected="true" aria-controls="mftecmd-panel-windows">Windows</button>
+                    <button role="tab" class="tab-button" id="mftecmd-tab-linux" aria-selected="false" aria-controls="mftecmd-panel-linux">Linux (Wine)</button>
+                    <button role="tab" class="tab-button" id="mftecmd-tab-sift" aria-selected="false" aria-controls="mftecmd-panel-sift">SIFT Workstation</button>
+                </div>
+
+                <div role="tabpanel" class="tab-panel active" id="mftecmd-panel-windows" aria-labelledby="mftecmd-tab-windows">
+                    <h4>Windows Installation</h4>
+                    <p>MFTECmd is part of Eric Zimmerman's forensic tools collection:</p>
+                    
+                    <h5>Option 1: Download Individual Tool</h5>
+                    <ol>
+                        <li>Visit <a href="https://ericzimmerman.github.io/#!index.md" target="_blank" rel="noopener noreferrer">ericzimmerman.github.io</a></li>
+                        <li>Download <code>MFTECmd.zip</code></li>
+                        <li>Extract to <code>C:\Tools\ZimmermanTools\</code></li>
+                    </ol>
+
+                    <h5>Option 2: Use Get-ZimmermanTools Script</h5>
+                    <div class="code-header">
+                        <span>PowerShell (Administrator)</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Download the installer script
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/EricZimmerman/Get-ZimmermanTools/master/Get-ZimmermanTools.ps1" -OutFile "Get-ZimmermanTools.ps1"
+
+# Run the script to download all tools
+.\Get-ZimmermanTools.ps1 -Dest C:\Tools\ZimmermanTools
+
+# Verify installation
+C:\Tools\ZimmermanTools\MFTECmd.exe --version</code></pre>
+
+                    <h5>Add to System PATH</h5>
+                    <div class="code-header">
+                        <span>PowerShell</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Add to PATH for current session
+$env:PATH += ";C:\Tools\ZimmermanTools"
+
+# Verify
+MFTECmd.exe --version</code></pre>
+
+                    <div class="info-box info-box-warning">
+                        <div class="info-box-title"><span aria-hidden="true">⚠️</span> .NET Requirement</div>
+                        <p>MFTECmd requires .NET 6 or later. Download from <a href="https://dotnet.microsoft.com/download" target="_blank" rel="noopener noreferrer">dotnet.microsoft.com</a> if needed.</p>
+                    </div>
+                </div>
+
+                <div role="tabpanel" class="tab-panel" id="mftecmd-panel-linux" aria-labelledby="mftecmd-tab-linux">
+                    <h4>Linux Installation (via Wine or .NET)</h4>
+                    
+                    <h5>Option 1: Using .NET on Linux</h5>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Install .NET SDK
+wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb
+sudo apt update
+sudo apt install dotnet-sdk-8.0
+
+# Download MFTECmd
+wget https://download.ericzimmerman.com/net6/MFTECmd.zip
+unzip MFTECmd.zip -d ~/Tools/MFTECmd
+
+# Run using dotnet
+dotnet ~/Tools/MFTECmd/MFTECmd.dll --version</code></pre>
+
+                    <h5>Option 2: Using Wine</h5>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Install Wine
+sudo apt install wine64
+
+# Download Windows version
+wget https://download.ericzimmerman.com/net6/MFTECmd.zip
+unzip MFTECmd.zip -d ~/Tools/MFTECmd
+
+# Run via Wine
+wine ~/Tools/MFTECmd/MFTECmd.exe --version</code></pre>
+                </div>
+
+                <div role="tabpanel" class="tab-panel" id="mftecmd-panel-sift" aria-labelledby="mftecmd-tab-sift">
+                    <h4>SIFT Workstation</h4>
+                    <p>Zimmerman tools may need to be installed separately on SIFT:</p>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Install .NET
+sudo apt install dotnet-sdk-8.0
+
+# Download tools
+mkdir -p ~/Tools/ZimmermanTools
+cd ~/Tools/ZimmermanTools
+wget https://download.ericzimmerman.com/net6/MFTECmd.zip
+unzip MFTECmd.zip
+
+# Create alias for convenience
+echo 'alias mftecmd="dotnet ~/Tools/ZimmermanTools/MFTECmd.dll"' >> ~/.bashrc
+source ~/.bashrc
+
+# Verify
+mftecmd --version</code></pre>
+                </div>
+            </div>
+
+            <h3>Extracting the MFT</h3>
+            <p>Before using MFTECmd, you need to extract the $MFT file from the disk image:</p>
+            <div class="code-header">
+                <span>Bash - Using icat from The Sleuth Kit</span>
+                <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+            </div>
+<pre><code># Find the partition offset
+mmls evidence.dd
+
+# Extract $MFT (inode 0 on NTFS)
+icat -o 2048 evidence.dd 0 > extracted_mft.bin
+
+# Verify extraction
+file extracted_mft.bin
+ls -lh extracted_mft.bin</code></pre>
+
+            <div class="code-header">
+                <span>PowerShell - Using FTK Imager or Raw Copy</span>
+                <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+            </div>
+<pre><code># If you have direct access to a mounted NTFS volume
+# (Run as Administrator)
+# Use raw copy tool or FTK Imager to extract:
+# - $MFT
+# - $MFTMirr
+# - $LogFile
+# - $UsnJrnl:$J</code></pre>
+
+            <h3>Basic Usage</h3>
+            <div class="code-header">
+                <span>Command Line</span>
+                <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+            </div>
+<pre><code># Basic syntax
+MFTECmd.exe -f &lt;MFT_file&gt; --csv &lt;output_directory&gt;
+
+# Common options:
+#   -f, --file        Path to $MFT file
+#   --csv             Output directory for CSV files
+#   --csvf            Output filename for CSV
+#   --json            Output directory for JSON files
+#   --body            Output directory for bodyfile (timeline)
+#   --bodyf           Bodyfile filename
+#   --bdl             Drive letter for bodyfile paths
+#   --blf             Use long format for bodyfile
+#   --fls             Output fls-style format
+#   --de              Debug mode (show errors)
+#   --vss             Process Volume Shadow Copies</code></pre>
+
+            <h4>Example Commands</h4>
+            <div class="code-header">
+                <span>PowerShell / Bash</span>
+                <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+            </div>
+<pre><code># Parse MFT and output to CSV
+MFTECmd.exe -f extracted_mft.bin --csv ./output --csvf mft_analysis.csv
+
+# Generate bodyfile for timeline analysis
+MFTECmd.exe -f extracted_mft.bin --body ./output --bodyf mft_timeline.body --bdl C:
+
+# Output to JSON format
+MFTECmd.exe -f extracted_mft.bin --json ./output
+
+# Process with verbose error output
+MFTECmd.exe -f extracted_mft.bin --csv ./output --de
+
+# Linux with dotnet
+dotnet MFTECmd.dll -f extracted_mft.bin --csv ./output</code></pre>
+
+            <h3>Output Fields</h3>
+            <div class="accordion">
+                <button class="accordion-header" aria-expanded="false" aria-controls="mftecmd-fields-content" id="mftecmd-fields-header">
+                    <span>CSV Output Field Descriptions</span>
+                </button>
+                <div class="accordion-content" id="mftecmd-fields-content" role="region" aria-labelledby="mftecmd-fields-header">
+                    <div class="table-container">
+                        <table>
+                            <caption class="visually-hidden">MFTECmd CSV output field descriptions</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Field</th>
+                                    <th scope="col">Description</th>
+                                    <th scope="col">Forensic Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>EntryNumber</code></td>
+                                    <td>MFT entry number</td>
+                                    <td>Unique file identifier</td>
+                                </tr>
+                                <tr>
+                                    <td><code>SequenceNumber</code></td>
+                                    <td>Reuse counter for entry</td>
+                                    <td>Detect entry reuse</td>
+                                </tr>
+                                <tr>
+                                    <td><code>ParentEntryNumber</code></td>
+                                    <td>Parent directory MFT entry</td>
+                                    <td>Reconstruct directory structure</td>
+                                </tr>
+                                <tr>
+                                    <td><code>FileName</code></td>
+                                    <td>File or directory name</td>
+                                    <td>Identify files</td>
+                                </tr>
+                                <tr>
+                                    <td><code>Extension</code></td>
+                                    <td>File extension</td>
+                                    <td>File type identification</td>
+                                </tr>
+                                <tr>
+                                    <td><code>FileSize</code></td>
+                                    <td>Logical file size</td>
+                                    <td>Size analysis</td>
+                                </tr>
+                                <tr>
+                                    <td><code>Created0x10</code></td>
+                                    <td>$STANDARD_INFORMATION created</td>
+                                    <td>File creation time</td>
+                                </tr>
+                                <tr>
+                                    <td><code>LastModified0x10</code></td>
+                                    <td>$SI last modified</td>
+                                    <td>Content modification</td>
+                                </tr>
+                                <tr>
+                                    <td><code>LastRecordChange0x10</code></td>
+                                    <td>$SI MFT record change</td>
+                                    <td>Metadata changes</td>
+                                </tr>
+                                <tr>
+                                    <td><code>LastAccess0x10</code></td>
+                                    <td>$SI last access</td>
+                                    <td>File access time</td>
+                                </tr>
+                                <tr>
+                                    <td><code>Created0x30</code></td>
+                                    <td>$FILE_NAME created</td>
+                                    <td>Original creation time</td>
+                                </tr>
+                                <tr>
+                                    <td><code>LastModified0x30</code></td>
+                                    <td>$FN last modified</td>
+                                    <td>Timestamp comparison</td>
+                                </tr>
+                                <tr>
+                                    <td><code>InUse</code></td>
+                                    <td>Entry allocation status</td>
+                                    <td>Identify deleted files</td>
+                                </tr>
+                                <tr>
+                                    <td><code>IsDirectory</code></td>
+                                    <td>Directory flag</td>
+                                    <td>File vs folder</td>
+                                </tr>
+                                <tr>
+                                    <td><code>HasAds</code></td>
+                                    <td>Alternate Data Streams present</td>
+                                    <td>Hidden data detection</td>
+                                </tr>
+                                <tr>
+                                    <td><code>SiFlags</code></td>
+                                    <td>$SI attribute flags</td>
+                                    <td>Hidden, system, archive</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="info-box info-box-important">
+                        <div class="info-box-title"><span aria-hidden="true">🔑</span> Timestamp Analysis</div>
+                        <p>Comparing <code>0x10</code> ($STANDARD_INFORMATION) and <code>0x30</code> ($FILE_NAME) timestamps can reveal timestamp manipulation—a key anti-forensics detection technique.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Timeline Integration</h3>
+            <div class="code-header">
+                <span>Bash - Creating Timeline with mactime</span>
+                <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+            </div>
+<pre><code># Generate bodyfile from MFT
+MFTECmd.exe -f extracted_mft.bin --body ./output --bodyf mft.body --bdl C:
+
+# Convert to timeline using mactime (from Sleuth Kit)
+mactime -b ./output/mft.body -d > mft_timeline.csv
+
+# Filter by date range
+mactime -b ./output/mft.body -d 2026-01-01..2026-01-31 > january_activity.csv
+
+# Combine with fls bodyfile for comprehensive timeline
+cat fls.body mft.body > combined.body
+mactime -b combined.body -d > full_timeline.csv</code></pre>
+        </section>
+
+        <!-- Comparison Section -->
+        <section id="comparison" aria-labelledby="comparison-heading">
+            <h2 id="comparison-heading">Tool Comparison</h2>
+
+            <div class="table-container">
+                <table class="comparison-table">
+                    <caption class="visually-hidden">Feature comparison of Scalpel, PhotoRec, and MFTECmd</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Feature</th>
+                            <th scope="col" class="tool-header"><span class="badge badge--scalpel">Scalpel</span></th>
+                            <th scope="col" class="tool-header"><span class="badge badge--photorec">PhotoRec</span></th>
+                            <th scope="col" class="tool-header"><span class="badge badge--mftecmd">MFTECmd</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="feature-name">Primary Function</td>
+                            <td>File carving</td>
+                            <td>File recovery</td>
+                            <td>MFT parsing</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Platform</td>
+                            <td><span class="badge badge--linux">Linux</span></td>
+                            <td><span class="badge badge--cross-platform">Cross-platform</span></td>
+                            <td><span class="badge badge--windows">Windows</span></td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">File System Independent</td>
+                            <td class="check" aria-label="Yes">✓</td>
+                            <td class="check" aria-label="Yes">✓</td>
+                            <td class="cross" aria-label="No">✗</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Works on Raw Images</td>
+                            <td class="check" aria-label="Yes">✓</td>
+                            <td class="check" aria-label="Yes">✓</td>
+                            <td class="partial" aria-label="Partial">◐</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Custom Signatures</td>
+                            <td class="check" aria-label="Yes">✓</td>
+                            <td class="cross" aria-label="No">✗</td>
+                            <td class="cross" aria-label="No">✗</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Interactive Mode</td>
+                            <td class="cross" aria-label="No">✗</td>
+                            <td class="check" aria-label="Yes">✓</td>
+                            <td class="cross" aria-label="No">✗</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">CSV Output</td>
+                            <td class="cross" aria-label="No">✗</td>
+                            <td class="cross" aria-label="No">✗</td>
+                            <td class="check" aria-label="Yes">✓</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Timeline Output</td>
+                            <td class="cross" aria-label="No">✗</td>
+                            <td class="cross" aria-label="No">✗</td>
+                            <td class="check" aria-label="Yes">✓</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Timestamp Analysis</td>
+                            <td class="cross" aria-label="No">✗</td>
+                            <td class="cross" aria-label="No">✗</td>
+                            <td class="check" aria-label="Yes">✓</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Deleted File Recovery</td>
+                            <td class="check" aria-label="Yes">✓</td>
+                            <td class="check" aria-label="Yes">✓</td>
+                            <td class="partial" aria-label="Partial">◐</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">ADS Detection</td>
+                            <td class="cross" aria-label="No">✗</td>
+                            <td class="cross" aria-label="No">✗</td>
+                            <td class="check" aria-label="Yes">✓</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Format Count</td>
+                            <td>~50 (configurable)</td>
+                            <td>500+</td>
+                            <td>N/A (metadata)</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-name">Speed</td>
+                            <td>Fast</td>
+                            <td>Moderate</td>
+                            <td>Very Fast</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="info-box info-box-tip">
+                <div class="info-box-title"><span aria-hidden="true">💡</span> Best Practice</div>
+                <p>Use these tools in combination: <strong>MFTECmd</strong> for NTFS metadata analysis and timeline creation, <strong>PhotoRec</strong> for broad file recovery, and <strong>Scalpel</strong> for targeted carving of specific file types with custom signatures.</p>
+            </div>
+        </section>
+
+        <!-- Workflow Section -->
+        <section id="workflow" aria-labelledby="workflow-heading">
+            <h2 id="workflow-heading">Integrated Forensic Workflow</h2>
+
+            <p>This workflow demonstrates how to use Scalpel, PhotoRec, and MFTECmd together with The Sleuth Kit for comprehensive file system analysis.</p>
+
+            <div class="workflow">
+                <div class="workflow-step">
+                    <h4>Initial Image Analysis</h4>
+                    <p>Use The Sleuth Kit to identify partitions and file systems:</p>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Identify partitions
+mmls evidence.dd
+
+# Get file system details
+fsstat -o 2048 evidence.dd</code></pre>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Extract MFT for NTFS Analysis</h4>
+                    <p>If NTFS, extract and parse the MFT:</p>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Extract $MFT using icat
+icat -o 2048 evidence.dd 0 > mft.bin
+
+# Parse with MFTECmd
+MFTECmd.exe -f mft.bin --csv ./analysis --body ./analysis --bdl C:</code></pre>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Identify Deleted Files</h4>
+                    <p>Use fls and MFTECmd output to identify deleted files:</p>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># List deleted files with fls
+fls -o 2048 -r -d evidence.dd > deleted_files.txt
+
+# Filter MFT CSV for deleted entries
+# (InUse = FALSE)</code></pre>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Targeted File Carving with Scalpel</h4>
+                    <p>Carve specific file types from unallocated space:</p>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Edit scalpel.conf to enable needed file types
+# Then run carving
+scalpel -c ./custom_scalpel.conf -o ./carved evidence.dd</code></pre>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Broad Recovery with PhotoRec</h4>
+                    <p>Perform comprehensive file recovery:</p>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Run PhotoRec for broad recovery
+photorec /log /d ./photorec_output evidence.dd</code></pre>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Create Unified Timeline</h4>
+                    <p>Combine all timeline sources:</p>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Generate fls bodyfile
+fls -o 2048 -r -m "C:" evidence.dd > fls.body
+
+# Combine with MFT bodyfile
+cat fls.body ./analysis/mft.body > combined.body
+
+# Create timeline
+mactime -b combined.body -d > full_timeline.csv</code></pre>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Validate and Document</h4>
+                    <p>Hash all recovered files and document findings:</p>
+                    <div class="code-header">
+                        <span>Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code to clipboard">Copy</button>
+                    </div>
+<pre><code># Hash carved files
+find ./carved -type f -exec sha256sum {} \; > carved_hashes.txt
+
+# Hash PhotoRec output
+find ./photorec_output -type f -exec sha256sum {} \; > photorec_hashes.txt
+
+# Validate file types
+find ./carved -type f -exec file {} \; > file_types.txt</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Command Generator -->
+        <section id="generator" aria-labelledby="generator-heading">
+            <h2 id="generator-heading">Command Generator</h2>
+            
+            <div class="demo-container">
+                <div class="demo-title">Interactive Command Builder</div>
+                
+                <div class="demo-input-group">
+                    <label for="tool-select">Select Tool:</label>
+                    <select id="tool-select" onchange="updateCommandGenerator()">
+                        <option value="scalpel">Scalpel</option>
+                        <option value="photorec">PhotoRec</option>
+                        <option value="mftecmd">MFTECmd</option>
+                    </select>
+                </div>
+
+                <div class="demo-input-group">
+                    <label for="input-file">Input File/Image:</label>
+                    <input type="text" id="input-file" value="evidence.dd" oninput="updateCommandGenerator()">
+                </div>
+
+                <div class="demo-input-group">
+                    <label for="output-dir">Output Directory:</label>
+                    <input type="text" id="output-dir" value="./output" oninput="updateCommandGenerator()">
+                </div>
+
+                <div class="demo-input-group" id="config-group">
+                    <label for="config-file">Configuration File (Scalpel):</label>
+                    <input type="text" id="config-file" value="/etc/scalpel/scalpel.conf" oninput="updateCommandGenerator()">
+                </div>
+
+                <div class="demo-input-group" id="offset-group" style="display:none;">
+                    <label for="offset-value">Partition Offset (for MFT extraction):</label>
+                    <input type="text" id="offset-value" value="2048" oninput="updateCommandGenerator()">
+                </div>
+
+                <label>Generated Command:</label>
+                <div class="demo-output" id="generated-command" aria-live="polite">scalpel -c /etc/scalpel/scalpel.conf -o ./output evidence.dd</div>
+            </div>
+        </section>
+
+        <!-- Resources Section -->
+        <section id="resources" aria-labelledby="resources-heading">
+            <h2 id="resources-heading">Additional Resources</h2>
+
+            <div class="tool-cards">
+                <div class="tool-card tool-card--scalpel">
+                    <h4 class="tool-card__title"><span aria-hidden="true">🔪</span> Scalpel Resources</h4>
+                    <ul>
+                        <li><a href="https://github.com/sleuthkit/scalpel" target="_blank" rel="noopener noreferrer">GitHub Repository</a></li>
+                        <li><a href="https://www.digitalforensicstips.com/2007/08/scalpel-tutorial.html" target="_blank" rel="noopener noreferrer">Scalpel Tutorial</a></li>
+                        <li><a href="https://www.sleuthkit.org/" target="_blank" rel="noopener noreferrer">Sleuth Kit Project</a></li>
+                    </ul>
+                </div>
+
+                <div class="tool-card tool-card--photorec">
+                    <h4 class="tool-card__title"><span aria-hidden="true">📷</span> PhotoRec Resources</h4>
+                    <ul>
+                        <li><a href="https://www.cgsecurity.org/wiki/PhotoRec" target="_blank" rel="noopener noreferrer">Official Documentation</a></li>
+                        <li><a href="https://www.cgsecurity.org/wiki/PhotoRec_Step_By_Step" target="_blank" rel="noopener noreferrer">Step-by-Step Guide</a></li>
+                        <li><a href="https://www.cgsecurity.org/wiki/File_Formats_Recovered_By_PhotoRec" target="_blank" rel="noopener noreferrer">Supported File Formats</a></li>
+                    </ul>
+                </div>
+
+                <div class="tool-card tool-card--mftecmd">
+                    <h4 class="tool-card__title"><span aria-hidden="true">📊</span> MFTECmd Resources</h4>
+                    <ul>
+                        <li><a href="https://ericzimmerman.github.io/" target="_blank" rel="noopener noreferrer">Eric Zimmerman's Tools</a></li>
+                        <li><a href="https://github.com/EricZimmerman/MFTECmd" target="_blank" rel="noopener noreferrer">GitHub Repository</a></li>
+                        <li><a href="https://aboutdfir.com/toolsandartifacts/windows/mft-explorer-mftecmd/" target="_blank" rel="noopener noreferrer">AboutDFIR Guide</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Quick Reference</h3>
+            <div class="table-container">
+                <table>
+                    <caption class="visually-hidden">Quick reference commands for all three tools</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Task</th>
+                            <th scope="col">Command</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Carve JPEGs with Scalpel</td>
+                            <td><code>scalpel -c scalpel.conf -o ./carved image.dd</code></td>
+                        </tr>
+                        <tr>
+                            <td>Run PhotoRec interactively</td>
+                            <td><code>photorec image.dd</code></td>
+                        </tr>
+                        <tr>
+                            <td>PhotoRec with logging</td>
+                            <td><code>photorec /log /d ./recovered image.dd</code></td>
+                        </tr>
+                        <tr>
+                            <td>Extract $MFT</td>
+                            <td><code>icat -o 2048 image.dd 0 > mft.bin</code></td>
+                        </tr>
+                        <tr>
+                            <td>Parse MFT to CSV</td>
+                            <td><code>MFTECmd.exe -f mft.bin --csv ./output</code></td>
+                        </tr>
+                        <tr>
+                            <td>MFT to bodyfile</td>
+                            <td><code>MFTECmd.exe -f mft.bin --body ./output --bdl C:</code></td>
+                        </tr>
+                        <tr>
+                            <td>Create timeline</td>
+                            <td><code>mactime -b mft.body -d > timeline.csv</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>File Signature Reference</h3>
+            <div class="table-container">
+                <table class="signature-table">
+                    <caption class="visually-hidden">Common file signatures for carving configuration</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">File Type</th>
+                            <th scope="col">Header (Hex)</th>
+                            <th scope="col">Footer (Hex)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>JPEG</td>
+                            <td><code>FF D8 FF</code></td>
+                            <td><code>FF D9</code></td>
+                        </tr>
+                        <tr>
+                            <td>PNG</td>
+                            <td><code>89 50 4E 47 0D 0A 1A 0A</code></td>
+                            <td><code>49 45 4E 44 AE 42 60 82</code></td>
+                        </tr>
+                        <tr>
+                            <td>PDF</td>
+                            <td><code>25 50 44 46</code> (%PDF)</td>
+                            <td><code>25 45 4F 46</code> (%EOF)</td>
+                        </tr>
+                        <tr>
+                            <td>ZIP/DOCX/XLSX</td>
+                            <td><code>50 4B 03 04</code></td>
+                            <td><code>50 4B 05 06</code></td>
+                        </tr>
+                        <tr>
+                            <td>GIF</td>
+                            <td><code>47 49 46 38</code></td>
+                            <td><code>00 3B</code></td>
+                        </tr>
+                        <tr>
+                            <td>MP4</td>
+                            <td><code>00 00 00 xx 66 74 79 70</code></td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td>SQLite</td>
+                            <td><code>53 51 4C 69 74 65</code></td>
+                            <td>—</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer role="contentinfo">
+        <p><strong>CSC 156 - Digital Forensic Fundamentals</strong></p>
+        <p>Tools referenced: Scalpel (Sleuth Kit), PhotoRec (CGSecurity), MFTECmd (Eric Zimmerman)</p>
+        <p>Reference: <a href="https://csrc.nist.gov/publications/detail/sp/800-86/final" target="_blank" rel="noopener noreferrer">NIST SP 800-86</a></p>
+        <p><small>Last updated: February 2026</small></p>
+    </footer>
+
+    <script>
+        // Tab functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize all tab containers
+            const tabContainers = document.querySelectorAll('.tabs-container');
+            
+            tabContainers.forEach(container => {
+                const tabButtons = container.querySelectorAll('.tab-button');
+                const tabPanels = container.querySelectorAll('.tab-panel');
+
+                tabButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const targetId = this.getAttribute('aria-controls');
+
+                        // Update button states within this container
+                        tabButtons.forEach(btn => {
+                            btn.setAttribute('aria-selected', 'false');
+                        });
+                        this.setAttribute('aria-selected', 'true');
+
+                        // Update panel visibility within this container
+                        tabPanels.forEach(panel => {
+                            panel.classList.remove('active');
+                        });
+                        document.getElementById(targetId).classList.add('active');
+                    });
+
+                    // Keyboard navigation for tabs
+                    button.addEventListener('keydown', function(e) {
+                        const tabs = Array.from(tabButtons);
+                        const currentIndex = tabs.indexOf(this);
+                        let newIndex;
+
+                        switch(e.key) {
+                            case 'ArrowRight':
+                            case 'ArrowDown':
+                                newIndex = (currentIndex + 1) % tabs.length;
+                                tabs[newIndex].focus();
+                                tabs[newIndex].click();
+                                e.preventDefault();
+                                break;
+                            case 'ArrowLeft':
+                            case 'ArrowUp':
+                                newIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+                                tabs[newIndex].focus();
+                                tabs[newIndex].click();
+                                e.preventDefault();
+                                break;
+                            case 'Home':
+                                tabs[0].focus();
+                                tabs[0].click();
+                                e.preventDefault();
+                                break;
+                            case 'End':
+                                tabs[tabs.length - 1].focus();
+                                tabs[tabs.length - 1].click();
+                                e.preventDefault();
+                                break;
+                        }
+                    });
+                });
+            });
+
+            // Accordion functionality
+            const accordionHeaders = document.querySelectorAll('.accordion-header');
+
+            accordionHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                    const content = document.getElementById(this.getAttribute('aria-controls'));
+
+                    // Toggle current accordion
+                    this.setAttribute('aria-expanded', !isExpanded);
+                    content.classList.toggle('active');
+                });
+
+                // Keyboard support for accordions
+                header.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+
+            // Smooth scroll for navigation links
+            document.querySelectorAll('nav a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                        targetElement.setAttribute('tabindex', '-1');
+                        targetElement.focus();
+                    }
+                });
+            });
+
+            // Initialize command generator
+            updateCommandGenerator();
+        });
+
+        // Copy code functionality
+        function copyCode(button) {
+            const codeBlock = button.closest('.code-header').nextElementSibling;
+            const code = codeBlock.textContent;
+
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.setAttribute('aria-label', 'Code copied to clipboard');
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.setAttribute('aria-label', 'Copy code to clipboard');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy code:', err);
+                button.textContent = 'Error';
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+
+        // Command generator functionality
+        function updateCommandGenerator() {
+            const tool = document.getElementById('tool-select').value;
+            const inputFile = document.getElementById('input-file').value || 'evidence.dd';
+            const outputDir = document.getElementById('output-dir').value || './output';
+            const configFile = document.getElementById('config-file').value || '/etc/scalpel/scalpel.conf';
+            const offset = document.getElementById('offset-value').value || '2048';
+            
+            const configGroup = document.getElementById('config-group');
+            const offsetGroup = document.getElementById('offset-group');
+            const commandOutput = document.getElementById('generated-command');
+            
+            let command = '';
+            
+            switch(tool) {
+                case 'scalpel':
+                    configGroup.style.display = 'block';
+                    offsetGroup.style.display = 'none';
+                    command = `scalpel -c ${configFile} -o ${outputDir} ${inputFile}`;
+                    break;
+                case 'photorec':
+                    configGroup.style.display = 'none';
+                    offsetGroup.style.display = 'none';
+                    command = `photorec /log /d ${outputDir} ${inputFile}`;
+                    break;
+                case 'mftecmd':
+                    configGroup.style.display = 'none';
+                    offsetGroup.style.display = 'block';
+                    command = `# Step 1: Extract MFT\nicat -o ${offset} ${inputFile} 0 > mft.bin\n\n# Step 2: Parse MFT\nMFTECmd.exe -f mft.bin --csv ${outputDir} --body ${outputDir} --bdl C:`;
+                    break;
+            }
+            
+            commandOutput.textContent = command;
+        }
+
+        // Announce dynamic content changes for screen readers
+        function announceToScreenReader(message) {
+            const announcement = document.createElement('div');
+            announcement.setAttribute('role', 'status');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.setAttribute('aria-atomic', 'true');
+            announcement.className = 'visually-hidden';
+            announcement.textContent = message;
+            document.body.appendChild(announcement);
+            
+            setTimeout(() => {
+                document.body.removeChild(announcement);
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
