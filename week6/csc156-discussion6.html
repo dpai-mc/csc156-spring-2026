@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CSC 156 Discussion Post 6: Write Blocker Technologies - Explore hardware and software write blocking methods in digital forensics">
+    <title>Discussion Post 6: Write Blocker Technologies | CSC 156</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-color: #1a5f7a;
+            --secondary-color: #2e8b57;
+            --accent-color: #d4740c;
+            --background-color: #ffffff;
+            --surface-color: #f8f9fa;
+            --text-color: #212529;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --success-color: #198754;
+            --warning-color: #fd7e14;
+            --error-color: #dc3545;
+            --info-color: #0dcaf0;
+            --discussion-color: #6f42c1;
+            --focus-ring: 0 0 0 3px rgba(26, 95, 122, 0.4);
+        }
+        
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+        }
+        
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            z-index: 100;
+            text-decoration: none;
+            border-radius: 0 0 4px 0;
+        }
+        
+        .skip-link:focus {
+            top: 0;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 24px 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--discussion-color) 0%, #8b5cf6 100%);
+            color: white;
+            padding: 32px 20px;
+            margin-bottom: 32px;
+        }
+        
+        header .container {
+            padding: 0 20px;
+        }
+        
+        .course-tag {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+        }
+        
+        .assessment-type {
+            display: inline-block;
+            background: rgba(255,255,255,0.3);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.875rem;
+            margin-left: 8px;
+        }
+        
+        h1 {
+            font-size: 1.875rem;
+            margin: 0 0 8px 0;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+        
+        .subtitle {
+            font-size: 1.125rem;
+            opacity: 0.95;
+            margin: 0;
+        }
+        
+        .meta-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255,255,255,0.3);
+            font-size: 0.875rem;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            color: var(--discussion-color);
+            margin: 40px 0 16px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--discussion-color);
+        }
+        
+        h3 {
+            font-size: 1.25rem;
+            color: var(--text-color);
+            margin: 32px 0 12px 0;
+        }
+        
+        h4 {
+            font-size: 1.1rem;
+            color: var(--text-color);
+            margin: 24px 0 8px 0;
+        }
+        
+        p {
+            margin: 0 0 16px 0;
+        }
+        
+        a {
+            color: var(--discussion-color);
+            text-decoration: underline;
+        }
+        
+        a:hover, a:focus {
+            color: #5a32a3;
+        }
+        
+        a:focus {
+            outline: none;
+            box-shadow: var(--focus-ring);
+            border-radius: 2px;
+        }
+        
+        .alert {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 24px 0;
+            border-left: 4px solid;
+        }
+        
+        .alert-info {
+            background-color: #f3e8ff;
+            border-color: var(--discussion-color);
+        }
+        
+        .alert-warning {
+            background-color: #fff8e6;
+            border-color: var(--warning-color);
+        }
+        
+        .alert-success {
+            background-color: #e8f5e9;
+            border-color: var(--success-color);
+        }
+        
+        .alert-title {
+            font-weight: 700;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .prompt-box {
+            background: linear-gradient(135deg, #f8f4ff 0%, #f0e6ff 100%);
+            border: 2px solid var(--discussion-color);
+            border-radius: 12px;
+            padding: 28px;
+            margin: 24px 0;
+        }
+        
+        .prompt-box h3 {
+            margin-top: 0;
+            color: var(--discussion-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .prompt-icon {
+            font-size: 1.5rem;
+        }
+        
+        .prompt-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--text-color);
+            margin-bottom: 0;
+        }
+        
+        .topic-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 16px 0;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        
+        .topic-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: var(--discussion-color);
+        }
+        
+        .topic-card h4 {
+            margin-top: 0;
+            color: var(--discussion-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .topic-number {
+            background: var(--discussion-color);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95rem;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 14px 16px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+        
+        .comparison-table th {
+            background: var(--discussion-color);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .comparison-table tbody tr:nth-child(even) {
+            background: var(--surface-color);
+        }
+        
+        .comparison-table tbody tr:hover {
+            background: #f0e6ff;
+        }
+        
+        .pro-con-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 20px 0;
+        }
+        
+        @media (max-width: 600px) {
+            .pro-con-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .pro-box, .con-box {
+            padding: 16px;
+            border-radius: 8px;
+        }
+        
+        .pro-box {
+            background: #e8f5e9;
+            border: 1px solid var(--success-color);
+        }
+        
+        .con-box {
+            background: #fdeaea;
+            border: 1px solid var(--error-color);
+        }
+        
+        .pro-box h4, .con-box h4 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .pro-box h4 {
+            color: var(--success-color);
+        }
+        
+        .con-box h4 {
+            color: var(--error-color);
+        }
+        
+        .pro-box ul, .con-box ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .pro-box li, .con-box li {
+            padding: 4px 0;
+        }
+        
+        .rubric-section {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+        
+        .rubric-section h3 {
+            margin-top: 0;
+            color: var(--discussion-color);
+        }
+        
+        .rubric-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.9rem;
+        }
+        
+        .rubric-table th,
+        .rubric-table td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+        
+        .rubric-table th {
+            background: var(--discussion-color);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .rubric-table tbody tr:nth-child(even) {
+            background: white;
+        }
+        
+        .points-badge {
+            display: inline-block;
+            background: var(--secondary-color);
+            color: white;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .deadline-box {
+            background: #fff8e6;
+            border: 2px solid var(--warning-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 24px 0;
+        }
+        
+        .deadline-box h3 {
+            margin-top: 0;
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .deadline-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 12px;
+        }
+        
+        @media (max-width: 500px) {
+            .deadline-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .deadline-item {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 6px;
+            border-left: 4px solid var(--warning-color);
+        }
+        
+        .deadline-item strong {
+            display: block;
+            color: var(--accent-color);
+            margin-bottom: 4px;
+        }
+        
+        .example-post {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid var(--discussion-color);
+        }
+        
+        .example-post-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--discussion-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .post-meta {
+            flex: 1;
+        }
+        
+        .post-author {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        
+        .post-date {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        
+        .example-label {
+            background: var(--info-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .thinking-questions {
+            background: #e7f6f8;
+            border: 1px solid var(--info-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 24px 0;
+        }
+        
+        .thinking-questions h3 {
+            margin-top: 0;
+            color: #0891b2;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .thinking-questions ol {
+            margin-bottom: 0;
+            padding-left: 24px;
+        }
+        
+        .thinking-questions li {
+            padding: 6px 0;
+        }
+        
+        .checklist {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 24px 0;
+        }
+        
+        .checklist h3 {
+            margin-top: 0;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 12px;
+            background: white;
+            border-radius: 6px;
+            margin: 8px 0;
+            border: 1px solid var(--border-color);
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            cursor: pointer;
+            accent-color: var(--discussion-color);
+        }
+        
+        .checkbox-item label {
+            cursor: pointer;
+            flex: 1;
+        }
+        
+        .checkbox-item.completed {
+            background: #f0e6ff;
+            border-color: var(--discussion-color);
+        }
+        
+        .checkbox-item.completed label {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+        
+        .progress-mini {
+            background: var(--surface-color);
+            border-radius: 20px;
+            padding: 12px 20px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .progress-mini-bar {
+            flex: 1;
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-mini-fill {
+            height: 100%;
+            background: var(--discussion-color);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-mini-text {
+            font-weight: 600;
+            color: var(--discussion-color);
+            min-width: 50px;
+            text-align: right;
+        }
+        
+        footer {
+            background: var(--surface-color);
+            border-top: 1px solid var(--border-color);
+            padding: 24px 20px;
+            margin-top: 48px;
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+        
+        footer .course-info {
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 4px;
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            h2 {
+                font-size: 1.25rem;
+            }
+            
+            .meta-bar {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .prompt-box {
+                padding: 20px;
+            }
+            
+            .comparison-table {
+                font-size: 0.85rem;
+            }
+            
+            .comparison-table th,
+            .comparison-table td {
+                padding: 10px;
+            }
+        }
+        
+        @media print {
+            header {
+                background: var(--discussion-color) !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .checkbox-item input[type="checkbox"] {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <header>
+        <div class="container">
+            <span class="course-tag">CSC 156 – Digital Forensics Fundamentals</span>
+            <span class="assessment-type">💬 Discussion</span>
+            <h1>Discussion Post 6: Write Blocker Technologies</h1>
+            <p class="subtitle">Exploring Hardware vs. Software Write Blocking in Digital Forensics</p>
+            <div class="meta-bar">
+                <span class="meta-item"><strong>Week:</strong> 6 of 17</span>
+                <span class="meta-item"><strong>Points:</strong> 3</span>
+                <span class="meta-item"><strong>CSLO:</strong> 3</span>
+                <span class="meta-item"><strong>Initial Post:</strong> Day 3</span>
+                <span class="meta-item"><strong>Responses:</strong> Day 5</span>
+            </div>
+        </div>
+    </header>
+    
+    <main id="main-content" class="container">
+        
+        <div class="progress-mini" role="region" aria-label="Preparation Progress">
+            <span>Preparation:</span>
+            <div class="progress-mini-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-mini-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+            <span class="progress-mini-text" id="progress-text">0%</span>
+        </div>
+        
+        <section aria-labelledby="overview-heading">
+            <h2 id="overview-heading">Discussion Overview</h2>
+            
+            <p>Write blocking is a fundamental concept in digital forensics that ensures evidence integrity during data acquisition. This discussion explores the two primary approaches—hardware write blockers and software write blocking—and their implications for forensic investigations.</p>
+            
+            <div class="alert alert-info">
+                <div class="alert-title">💡 Why This Matters</div>
+                <p style="margin-bottom: 0;">The choice between hardware and software write blocking can impact evidence admissibility in court. Understanding the strengths and limitations of each approach is essential for any forensic examiner.</p>
+            </div>
+        </section>
+        
+        <section aria-labelledby="background-heading">
+            <h2 id="background-heading">Background Information</h2>
+            
+            <p>Before writing your discussion post, review the following comparison of write blocking technologies:</p>
+            
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Aspect</th>
+                        <th>Hardware Write Blocker</th>
+                        <th>Software Write Blocker</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>How It Works</strong></td>
+                        <td>Physical device that intercepts and blocks write commands at the hardware level</td>
+                        <td>Software/driver that intercepts write commands at the operating system level</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cost</strong></td>
+                        <td>$200–$1,500+ per device</td>
+                        <td>Free to ~$100 (often included with forensic suites)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Portability</strong></td>
+                        <td>Requires carrying physical devices</td>
+                        <td>Software installed on forensic workstation</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Court Acceptance</strong></td>
+                        <td>Widely accepted; considered gold standard</td>
+                        <td>Generally accepted but may face more scrutiny</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Interface Support</strong></td>
+                        <td>Specific to interface type (SATA, USB, IDE, etc.)</td>
+                        <td>Can support multiple interfaces through drivers</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Failure Mode</strong></td>
+                        <td>If device fails, no connection occurs</td>
+                        <td>If software crashes, writes may occur</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h3>Hardware Write Blockers</h3>
+            
+            <div class="pro-con-grid">
+                <div class="pro-box">
+                    <h4>✓ Advantages</h4>
+                    <ul>
+                        <li>Independent of operating system</li>
+                        <li>Cannot be bypassed by malware</li>
+                        <li>Fail-safe design (no connection if failure)</li>
+                        <li>Highest court acceptance</li>
+                        <li>Works with any forensic software</li>
+                    </ul>
+                </div>
+                <div class="con-box">
+                    <h4>✗ Disadvantages</h4>
+                    <ul>
+                        <li>Expensive initial investment</li>
+                        <li>Need different devices for different interfaces</li>
+                        <li>Can be damaged or lost</li>
+                        <li>May have speed limitations</li>
+                        <li>Requires physical access to evidence</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <h3>Software Write Blockers</h3>
+            
+            <div class="pro-con-grid">
+                <div class="pro-box">
+                    <h4>✓ Advantages</h4>
+                    <ul>
+                        <li>Low or no cost</li>
+                        <li>No additional hardware needed</li>
+                        <li>Easily updated for new interfaces</li>
+                        <li>Convenient for field work</li>
+                        <li>Can work with remote/network evidence</li>
+                    </ul>
+                </div>
+                <div class="con-box">
+                    <h4>✗ Disadvantages</h4>
+                    <ul>
+                        <li>Dependent on operating system</li>
+                        <li>Could be bypassed by rootkits/malware</li>
+                        <li>Software crashes could allow writes</li>
+                        <li>May face more legal challenges</li>
+                        <li>Requires proper configuration</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+        <section aria-labelledby="prompt-heading">
+            <h2 id="prompt-heading">Discussion Prompt</h2>
+            
+            <div class="prompt-box">
+                <h3><span class="prompt-icon">💬</span> Your Discussion Topic</h3>
+                <p class="prompt-text">You are a digital forensic examiner called to investigate a corporate data breach. The suspect's computer contains a SATA hard drive and two USB external drives. Your agency has both hardware write blockers and software write blocking solutions available.</p>
+                <p class="prompt-text"><strong>In your initial post, address the following:</strong></p>
+                <ol>
+                    <li>Which write blocking approach would you choose for this scenario, and why?</li>
+                    <li>What factors influenced your decision (consider: time constraints, legal requirements, evidence types)?</li>
+                    <li>How would you document your write blocking procedures to ensure evidence admissibility?</li>
+                    <li>Describe a scenario where you might choose the opposite approach.</li>
+                </ol>
+            </div>
+            
+            <div class="thinking-questions">
+                <h3>🤔 Questions to Consider</h3>
+                <ol>
+                    <li>How might the type of case (criminal vs. civil) affect your choice?</li>
+                    <li>What if you were working in a remote location with limited equipment?</li>
+                    <li>How do SSD TRIM commands complicate write blocking decisions?</li>
+                    <li>What role does organizational policy play in write blocker selection?</li>
+                    <li>How might emerging technologies (NVMe, Thunderbolt) affect these considerations?</li>
+                </ol>
+            </div>
+        </section>
+        
+        <section aria-labelledby="example-heading">
+            <h2 id="example-heading">Example Post Structure</h2>
+            
+            <p>Here's an example of how to structure a strong discussion post:</p>
+            
+            <div class="example-post">
+                <div class="example-post-header">
+                    <div class="avatar">EX</div>
+                    <div class="post-meta">
+                        <div class="post-author">Example Student</div>
+                        <div class="post-date">Week 6, Day 3</div>
+                    </div>
+                    <span class="example-label">EXAMPLE</span>
+                </div>
+                <div class="example-content">
+                    <p><strong>My Choice: Hardware Write Blockers</strong></p>
+                    <p>For this corporate data breach investigation, I would choose hardware write blockers for all three drives. Here's my reasoning:</p>
+                    <p><strong>1. Primary Justification:</strong> Corporate data breach cases often lead to litigation, whether criminal prosecution or civil lawsuits. Hardware write blockers provide the strongest defensible position in court because they operate independently of the operating system and cannot be circumvented by malware that might exist on the suspect's system...</p>
+                    <p><strong>2. Factors Considered:</strong></p>
+                    <ul>
+                        <li><em>Legal requirements:</em> The potential for this case to go to court makes evidence integrity paramount...</li>
+                        <li><em>Evidence types:</em> With multiple drives including both internal and external storage...</li>
+                    </ul>
+                    <p><strong>3. Documentation Approach:</strong> I would document the make, model, and serial number of each write blocker used, photograph the physical setup, and record hash values before and after imaging...</p>
+                    <p><strong>4. Alternative Scenario:</strong> I would consider software write blocking if I were conducting a preliminary triage in the field where I needed to quickly preview multiple systems before determining which required full forensic acquisition...</p>
+                </div>
+            </div>
+        </section>
+        
+        <section aria-labelledby="requirements-heading">
+            <h2 id="requirements-heading">Requirements</h2>
+            
+            <div class="deadline-box">
+                <h3>📅 Submission Deadlines</h3>
+                <div class="deadline-grid">
+                    <div class="deadline-item">
+                        <strong>Initial Post</strong>
+                        Day 3 (Wednesday) by 11:59 PM
+                    </div>
+                    <div class="deadline-item">
+                        <strong>Response Posts</strong>
+                        Day 5 (Friday) by 11:59 PM
+                    </div>
+                </div>
+            </div>
+            
+            <h3>Initial Post Requirements</h3>
+            <ul>
+                <li><strong>Length:</strong> Minimum 200 words</li>
+                <li><strong>Content:</strong> Address all four questions in the prompt</li>
+                <li><strong>Support:</strong> Reference course materials, readings, or external sources</li>
+                <li><strong>Professionalism:</strong> Use proper grammar and forensic terminology</li>
+            </ul>
+            
+            <h3>Response Requirements</h3>
+            <ul>
+                <li><strong>Quantity:</strong> Respond to at least 2 classmates</li>
+                <li><strong>Length:</strong> Minimum 75 words per response</li>
+                <li><strong>Quality:</strong> Add substantive value—agree/disagree with reasoning, ask follow-up questions, share additional insights</li>
+                <li><strong>Respect:</strong> Maintain professional, respectful dialogue</li>
+            </ul>
+        </section>
+        
+        <section aria-labelledby="rubric-heading">
+            <h2 id="rubric-heading">Grading Rubric</h2>
+            
+            <div class="rubric-section">
+                <h3>Discussion Post 6 Rubric (3 Points Total)</h3>
+                
+                <table class="rubric-table">
+                    <thead>
+                        <tr>
+                            <th>Criteria</th>
+                            <th>Points</th>
+                            <th>Excellent</th>
+                            <th>Needs Improvement</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Initial Post Quality</strong></td>
+                            <td><span class="points-badge">1.5 pts</span></td>
+                            <td>Thoroughly addresses all prompt questions with specific examples and clear reasoning; demonstrates understanding of write blocking concepts</td>
+                            <td>Missing prompt elements; vague or unsupported claims; minimal engagement with concepts</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Response Quality</strong></td>
+                            <td><span class="points-badge">1 pt</span></td>
+                            <td>Responses add meaningful value through questions, alternative perspectives, or additional information; engages thoughtfully with peers</td>
+                            <td>Generic responses ("I agree"); no substantive additions; fewer than 2 responses</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Professionalism</strong></td>
+                            <td><span class="points-badge">0.5 pts</span></td>
+                            <td>Uses proper forensic terminology; well-organized; free of major grammar/spelling errors</td>
+                            <td>Informal language; disorganized; multiple errors that impede understanding</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        
+        <section aria-labelledby="checklist-heading">
+            <h2 id="checklist-heading">Preparation Checklist</h2>
+            
+            <div class="checklist">
+                <h3>✅ Before You Post</h3>
+                
+                <div class="checkbox-item">
+                    <input type="checkbox" id="check-1" onchange="updateProgress()">
+                    <label for="check-1">I have read the Week 6 materials on write blocking technologies</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="check-2" onchange="updateProgress()">
+                    <label for="check-2">I understand the differences between hardware and software write blockers</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="check-3" onchange="updateProgress()">
+                    <label for="check-3">I have considered the scenario from multiple perspectives</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="check-4" onchange="updateProgress()">
+                    <label for="check-4">My initial post addresses all four prompt questions</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="check-5" onchange="updateProgress()">
+                    <label for="check-5">My post is at least 200 words</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="check-6" onchange="updateProgress()">
+                    <label for="check-6">I have proofread for grammar and spelling</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="check-7" onchange="updateProgress()">
+                    <label for="check-7">I have planned time to respond to classmates by Day 5</label>
+                </div>
+            </div>
+        </section>
+        
+        <section aria-labelledby="resources-heading">
+            <h2 id="resources-heading">Additional Resources</h2>
+            
+            <ul>
+                <li><strong>NIST SP 800-86:</strong> Guide to Integrating Forensic Techniques into Incident Response (Section on Evidence Collection)</li>
+                <li><strong>SWGDE Best Practices:</strong> Scientific Working Group on Digital Evidence guidelines</li>
+                <li><strong>Vendor Documentation:</strong> Tableau, WiebeTech, and other write blocker manufacturers</li>
+                <li><strong>Course Materials:</strong> Week 6 Learning Modules 6.2 (Write Blocking) and 6.3 (Imaging Techniques)</li>
+            </ul>
+        </section>
+        
+    </main>
+    
+    <footer>
+        <div class="container">
+            <p class="course-info">CSC 156 – Digital Forensics Fundamentals</p>
+            <p>Mendocino College | Computer Science Department</p>
+            <p>Week 6 of 17 | Discussion Post 6 | 3 Points | CSLO 3</p>
+            <p>Version 1.0 | Spring 2026</p>
+        </div>
+    </footer>
+    
+    <script>
+        const STORAGE_KEY = 'csc156_disc6_progress';
+        const TOTAL_ITEMS = 7;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+            updateProgress();
+        });
+        
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('.checklist input[type="checkbox"]');
+            let completed = 0;
+            const checkedIds = [];
+            
+            checkboxes.forEach(function(checkbox) {
+                const item = checkbox.closest('.checkbox-item');
+                if (checkbox.checked) {
+                    completed++;
+                    checkedIds.push(checkbox.id);
+                    if (item) item.classList.add('completed');
+                } else {
+                    if (item) item.classList.remove('completed');
+                }
+            });
+            
+            const percentage = Math.round((completed / TOTAL_ITEMS) * 100);
+            
+            document.getElementById('progress-text').textContent = percentage + '%';
+            document.getElementById('progress-fill').style.width = percentage + '%';
+            
+            const progressBar = document.querySelector('.progress-mini-bar');
+            progressBar.setAttribute('aria-valuenow', percentage);
+            
+            saveProgress(checkedIds);
+        }
+        
+        function saveProgress(checkedIds) {
+            try {
+                sessionStorage.setItem(STORAGE_KEY, JSON.stringify(checkedIds));
+            } catch (e) {
+                console.log('Session storage not available');
+            }
+        }
+        
+        function loadProgress() {
+            try {
+                const saved = sessionStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const checkedIds = JSON.parse(saved);
+                    checkedIds.forEach(function(id) {
+                        const checkbox = document.getElementById(id);
+                        if (checkbox) {
+                            checkbox.checked = true;
+                        }
+                    });
+                }
+            } catch (e) {
+                console.log('Could not load saved progress');
+            }
+        }
+    </script>
+</body>
+</html>

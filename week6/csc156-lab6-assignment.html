@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CSC 156 Lab Activity 6: Forensic Imaging and Hash Verification - Learn to create forensically sound disk images and verify data integrity">
+    <title>Lab Activity 6: Forensic Imaging and Hash Verification | CSC 156</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-color: #1a5f7a;
+            --secondary-color: #2e8b57;
+            --accent-color: #d4740c;
+            --background-color: #ffffff;
+            --surface-color: #f8f9fa;
+            --text-color: #212529;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --success-color: #198754;
+            --warning-color: #fd7e14;
+            --error-color: #dc3545;
+            --info-color: #0dcaf0;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --focus-ring: 0 0 0 3px rgba(26, 95, 122, 0.4);
+        }
+        
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+        }
+        
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            z-index: 100;
+            text-decoration: none;
+            border-radius: 0 0 4px 0;
+        }
+        
+        .skip-link:focus {
+            top: 0;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 24px 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #2d7d9a 100%);
+            color: white;
+            padding: 32px 20px;
+            margin-bottom: 32px;
+        }
+        
+        header .container {
+            padding: 0 20px;
+        }
+        
+        .course-tag {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+        }
+        
+        h1 {
+            font-size: 1.875rem;
+            margin: 0 0 8px 0;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+        
+        .subtitle {
+            font-size: 1.125rem;
+            opacity: 0.95;
+            margin: 0;
+        }
+        
+        .meta-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255,255,255,0.3);
+            font-size: 0.875rem;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .meta-item strong {
+            font-weight: 600;
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin: 40px 0 16px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        h3 {
+            font-size: 1.25rem;
+            color: var(--text-color);
+            margin: 32px 0 12px 0;
+        }
+        
+        h4 {
+            font-size: 1.1rem;
+            color: var(--text-color);
+            margin: 24px 0 8px 0;
+        }
+        
+        p {
+            margin: 0 0 16px 0;
+        }
+        
+        a {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+        
+        a:hover, a:focus {
+            color: #134a5f;
+        }
+        
+        a:focus {
+            outline: none;
+            box-shadow: var(--focus-ring);
+            border-radius: 2px;
+        }
+        
+        .alert {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 24px 0;
+            border-left: 4px solid;
+        }
+        
+        .alert-info {
+            background-color: #e7f6f8;
+            border-color: var(--info-color);
+        }
+        
+        .alert-warning {
+            background-color: #fff8e6;
+            border-color: var(--warning-color);
+        }
+        
+        .alert-success {
+            background-color: #e8f5e9;
+            border-color: var(--success-color);
+        }
+        
+        .alert-error {
+            background-color: #fdeaea;
+            border-color: var(--error-color);
+        }
+        
+        .alert-title {
+            font-weight: 700;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .objectives-box {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+        
+        .objectives-box h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+        
+        .objectives-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .objectives-list li {
+            padding: 8px 0 8px 32px;
+            position: relative;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .objectives-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .objectives-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--success-color);
+            font-weight: bold;
+        }
+        
+        .task-section {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: 24px 0;
+            overflow: hidden;
+        }
+        
+        .task-header {
+            background: var(--surface-color);
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .task-header:hover {
+            background: #eef1f4;
+        }
+        
+        .task-header:focus {
+            outline: none;
+            box-shadow: inset var(--focus-ring);
+        }
+        
+        .task-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .task-number {
+            background: var(--primary-color);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .task-toggle {
+            font-size: 1.25rem;
+            transition: transform 0.2s ease;
+            color: var(--text-muted);
+        }
+        
+        .task-section.expanded .task-toggle {
+            transform: rotate(180deg);
+        }
+        
+        .task-content {
+            padding: 20px;
+            display: none;
+        }
+        
+        .task-section.expanded .task-content {
+            display: block;
+        }
+        
+        .step-list {
+            counter-reset: step-counter;
+            list-style: none;
+            padding: 0;
+            margin: 16px 0;
+        }
+        
+        .step-list li {
+            counter-increment: step-counter;
+            padding: 12px 0 12px 48px;
+            position: relative;
+            border-bottom: 1px dashed var(--border-color);
+        }
+        
+        .step-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .step-list li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 10px;
+            background: var(--secondary-color);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        pre {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 16px 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 16px 0;
+            font-family: "SF Mono", "Consolas", "Monaco", "Inconsolata", "Fira Code", monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            white-space: pre;
+            word-wrap: normal;
+        }
+        
+        code {
+            font-family: "SF Mono", "Consolas", "Monaco", "Inconsolata", "Fira Code", monospace;
+            font-size: 0.9em;
+        }
+        
+        p code, li code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #c7254e;
+        }
+        
+        .code-caption {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: -12px;
+            margin-bottom: 16px;
+            font-style: italic;
+        }
+        
+        .command-explanation {
+            background: #f0f7ff;
+            border: 1px solid #b3d7ff;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        
+        .command-explanation h4 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+        
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 0.9rem;
+        }
+        
+        .param-table th,
+        .param-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+        
+        .param-table th {
+            background: var(--surface-color);
+            font-weight: 600;
+        }
+        
+        .param-table code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            background: var(--surface-color);
+            border-radius: 6px;
+            margin: 8px 0;
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            cursor: pointer;
+            accent-color: var(--primary-color);
+        }
+        
+        .checkbox-item label {
+            cursor: pointer;
+            flex: 1;
+        }
+        
+        .checkbox-item.completed {
+            background: #e8f5e9;
+        }
+        
+        .checkbox-item.completed label {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+        
+        .progress-container {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 24px 0;
+            position: sticky;
+            top: 20px;
+            z-index: 10;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .progress-header h4 {
+            margin: 0;
+            font-size: 1rem;
+        }
+        
+        .progress-percentage {
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .progress-bar {
+            height: 12px;
+            background: var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 6px;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        
+        .rubric-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.9rem;
+        }
+        
+        .rubric-table th,
+        .rubric-table td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+        
+        .rubric-table th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .rubric-table tbody tr:nth-child(even) {
+            background: var(--surface-color);
+        }
+        
+        .points-badge {
+            display: inline-block;
+            background: var(--secondary-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .deliverables-list {
+            background: #fff8e6;
+            border: 1px solid var(--warning-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 24px 0;
+        }
+        
+        .deliverables-list h3 {
+            margin-top: 0;
+            color: var(--accent-color);
+        }
+        
+        .deliverables-list ul {
+            margin: 0;
+            padding-left: 24px;
+        }
+        
+        .deliverables-list li {
+            padding: 6px 0;
+        }
+        
+        .hash-comparison {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 16px 0;
+        }
+        
+        .hash-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 12px 0;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+        }
+        
+        .hash-label {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .hash-value {
+            font-family: "SF Mono", "Consolas", monospace;
+            font-size: 0.85rem;
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 8px 12px;
+            border-radius: 4px;
+            word-break: break-all;
+        }
+        
+        .hash-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        
+        .hash-status.match {
+            background: #e8f5e9;
+            color: var(--success-color);
+        }
+        
+        .hash-status.mismatch {
+            background: #fdeaea;
+            color: var(--error-color);
+        }
+        
+        .tool-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 16px 0;
+        }
+        
+        @media (max-width: 600px) {
+            .tool-comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .tool-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+        }
+        
+        .tool-card h4 {
+            margin-top: 0;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .tool-card ul {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .tool-card li {
+            padding: 4px 0;
+        }
+        
+        footer {
+            background: var(--surface-color);
+            border-top: 1px solid var(--border-color);
+            padding: 24px 20px;
+            margin-top: 48px;
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+        
+        footer .course-info {
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 4px;
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            h2 {
+                font-size: 1.25rem;
+            }
+            
+            .meta-bar {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            pre {
+                font-size: 0.8rem;
+                padding: 12px;
+            }
+            
+            .param-table {
+                font-size: 0.8rem;
+            }
+            
+            .param-table th,
+            .param-table td {
+                padding: 8px;
+            }
+        }
+        
+        @media print {
+            .progress-container,
+            .task-toggle,
+            .checkbox-item input[type="checkbox"] {
+                display: none;
+            }
+            
+            .task-content {
+                display: block !important;
+            }
+            
+            .task-section {
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <header>
+        <div class="container">
+            <span class="course-tag">CSC 156 – Digital Forensics Fundamentals</span>
+            <h1>Lab Activity 6: Forensic Imaging and Hash Verification</h1>
+            <p class="subtitle">Creating Forensically Sound Disk Images and Verifying Data Integrity</p>
+            <div class="meta-bar">
+                <span class="meta-item"><strong>Week:</strong> 6 of 17</span>
+                <span class="meta-item"><strong>Points:</strong> 20</span>
+                <span class="meta-item"><strong>CSLO:</strong> 3</span>
+                <span class="meta-item"><strong>Due:</strong> End of Week 6</span>
+            </div>
+        </div>
+    </header>
+    
+    <main id="main-content" class="container">
+        
+        <div class="progress-container" role="region" aria-label="Lab Progress Tracker">
+            <div class="progress-header">
+                <h4>Lab Progress</h4>
+                <span class="progress-percentage" id="progress-percent">0%</span>
+            </div>
+            <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="progress-stats">
+                <span id="tasks-completed">0 of 15 tasks completed</span>
+                <span id="session-note">Progress saved this session</span>
+            </div>
+        </div>
+        
+        <section aria-labelledby="overview-heading">
+            <h2 id="overview-heading">Lab Overview</h2>
+            
+            <p>This lab demonstrates proficiency in creating forensically sound disk images using multiple tools and verifying data integrity through cryptographic hashing. You will work with both command-line tools (dd/dcfldd) on Linux and GUI-based tools (FTK Imager) on Windows to understand the strengths of each approach.</p>
+            
+            <div class="alert alert-warning">
+                <div class="alert-title">⚠️ Critical Reminder</div>
+                <p style="margin-bottom: 0;">Data acquisition is the "make or break" phase of digital forensics. An improperly acquired image can render an entire investigation useless. Always use write blocking and verify your hashes!</p>
+            </div>
+            
+            <div class="objectives-box">
+                <h3>Learning Objectives</h3>
+                <ul class="objectives-list" role="list">
+                    <li>Create forensically sound disk images using command-line tools (dd/dcfldd)</li>
+                    <li>Create forensically sound disk images using GUI tools (FTK Imager)</li>
+                    <li>Calculate and verify MD5 and SHA-256 hashes for data integrity</li>
+                    <li>Compare raw (dd) and E01 (Expert Witness) image formats</li>
+                    <li>Document the acquisition process following forensic standards</li>
+                </ul>
+            </div>
+        </section>
+        
+        <section aria-labelledby="prereqs-heading">
+            <h2 id="prereqs-heading">Prerequisites</h2>
+            
+            <p>Before beginning this lab, ensure you have:</p>
+            
+            <ul>
+                <li>Completed Week 5 modules on file systems (FAT32, NTFS, ext4)</li>
+                <li>Access to a forensic workstation with Linux and Windows environments</li>
+                <li>A provided USB drive for imaging (do NOT use personal drives)</li>
+                <li>Write blocker (hardware or software) available</li>
+                <li>FTK Imager installed on Windows environment</li>
+            </ul>
+        </section>
+        
+        <section aria-labelledby="part1-heading">
+            <h2 id="part1-heading">Part 1: Imaging with dd/dcfldd (Linux)</h2>
+            
+            <p>The <code>dd</code> command is a fundamental Unix utility for low-level copying of data. In forensics, we use it (or its enhanced version <code>dcfldd</code>) to create bit-for-bit copies of storage media.</p>
+            
+            <div class="task-section expanded" id="task-1">
+                <div class="task-header" role="button" tabindex="0" aria-expanded="true" aria-controls="task-1-content" onclick="toggleTask('task-1')" onkeypress="handleKeyPress(event, 'task-1')">
+                    <h3><span class="task-number">1</span> Connect and Identify the Evidence Drive</h3>
+                    <span class="task-toggle" aria-hidden="true">▼</span>
+                </div>
+                <div class="task-content" id="task-1-content">
+                    <ol class="step-list">
+                        <li>Connect the provided USB drive through a write blocker (hardware preferred) or enable software write blocking</li>
+                        <li>Open a terminal and identify the device using <code>lsblk</code></li>
+                        <li>Verify the device details with <code>fdisk -l</code></li>
+                        <li>Document the device identifier (e.g., <code>/dev/sdb</code>)</li>
+                    </ol>
+                    
+                    <pre><code># List all block devices
+lsblk
+
+# Example output:
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 256.0G  0 disk 
+├─sda1   8:1    0   512M  0 part /boot/efi
+└─sda2   8:2    0 255.5G  0 part /
+sdb      8:16   1   8.0G  0 disk        ← Evidence drive
+└─sdb1   8:17   1   8.0G  0 part 
+
+# Get detailed information
+sudo fdisk -l /dev/sdb</code></pre>
+                    <p class="code-caption">Terminal commands to identify connected storage devices</p>
+                    
+                    <div class="alert alert-error">
+                        <div class="alert-title">⛔ Warning</div>
+                        <p style="margin-bottom: 0;">Triple-check your device identifier before imaging! Using the wrong device (like your system drive) can result in catastrophic data loss.</p>
+                    </div>
+                    
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="check-1-1" onchange="updateProgress()">
+                        <label for="check-1-1">I have connected the evidence drive through a write blocker</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="check-1-2" onchange="updateProgress()">
+                        <label for="check-1-2">I have identified and documented the correct device identifier</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="task-section" id="task-2">
+                <div class="task-header" role="button" tabindex="0" aria-expanded="false" aria-controls="task-2-content" onclick="toggleTask('task-2')" onkeypress="handleKeyPress(event, 'task-2')">
+                    <h3><span class="task-number">2</span> Create a Raw Image with dd</h3>
+                    <span class="task-toggle" aria-hidden="true">▼</span>
+                </div>
+                <div class="task-content" id="task-2-content">
+                    <p>Now we'll create a bit-for-bit copy of the evidence drive using the <code>dd</code> command with appropriate forensic parameters.</p>
+                    
+                    <pre><code># Create forensic image with dd
+sudo dd if=/dev/sdb of=/cases/lab6/evidence.raw bs=4096 conv=noerror,sync status=progress</code></pre>
+                    <p class="code-caption">Basic dd command for forensic imaging</p>
+                    
+                    <div class="command-explanation">
+                        <h4>Command Parameters Explained</h4>
+                        <table class="param-table">
+                            <thead>
+                                <tr>
+                                    <th>Parameter</th>
+                                    <th>Meaning</th>
+                                    <th>Forensic Purpose</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>if=/dev/sdb</code></td>
+                                    <td>Input file (source)</td>
+                                    <td>The evidence drive to image</td>
+                                </tr>
+                                <tr>
+                                    <td><code>of=evidence.raw</code></td>
+                                    <td>Output file (destination)</td>
+                                    <td>The forensic image file</td>
+                                </tr>
+                                <tr>
+                                    <td><code>bs=4096</code></td>
+                                    <td>Block size (4KB)</td>
+                                    <td>Optimal for modern drives</td>
+                                </tr>
+                                <tr>
+                                    <td><code>conv=noerror</code></td>
+                                    <td>Continue on read errors</td>
+                                    <td>Captures as much data as possible</td>
+                                </tr>
+                                <tr>
+                                    <td><code>conv=sync</code></td>
+                                    <td>Pad error blocks with zeros</td>
+                                    <td>Maintains image size integrity</td>
+                                </tr>
+                                <tr>
+                                    <td><code>status=progress</code></td>
+                                    <td>Show progress</td>
+                                    <td>Monitor imaging progress</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <div class="alert-title">💡 Pro Tip: Using dcfldd</div>
+                        <p>For forensic work, consider using <code>dcfldd</code> which adds hashing on-the-fly:</p>
+                    </div>
+                    
+                    <pre><code># Enhanced forensic imaging with dcfldd
+sudo dcfldd if=/dev/sdb of=/cases/lab6/evidence.raw bs=4096 \
+    hash=md5,sha256 hashwindow=1G hashlog=/cases/lab6/hash.log \
+    conv=noerror,sync</code></pre>
+                    <p class="code-caption">dcfldd command with integrated hashing</p>
+                    
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="check-2-1" onchange="updateProgress()">
+                        <label for="check-2-1">I have created a raw image file using dd or dcfldd</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="check-2-2" onchange="updateProgress()">
+                        <label for="check-2-2">I have documented all command parameters used</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="task-section" id="task-3">
+                <div class="task-header" role="button" tabindex="0" aria-expanded="false" aria-controls="task-3-content" onclick="toggleTask('task-3')" onkeypress="handleKeyPress(event, 'task-3')">
+                    <h3><span class="task-number">3</span> Calculate Hash Values</h3>
+                    <span class="task-toggle" aria-hidden="true">▼</span>
+                </div>
+                <div class="task-content" id="task-3-content">
+                    <p>Hash values serve as digital fingerprints that prove the integrity of our evidence. We calculate hashes of both the source device and the image file to verify they match.</p>
+                    
+                    <pre><code># Calculate MD5 hash of source device
+sudo md5sum /dev/sdb
+# Example: d41d8cd98f00b204e9800998ecf8427e  /dev/sdb
+
+# Calculate MD5 hash of image file
+md5sum /cases/lab6/evidence.raw
+# Example: d41d8cd98f00b204e9800998ecf8427e  evidence.raw
+
+# Calculate SHA-256 hash of source device
+sudo sha256sum /dev/sdb
+
+# Calculate SHA-256 hash of image file
+sha256sum /cases/lab6/evidence.raw</code></pre>
+                    <p class="code-caption">Commands to calculate MD5 and SHA-256 hash values</p>
+                    
+                    <div class="hash-comparison">
+                        <h4>Hash Verification Template</h4>
+                        <p>Record your hash values below (you'll include these in your lab report):</p>
+                        
+                        <div class="hash-row">
+                            <span class="hash-label">Source Device MD5:</span>
+                            <span class="hash-value">[Record your hash here]</span>
+                        </div>
+                        <div class="hash-row">
+                            <span class="hash-label">Image File MD5:</span>
+                            <span class="hash-value">[Record your hash here]</span>
+                        </div>
+                        <div class="hash-row">
+                            <span class="hash-label">Source Device SHA-256:</span>
+                            <span class="hash-value">[Record your hash here]</span>
+                        </div>
+                        <div class="hash-row">
+                            <span class="hash-label">Image File SHA-256:</span>
+                            <span class="hash-value">[Record your hash here]</span>
+                        </div>
+                        
+                        <div class="hash-status match">
+                            <span>✓</span>
+                            <span>If hashes match: Image is forensically sound</span>
+                        </div>
+                        <div class="hash-status mismatch">
+                            <span>✗</span>
+                            <span>If hashes don't match: Re-image required</span>
+                        </div>
+                    </div>
+                    
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="check-3-1" onchange="updateProgress()">
+                        <label for="check-3-1">I have calculated MD5 hashes for both source and image</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="check-3-2" onchange="updateProgress()">
+                        <label for="check-3-2">I have calculated SHA-256 hashes for both source and image</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="check-3-3" onchange="updateProgress()">
+                        <label for="check-3-3">I have verified that source and image hashes match</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section aria-labelledby="part2-heading">
+            <h2 id="part2-heading">Part 2: Imaging with FTK Imager (Windows)</h2>
+            
+            <p>FTK Imager is a free, GUI-based forensic imaging tool from AccessData. It creates images in the E01 (Expert Witness Format) which includes built-in compression and hash verification.</p>
+            
+            <div class="task-section" id="task-4">
+                <div class="task-header" role="button" tabindex="0" aria-expanded="false" aria-controls="task-4-content" onclick="toggleTask('task-4')" onkeypress="handleKeyPress(event, 'task-4')">
+                    <h3><span class="task-number">4</span> Create E01 Image with FTK Imager</h3>
+                    <span class="task-toggle" aria-hidden="true">▼</span>
+                </div>
+                <div class="task-content" id="task-4-content">
+                    <p>Follow these steps to create an E01 format image using FTK Imager:</p>
+                    
+                    <ol class="step-list">
+                        <li>Connect the same USB drive via write blocker to Windows workstation</li>
+                        <li>Launch FTK Imager as Administrator</li>
+                        <li>Select <strong>File → Create Disk Image</strong></li>
+                        <li>Choose <strong>Physical Drive</strong> as the source type</li>
+                        <li>Select the evidence drive from the dropdown list</li>
+                        <li>Click <strong>Add</strong> to specify image destination</li>
+                        <li>Select <strong>E01</strong> as the image type</li>
+                    </ol>
+                    
+                    <h4>Evidence Item Information</h4>
+                    <p>Enter the following case information when prompted:</p>
+                    
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Example Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Case Number</td>
+                                <td>CSC156-LAB6-[YourInitials]</td>
+                            </tr>
+                            <tr>
+                                <td>Evidence Number</td>
+                                <td>001</td>
+                            </tr>
+                            <tr>
+                                <td>Unique Description</td>
+                                <td>8GB USB Drive - Lab Exercise</td>
+                            </tr>
+                            <tr>
+                                <td>Examiner</td>
+                                <td>[Your Full Name]</td>
+                            </tr>
+                            <tr>
+                                <td>Notes</td>
+                                <td>Lab 6 imaging exercise - CSC 156</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h4>Image Settings</h4>
+                    <ul>
+                        <li><strong>Image Fragment Size:</strong> 0 (no fragmentation) or 2GB for large images</li>
+                        <li><strong>Compression:</strong> 6 (balanced)</li>
+                        <li>Check <strong>"Verify images after they are created"</strong></li>
+                        <li>Check <strong>"Create directory listings"</strong></li>
+                    </ul>
+                    
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="check-4-1" onchange="updateProgress()">
+                        <label for="check-4-1">I have created an E01 image using FTK Imager</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="check-4-2" onchange="updateProgress()">
+                        <label for="check-4-2">I have entered complete case information</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="check-4-3" onchange="updateProgress()">
+                        <label for="check-4-3">FTK Imager verification completed successfully</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="task-section" id="task-5">
+                <div class="task-header" role="button" tabindex="0" aria-expanded="false" aria-controls="task-5-content" onclick="toggleTask('task-5')" onkeypress="handleKeyPress(event, 'task-5')">
+                    <h3><span class="task-number">5</span> Compare Hash Values</h3>
+                    <span class="task-toggle" aria-hidden="true">▼</span>
+                </div>
+                <div class="task-content" id="task-5-content">
+                    <p>FTK Imager automatically calculates and verifies hashes. Compare these with your Linux results:</p>
+                    
+                    <div class="hash-comparison">
+                        <h4>Cross-Platform Hash Comparison</h4>
+                        
+                        <table class="param-table">
+                            <thead>
+                                <tr>
+                                    <th>Hash Type</th>
+                                    <th>Linux (dd) Result</th>
+                                    <th>Windows (FTK) Result</th>
+                                    <th>Match?</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>MD5</td>
+                                    <td>[Your Linux MD5]</td>
+                                    <td>[FTK Imager MD5]</td>
+                                    <td>☐ Yes / ☐ No</td>
+                                </tr>
+                                <tr>
+                                    <td>SHA-1</td>
+                                    <td>N/A</td>
+                                    <td>[FTK Imager SHA-1]</td>
+                                    <td>—</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="alert alert-success">
+                        <div class="alert-title">✓ Expected Result</div>
+                        <p style="margin-bottom: 0;">The MD5 hashes from both tools should be identical, proving that both imaging methods captured the exact same data.</p>
+                    </div>
+                    
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="check-5-1" onchange="updateProgress()">
+                        <label for="check-5-1">I have compared hash values between Linux and Windows imaging</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="check-5-2" onchange="updateProgress()">
+                        <label for="check-5-2">Hash values match across platforms</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section aria-labelledby="part3-heading">
+            <h2 id="part3-heading">Part 3: Image Verification and Format Comparison</h2>
+            
+            <div class="task-section" id="task-6">
+                <div class="task-header" role="button" tabindex="0" aria-expanded="false" aria-controls="task-6-content" onclick="toggleTask('task-6')" onkeypress="handleKeyPress(event, 'task-6')">
+                    <h3><span class="task-number">6</span> Compare Image Formats</h3>
+                    <span class="task-toggle" aria-hidden="true">▼</span>
+                </div>
+                <div class="task-content" id="task-6-content">
+                    <p>Compare the raw (dd) and E01 (FTK Imager) formats you created:</p>
+                    
+                    <div class="tool-comparison">
+                        <div class="tool-card">
+                            <h4>📁 Raw Format (dd)</h4>
+                            <ul>
+                                <li>Exact bit-for-bit copy</li>
+                                <li>No compression</li>
+                                <li>No built-in metadata</li>
+                                <li>Universal compatibility</li>
+                                <li>File size = source size</li>
+                            </ul>
+                        </div>
+                        <div class="tool-card">
+                            <h4>📦 E01 Format (FTK)</h4>
+                            <ul>
+                                <li>Expert Witness Format</li>
+                                <li>Built-in compression</li>
+                                <li>Embedded case metadata</li>
+                                <li>Integrated hash verification</li>
+                                <li>File size often smaller</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h4>File Size Comparison</h4>
+                    <pre><code># Check raw image size
+ls -lh /cases/lab6/evidence.raw
+
+# Check E01 image size (on Windows or after copying)
+# E01 files may be split: evidence.E01, evidence.E02, etc.
+dir evidence.E01</code></pre>
+                    
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="check-6-1" onchange="updateProgress()">
+                        <label for="check-6-1">I have documented the file sizes of both image formats</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="check-6-2" onchange="updateProgress()">
+                        <label for="check-6-2">I understand the differences between raw and E01 formats</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section aria-labelledby="deliverables-heading">
+            <h2 id="deliverables-heading">Lab Deliverables</h2>
+            
+            <div class="deliverables-list">
+                <h3>📋 Required Submissions</h3>
+                <ul>
+                    <li><strong>Lab Report</strong> (PDF format) including:
+                        <ul>
+                            <li>Screenshots of imaging process (both tools)</li>
+                            <li>Complete hash values for source and images</li>
+                            <li>Hash comparison table showing matches</li>
+                            <li>File size comparison between formats</li>
+                            <li>Reflection on which tool you would prefer and why</li>
+                        </ul>
+                    </li>
+                    <li><strong>Chain of Custody Form</strong> documenting evidence handling</li>
+                    <li><strong>FTK Imager Log File</strong> (.txt file generated during imaging)</li>
+                </ul>
+            </div>
+            
+            <h3>Grading Rubric</h3>
+            
+            <table class="rubric-table">
+                <thead>
+                    <tr>
+                        <th>Criteria</th>
+                        <th>Points</th>
+                        <th>Requirements</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Linux Imaging (dd/dcfldd)</td>
+                        <td><span class="points-badge">5 pts</span></td>
+                        <td>Correct command usage, successful image creation, proper parameters documented</td>
+                    </tr>
+                    <tr>
+                        <td>Windows Imaging (FTK Imager)</td>
+                        <td><span class="points-badge">5 pts</span></td>
+                        <td>Complete E01 image with case metadata, verification successful</td>
+                    </tr>
+                    <tr>
+                        <td>Hash Verification</td>
+                        <td><span class="points-badge">5 pts</span></td>
+                        <td>MD5 and SHA-256 calculated for all images, cross-platform comparison documented</td>
+                    </tr>
+                    <tr>
+                        <td>Documentation Quality</td>
+                        <td><span class="points-badge">5 pts</span></td>
+                        <td>Professional report format, clear screenshots, complete chain of custody</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <section aria-labelledby="troubleshooting-heading">
+            <h2 id="troubleshooting-heading">Troubleshooting Common Issues</h2>
+            
+            <div class="alert alert-info">
+                <div class="alert-title">🔧 dd: Permission denied</div>
+                <p style="margin-bottom: 0;">Use <code>sudo</code> before the dd command. Raw device access requires root privileges.</p>
+            </div>
+            
+            <div class="alert alert-info">
+                <div class="alert-title">🔧 Hash mismatch between source and image</div>
+                <p style="margin-bottom: 0;">Ensure write blocker is functioning. Re-image the drive. Check for drive errors using <code>dmesg</code>.</p>
+            </div>
+            
+            <div class="alert alert-info">
+                <div class="alert-title">🔧 FTK Imager doesn't see the drive</div>
+                <p style="margin-bottom: 0;">Run FTK Imager as Administrator. Check Device Manager for drive detection. Try a different USB port.</p>
+            </div>
+        </section>
+        
+    </main>
+    
+    <footer>
+        <div class="container">
+            <p class="course-info">CSC 156 – Digital Forensics Fundamentals</p>
+            <p>Mendocino College | Computer Science Department</p>
+            <p>Week 6 of 17 | Lab Activity 6 | 20 Points | CSLO 3</p>
+            <p>Version 1.0 | Spring 2026</p>
+        </div>
+    </footer>
+    
+    <script>
+        // Session storage for progress tracking
+        const STORAGE_KEY = 'csc156_lab6_progress';
+        const TOTAL_TASKS = 15;
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+            updateProgress();
+        });
+        
+        // Toggle task sections
+        function toggleTask(taskId) {
+            const section = document.getElementById(taskId);
+            const isExpanded = section.classList.contains('expanded');
+            const header = section.querySelector('.task-header');
+            
+            section.classList.toggle('expanded');
+            header.setAttribute('aria-expanded', !isExpanded);
+        }
+        
+        // Handle keyboard navigation
+        function handleKeyPress(event, taskId) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleTask(taskId);
+            }
+        }
+        
+        // Update progress bar and stats
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            let completed = 0;
+            const checkedIds = [];
+            
+            checkboxes.forEach(function(checkbox) {
+                const item = checkbox.closest('.checkbox-item');
+                if (checkbox.checked) {
+                    completed++;
+                    checkedIds.push(checkbox.id);
+                    if (item) item.classList.add('completed');
+                } else {
+                    if (item) item.classList.remove('completed');
+                }
+            });
+            
+            const percentage = Math.round((completed / TOTAL_TASKS) * 100);
+            
+            // Update UI
+            document.getElementById('progress-percent').textContent = percentage + '%';
+            document.getElementById('progress-fill').style.width = percentage + '%';
+            document.getElementById('tasks-completed').textContent = completed + ' of ' + TOTAL_TASKS + ' tasks completed';
+            
+            // Update ARIA
+            const progressBar = document.querySelector('.progress-bar');
+            progressBar.setAttribute('aria-valuenow', percentage);
+            
+            // Save to session storage
+            saveProgress(checkedIds);
+        }
+        
+        // Save progress to session storage
+        function saveProgress(checkedIds) {
+            try {
+                sessionStorage.setItem(STORAGE_KEY, JSON.stringify(checkedIds));
+            } catch (e) {
+                console.log('Session storage not available');
+            }
+        }
+        
+        // Load progress from session storage
+        function loadProgress() {
+            try {
+                const saved = sessionStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const checkedIds = JSON.parse(saved);
+                    checkedIds.forEach(function(id) {
+                        const checkbox = document.getElementById(id);
+                        if (checkbox) {
+                            checkbox.checked = true;
+                        }
+                    });
+                }
+            } catch (e) {
+                console.log('Could not load saved progress');
+            }
+        }
+    </script>
+</body>
+</html>
