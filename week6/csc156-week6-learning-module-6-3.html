@@ -1,0 +1,3164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 6.3: Command-Line Acquisition Tools | CSC 156</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #1a1a2e;
+            background-color: #ffffff;
+            font-size: 16px;
+        }
+
+        /* Skip Link for Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #0d47a1;
+            color: #ffffff;
+            padding: 8px 16px;
+            z-index: 1000;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #ffffff;
+            padding: 24px;
+            text-align: center;
+            border-bottom: 4px solid #0f3460;
+        }
+
+        header h1 {
+            font-size: 1.875rem;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .course-info {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .module-badge {
+            display: inline-block;
+            background: #e94560;
+            color: #ffffff;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        /* Navigation */
+        nav {
+            background: #f8f9fa;
+            padding: 16px 24px;
+            border-bottom: 1px solid #dee2e6;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        nav a {
+            color: #1a1a2e;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        nav a:hover,
+        nav a:focus {
+            background: #0d47a1;
+            color: #ffffff;
+            outline: none;
+        }
+
+        nav a:focus {
+            outline: 3px solid #e94560;
+            outline-offset: 2px;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            background: #e8f4f8;
+            padding: 20px 24px;
+            border-bottom: 1px solid #b8d4e3;
+        }
+
+        .progress-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .progress-title {
+            font-weight: 600;
+            color: #1a1a2e;
+            font-size: 1rem;
+        }
+
+        .progress-stats {
+            font-size: 0.875rem;
+            color: #495057;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: #dee2e6;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0d47a1, #1976d2);
+            border-radius: 6px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .time-estimate {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #fff3cd;
+            color: #856404;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        /* Main Content */
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        section {
+            margin-bottom: 48px;
+            scroll-margin-top: 80px;
+        }
+
+        h2 {
+            color: #1a1a2e;
+            font-size: 1.75rem;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #0d47a1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h3 {
+            color: #16213e;
+            font-size: 1.375rem;
+            margin: 24px 0 16px 0;
+        }
+
+        h4 {
+            color: #0f3460;
+            font-size: 1.125rem;
+            margin: 20px 0 12px 0;
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: #2d3748;
+        }
+
+        /* Cards */
+        .card {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .card-icon {
+            font-size: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        /* Definition Box */
+        .definition-box {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-left: 5px solid #0d47a1;
+            padding: 20px 24px;
+            margin: 20px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .definition-box h4 {
+            color: #0d47a1;
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        .definition-box p {
+            margin-bottom: 0;
+            color: #1a1a2e;
+        }
+
+        /* Key Concept Box */
+        .key-concept {
+            background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+            border-left: 5px solid #f57c00;
+            padding: 20px 24px;
+            margin: 20px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .key-concept h4 {
+            color: #e65100;
+            margin-top: 0;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            border-left: 5px solid #c62828;
+            padding: 20px 24px;
+            margin: 20px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .warning-box h4 {
+            color: #c62828;
+            margin-top: 0;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-left: 5px solid #2e7d32;
+            padding: 20px 24px;
+            margin: 20px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .info-box h4 {
+            color: #2e7d32;
+            margin-top: 0;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Example Box */
+        .example-box {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            border-left: 5px solid #7b1fa2;
+            padding: 20px 24px;
+            margin: 20px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .example-box h4 {
+            color: #7b1fa2;
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        /* Syntax Box */
+        .syntax-box {
+            background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+            border-left: 5px solid #00796b;
+            padding: 20px 24px;
+            margin: 20px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .syntax-box h4 {
+            color: #00796b;
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: #1a1a2e;
+            color: #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin: 16px 0;
+            white-space: pre;
+            word-wrap: normal;
+        }
+
+        code {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background: #e9ecef;
+            color: #c62828;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        pre code {
+            background: transparent;
+            color: #e9ecef;
+            padding: 0;
+        }
+
+        .code-comment {
+            color: #6c757d;
+        }
+
+        .code-keyword {
+            color: #82aaff;
+        }
+
+        .code-string {
+            color: #c3e88d;
+        }
+
+        .code-flag {
+            color: #ffcb6b;
+        }
+
+        .code-path {
+            color: #89ddff;
+        }
+
+        .code-value {
+            color: #f78c6c;
+        }
+
+        .code-output {
+            color: #a5d6a7;
+        }
+
+        .code-error {
+            color: #ef9a9a;
+        }
+
+        .code-prompt {
+            color: #80cbc4;
+        }
+
+        /* Terminal Simulation */
+        .terminal {
+            background: #0d1117;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 24px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .terminal-header {
+            background: #161b22;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot.red { background: #ff5f56; }
+        .terminal-dot.yellow { background: #ffbd2e; }
+        .terminal-dot.green { background: #27c93f; }
+
+        .terminal-title {
+            color: #8b949e;
+            margin-left: 12px;
+            font-size: 0.85rem;
+        }
+
+        .terminal-body {
+            padding: 20px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #c9d1d9;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .terminal-body .prompt {
+            color: #58a6ff;
+        }
+
+        .terminal-body .command {
+            color: #f0f6fc;
+        }
+
+        .terminal-body .output {
+            color: #8b949e;
+        }
+
+        .terminal-body .success {
+            color: #3fb950;
+        }
+
+        .terminal-body .error {
+            color: #f85149;
+        }
+
+        .terminal-body .warning {
+            color: #d29922;
+        }
+
+        .terminal-body .highlight {
+            color: #a5d6ff;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        th {
+            background: #0d47a1;
+            color: #ffffff;
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #dee2e6;
+            color: #2d3748;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        tr:hover {
+            background: #e3f2fd;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin: 16px 0;
+            padding-left: 24px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            color: #2d3748;
+        }
+
+        li::marker {
+            color: #0d47a1;
+        }
+
+        /* Tool Comparison Cards */
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            margin: 24px 0;
+        }
+
+        .tool-card {
+            background: #ffffff;
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .tool-card:hover {
+            border-color: #0d47a1;
+            box-shadow: 0 4px 12px rgba(13, 71, 161, 0.15);
+        }
+
+        .tool-card.dd {
+            border-top: 4px solid #2e7d32;
+        }
+
+        .tool-card.dcfldd {
+            border-top: 4px solid #1565c0;
+        }
+
+        .tool-card.dc3dd {
+            border-top: 4px solid #7b1fa2;
+        }
+
+        .tool-card h4 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tool-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .tool-badge.standard { background: #e8f5e9; color: #2e7d32; }
+        .tool-badge.enhanced { background: #e3f2fd; color: #1565c0; }
+        .tool-badge.dod { background: #f3e5f5; color: #7b1fa2; }
+
+        /* Parameter Reference */
+        .param-table {
+            margin: 20px 0;
+        }
+
+        .param-row {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .param-row:last-child {
+            border-bottom: none;
+        }
+
+        .param-name {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #0d47a1;
+            font-size: 0.9rem;
+            align-self: start;
+        }
+
+        .param-desc {
+            color: #2d3748;
+        }
+
+        /* Interactive Elements */
+        .accordion {
+            margin: 20px 0;
+        }
+
+        .accordion-item {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            background: #f8f9fa;
+            padding: 16px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: #1a1a2e;
+            transition: all 0.3s ease;
+            border: none;
+            width: 100%;
+            text-align: left;
+            font-size: 1rem;
+        }
+
+        .accordion-header:hover,
+        .accordion-header:focus {
+            background: #e3f2fd;
+            outline: none;
+        }
+
+        .accordion-header:focus {
+            outline: 3px solid #0d47a1;
+            outline-offset: -3px;
+        }
+
+        .accordion-header::after {
+            content: '+';
+            font-size: 1.5rem;
+            font-weight: 300;
+            transition: transform 0.3s ease;
+            color: #0d47a1;
+        }
+
+        .accordion-item.active .accordion-header::after {
+            transform: rotate(45deg);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+            background: #ffffff;
+        }
+
+        .accordion-item.active .accordion-content {
+            max-height: 5000px;
+        }
+
+        .accordion-body {
+            padding: 20px;
+        }
+
+        /* Quiz Section */
+        .quiz-container {
+            background: #f8f9fa;
+            border: 2px solid #0d47a1;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .quiz-question {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 16px;
+            font-size: 1.1rem;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            background: #ffffff;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-option:hover {
+            border-color: #0d47a1;
+            background: #e3f2fd;
+        }
+
+        .quiz-option:focus-within {
+            outline: 3px solid #0d47a1;
+            outline-offset: 2px;
+        }
+
+        .quiz-option input[type="radio"] {
+            margin-right: 12px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .quiz-option label {
+            cursor: pointer;
+            flex: 1;
+            color: #2d3748;
+        }
+
+        .quiz-option.correct {
+            border-color: #2e7d32;
+            background: #e8f5e9;
+        }
+
+        .quiz-option.incorrect {
+            border-color: #c62828;
+            background: #ffebee;
+        }
+
+        .quiz-feedback {
+            margin-top: 16px;
+            padding: 16px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .quiz-feedback.show {
+            display: block;
+        }
+
+        .quiz-feedback.correct {
+            background: #e8f5e9;
+            border: 1px solid #2e7d32;
+            color: #1b5e20;
+        }
+
+        .quiz-feedback.incorrect {
+            background: #ffebee;
+            border: 1px solid #c62828;
+            color: #b71c1c;
+        }
+
+        .quiz-btn {
+            margin-top: 16px;
+            padding: 12px 24px;
+            background: #0d47a1;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-btn:hover {
+            background: #1565c0;
+        }
+
+        .quiz-btn:focus {
+            outline: 3px solid #e94560;
+            outline-offset: 2px;
+        }
+
+        .quiz-btn:disabled {
+            background: #9e9e9e;
+            cursor: not-allowed;
+        }
+
+        /* Tabs */
+        .tabs-container {
+            margin: 24px 0;
+        }
+
+        .tab-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            border-bottom: 2px solid #dee2e6;
+            margin-bottom: 0;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #495057;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            background: #e9ecef;
+        }
+
+        .tab-btn:focus {
+            outline: 3px solid #0d47a1;
+            outline-offset: -3px;
+        }
+
+        .tab-btn.active {
+            background: #0d47a1;
+            color: #ffffff;
+            border-color: #0d47a1;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 24px;
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Checklist */
+        .checklist {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .checklist-item:last-child {
+            border-bottom: none;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+        }
+
+        .checklist-item label {
+            flex: 1;
+            cursor: pointer;
+            color: #2d3748;
+        }
+
+        .checklist-item.checked label {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+
+        /* Objectives List */
+        .objectives-list {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .objectives-list h3 {
+            color: #2e7d32;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .objectives-list ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .objectives-list li {
+            padding: 10px 0;
+            padding-left: 32px;
+            position: relative;
+            border-bottom: 1px solid rgba(46, 125, 50, 0.2);
+        }
+
+        .objectives-list li:last-child {
+            border-bottom: none;
+        }
+
+        .objectives-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #2e7d32;
+            font-weight: 700;
+        }
+
+        /* CSLO Badge */
+        .cslo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin: 16px 0;
+        }
+
+        /* Interactive Command Builder */
+        .command-builder {
+            background: #f8f9fa;
+            border: 2px solid #0d47a1;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .builder-header {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 16px;
+        }
+
+        .builder-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .builder-group {
+            background: #ffffff;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .builder-group label {
+            display: block;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+
+        .builder-group select,
+        .builder-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            color: #2d3748;
+        }
+
+        .builder-group select:focus,
+        .builder-group input:focus {
+            outline: 2px solid #0d47a1;
+            outline-offset: 1px;
+        }
+
+        .builder-output {
+            background: #1a1a2e;
+            color: #e9ecef;
+            padding: 16px 20px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .builder-copy-btn {
+            margin-top: 12px;
+            padding: 10px 20px;
+            background: #2e7d32;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .builder-copy-btn:hover {
+            background: #388e3c;
+        }
+
+        .builder-copy-btn:focus {
+            outline: 3px solid #e94560;
+            outline-offset: 2px;
+        }
+
+        /* Flashcard */
+        .flashcard-container {
+            margin: 24px 0;
+        }
+
+        .flashcard {
+            perspective: 1000px;
+            height: 250px;
+            cursor: pointer;
+        }
+
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-front,
+        .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .flashcard-front {
+            background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
+            color: #ffffff;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .flashcard-back {
+            background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
+            color: #ffffff;
+            transform: rotateY(180deg);
+            font-size: 1.1rem;
+        }
+
+        .flashcard-hint {
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-top: 8px;
+        }
+
+        .flashcard-nav {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .flashcard-nav button {
+            padding: 10px 20px;
+            background: #0d47a1;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .flashcard-nav button:hover {
+            background: #1565c0;
+        }
+
+        .flashcard-nav button:focus {
+            outline: 3px solid #e94560;
+            outline-offset: 2px;
+        }
+
+        .flashcard-counter {
+            text-align: center;
+            color: #495057;
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+
+        /* Highlight Box */
+        .highlight-box {
+            background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%);
+            border: 2px solid #0288d1;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 20px 0;
+        }
+
+        .highlight-box h4 {
+            color: #01579b;
+            margin-top: 0;
+        }
+
+        /* Scenario Container */
+        .scenario-container {
+            background: #f8f9fa;
+            border: 2px solid #0d47a1;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .scenario-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .scenario-icon {
+            font-size: 2rem;
+        }
+
+        .scenario-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .scenario-description {
+            background: #ffffff;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+        }
+
+        .scenario-choices {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .scenario-choice {
+            padding: 16px;
+            background: #ffffff;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-size: 1rem;
+            color: #2d3748;
+        }
+
+        .scenario-choice:hover {
+            border-color: #0d47a1;
+            background: #e3f2fd;
+        }
+
+        .scenario-choice:focus {
+            outline: 3px solid #0d47a1;
+            outline-offset: 2px;
+        }
+
+        .scenario-choice.correct {
+            border-color: #2e7d32;
+            background: #e8f5e9;
+        }
+
+        .scenario-choice.incorrect {
+            border-color: #c62828;
+            background: #ffebee;
+        }
+
+        .scenario-result {
+            margin-top: 20px;
+            padding: 16px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .scenario-result.show {
+            display: block;
+        }
+
+        /* Footer */
+        footer {
+            background: #1a1a2e;
+            color: #ffffff;
+            padding: 32px 24px;
+            text-align: center;
+            margin-top: 48px;
+        }
+
+        footer p {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 8px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: #90caf9;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover,
+        .footer-links a:focus {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            nav a {
+                text-align: center;
+            }
+
+            .tool-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tab-buttons {
+                flex-direction: column;
+            }
+
+            .tab-btn {
+                border-radius: 8px;
+                border: 1px solid #dee2e6;
+            }
+
+            .param-row {
+                grid-template-columns: 1fr;
+            }
+
+            .builder-options {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            nav, .progress-container, .quiz-container, .scenario-container, .command-builder {
+                display: none;
+            }
+
+            body {
+                font-size: 12pt;
+            }
+
+            .card {
+                break-inside: avoid;
+            }
+        }
+
+        /* Focus Visible for better accessibility */
+        :focus-visible {
+            outline: 3px solid #0d47a1;
+            outline-offset: 2px;
+        }
+
+        /* Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+                animation: none !important;
+            }
+
+            .flashcard-inner {
+                transition: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header>
+        <h1>Module 6.3: Command-Line Acquisition Tools</h1>
+        <p class="course-info">CSC 156 - Digital Forensics Fundamentals | Week 6: Data Acquisition and Preservation</p>
+        <span class="module-badge">Module 3 of 7</span>
+    </header>
+
+    <nav aria-label="Module sections">
+        <ul>
+            <li><a href="#section-overview">Overview</a></li>
+            <li><a href="#section-dd">dd Fundamentals</a></li>
+            <li><a href="#section-dcfldd">dcfldd Enhanced</a></li>
+            <li><a href="#section-dc3dd">dc3dd DoD Tool</a></li>
+            <li><a href="#section-comparison">Tool Comparison</a></li>
+            <li><a href="#section-errors">Error Handling</a></li>
+            <li><a href="#section-practice">Practice</a></li>
+            <li><a href="#section-summary">Summary</a></li>
+        </ul>
+    </nav>
+
+    <div class="progress-container">
+        <div class="progress-wrapper">
+            <div class="progress-header">
+                <span class="progress-title">📊 Module Progress</span>
+                <span class="progress-stats"><span id="progress-percent">0</span>% Complete</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <span class="time-estimate">⏱️ Estimated Time: 60-70 minutes</span>
+        </div>
+    </div>
+
+    <main id="main-content">
+        <!-- Section 1: Overview -->
+        <section id="section-overview" data-section="1">
+            <h2><span aria-hidden="true">🎯</span> Module Overview</h2>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon" aria-hidden="true">📋</span>
+                    <span class="card-title">What You'll Learn</span>
+                </div>
+                <p>This module introduces the foundational command-line tools used for forensic imaging on Linux systems. While GUI tools like FTK Imager (Module 6.4) are popular, command-line tools remain essential because they:</p>
+                <ul>
+                    <li>Provide maximum control over the imaging process</li>
+                    <li>Work in environments without graphical interfaces</li>
+                    <li>Are available on virtually all Linux distributions</li>
+                    <li>Can be scripted for automated workflows</li>
+                    <li>Are often used in bootable forensic environments</li>
+                </ul>
+                <p>You'll learn three essential tools: <code>dd</code> (the classic), <code>dcfldd</code> (enhanced for forensics), and <code>dc3dd</code> (Department of Defense enhanced).</p>
+            </div>
+
+            <div class="objectives-list">
+                <h3><span aria-hidden="true">✓</span> Learning Objectives</h3>
+                <p>By the end of this module, you will be able to:</p>
+                <ul>
+                    <li>Create forensic images using <code>dd</code> with appropriate parameters</li>
+                    <li>Use <code>dcfldd</code> for enhanced forensic imaging with built-in hashing</li>
+                    <li>Apply <code>dc3dd</code> for DoD-compliant imaging with logging</li>
+                    <li>Select appropriate block sizes for optimal performance</li>
+                    <li>Handle errors during acquisition using <code>conv=</code> options</li>
+                    <li>Compare the features and use cases for each tool</li>
+                </ul>
+            </div>
+
+            <div class="cslo-badge">
+                <span aria-hidden="true">🎓</span>
+                CSLO 3: Perform data collection using forensic technology methods in accordance with evidence handling procedures
+            </div>
+
+            <div class="key-concept">
+                <h4><span aria-hidden="true">💡</span> Prerequisites</h4>
+                <p>This module assumes basic familiarity with the Linux command line. You should be comfortable with:</p>
+                <ul>
+                    <li>Navigating directories (<code>cd</code>, <code>ls</code>, <code>pwd</code>)</li>
+                    <li>Understanding file paths (<code>/dev/sdb</code>, <code>/mnt/evidence</code>)</li>
+                    <li>Using <code>sudo</code> for administrative commands</li>
+                    <li>Basic command structure (command, options, arguments)</li>
+                </ul>
+                <p>If you need a refresher, review the Linux command-line basics from Week 3.</p>
+            </div>
+
+            <div class="warning-box">
+                <h4><span aria-hidden="true">⚠️</span> Critical Warning: dd is Dangerous</h4>
+                <p>The <code>dd</code> command (and its variants) will <strong>overwrite data without confirmation</strong>. A simple typo—swapping <code>if=</code> and <code>of=</code>—can destroy evidence or your entire system. Always:</p>
+                <ul>
+                    <li>Double-check your source (<code>if=</code>) and destination (<code>of=</code>) before pressing Enter</li>
+                    <li>Use write blockers when imaging evidence</li>
+                    <li>Verify device names with <code>lsblk</code> before running commands</li>
+                </ul>
+                <p>The nickname "dd = disk destroyer" exists for a reason.</p>
+            </div>
+        </section>
+
+        <!-- Section 2: dd Fundamentals -->
+        <section id="section-dd" data-section="2">
+            <h2><span aria-hidden="true">🔧</span> dd: The Foundation of Forensic Imaging</h2>
+
+            <div class="definition-box">
+                <h4>dd (Data Duplicator)</h4>
+                <p>A Unix/Linux command-line utility that copies data at the block level. Originally designed for converting and copying files, <code>dd</code> has become the foundational tool for forensic imaging due to its ability to create exact bit-for-bit copies of storage devices.</p>
+            </div>
+
+            <h3>Why dd Remains Relevant</h3>
+            <p>Despite being decades old, <code>dd</code> remains a critical forensic tool because:</p>
+            <ul>
+                <li><strong>Universal availability:</strong> Pre-installed on virtually every Unix/Linux system</li>
+                <li><strong>Simplicity:</strong> No installation or configuration required</li>
+                <li><strong>Reliability:</strong> Proven track record over decades of use</li>
+                <li><strong>Court acceptance:</strong> Well-understood and widely accepted in legal proceedings</li>
+                <li><strong>Scriptability:</strong> Easy to incorporate into automated workflows</li>
+            </ul>
+
+            <h3>Basic Syntax</h3>
+
+            <div class="syntax-box">
+                <h4>dd Command Structure</h4>
+                <pre><code>dd if=<span class="code-path">[source]</span> of=<span class="code-path">[destination]</span> bs=<span class="code-value">[block_size]</span> <span class="code-flag">[options]</span></code></pre>
+            </div>
+
+            <h3>Essential Parameters</h3>
+
+            <div class="table-container">
+                <table>
+                    <caption class="visually-hidden">dd command parameters</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Parameter</th>
+                            <th scope="col">Meaning</th>
+                            <th scope="col">Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>if=</code></td>
+                            <td><strong>Input file</strong> - The source device or file to read from</td>
+                            <td><code>if=/dev/sdb</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>of=</code></td>
+                            <td><strong>Output file</strong> - The destination file or device to write to</td>
+                            <td><code>of=/evidence/image.dd</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>bs=</code></td>
+                            <td><strong>Block size</strong> - Read and write this many bytes at a time</td>
+                            <td><code>bs=4096</code> or <code>bs=4K</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>count=</code></td>
+                            <td><strong>Count</strong> - Copy only this many blocks (optional)</td>
+                            <td><code>count=1000</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>status=</code></td>
+                            <td><strong>Status output</strong> - Control progress display</td>
+                            <td><code>status=progress</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>conv=</code></td>
+                            <td><strong>Conversion options</strong> - Error handling and data conversion</td>
+                            <td><code>conv=noerror,sync</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Understanding Block Size</h3>
+
+            <div class="info-box">
+                <h4><span aria-hidden="true">ℹ️</span> Block Size Impact on Performance</h4>
+                <p>Block size (<code>bs=</code>) significantly affects imaging speed. The default (512 bytes) is very slow. Larger block sizes improve performance but use more memory.</p>
+                <ul>
+                    <li><code>bs=512</code> - Default, very slow (not recommended)</li>
+                    <li><code>bs=4096</code> or <code>bs=4K</code> - Good balance for most situations</li>
+                    <li><code>bs=64K</code> - Faster for modern drives</li>
+                    <li><code>bs=1M</code> - Very fast, good for large drives with no errors</li>
+                </ul>
+                <p><strong>Recommendation:</strong> Use <code>bs=4K</code> or <code>bs=64K</code> for forensic imaging. Larger sizes may skip over bad sectors.</p>
+            </div>
+
+            <h3>Forensic Imaging with dd</h3>
+
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="terminal-dot red"></div>
+                    <div class="terminal-dot yellow"></div>
+                    <div class="terminal-dot green"></div>
+                    <span class="terminal-title">Terminal - Forensic Imaging with dd</span>
+                </div>
+                <div class="terminal-body"><span class="output"># Step 1: Identify the evidence drive (after connecting through write blocker)</span>
+<span class="prompt">examiner@forensic-ws:~$</span> <span class="command">sudo lsblk</span>
+<span class="output">NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 256G  0 disk 
+├─sda1   8:1    0 512M  0 part /boot/efi
+├─sda2   8:2    0 255G  0 part /
+sdb      8:16   0  32G  1 disk           </span><span class="highlight">← Evidence drive (RO=1 means read-only)</span>
+<span class="output">└─sdb1   8:17   0  32G  1 part</span>
+
+<span class="output"># Step 2: Verify write protection is active</span>
+<span class="prompt">examiner@forensic-ws:~$</span> <span class="command">sudo blockdev --getro /dev/sdb</span>
+<span class="success">1</span>  <span class="output"># 1 = read-only (protected)</span>
+
+<span class="output"># Step 3: Create the forensic image</span>
+<span class="prompt">examiner@forensic-ws:~$</span> <span class="command">sudo dd if=/dev/sdb of=/evidence/case001/evidence.dd bs=4K status=progress</span>
+<span class="output">33553920000 bytes (34 GB, 31 GiB) copied, 425 s, 78.9 MB/s</span>
+<span class="success">8192000+0 records in
+8192000+0 records out
+33553920000 bytes (34 GB, 31 GiB) copied, 425.234 s, 78.9 MB/s</span>
+
+<span class="output"># Step 4: Calculate hash of the image</span>
+<span class="prompt">examiner@forensic-ws:~$</span> <span class="command">md5sum /evidence/case001/evidence.dd</span>
+<span class="success">a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6  /evidence/case001/evidence.dd</span>
+
+<span class="output"># Step 5: Calculate hash of source (should match)</span>
+<span class="prompt">examiner@forensic-ws:~$</span> <span class="command">sudo md5sum /dev/sdb</span>
+<span class="success">a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6  /dev/sdb</span>
+
+<span class="output"># ✓ Hashes match - Image verified successfully</span></div>
+            </div>
+
+            <h3>Important dd Conversion Options</h3>
+
+            <div class="accordion">
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>conv=noerror - Continue on Read Errors</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <p>By default, <code>dd</code> stops when it encounters a read error. The <code>noerror</code> option tells dd to continue copying even when errors occur.</p>
+                            <pre><code>dd if=/dev/sdb of=/evidence/image.dd bs=4K <span class="code-flag">conv=noerror</span> status=progress</code></pre>
+                            <p><strong>When to use:</strong> When imaging drives with bad sectors or physical damage. Without this option, a single bad sector would abort the entire image.</p>
+                            <div class="warning-box">
+                                <h4><span aria-hidden="true">⚠️</span> Important</h4>
+                                <p>When <code>noerror</code> skips a bad sector, it doesn't write anything for that sector—the output file will be shorter than the source. Always use with <code>sync</code> to maintain proper alignment.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>conv=sync - Pad Blocks with Zeros</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <p>The <code>sync</code> option pads every input block to the full block size with null bytes (zeros). When combined with <code>noerror</code>, it ensures that unreadable sectors are replaced with zeros, maintaining proper file alignment.</p>
+                            <pre><code>dd if=/dev/sdb of=/evidence/image.dd bs=4K <span class="code-flag">conv=noerror,sync</span> status=progress</code></pre>
+                            <p><strong>Result:</strong> The output image will be exactly the same size as the source, with zeros in place of any unreadable sectors.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>conv=notrunc - Don't Truncate Output</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <p>The <code>notrunc</code> option prevents dd from truncating the output file. Useful when writing to a file that already exists and you want to preserve data beyond what you're writing.</p>
+                            <pre><code>dd if=/dev/sdb of=/evidence/image.dd bs=4K <span class="code-flag">conv=notrunc</span> status=progress</code></pre>
+                            <p><strong>Forensic use:</strong> Rarely needed for standard imaging, but useful in specific recovery scenarios.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Standard Forensic dd Command</h3>
+
+            <div class="highlight-box">
+                <h4>Recommended Forensic Imaging Command</h4>
+                <pre><code>sudo dd if=/dev/sdX of=/path/to/image.dd bs=4K conv=noerror,sync status=progress</code></pre>
+                <p>This command:</p>
+                <ul>
+                    <li>Uses 4K block size for good performance</li>
+                    <li>Continues on errors (<code>noerror</code>)</li>
+                    <li>Maintains proper alignment (<code>sync</code>)</li>
+                    <li>Shows progress during imaging (<code>status=progress</code>)</li>
+                </ul>
+            </div>
+
+            <div class="warning-box">
+                <h4><span aria-hidden="true">⚠️</span> Limitations of dd for Forensics</h4>
+                <ul>
+                    <li><strong>No built-in hashing:</strong> Must calculate hashes separately</li>
+                    <li><strong>No logging:</strong> No automatic documentation of the process</li>
+                    <li><strong>No verification:</strong> Must manually verify image integrity</li>
+                    <li><strong>No split output:</strong> Cannot automatically split large images</li>
+                    <li><strong>Limited progress info:</strong> <code>status=progress</code> only shows basic stats</li>
+                </ul>
+                <p>These limitations are addressed by <code>dcfldd</code> and <code>dc3dd</code>.</p>
+            </div>
+        </section>
+
+        <!-- Section 3: dcfldd Enhanced -->
+        <section id="section-dcfldd" data-section="3">
+            <h2><span aria-hidden="true">⚡</span> dcfldd: Enhanced dd for Forensics</h2>
+
+            <div class="definition-box">
+                <h4>dcfldd (Department of Defense Computer Forensics Lab dd)</h4>
+                <p>An enhanced version of <code>dd</code> developed by Nick Harbour at the Department of Defense Computer Forensics Laboratory (DCFL). It adds forensic-specific features including on-the-fly hashing, progress indication, split output, and verification.</p>
+            </div>
+
+            <h3>Key Enhancements Over dd</h3>
+
+            <div class="tool-card dcfldd" style="margin: 24px 0;">
+                <h4><span aria-hidden="true">⚡</span> dcfldd Features <span class="tool-badge enhanced">Enhanced</span></h4>
+                <ul>
+                    <li><strong>On-the-fly hashing:</strong> Calculate MD5, SHA-1, SHA-256, etc. during imaging</li>
+                    <li><strong>Hash verification:</strong> Verify image against source automatically</li>
+                    <li><strong>Split output:</strong> Automatically split large images into manageable chunks</li>
+                    <li><strong>Multiple outputs:</strong> Write to multiple destinations simultaneously</li>
+                    <li><strong>Progress bar:</strong> Visual progress indication</li>
+                    <li><strong>Logging:</strong> Log all operations to a file</li>
+                    <li><strong>Pattern wiping:</strong> Securely wipe drives (non-forensic use)</li>
+                </ul>
+            </div>
+
+            <h3>Installation</h3>
+
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="terminal-dot red"></div>
+                    <div class="terminal-dot yellow"></div>
+                    <div class="terminal-dot green"></div>
+                    <span class="terminal-title">Terminal - Installing dcfldd</span>
+                </div>
+                <div class="terminal-body"><span class="output"># Debian/Ubuntu</span>
+<span class="prompt">examiner@forensic-ws:~$</span> <span class="command">sudo apt install dcfldd</span>
+
+<span class="output"># Fedora/RHEL/CentOS</span>
+<span class="prompt">examiner@forensic-ws:~$</span> <span class="command">sudo dnf install dcfldd</span>
+
+<span class="output"># Verify installation</span>
+<span class="prompt">examiner@forensic-ws:~$</span> <span class="command">dcfldd --version</span>
+<span class="output">dcfldd 1.3.4-1</span></div>
+            </div>
+
+            <h3>dcfldd Syntax and Parameters</h3>
+
+            <div class="table-container">
+                <table>
+                    <caption class="visually-hidden">dcfldd specific parameters</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Parameter</th>
+                            <th scope="col">Description</th>
+                            <th scope="col">Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>hash=</code></td>
+                            <td>Hash algorithm(s) to use</td>
+                            <td><code>hash=md5,sha256</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>hashlog=</code></td>
+                            <td>File to write hash values</td>
+                            <td><code>hashlog=/evidence/hash.txt</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>hashwindow=</code></td>
+                            <td>Hash every N bytes (piecewise hashing)</td>
+                            <td><code>hashwindow=1G</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>hashconv=</code></td>
+                            <td>Hash before or after conversion</td>
+                            <td><code>hashconv=after</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>split=</code></td>
+                            <td>Split output into chunks of specified size</td>
+                            <td><code>split=2G</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>splitformat=</code></td>
+                            <td>Format for split file numbering</td>
+                            <td><code>splitformat=000</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>vf=</code></td>
+                            <td>Verify file - compare output to this file</td>
+                            <td><code>vf=/dev/sdb</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>verifylog=</code></td>
+                            <td>Log verification results</td>
+                            <td><code>verifylog=/evidence/verify.txt</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>statusinterval=</code></td>
+                            <td>Update progress every N blocks</td>
+                            <td><code>statusinterval=256</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Forensic Imaging with dcfldd</h3>
+
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="terminal-dot red"></div>
+                    <div class="terminal-dot yellow"></div>
+                    <div class="terminal-dot green"></div>
+                    <span class="terminal-title">Terminal - Forensic Imaging with dcfldd</span>
+                </div>
+                <div class="terminal-body"><span class="output"># Basic forensic image with MD5 and SHA-256 hashing</span>
+<span class="prompt">examiner@forensic-ws:~$</span> <span class="command">sudo dcfldd if=/dev/sdb of=/evidence/case001/evidence.dd \
+    bs=4K \
+    hash=md5,sha256 \
+    hashlog=/evidence/case001/evidence.hash \
+    conv=noerror,sync</span>
+
+<span class="output">[  0% complete]  0 blocks (0Mb) written.
+[ 10% complete]  819200 blocks (3200Mb) written.
+[ 20% complete]  1638400 blocks (6400Mb) written.
+...</span>
+<span class="success">[100% complete]  8192000 blocks (32000Mb) written.
+
+Total (md5): a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
+Total (sha256): e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+
+8192000+0 records in
+8192000+0 records out</span>
+
+<span class="output"># View the hash log</span>
+<span class="prompt">examiner@forensic-ws:~$</span> <span class="command">cat /evidence/case001/evidence.hash</span>
+<span class="output">Total (md5): a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
+Total (sha256): e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span></div>
+            </div>
+
+            <h3>Advanced dcfldd Examples</h3>
+
+            <div class="accordion">
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>Split Large Images into Chunks</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <p>Split output is useful when the destination file system has size limits (e.g., FAT32's 4GB limit) or when you need to span multiple media:</p>
+                            <pre><code>sudo dcfldd if=/dev/sdb of=/evidence/case001/evidence.dd \
+    bs=4K \
+    hash=md5,sha256 \
+    hashlog=/evidence/case001/evidence.hash \
+    <span class="code-flag">split=2G</span> \
+    <span class="code-flag">splitformat=000</span> \
+    conv=noerror,sync</code></pre>
+                            <p><strong>Result:</strong> Creates files named <code>evidence.dd.000</code>, <code>evidence.dd.001</code>, <code>evidence.dd.002</code>, etc., each 2GB in size.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>Piecewise Hashing for Large Images</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <p>Piecewise hashing calculates hash values for segments of the image, useful for verifying specific portions without re-hashing the entire image:</p>
+                            <pre><code>sudo dcfldd if=/dev/sdb of=/evidence/case001/evidence.dd \
+    bs=4K \
+    hash=md5 \
+    <span class="code-flag">hashwindow=1G</span> \
+    hashlog=/evidence/case001/evidence_piecewise.hash \
+    conv=noerror,sync</code></pre>
+                            <p><strong>Result:</strong> Generates MD5 hash for every 1GB segment plus a total hash.</p>
+                            <pre><code><span class="code-comment"># Sample piecewise hash output:</span>
+0 - 1073741824: 5d41402abc4b2a76b9719d911017c592
+1073741824 - 2147483648: 7d793037a0760186574b0282f2f435e7
+2147483648 - 3221225472: 098f6bcd4621d373cade4e832627b4f6
+Total (md5): a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>Write to Multiple Destinations</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <p>Create multiple copies simultaneously—useful for creating a working copy and archive copy in one pass:</p>
+                            <pre><code>sudo dcfldd if=/dev/sdb \
+    <span class="code-flag">of=/evidence/case001/evidence_primary.dd</span> \
+    <span class="code-flag">of=/evidence/case001/evidence_backup.dd</span> \
+    bs=4K \
+    hash=md5,sha256 \
+    hashlog=/evidence/case001/evidence.hash \
+    conv=noerror,sync</code></pre>
+                            <p><strong>Benefit:</strong> Both copies are created in the time it takes to read the source once, and both will have identical hashes.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>Verify Image Against Source</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <p>After imaging, verify the image matches the source:</p>
+                            <pre><code>sudo dcfldd if=/evidence/case001/evidence.dd \
+    <span class="code-flag">vf=/dev/sdb</span> \
+    <span class="code-flag">verifylog=/evidence/case001/verify.log</span></code></pre>
+                            <p><strong>Output:</strong></p>
+                            <pre><code><span class="code-comment"># Verification successful:</span>
+<span class="success">0 - 33553920000: MATCH</span>
+
+<span class="code-comment"># Verification failed (example):</span>
+<span class="error">0 - 33553920000: MISMATCH at offset 1048576</span></code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="example-box">
+                <h4>Complete Forensic Workflow with dcfldd</h4>
+                <pre><code><span class="code-comment"># Step 1: Create image with hashing</span>
+sudo dcfldd if=/dev/sdb of=/evidence/case001/evidence.dd \
+    bs=4K \
+    hash=md5,sha256 \
+    hashlog=/evidence/case001/evidence.hash \
+    conv=noerror,sync
+
+<span class="code-comment"># Step 2: Verify image against source</span>
+sudo dcfldd if=/evidence/case001/evidence.dd \
+    vf=/dev/sdb \
+    verifylog=/evidence/case001/verify.log
+
+<span class="code-comment"># Step 3: Document results</span>
+cat /evidence/case001/evidence.hash
+cat /evidence/case001/verify.log</code></pre>
+            </div>
+        </section>
+
+        <!-- Section 4: dc3dd DoD Tool -->
+        <section id="section-dc3dd" data-section="4">
+            <h2><span aria-hidden="true">🛡️</span> dc3dd: Department of Defense Enhanced dd</h2>
+
+            <div class="definition-box">
+                <h4>dc3dd (DoD Cyber Crime Center dd)</h4>
+                <p>A patched version of GNU <code>dd</code> developed by the Department of Defense Cyber Crime Center (DC3). It includes features specifically designed for forensic acquisition, including comprehensive logging, error reporting, and progress indication.</p>
+            </div>
+
+            <h3>dc3dd vs dcfldd</h3>
+
+            <p>While both tools enhance <code>dd</code> for forensics, they have different origins and slightly different feature sets:</p>
+
+            <div class="table-container">
+                <table>
+                    <caption class="visually-hidden">Comparison of dcfldd and dc3dd</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Feature</th>
+                            <th scope="col">dcfldd</th>
+                            <th scope="col">dc3dd</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Origin</strong></td>
+                            <td>DCFL (DoD Computer Forensics Lab)</td>
+                            <td>DC3 (DoD Cyber Crime Center)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Base</strong></td>
+                            <td>Standalone rewrite</td>
+                            <td>Patched GNU dd</td>
+                        </tr>
+                        <tr>
+                            <td><strong>On-the-fly hashing</strong></td>
+                            <td>Yes</td>
+                            <td>Yes</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Progress indication</strong></td>
+                            <td>Yes (percentage)</td>
+                            <td>Yes (detailed)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Split output</strong></td>
+                            <td>Yes</td>
+                            <td>Yes (ofs=)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Logging</strong></td>
+                            <td>Hash log only</td>
+                            <td>Comprehensive logging</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Error reporting</strong></td>
+                            <td>Basic</td>
+                            <td>Detailed with sector numbers</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Verification</strong></td>
+                            <td>vf= option</td>
+                            <td>Built-in verification</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Pattern wiping</strong></td>
+                            <td>Yes</td>
+                            <td>Yes</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Installation</h3>
+
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="terminal-dot red"></div>
+                    <div class="terminal-dot yellow"></div>
+                    <div class="terminal-dot green"></div>
+                    <span class="terminal-title">Terminal - Installing dc3dd</span>
+                </div>
+                <div class="terminal-body"><span class="output"># Debian/Ubuntu</span>
+<span class="prompt">examiner@forensic-ws:~$</span> <span class="command">sudo apt install dc3dd</span>
+
+<span class="output"># Verify installation</span>
+<span class="prompt">examiner@forensic-ws:~$</span> <span class="command">dc3dd --version</span>
+<span class="output">dc3dd 7.2.646 based on GNU dd</span></div>
+            </div>
+
+            <h3>dc3dd Specific Parameters</h3>
+
+            <div class="table-container">
+                <table>
+                    <caption class="visually-hidden">dc3dd specific parameters</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Parameter</th>
+                            <th scope="col">Description</th>
+                            <th scope="col">Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>hof=</code></td>
+                            <td>Hash output file (calculates hash of output)</td>
+                            <td><code>hof=/evidence/image.dd</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>hash=</code></td>
+                            <td>Hash algorithm to use</td>
+                            <td><code>hash=md5</code> or <code>hash=sha256</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>log=</code></td>
+                            <td>Log file for all operations</td>
+                            <td><code>log=/evidence/acquisition.log</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>hlog=</code></td>
+                            <td>Separate log for hash values</td>
+                            <td><code>hlog=/evidence/hash.log</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>rec=</code></td>
+                            <td>Recovery mode (continue after errors)</td>
+                            <td><code>rec=on</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>ofs=</code></td>
+                            <td>Output file size (for splitting)</td>
+                            <td><code>ofs=2G</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>ofsz=</code></td>
+                            <td>Output file size in bytes</td>
+                            <td><code>ofsz=2147483648</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>verb=</code></td>
+                            <td>Verbosity level</td>
+                            <td><code>verb=on</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>nwspc=</code></td>
+                            <td>Replace spaces in output filename</td>
+                            <td><code>nwspc=on</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Forensic Imaging with dc3dd</h3>
+
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="terminal-dot red"></div>
+                    <div class="terminal-dot yellow"></div>
+                    <div class="terminal-dot green"></div>
+                    <span class="terminal-title">Terminal - Forensic Imaging with dc3dd</span>
+                </div>
+                <div class="terminal-body"><span class="output"># Basic forensic image with MD5 hashing and logging</span>
+<span class="prompt">examiner@forensic-ws:~$</span> <span class="command">sudo dc3dd if=/dev/sdb hof=/evidence/case001/evidence.dd \
+    hash=md5 \
+    log=/evidence/case001/acquisition.log \
+    hlog=/evidence/case001/hash.log \
+    rec=on \
+    verb=on</span>
+
+<span class="output">dc3dd 7.2.646 started at 2026-02-23 10:15:32 -0800
+compiled options:
+command line: dc3dd if=/dev/sdb hof=/evidence/case001/evidence.dd hash=md5 log=/evidence/case001/acquisition.log hlog=/evidence/case001/hash.log rec=on verb=on
+device size: 33553920000 bytes
+sector size: 512 bytes
+
+ 33553920000 bytes ( 32 G ) copied ( 100% ), 425 s, 78.9 M/s                    
+
+input results for device `/dev/sdb':
+   33553920000 bytes (32 G) copied
+   65535000 sectors in
+
+output results for file `/evidence/case001/evidence.dd':
+   33553920000 bytes (32 G) copied
+   65535000 sectors out
+
+dc3dd completed at 2026-02-23 10:22:17 -0800</span>
+
+<span class="output"># View the comprehensive log</span>
+<span class="prompt">examiner@forensic-ws:~$</span> <span class="command">cat /evidence/case001/acquisition.log</span>
+<span class="output">dc3dd 7.2.646 started at 2026-02-23 10:15:32 -0800
+command line: dc3dd if=/dev/sdb hof=/evidence/case001/evidence.dd hash=md5 ...
+device size: 33553920000 bytes
+sector size: 512 bytes
+33553920000 bytes ( 32 G ) copied ( 100% ), 425 s, 78.9 M/s
+input results for device `/dev/sdb':
+   33553920000 bytes (32 G) copied
+   0 input errors
+output results for file `/evidence/case001/evidence.dd':
+   33553920000 bytes (32 G) copied
+   0 output errors
+dc3dd completed at 2026-02-23 10:22:17 -0800</span>
+
+<span class="output"># View the hash log</span>
+<span class="prompt">examiner@forensic-ws:~$</span> <span class="command">cat /evidence/case001/hash.log</span>
+<span class="output">a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6 - /evidence/case001/evidence.dd</span></div>
+            </div>
+
+            <h3>dc3dd Error Handling</h3>
+
+            <p>One of dc3dd's strengths is detailed error reporting. When encountering bad sectors, it logs the exact location:</p>
+
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="terminal-dot red"></div>
+                    <div class="terminal-dot yellow"></div>
+                    <div class="terminal-dot green"></div>
+                    <span class="terminal-title">Terminal - dc3dd Error Handling</span>
+                </div>
+                <div class="terminal-body"><span class="output"># Imaging a drive with bad sectors</span>
+<span class="prompt">examiner@forensic-ws:~$</span> <span class="command">sudo dc3dd if=/dev/sdb hof=/evidence/damaged_drive.dd \
+    hash=md5 \
+    log=/evidence/damaged_acquisition.log \
+    rec=on</span>
+
+<span class="warning">sector 1048576: read error
+sector 1048577: read error
+sector 1048578: read error</span>
+<span class="output">...continuing...</span>
+
+<span class="output">input results for device `/dev/sdb':
+   33553920000 bytes (32 G) copied
+   </span><span class="warning">3 input errors at sectors: 1048576, 1048577, 1048578</span>
+
+<span class="output">output results for file `/evidence/damaged_drive.dd':
+   33553920000 bytes (32 G) copied
+   3 sectors replaced with zeros</span></div>
+            </div>
+
+            <div class="info-box">
+                <h4><span aria-hidden="true">ℹ️</span> Documentation Benefit</h4>
+                <p>The detailed logging in dc3dd is invaluable for court documentation. You can show exactly which sectors had errors, that the acquisition continued properly, and that affected sectors were filled with zeros. This level of documentation strengthens the chain of custody.</p>
+            </div>
+
+            <h3>Advanced dc3dd Examples</h3>
+
+            <div class="accordion">
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>Multiple Hash Algorithms</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <p>Calculate multiple hash types simultaneously:</p>
+                            <pre><code>sudo dc3dd if=/dev/sdb hof=/evidence/evidence.dd \
+    <span class="code-flag">hash=md5</span> \
+    <span class="code-flag">hash=sha1</span> \
+    <span class="code-flag">hash=sha256</span> \
+    log=/evidence/acquisition.log \
+    hlog=/evidence/hashes.log</code></pre>
+                            <p><strong>Note:</strong> Unlike dcfldd which uses comma-separated values, dc3dd requires separate <code>hash=</code> statements for each algorithm.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>Split Output Files</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <p>Create split image files:</p>
+                            <pre><code>sudo dc3dd if=/dev/sdb hof=/evidence/evidence.dd \
+    <span class="code-flag">ofs=2G</span> \
+    hash=md5 \
+    log=/evidence/acquisition.log</code></pre>
+                            <p><strong>Result:</strong> Creates <code>evidence.dd.000</code>, <code>evidence.dd.001</code>, etc.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>Imaging to Multiple Outputs</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <p>Create multiple copies simultaneously:</p>
+                            <pre><code>sudo dc3dd if=/dev/sdb \
+    <span class="code-flag">hof=/evidence/primary/evidence.dd</span> \
+    <span class="code-flag">hof=/evidence/backup/evidence.dd</span> \
+    hash=md5 \
+    log=/evidence/acquisition.log</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Tool Comparison -->
+        <section id="section-comparison" data-section="5">
+            <h2><span aria-hidden="true">⚖️</span> Tool Comparison and Selection</h2>
+
+            <p>Choosing the right tool depends on your specific requirements, available software, and documentation needs.</p>
+
+            <div class="tool-grid">
+                <div class="tool-card dd">
+                    <h4><span aria-hidden="true">🔧</span> dd <span class="tool-badge standard">Standard</span></h4>
+                    <p><strong>Best for:</strong> Simple imaging when other tools unavailable</p>
+                    <ul>
+                        <li>✓ Available everywhere</li>
+                        <li>✓ Simple syntax</li>
+                        <li>✓ Well-documented</li>
+                        <li>✗ No built-in hashing</li>
+                        <li>✗ No logging</li>
+                        <li>✗ No split output</li>
+                    </ul>
+                    <p><strong>Use when:</strong> Boot environments, minimal systems, or when other tools aren't available.</p>
+                </div>
+
+                <div class="tool-card dcfldd">
+                    <h4><span aria-hidden="true">⚡</span> dcfldd <span class="tool-badge enhanced">Enhanced</span></h4>
+                    <p><strong>Best for:</strong> General forensic imaging with hashing</p>
+                    <ul>
+                        <li>✓ On-the-fly hashing</li>
+                        <li>✓ Multiple hash algorithms</li>
+                        <li>✓ Split output</li>
+                        <li>✓ Progress indication</li>
+                        <li>✓ Verification option</li>
+                        <li>○ Basic logging</li>
+                    </ul>
+                    <p><strong>Use when:</strong> Standard forensic imaging with hash verification needs.</p>
+                </div>
+
+                <div class="tool-card dc3dd">
+                    <h4><span aria-hidden="true">🛡️</span> dc3dd <span class="tool-badge dod">DoD</span></h4>
+                    <p><strong>Best for:</strong> Comprehensive logging and documentation</p>
+                    <ul>
+                        <li>✓ On-the-fly hashing</li>
+                        <li>✓ Comprehensive logging</li>
+                        <li>✓ Detailed error reporting</li>
+                        <li>✓ Sector-level error info</li>
+                        <li>✓ Based on GNU dd</li>
+                        <li>✓ DoD validated</li>
+                    </ul>
+                    <p><strong>Use when:</strong> Maximum documentation needed, court cases, or damaged drives.</p>
+                </div>
+            </div>
+
+            <h3>Feature Comparison Matrix</h3>
+
+            <div class="table-container">
+                <table>
+                    <caption class="visually-hidden">Complete feature comparison of dd, dcfldd, and dc3dd</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Feature</th>
+                            <th scope="col">dd</th>
+                            <th scope="col">dcfldd</th>
+                            <th scope="col">dc3dd</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Bit-for-bit copy</td>
+                            <td>✓</td>
+                            <td>✓</td>
+                            <td>✓</td>
+                        </tr>
+                        <tr>
+                            <td>On-the-fly MD5</td>
+                            <td>✗</td>
+                            <td>✓</td>
+                            <td>✓</td>
+                        </tr>
+                        <tr>
+                            <td>On-the-fly SHA-256</td>
+                            <td>✗</td>
+                            <td>✓</td>
+                            <td>✓</td>
+                        </tr>
+                        <tr>
+                            <td>Multiple hash algorithms</td>
+                            <td>✗</td>
+                            <td>✓ (comma-separated)</td>
+                            <td>✓ (multiple hash=)</td>
+                        </tr>
+                        <tr>
+                            <td>Progress indication</td>
+                            <td>✓ (status=progress)</td>
+                            <td>✓ (percentage)</td>
+                            <td>✓ (detailed)</td>
+                        </tr>
+                        <tr>
+                            <td>Split output</td>
+                            <td>✗</td>
+                            <td>✓ (split=)</td>
+                            <td>✓ (ofs=)</td>
+                        </tr>
+                        <tr>
+                            <td>Multiple outputs</td>
+                            <td>✗</td>
+                            <td>✓ (multiple of=)</td>
+                            <td>✓ (multiple hof=)</td>
+                        </tr>
+                        <tr>
+                            <td>Hash logging</td>
+                            <td>✗</td>
+                            <td>✓ (hashlog=)</td>
+                            <td>✓ (hlog=)</td>
+                        </tr>
+                        <tr>
+                            <td>Operation logging</td>
+                            <td>✗</td>
+                            <td>✗</td>
+                            <td>✓ (log=)</td>
+                        </tr>
+                        <tr>
+                            <td>Detailed error reporting</td>
+                            <td>✗</td>
+                            <td>Basic</td>
+                            <td>✓ (sector numbers)</td>
+                        </tr>
+                        <tr>
+                            <td>Verification mode</td>
+                            <td>✗</td>
+                            <td>✓ (vf=)</td>
+                            <td>✓</td>
+                        </tr>
+                        <tr>
+                            <td>Piecewise hashing</td>
+                            <td>✗</td>
+                            <td>✓ (hashwindow=)</td>
+                            <td>✗</td>
+                        </tr>
+                        <tr>
+                            <td>Available by default</td>
+                            <td>✓</td>
+                            <td>✗ (install required)</td>
+                            <td>✗ (install required)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="key-concept">
+                <h4><span aria-hidden="true">💡</span> Selection Guidelines</h4>
+                <ul>
+                    <li><strong>Emergency/minimal environment:</strong> Use <code>dd</code> with separate hash calculation</li>
+                    <li><strong>Standard forensic imaging:</strong> Use <code>dcfldd</code> for integrated hashing</li>
+                    <li><strong>Court cases requiring extensive documentation:</strong> Use <code>dc3dd</code> for comprehensive logging</li>
+                    <li><strong>Damaged drives:</strong> Use <code>dc3dd</code> for detailed error reporting</li>
+                    <li><strong>Piecewise verification needs:</strong> Use <code>dcfldd</code> with hashwindow</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 6: Error Handling -->
+        <section id="section-errors" data-section="6">
+            <h2><span aria-hidden="true">🔧</span> Error Handling and Troubleshooting</h2>
+
+            <p>Forensic examiners frequently encounter errors during acquisition. Understanding how to handle these errors while maintaining evidence integrity is crucial.</p>
+
+            <h3>Common Errors and Solutions</h3>
+
+            <div class="accordion">
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>Read Errors / Bad Sectors</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <h4>Symptoms:</h4>
+                            <pre><code><span class="code-error">dd: error reading '/dev/sdb': Input/output error
+0+0 records in
+0+0 records out</span></code></pre>
+
+                            <h4>Cause:</h4>
+                            <p>Physical damage to the drive, failing sectors, or connection issues.</p>
+
+                            <h4>Solution:</h4>
+                            <pre><code><span class="code-comment"># Use conv=noerror,sync to continue past errors</span>
+sudo dd if=/dev/sdb of=/evidence/image.dd bs=4K <span class="code-flag">conv=noerror,sync</span> status=progress
+
+<span class="code-comment"># Or with dcfldd/dc3dd for better error handling</span>
+sudo dc3dd if=/dev/sdb hof=/evidence/image.dd hash=md5 <span class="code-flag">rec=on</span> log=/evidence/errors.log</code></pre>
+
+                            <div class="info-box">
+                                <h4><span aria-hidden="true">ℹ️</span> Documentation</h4>
+                                <p>Always document errors in your notes. With dc3dd, errors are automatically logged with sector numbers. This documentation is crucial for court testimony.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>Permission Denied</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <h4>Symptoms:</h4>
+                            <pre><code><span class="code-error">dd: failed to open '/dev/sdb': Permission denied</span></code></pre>
+
+                            <h4>Cause:</h4>
+                            <p>Insufficient privileges to access raw block devices.</p>
+
+                            <h4>Solution:</h4>
+                            <pre><code><span class="code-comment"># Run with sudo</span>
+<span class="code-flag">sudo</span> dd if=/dev/sdb of=/evidence/image.dd bs=4K status=progress
+
+<span class="code-comment"># Or check if you're in the 'disk' group</span>
+groups $USER</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>No Space Left on Device</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <h4>Symptoms:</h4>
+                            <pre><code><span class="code-error">dd: error writing '/evidence/image.dd': No space left on device</span></code></pre>
+
+                            <h4>Cause:</h4>
+                            <p>Destination doesn't have enough space for the complete image.</p>
+
+                            <h4>Solutions:</h4>
+                            <pre><code><span class="code-comment"># Check available space before imaging</span>
+df -h /evidence
+
+<span class="code-comment"># Use split output with dcfldd</span>
+sudo dcfldd if=/dev/sdb of=/evidence/image.dd bs=4K <span class="code-flag">split=2G</span> hash=md5
+
+<span class="code-comment"># Or compress on-the-fly (reduces forensic integrity)</span>
+sudo dd if=/dev/sdb bs=4K | gzip > /evidence/image.dd.gz</code></pre>
+
+                            <div class="warning-box">
+                                <h4><span aria-hidden="true">⚠️</span> Compression Warning</h4>
+                                <p>Compressing during imaging adds complexity and potential points of failure. It's generally better to use split output and ensure adequate destination space.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>Device Busy</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <h4>Symptoms:</h4>
+                            <pre><code><span class="code-error">dd: failed to open '/dev/sdb': Device or resource busy</span></code></pre>
+
+                            <h4>Cause:</h4>
+                            <p>The device is mounted or in use by another process.</p>
+
+                            <h4>Solution:</h4>
+                            <pre><code><span class="code-comment"># Check if mounted</span>
+mount | grep sdb
+
+<span class="code-comment"># Unmount if necessary</span>
+sudo umount /dev/sdb1
+
+<span class="code-comment"># Check for processes using the device</span>
+sudo lsof /dev/sdb
+
+<span class="code-comment"># For forensic imaging, ensure automount is disabled</span>
+<span class="code-comment"># and use write blockers which prevent mounting</span></code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>Hash Mismatch After Imaging</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <h4>Symptoms:</h4>
+                            <p>Source and image hash values don't match.</p>
+
+                            <h4>Possible Causes:</h4>
+                            <ul>
+                                <li>Source was modified during imaging (write blocker failure)</li>
+                                <li>Read errors occurred without proper handling</li>
+                                <li>Destination file was truncated</li>
+                                <li>Imaging didn't complete successfully</li>
+                            </ul>
+
+                            <h4>Investigation Steps:</h4>
+                            <pre><code><span class="code-comment"># Verify file sizes match</span>
+sudo blockdev --getsize64 /dev/sdb
+ls -l /evidence/image.dd
+
+<span class="code-comment"># Check for errors in logs (dc3dd)</span>
+cat /evidence/acquisition.log
+
+<span class="code-comment"># Re-image with better error handling</span>
+sudo dc3dd if=/dev/sdb hof=/evidence/image2.dd hash=md5 rec=on log=/evidence/acq2.log</code></pre>
+
+                            <div class="warning-box">
+                                <h4><span aria-hidden="true">⚠️</span> Critical Action</h4>
+                                <p>A hash mismatch is a serious issue. Document everything, investigate the cause, and consider whether the evidence integrity has been compromised. You may need to re-image or document the discrepancy in your report.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Best Practices for Error Prevention</h3>
+
+            <div class="checklist">
+                <h4><span aria-hidden="true">✅</span> Pre-Imaging Checklist</h4>
+                <div class="checklist-item">
+                    <input type="checkbox" id="pre1">
+                    <label for="pre1">Verify write blocker is active (<code>blockdev --getro</code>)</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="pre2">
+                    <label for="pre2">Confirm source device identification (<code>lsblk</code>, serial numbers)</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="pre3">
+                    <label for="pre3">Verify destination has sufficient space (<code>df -h</code>)</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="pre4">
+                    <label for="pre4">Disable automount on forensic workstation</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="pre5">
+                    <label for="pre5">Document source drive details before imaging</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="pre6">
+                    <label for="pre6">Calculate pre-image hash of source</label>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 7: Interactive Practice -->
+        <section id="section-practice" data-section="7">
+            <h2><span aria-hidden="true">🎮</span> Interactive Practice</h2>
+
+            <!-- Command Builder -->
+            <div class="command-builder">
+                <div class="builder-header">🔧 Interactive Command Builder</div>
+                <p>Build a forensic imaging command by selecting options below:</p>
+
+                <div class="builder-options">
+                    <div class="builder-group">
+                        <label for="tool-select">Tool:</label>
+                        <select id="tool-select" onchange="updateCommand()">
+                            <option value="dd">dd</option>
+                            <option value="dcfldd" selected>dcfldd</option>
+                            <option value="dc3dd">dc3dd</option>
+                        </select>
+                    </div>
+
+                    <div class="builder-group">
+                        <label for="source-input">Source Device:</label>
+                        <input type="text" id="source-input" value="/dev/sdb" onchange="updateCommand()">
+                    </div>
+
+                    <div class="builder-group">
+                        <label for="dest-input">Destination:</label>
+                        <input type="text" id="dest-input" value="/evidence/image.dd" onchange="updateCommand()">
+                    </div>
+
+                    <div class="builder-group">
+                        <label for="bs-select">Block Size:</label>
+                        <select id="bs-select" onchange="updateCommand()">
+                            <option value="512">512 bytes (slow)</option>
+                            <option value="4K" selected>4K (recommended)</option>
+                            <option value="64K">64K (fast)</option>
+                            <option value="1M">1M (very fast)</option>
+                        </select>
+                    </div>
+
+                    <div class="builder-group">
+                        <label for="hash-select">Hash Algorithm:</label>
+                        <select id="hash-select" onchange="updateCommand()">
+                            <option value="none">None (dd only)</option>
+                            <option value="md5" selected>MD5</option>
+                            <option value="sha256">SHA-256</option>
+                            <option value="md5,sha256">MD5 + SHA-256</option>
+                        </select>
+                    </div>
+
+                    <div class="builder-group">
+                        <label for="error-select">Error Handling:</label>
+                        <select id="error-select" onchange="updateCommand()">
+                            <option value="none">Stop on error</option>
+                            <option value="continue" selected>Continue on error</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="builder-output" id="command-output">sudo dcfldd if=/dev/sdb of=/evidence/image.dd bs=4K hash=md5 conv=noerror,sync</div>
+                <button class="builder-copy-btn" onclick="copyCommand()">📋 Copy Command</button>
+            </div>
+
+            <!-- Flashcards -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon" aria-hidden="true">🎴</span>
+                    <span class="card-title">Key Concept Flashcards</span>
+                </div>
+
+                <div class="flashcard-container">
+                    <div class="flashcard" id="flashcard" onclick="flipCard()" onkeypress="handleFlashcardKey(event)" tabindex="0" role="button" aria-label="Flashcard. Press Enter or Space to flip.">
+                        <div class="flashcard-inner">
+                            <div class="flashcard-front">
+                                <span id="flashcard-term">if=</span>
+                            </div>
+                            <div class="flashcard-back">
+                                <span id="flashcard-definition">Input file - specifies the source device or file to read from (e.g., if=/dev/sdb)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="flashcard-hint">Click or press Enter to flip the card</p>
+                    <div class="flashcard-counter" id="flashcard-counter">Card 1 of 8</div>
+                    <div class="flashcard-nav">
+                        <button onclick="prevCard()" aria-label="Previous card">← Previous</button>
+                        <button onclick="nextCard()" aria-label="Next card">Next →</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Knowledge Check Quizzes -->
+            <div class="quiz-container" id="quiz1">
+                <h3>Knowledge Check 1</h3>
+                <p class="quiz-question">What does the <code>conv=noerror,sync</code> option do in dd?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz1" id="q1a" value="a">
+                        <label for="q1a">A) Compresses the output file</label>
+                    </div>
+                    <div class="quiz-option" data-correct="true">
+                        <input type="radio" name="quiz1" id="q1b" value="b">
+                        <label for="q1b">B) Continues on read errors and pads unreadable sectors with zeros</label>
+                    </div>
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz1" id="q1c" value="c">
+                        <label for="q1c">C) Synchronizes the system clock during imaging</label>
+                    </div>
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz1" id="q1d" value="d">
+                        <label for="q1d">D) Converts the file system format</label>
+                    </div>
+                </div>
+                <button class="quiz-btn" onclick="checkQuiz('quiz1')">Check Answer</button>
+                <div class="quiz-feedback" id="quiz1-feedback"></div>
+            </div>
+
+            <div class="quiz-container" id="quiz2">
+                <h3>Knowledge Check 2</h3>
+                <p class="quiz-question">Which tool provides the most comprehensive logging for court documentation?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz2" id="q2a" value="a">
+                        <label for="q2a">A) dd</label>
+                    </div>
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz2" id="q2b" value="b">
+                        <label for="q2b">B) dcfldd</label>
+                    </div>
+                    <div class="quiz-option" data-correct="true">
+                        <input type="radio" name="quiz2" id="q2c" value="c">
+                        <label for="q2c">C) dc3dd</label>
+                    </div>
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz2" id="q2d" value="d">
+                        <label for="q2d">D) All three provide equal logging</label>
+                    </div>
+                </div>
+                <button class="quiz-btn" onclick="checkQuiz('quiz2')">Check Answer</button>
+                <div class="quiz-feedback" id="quiz2-feedback"></div>
+            </div>
+
+            <div class="quiz-container" id="quiz3">
+                <h3>Knowledge Check 3</h3>
+                <p class="quiz-question">What is the recommended block size for forensic imaging with dd?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz3" id="q3a" value="a">
+                        <label for="q3a">A) 512 bytes (default)</label>
+                    </div>
+                    <div class="quiz-option" data-correct="true">
+                        <input type="radio" name="quiz3" id="q3b" value="b">
+                        <label for="q3b">B) 4K or 64K</label>
+                    </div>
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz3" id="q3c" value="c">
+                        <label for="q3c">C) 1 byte for maximum accuracy</label>
+                    </div>
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz3" id="q3d" value="d">
+                        <label for="q3d">D) Block size doesn't affect forensic imaging</label>
+                    </div>
+                </div>
+                <button class="quiz-btn" onclick="checkQuiz('quiz3')">Check Answer</button>
+                <div class="quiz-feedback" id="quiz3-feedback"></div>
+            </div>
+
+            <!-- Scenario -->
+            <div class="scenario-container" id="scenario1">
+                <div class="scenario-header">
+                    <span class="scenario-icon" aria-hidden="true">🔍</span>
+                    <span class="scenario-title">Scenario: Imaging a Damaged Drive</span>
+                </div>
+                <div class="scenario-description">
+                    <p><strong>Situation:</strong> You need to image a hard drive from a suspect's computer. During initial testing, you notice the drive makes clicking sounds and has several bad sectors. You need to capture as much data as possible while maintaining detailed documentation for court.</p>
+                    <p><strong>Question:</strong> Which command would be most appropriate?</p>
+                </div>
+                <div class="scenario-choices">
+                    <button class="scenario-choice" data-correct="false" onclick="checkScenario(this, 'scenario1')">
+                        <strong>A)</strong> <code>sudo dd if=/dev/sdb of=/evidence/image.dd bs=4K</code>
+                    </button>
+                    <button class="scenario-choice" data-correct="false" onclick="checkScenario(this, 'scenario1')">
+                        <strong>B)</strong> <code>sudo dcfldd if=/dev/sdb of=/evidence/image.dd bs=4K hash=md5</code>
+                    </button>
+                    <button class="scenario-choice" data-correct="true" onclick="checkScenario(this, 'scenario1')">
+                        <strong>C)</strong> <code>sudo dc3dd if=/dev/sdb hof=/evidence/image.dd hash=md5 rec=on log=/evidence/acquisition.log</code>
+                    </button>
+                    <button class="scenario-choice" data-correct="false" onclick="checkScenario(this, 'scenario1')">
+                        <strong>D)</strong> <code>sudo dd if=/dev/sdb of=/evidence/image.dd bs=1M status=progress</code>
+                    </button>
+                </div>
+                <div class="scenario-result" id="scenario1-result"></div>
+            </div>
+        </section>
+
+        <!-- Section 8: Summary -->
+        <section id="section-summary" data-section="8">
+            <h2><span aria-hidden="true">📋</span> Module Summary</h2>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon" aria-hidden="true">✅</span>
+                    <span class="card-title">Key Takeaways</span>
+                </div>
+
+                <h4>dd - The Foundation</h4>
+                <ul>
+                    <li>Basic syntax: <code>dd if=[source] of=[dest] bs=[size]</code></li>
+                    <li>Use <code>conv=noerror,sync</code> for error handling</li>
+                    <li>Use <code>status=progress</code> for progress display</li>
+                    <li>No built-in hashing—calculate separately</li>
+                    <li>Available on all Unix/Linux systems</li>
+                </ul>
+
+                <h4>dcfldd - Enhanced for Forensics</h4>
+                <ul>
+                    <li>On-the-fly hashing with <code>hash=md5,sha256</code></li>
+                    <li>Split output with <code>split=2G</code></li>
+                    <li>Verification with <code>vf=</code></li>
+                    <li>Piecewise hashing with <code>hashwindow=</code></li>
+                    <li>Multiple simultaneous outputs</li>
+                </ul>
+
+                <h4>dc3dd - DoD Enhanced</h4>
+                <ul>
+                    <li>Comprehensive logging with <code>log=</code></li>
+                    <li>Detailed error reporting with sector numbers</li>
+                    <li>Recovery mode with <code>rec=on</code></li>
+                    <li>Based on GNU dd (familiar syntax)</li>
+                    <li>Best for court documentation</li>
+                </ul>
+
+                <h4>Error Handling</h4>
+                <ul>
+                    <li>Always use error handling options for damaged drives</li>
+                    <li>Document all errors encountered</li>
+                    <li>Verify hash values after imaging</li>
+                    <li>Use comprehensive logging when available</li>
+                </ul>
+            </div>
+
+            <div class="highlight-box">
+                <h4>Quick Reference Commands</h4>
+                <pre><code><span class="code-comment"># Basic dd forensic image</span>
+sudo dd if=/dev/sdX of=/path/image.dd bs=4K conv=noerror,sync status=progress
+
+<span class="code-comment"># dcfldd with hashing</span>
+sudo dcfldd if=/dev/sdX of=/path/image.dd bs=4K hash=md5,sha256 hashlog=/path/hash.txt conv=noerror,sync
+
+<span class="code-comment"># dc3dd with full logging</span>
+sudo dc3dd if=/dev/sdX hof=/path/image.dd hash=md5 log=/path/acq.log hlog=/path/hash.log rec=on</code></pre>
+            </div>
+
+            <div class="checklist">
+                <h3><span aria-hidden="true">☑️</span> Module Completion Checklist</h3>
+                <p>Before moving to Module 6.4, ensure you can:</p>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check1" onchange="updateChecklist(this)">
+                    <label for="check1">Create a forensic image using dd with appropriate parameters</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check2" onchange="updateChecklist(this)">
+                    <label for="check2">Use dcfldd for imaging with on-the-fly hashing</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check3" onchange="updateChecklist(this)">
+                    <label for="check3">Use dc3dd for comprehensive logging</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check4" onchange="updateChecklist(this)">
+                    <label for="check4">Explain the purpose of conv=noerror,sync</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check5" onchange="updateChecklist(this)">
+                    <label for="check5">Select the appropriate tool based on requirements</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check6" onchange="updateChecklist(this)">
+                    <label for="check6">Handle common imaging errors</label>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon" aria-hidden="true">🔜</span>
+                    <span class="card-title">Coming Up Next</span>
+                </div>
+                <h4>Module 6.4: GUI Acquisition Tools (FTK Imager, Guymager)</h4>
+                <p>In the next module, you'll learn graphical tools for forensic imaging:</p>
+                <ul>
+                    <li>FTK Imager for Windows-based imaging</li>
+                    <li>Guymager for Linux-based imaging</li>
+                    <li>E01 (Expert Witness) format and its advantages</li>
+                    <li>Adding case information and metadata</li>
+                    <li>Comparing command-line and GUI approaches</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 Mendocino College | CSC 156 - Digital Forensics Fundamentals</p>
+        <p>Module 6.3: Command-Line Acquisition Tools | Week 6: Data Acquisition and Preservation</p>
+        <p>Instructor: David Pai | Spring 2026</p>
+        <div class="footer-links">
+            <a href="#section-overview">Back to Top</a>
+            <a href="#">← Module 6.2: Write Protection</a>
+            <a href="#">Module 6.4: GUI Tools →</a>
+        </div>
+    </footer>
+
+    <script>
+        // Progress Tracking
+        let sectionsCompleted = new Set();
+        const totalSections = 8;
+
+        function updateProgress() {
+            const percent = Math.round((sectionsCompleted.size / totalSections) * 100);
+            document.getElementById('progress-percent').textContent = percent;
+            document.getElementById('progress-fill').style.width = percent + '%';
+            document.getElementById('progress-fill').setAttribute('aria-valuenow', percent);
+            sessionStorage.setItem('module63Progress', JSON.stringify([...sectionsCompleted]));
+        }
+
+        function loadProgress() {
+            const saved = sessionStorage.getItem('module63Progress');
+            if (saved) {
+                sectionsCompleted = new Set(JSON.parse(saved));
+                updateProgress();
+            }
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const sectionNum = entry.target.dataset.section;
+                    if (sectionNum) {
+                        sectionsCompleted.add(sectionNum);
+                        updateProgress();
+                    }
+                }
+            });
+        }, { threshold: 0.3 });
+
+        document.querySelectorAll('section[data-section]').forEach(section => {
+            observer.observe(section);
+        });
+
+        // Accordion functionality
+        document.querySelectorAll('.accordion-header').forEach(header => {
+            header.addEventListener('click', function() {
+                const item = this.parentElement;
+                const isActive = item.classList.contains('active');
+                const container = item.parentElement;
+                
+                container.querySelectorAll('.accordion-item').forEach(i => {
+                    i.classList.remove('active');
+                    i.querySelector('.accordion-header').setAttribute('aria-expanded', 'false');
+                });
+                
+                if (!isActive) {
+                    item.classList.add('active');
+                    this.setAttribute('aria-expanded', 'true');
+                }
+            });
+
+            header.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click();
+                }
+            });
+        });
+
+        // Tab functionality
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tabId = this.getAttribute('aria-controls');
+                const container = this.closest('.tabs-container');
+                
+                container.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('active');
+                    b.setAttribute('aria-selected', 'false');
+                });
+                this.classList.add('active');
+                this.setAttribute('aria-selected', 'true');
+                
+                container.querySelectorAll('.tab-content').forEach(c => {
+                    c.classList.remove('active');
+                });
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Command Builder
+        function updateCommand() {
+            const tool = document.getElementById('tool-select').value;
+            const source = document.getElementById('source-input').value;
+            const dest = document.getElementById('dest-input').value;
+            const bs = document.getElementById('bs-select').value;
+            const hash = document.getElementById('hash-select').value;
+            const error = document.getElementById('error-select').value;
+
+            let command = 'sudo ';
+
+            if (tool === 'dd') {
+                command += `dd if=${source} of=${dest} bs=${bs}`;
+                if (error === 'continue') {
+                    command += ' conv=noerror,sync';
+                }
+                command += ' status=progress';
+            } else if (tool === 'dcfldd') {
+                command += `dcfldd if=${source} of=${dest} bs=${bs}`;
+                if (hash !== 'none') {
+                    command += ` hash=${hash}`;
+                }
+                if (error === 'continue') {
+                    command += ' conv=noerror,sync';
+                }
+            } else if (tool === 'dc3dd') {
+                command += `dc3dd if=${source} hof=${dest}`;
+                if (hash !== 'none') {
+                    if (hash.includes(',')) {
+                        const hashes = hash.split(',');
+                        hashes.forEach(h => {
+                            command += ` hash=${h.trim()}`;
+                        });
+                    } else {
+                        command += ` hash=${hash}`;
+                    }
+                }
+                if (error === 'continue') {
+                    command += ' rec=on';
+                }
+                command += ' log=/evidence/acquisition.log';
+            }
+
+            document.getElementById('command-output').textContent = command;
+        }
+
+        function copyCommand() {
+            const command = document.getElementById('command-output').textContent;
+            navigator.clipboard.writeText(command).then(() => {
+                const btn = document.querySelector('.builder-copy-btn');
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy Command';
+                }, 2000);
+            });
+        }
+
+        // Quiz functionality
+        function checkQuiz(quizId) {
+            const quiz = document.getElementById(quizId);
+            const options = quiz.querySelectorAll('.quiz-option');
+            const feedback = document.getElementById(quizId + '-feedback');
+            const selected = quiz.querySelector('input[type="radio"]:checked');
+            
+            if (!selected) {
+                feedback.textContent = 'Please select an answer.';
+                feedback.className = 'quiz-feedback show incorrect';
+                return;
+            }
+            
+            const selectedOption = selected.closest('.quiz-option');
+            const isCorrect = selectedOption.dataset.correct === 'true';
+            
+            options.forEach(opt => {
+                opt.classList.remove('correct', 'incorrect');
+            });
+            
+            if (isCorrect) {
+                selectedOption.classList.add('correct');
+                feedback.className = 'quiz-feedback show correct';
+                
+                const feedbackMessages = {
+                    'quiz1': '<strong>Correct!</strong> The <code>noerror</code> option continues past read errors, and <code>sync</code> pads incomplete blocks with zeros to maintain proper alignment.',
+                    'quiz2': '<strong>Correct!</strong> dc3dd provides comprehensive logging including operation details, error sector numbers, and timing information—ideal for court documentation.',
+                    'quiz3': '<strong>Correct!</strong> Block sizes of 4K or 64K provide good performance while maintaining accuracy. The default 512 bytes is too slow for practical use.'
+                };
+                feedback.innerHTML = feedbackMessages[quizId];
+            } else {
+                selectedOption.classList.add('incorrect');
+                options.forEach(opt => {
+                    if (opt.dataset.correct === 'true') {
+                        opt.classList.add('correct');
+                    }
+                });
+                feedback.className = 'quiz-feedback show incorrect';
+                
+                const incorrectMessages = {
+                    'quiz1': '<strong>Incorrect.</strong> The correct answer is B. <code>conv=noerror</code> continues on errors, and <code>sync</code> pads unreadable blocks with zeros.',
+                    'quiz2': '<strong>Incorrect.</strong> The correct answer is C. dc3dd provides the most comprehensive logging, including detailed error reporting with sector numbers.',
+                    'quiz3': '<strong>Incorrect.</strong> The correct answer is B. Block sizes of 4K or 64K provide optimal balance between speed and accuracy.'
+                };
+                feedback.innerHTML = incorrectMessages[quizId];
+            }
+            
+            quiz.querySelector('.quiz-btn').disabled = true;
+        }
+
+        // Scenario functionality
+        function checkScenario(button, scenarioId) {
+            const container = document.getElementById(scenarioId);
+            const choices = container.querySelectorAll('.scenario-choice');
+            const result = document.getElementById(scenarioId + '-result');
+            
+            choices.forEach(choice => {
+                choice.disabled = true;
+                choice.classList.remove('selected');
+            });
+            
+            button.classList.add('selected');
+            const isCorrect = button.dataset.correct === 'true';
+            
+            if (isCorrect) {
+                button.classList.add('correct');
+                result.className = 'scenario-result show';
+                result.style.background = '#e8f5e9';
+                result.style.border = '1px solid #2e7d32';
+                result.style.color = '#1b5e20';
+                result.innerHTML = `
+                    <strong>✓ Correct!</strong><br><br>
+                    dc3dd is the best choice for this scenario because:
+                    <ul>
+                        <li><code>rec=on</code> enables recovery mode to continue past bad sectors</li>
+                        <li><code>log=</code> creates comprehensive documentation of the acquisition</li>
+                        <li>dc3dd logs exact sector numbers of errors—crucial for court testimony</li>
+                        <li>The detailed logging documents that you captured all available data despite drive damage</li>
+                    </ul>
+                `;
+            } else {
+                button.classList.add('incorrect');
+                choices.forEach(choice => {
+                    if (choice.dataset.correct === 'true') {
+                        choice.classList.add('correct');
+                    }
+                });
+                result.className = 'scenario-result show';
+                result.style.background = '#ffebee';
+                result.style.border = '1px solid #c62828';
+                result.style.color = '#b71c1c';
+                result.innerHTML = `
+                    <strong>✗ Not the best choice.</strong><br><br>
+                    The correct answer is <strong>C</strong>. For a damaged drive requiring court documentation:
+                    <ul>
+                        <li>Option A (dd without error handling) would stop at the first bad sector</li>
+                        <li>Option B (dcfldd) provides hashing but not comprehensive logging</li>
+                        <li>Option D uses large block size which may skip over bad sectors</li>
+                        <li>dc3dd with <code>rec=on</code> and <code>log=</code> provides both error recovery and detailed documentation</li>
+                    </ul>
+                `;
+            }
+        }
+
+        // Flashcard functionality
+        const flashcards = [
+            { term: "if=", definition: "Input file - specifies the source device or file to read from (e.g., if=/dev/sdb)" },
+            { term: "of=", definition: "Output file - specifies the destination file or device to write to (e.g., of=/evidence/image.dd)" },
+            { term: "bs=", definition: "Block size - the number of bytes to read and write at a time. Larger sizes improve speed (e.g., bs=4K)" },
+            { term: "conv=noerror", definition: "Continue copying even when read errors occur, rather than stopping at the first error" },
+            { term: "conv=sync", definition: "Pad every input block to the block size with null bytes, maintaining proper alignment when errors occur" },
+            { term: "hash=", definition: "dcfldd/dc3dd parameter to specify hash algorithm(s) for on-the-fly hashing (e.g., hash=md5,sha256)" },
+            { term: "rec=on", definition: "dc3dd recovery mode - continues past errors and logs detailed error information" },
+            { term: "status=progress", definition: "dd parameter that displays transfer progress during imaging" }
+        ];
+
+        let currentCard = 0;
+
+        function flipCard() {
+            document.getElementById('flashcard').classList.toggle('flipped');
+        }
+
+        function handleFlashcardKey(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                flipCard();
+            }
+        }
+
+        function updateFlashcard() {
+            const card = flashcards[currentCard];
+            document.getElementById('flashcard-term').textContent = card.term;
+            document.getElementById('flashcard-definition').textContent = card.definition;
+            document.getElementById('flashcard-counter').textContent = `Card ${currentCard + 1} of ${flashcards.length}`;
+            document.getElementById('flashcard').classList.remove('flipped');
+        }
+
+        function nextCard() {
+            currentCard = (currentCard + 1) % flashcards.length;
+            updateFlashcard();
+        }
+
+        function prevCard() {
+            currentCard = (currentCard - 1 + flashcards.length) % flashcards.length;
+            updateFlashcard();
+        }
+
+        // Checklist functionality
+        function updateChecklist(checkbox) {
+            const item = checkbox.closest('.checklist-item');
+            if (checkbox.checked) {
+                item.classList.add('checked');
+            } else {
+                item.classList.remove('checked');
+            }
+            
+            const checkboxes = document.querySelectorAll('.checklist-item input[type="checkbox"]');
+            const states = [];
+            checkboxes.forEach(cb => states.push(cb.checked));
+            sessionStorage.setItem('module63Checklist', JSON.stringify(states));
+        }
+
+        function loadChecklist() {
+            const saved = sessionStorage.getItem('module63Checklist');
+            if (saved) {
+                const states = JSON.parse(saved);
+                const checkboxes = document.querySelectorAll('.checklist-item input[type="checkbox"]');
+                checkboxes.forEach((cb, index) => {
+                    if (states[index]) {
+                        cb.checked = true;
+                        cb.closest('.checklist-item').classList.add('checked');
+                    }
+                });
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+            loadChecklist();
+            updateFlashcard();
+            updateCommand();
+        });
+
+        // Smooth scrolling
+        document.querySelectorAll('nav a').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const target = document.getElementById(targetId);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                    target.focus();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
