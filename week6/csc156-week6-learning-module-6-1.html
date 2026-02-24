@@ -1,0 +1,2319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 6.1: Forensic Imaging Fundamentals | CSC 156</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #1a1a2e;
+            background-color: #ffffff;
+            font-size: 16px;
+        }
+
+        /* Skip Link for Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #0d47a1;
+            color: #ffffff;
+            padding: 8px 16px;
+            z-index: 1000;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #ffffff;
+            padding: 24px;
+            text-align: center;
+            border-bottom: 4px solid #0f3460;
+        }
+
+        header h1 {
+            font-size: 1.875rem;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .course-info {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .module-badge {
+            display: inline-block;
+            background: #e94560;
+            color: #ffffff;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        /* Navigation */
+        nav {
+            background: #f8f9fa;
+            padding: 16px 24px;
+            border-bottom: 1px solid #dee2e6;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        nav a {
+            color: #1a1a2e;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        nav a:hover,
+        nav a:focus {
+            background: #0d47a1;
+            color: #ffffff;
+            outline: none;
+        }
+
+        nav a:focus {
+            outline: 3px solid #e94560;
+            outline-offset: 2px;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            background: #e8f4f8;
+            padding: 20px 24px;
+            border-bottom: 1px solid #b8d4e3;
+        }
+
+        .progress-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .progress-title {
+            font-weight: 600;
+            color: #1a1a2e;
+            font-size: 1rem;
+        }
+
+        .progress-stats {
+            font-size: 0.875rem;
+            color: #495057;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: #dee2e6;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0d47a1, #1976d2);
+            border-radius: 6px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .time-estimate {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #fff3cd;
+            color: #856404;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        /* Main Content */
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        section {
+            margin-bottom: 48px;
+            scroll-margin-top: 80px;
+        }
+
+        h2 {
+            color: #1a1a2e;
+            font-size: 1.75rem;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #0d47a1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h3 {
+            color: #16213e;
+            font-size: 1.375rem;
+            margin: 24px 0 16px 0;
+        }
+
+        h4 {
+            color: #0f3460;
+            font-size: 1.125rem;
+            margin: 20px 0 12px 0;
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: #2d3748;
+        }
+
+        /* Cards */
+        .card {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .card-icon {
+            font-size: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        /* Definition Box */
+        .definition-box {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-left: 5px solid #0d47a1;
+            padding: 20px 24px;
+            margin: 20px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .definition-box h4 {
+            color: #0d47a1;
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        .definition-box p {
+            margin-bottom: 0;
+            color: #1a1a2e;
+        }
+
+        /* Key Concept Box */
+        .key-concept {
+            background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+            border-left: 5px solid #f57c00;
+            padding: 20px 24px;
+            margin: 20px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .key-concept h4 {
+            color: #e65100;
+            margin-top: 0;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            border-left: 5px solid #c62828;
+            padding: 20px 24px;
+            margin: 20px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .warning-box h4 {
+            color: #c62828;
+            margin-top: 0;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-left: 5px solid #2e7d32;
+            padding: 20px 24px;
+            margin: 20px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .info-box h4 {
+            color: #2e7d32;
+            margin-top: 0;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Example Box */
+        .example-box {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            border-left: 5px solid #7b1fa2;
+            padding: 20px 24px;
+            margin: 20px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .example-box h4 {
+            color: #7b1fa2;
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: #1a1a2e;
+            color: #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin: 16px 0;
+            white-space: pre;
+            word-wrap: normal;
+        }
+
+        code {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background: #e9ecef;
+            color: #c62828;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        pre code {
+            background: transparent;
+            color: #e9ecef;
+            padding: 0;
+        }
+
+        .code-comment {
+            color: #6c757d;
+        }
+
+        .code-keyword {
+            color: #82aaff;
+        }
+
+        .code-string {
+            color: #c3e88d;
+        }
+
+        .code-flag {
+            color: #ffcb6b;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        th {
+            background: #0d47a1;
+            color: #ffffff;
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #dee2e6;
+            color: #2d3748;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        tr:hover {
+            background: #e3f2fd;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin: 16px 0;
+            padding-left: 24px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            color: #2d3748;
+        }
+
+        li::marker {
+            color: #0d47a1;
+        }
+
+        /* Comparison Grid */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin: 24px 0;
+        }
+
+        .comparison-card {
+            background: #ffffff;
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .comparison-card:hover {
+            border-color: #0d47a1;
+            box-shadow: 0 4px 12px rgba(13, 71, 161, 0.15);
+        }
+
+        .comparison-card.forensic {
+            border-top: 4px solid #2e7d32;
+        }
+
+        .comparison-card.logical {
+            border-top: 4px solid #f57c00;
+        }
+
+        .comparison-card h4 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Diagram Container */
+        .diagram-container {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            text-align: center;
+        }
+
+        .diagram-title {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 16px;
+            font-size: 1.1rem;
+        }
+
+        .diagram-ascii {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            text-align: left;
+            display: inline-block;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        /* Interactive Elements */
+        .accordion {
+            margin: 20px 0;
+        }
+
+        .accordion-item {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            background: #f8f9fa;
+            padding: 16px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: #1a1a2e;
+            transition: all 0.3s ease;
+            border: none;
+            width: 100%;
+            text-align: left;
+            font-size: 1rem;
+        }
+
+        .accordion-header:hover,
+        .accordion-header:focus {
+            background: #e3f2fd;
+            outline: none;
+        }
+
+        .accordion-header:focus {
+            outline: 3px solid #0d47a1;
+            outline-offset: -3px;
+        }
+
+        .accordion-header::after {
+            content: '+';
+            font-size: 1.5rem;
+            font-weight: 300;
+            transition: transform 0.3s ease;
+            color: #0d47a1;
+        }
+
+        .accordion-item.active .accordion-header::after {
+            transform: rotate(45deg);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+            background: #ffffff;
+        }
+
+        .accordion-item.active .accordion-content {
+            max-height: 2000px;
+        }
+
+        .accordion-body {
+            padding: 20px;
+        }
+
+        /* Quiz Section */
+        .quiz-container {
+            background: #f8f9fa;
+            border: 2px solid #0d47a1;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .quiz-question {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 16px;
+            font-size: 1.1rem;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            background: #ffffff;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-option:hover {
+            border-color: #0d47a1;
+            background: #e3f2fd;
+        }
+
+        .quiz-option:focus-within {
+            outline: 3px solid #0d47a1;
+            outline-offset: 2px;
+        }
+
+        .quiz-option input[type="radio"] {
+            margin-right: 12px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .quiz-option label {
+            cursor: pointer;
+            flex: 1;
+            color: #2d3748;
+        }
+
+        .quiz-option.correct {
+            border-color: #2e7d32;
+            background: #e8f5e9;
+        }
+
+        .quiz-option.incorrect {
+            border-color: #c62828;
+            background: #ffebee;
+        }
+
+        .quiz-feedback {
+            margin-top: 16px;
+            padding: 16px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .quiz-feedback.show {
+            display: block;
+        }
+
+        .quiz-feedback.correct {
+            background: #e8f5e9;
+            border: 1px solid #2e7d32;
+            color: #1b5e20;
+        }
+
+        .quiz-feedback.incorrect {
+            background: #ffebee;
+            border: 1px solid #c62828;
+            color: #b71c1c;
+        }
+
+        .quiz-btn {
+            margin-top: 16px;
+            padding: 12px 24px;
+            background: #0d47a1;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-btn:hover {
+            background: #1565c0;
+        }
+
+        .quiz-btn:focus {
+            outline: 3px solid #e94560;
+            outline-offset: 2px;
+        }
+
+        .quiz-btn:disabled {
+            background: #9e9e9e;
+            cursor: not-allowed;
+        }
+
+        /* Tabs */
+        .tabs-container {
+            margin: 24px 0;
+        }
+
+        .tab-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            border-bottom: 2px solid #dee2e6;
+            margin-bottom: 0;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #495057;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            background: #e9ecef;
+        }
+
+        .tab-btn:focus {
+            outline: 3px solid #0d47a1;
+            outline-offset: -3px;
+        }
+
+        .tab-btn.active {
+            background: #0d47a1;
+            color: #ffffff;
+            border-color: #0d47a1;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 24px;
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Process Steps */
+        .process-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .step {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: #0d47a1;
+            color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 16px 20px;
+            border-radius: 8px;
+            border-left: 3px solid #0d47a1;
+        }
+
+        .step-content h4 {
+            margin-top: 0;
+            color: #0d47a1;
+        }
+
+        /* Checklist */
+        .checklist {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .checklist-item:last-child {
+            border-bottom: none;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+        }
+
+        .checklist-item label {
+            flex: 1;
+            cursor: pointer;
+            color: #2d3748;
+        }
+
+        .checklist-item.checked label {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+
+        /* Objectives List */
+        .objectives-list {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .objectives-list h3 {
+            color: #2e7d32;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .objectives-list ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .objectives-list li {
+            padding: 10px 0;
+            padding-left: 32px;
+            position: relative;
+            border-bottom: 1px solid rgba(46, 125, 50, 0.2);
+        }
+
+        .objectives-list li:last-child {
+            border-bottom: none;
+        }
+
+        .objectives-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #2e7d32;
+            font-weight: 700;
+        }
+
+        /* CSLO Badge */
+        .cslo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin: 16px 0;
+        }
+
+        /* Interactive Scenario */
+        .scenario-container {
+            background: #f8f9fa;
+            border: 2px solid #0d47a1;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .scenario-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .scenario-icon {
+            font-size: 2rem;
+        }
+
+        .scenario-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .scenario-description {
+            background: #ffffff;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+        }
+
+        .scenario-choices {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .scenario-choice {
+            padding: 16px;
+            background: #ffffff;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-size: 1rem;
+            color: #2d3748;
+        }
+
+        .scenario-choice:hover {
+            border-color: #0d47a1;
+            background: #e3f2fd;
+        }
+
+        .scenario-choice:focus {
+            outline: 3px solid #0d47a1;
+            outline-offset: 2px;
+        }
+
+        .scenario-choice.selected {
+            border-color: #0d47a1;
+            background: #e3f2fd;
+        }
+
+        .scenario-choice.correct {
+            border-color: #2e7d32;
+            background: #e8f5e9;
+        }
+
+        .scenario-choice.incorrect {
+            border-color: #c62828;
+            background: #ffebee;
+        }
+
+        .scenario-result {
+            margin-top: 20px;
+            padding: 16px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .scenario-result.show {
+            display: block;
+        }
+
+        /* Flashcard */
+        .flashcard-container {
+            margin: 24px 0;
+        }
+
+        .flashcard {
+            perspective: 1000px;
+            height: 250px;
+            cursor: pointer;
+        }
+
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-front,
+        .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .flashcard-front {
+            background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
+            color: #ffffff;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .flashcard-back {
+            background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
+            color: #ffffff;
+            transform: rotateY(180deg);
+            font-size: 1.1rem;
+        }
+
+        .flashcard-hint {
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-top: 8px;
+        }
+
+        .flashcard-nav {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .flashcard-nav button {
+            padding: 10px 20px;
+            background: #0d47a1;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .flashcard-nav button:hover {
+            background: #1565c0;
+        }
+
+        .flashcard-nav button:focus {
+            outline: 3px solid #e94560;
+            outline-offset: 2px;
+        }
+
+        .flashcard-counter {
+            text-align: center;
+            color: #495057;
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+
+        /* Highlight Box */
+        .highlight-box {
+            background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%);
+            border: 2px solid #0288d1;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 20px 0;
+        }
+
+        .highlight-box h4 {
+            color: #01579b;
+            margin-top: 0;
+        }
+
+        /* Footer */
+        footer {
+            background: #1a1a2e;
+            color: #ffffff;
+            padding: 32px 24px;
+            text-align: center;
+            margin-top: 48px;
+        }
+
+        footer p {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 8px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: #90caf9;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover,
+        .footer-links a:focus {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            nav a {
+                text-align: center;
+            }
+
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tab-buttons {
+                flex-direction: column;
+            }
+
+            .tab-btn {
+                border-radius: 8px;
+                border: 1px solid #dee2e6;
+            }
+
+            .step {
+                flex-direction: column;
+            }
+
+            .step-number {
+                align-self: flex-start;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            nav, .progress-container, .quiz-container, .scenario-container {
+                display: none;
+            }
+
+            body {
+                font-size: 12pt;
+            }
+
+            .card {
+                break-inside: avoid;
+            }
+        }
+
+        /* Focus Visible for better accessibility */
+        :focus-visible {
+            outline: 3px solid #0d47a1;
+            outline-offset: 2px;
+        }
+
+        /* Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+                animation: none !important;
+            }
+
+            .flashcard-inner {
+                transition: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header>
+        <h1>Module 6.1: Forensic Imaging Fundamentals</h1>
+        <p class="course-info">CSC 156 - Digital Forensics Fundamentals | Week 6: Data Acquisition and Preservation</p>
+        <span class="module-badge">Module 1 of 7</span>
+    </header>
+
+    <nav aria-label="Module sections">
+        <ul>
+            <li><a href="#section-overview">Overview</a></li>
+            <li><a href="#section-definitions">Key Definitions</a></li>
+            <li><a href="#section-comparison">Imaging vs. Copying</a></li>
+            <li><a href="#section-image-types">Image Types</a></li>
+            <li><a href="#section-process">Imaging Process</a></li>
+            <li><a href="#section-interactive">Practice</a></li>
+            <li><a href="#section-summary">Summary</a></li>
+        </ul>
+    </nav>
+
+    <div class="progress-container">
+        <div class="progress-wrapper">
+            <div class="progress-header">
+                <span class="progress-title">📊 Module Progress</span>
+                <span class="progress-stats"><span id="progress-percent">0</span>% Complete</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <span class="time-estimate">⏱️ Estimated Time: 45-50 minutes</span>
+        </div>
+    </div>
+
+    <main id="main-content">
+        <!-- Section 1: Overview -->
+        <section id="section-overview" data-section="1">
+            <h2><span aria-hidden="true">🎯</span> Module Overview</h2>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon" aria-hidden="true">📋</span>
+                    <span class="card-title">What You'll Learn</span>
+                </div>
+                <p>This module introduces the foundational concepts of forensic imaging—the cornerstone of digital forensic investigations. Understanding the difference between forensic imaging and standard file copying is essential for maintaining evidence integrity and ensuring your findings are admissible in legal proceedings.</p>
+
+                <p>Forensic imaging is your first hands-on interaction with evidence, and doing it correctly is critical. A single mistake during acquisition can compromise an entire investigation.</p>
+            </div>
+
+            <div class="objectives-list">
+                <h3><span aria-hidden="true">✓</span> Learning Objectives</h3>
+                <p>By the end of this module, you will be able to:</p>
+                <ul>
+                    <li>Define forensic imaging and explain its purpose in digital investigations</li>
+                    <li>Distinguish between forensic imaging and logical copying</li>
+                    <li>Identify the three main types of forensic images (physical, logical, targeted)</li>
+                    <li>Explain why bit-for-bit copies are essential for evidence integrity</li>
+                    <li>Describe the basic workflow for creating a forensic image</li>
+                </ul>
+            </div>
+
+            <div class="cslo-badge">
+                <span aria-hidden="true">🎓</span>
+                CSLO 3: Perform data collection using forensic technology methods in accordance with evidence handling procedures
+            </div>
+
+            <div class="key-concept">
+                <h4><span aria-hidden="true">💡</span> Why This Matters</h4>
+                <p>Every forensic examination begins with acquisition. If evidence is not acquired properly, all subsequent analysis may be challenged or excluded. This module establishes the foundation for everything you'll learn in Weeks 7-17 about analyzing digital evidence.</p>
+            </div>
+        </section>
+
+        <!-- Section 2: Key Definitions -->
+        <section id="section-definitions" data-section="2">
+            <h2><span aria-hidden="true">📚</span> Key Definitions</h2>
+
+            <div class="definition-box">
+                <h4>Forensic Image</h4>
+                <p>A forensic image is a bit-for-bit (sector-by-sector) copy of a storage device that captures every bit of data, including deleted files, file slack, unallocated space, and system areas. It is an exact duplicate of the original media at the binary level.</p>
+            </div>
+
+            <div class="definition-box">
+                <h4>Bit-for-Bit Copy (Bit-Stream Copy)</h4>
+                <p>A copying method that duplicates every single bit from the source media, regardless of whether that bit contains active file data, deleted data, or appears to be "empty." This preserves all potential evidence, including data that the operating system cannot see.</p>
+            </div>
+
+            <div class="definition-box">
+                <h4>Logical Copy</h4>
+                <p>A file-level copy that only captures files and folders visible to the operating system. It does not include deleted files (unless in the Recycle Bin), file slack, unallocated space, or hidden system areas.</p>
+            </div>
+
+            <div class="definition-box">
+                <h4>Evidence Integrity</h4>
+                <p>The assurance that digital evidence has not been altered, modified, or tampered with from the time of acquisition through analysis and presentation. Integrity is verified through cryptographic hash values.</p>
+            </div>
+
+            <div class="definition-box">
+                <h4>Forensically Sound</h4>
+                <p>A process or method that ensures digital evidence is collected, preserved, and analyzed in a manner that maintains its integrity and admissibility. A forensically sound acquisition does not modify the original evidence in any way.</p>
+            </div>
+
+            <div class="accordion">
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>Additional Important Terms</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <h4>Source Media (Evidence Drive)</h4>
+                            <p>The original storage device containing potential evidence. This device must never be modified during the forensic process.</p>
+
+                            <h4>Destination Media (Target Drive)</h4>
+                            <p>The storage device where the forensic image will be stored. Must have sufficient capacity and should be forensically wiped before use.</p>
+
+                            <h4>Write Blocker</h4>
+                            <p>A hardware or software tool that prevents any write operations to the source media, ensuring the original evidence remains unaltered. (Covered in detail in Module 6.2)</p>
+
+                            <h4>Hash Value</h4>
+                            <p>A fixed-size alphanumeric string generated by a cryptographic hash function (like MD5 or SHA-256) that serves as a unique "fingerprint" of data. Used to verify image integrity. (Covered in detail in Module 6.5)</p>
+
+                            <h4>Slack Space</h4>
+                            <p>The unused space in a file's last allocated cluster. May contain remnants of previously deleted files.</p>
+
+                            <h4>Unallocated Space</h4>
+                            <p>Disk space not currently assigned to any file. Often contains recoverable deleted data.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Imaging vs. Copying -->
+        <section id="section-comparison" data-section="3">
+            <h2><span aria-hidden="true">⚖️</span> Forensic Imaging vs. Logical Copying</h2>
+
+            <p>Understanding the fundamental difference between forensic imaging and standard file copying is critical for digital forensic examiners. While both methods transfer data from one location to another, they capture vastly different amounts of information.</p>
+
+            <div class="comparison-grid">
+                <div class="comparison-card forensic">
+                    <h4><span aria-hidden="true">🔬</span> Forensic Imaging</h4>
+                    <ul>
+                        <li><strong>Captures:</strong> Every sector of the storage device</li>
+                        <li><strong>Includes:</strong> Active files, deleted files, file slack, unallocated space, hidden partitions, boot records</li>
+                        <li><strong>Method:</strong> Bit-for-bit sector copy</li>
+                        <li><strong>Verification:</strong> Hash values verify exact duplication</li>
+                        <li><strong>Legal Status:</strong> Admissible as evidence</li>
+                        <li><strong>Purpose:</strong> Complete evidence preservation</li>
+                    </ul>
+                </div>
+
+                <div class="comparison-card logical">
+                    <h4><span aria-hidden="true">📁</span> Logical Copying</h4>
+                    <ul>
+                        <li><strong>Captures:</strong> Only files visible to the OS</li>
+                        <li><strong>Includes:</strong> Active files and folders only</li>
+                        <li><strong>Method:</strong> File system-level copy</li>
+                        <li><strong>Verification:</strong> May or may not include hashing</li>
+                        <li><strong>Legal Status:</strong> May be challenged in court</li>
+                        <li><strong>Purpose:</strong> General file backup</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title">Visual Comparison: What Each Method Captures</div>
+                <div class="diagram-ascii" role="img" aria-label="Diagram showing storage device structure with active files, deleted files, slack space, and unallocated space. Forensic imaging captures all areas while logical copying only captures active files.">
+┌─────────────────────────────────────────────────────────────────┐
+│                    STORAGE DEVICE (100 GB)                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐   │
+│  │ ACTIVE FILES │  │   DELETED    │  │   UNALLOCATED SPACE  │   │
+│  │              │  │    FILES     │  │                      │   │
+│  │  Documents   │  │  (Marked as  │  │  (May contain old    │   │
+│  │  Photos      │  │   available  │  │   deleted data)      │   │
+│  │  Programs    │  │   but data   │  │                      │   │
+│  │              │  │   remains)   │  │                      │   │
+│  └──────────────┘  └──────────────┘  └──────────────────────┘   │
+│         ▲                 ▲                    ▲                 │
+│         │                 │                    │                 │
+│  ┌──────┴─────────────────┴────────────────────┴──────────┐     │
+│  │              FILE SLACK (End of file clusters)         │     │
+│  └────────────────────────────────────────────────────────┘     │
+│                                                                  │
+│  ┌────────────────────────────────────────────────────────┐     │
+│  │     SYSTEM AREAS (MBR/GPT, Boot Sector, MFT, etc.)     │     │
+│  └────────────────────────────────────────────────────────┘     │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+
+LOGICAL COPY captures:     ████████░░░░░░░░░░░░░░░░ (~25%)
+                           (Active files only)
+
+FORENSIC IMAGE captures:   ████████████████████████ (100%)
+                           (Everything - every single bit)
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h4><span aria-hidden="true">⚠️</span> Critical Understanding</h4>
+                <p>When you perform a logical copy (like dragging files in Windows Explorer), you miss approximately <strong>75% or more</strong> of potential evidence. Deleted files, file fragments, browser history remnants, and other critical artifacts exist in unallocated space and slack space—areas that logical copies completely ignore.</p>
+            </div>
+
+            <div class="example-box">
+                <h4>Real-World Example: Why This Matters</h4>
+                <p><strong>Scenario:</strong> An employee is suspected of stealing proprietary documents before leaving the company. They deleted the files and emptied the Recycle Bin.</p>
+                <ul>
+                    <li><strong>Logical Copy Result:</strong> Shows no evidence of the documents—they appear to be gone</li>
+                    <li><strong>Forensic Image Result:</strong> Recovers the deleted documents from unallocated space, along with timestamps showing when they were accessed, copied to USB, and deleted</li>
+                </ul>
+                <p>The forensic image provides the evidence needed; the logical copy would have resulted in a failed investigation.</p>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <caption class="visually-hidden">Detailed comparison between forensic imaging and logical copying</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Characteristic</th>
+                            <th scope="col">Forensic Imaging</th>
+                            <th scope="col">Logical Copying</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Deleted File Recovery</strong></td>
+                            <td>Yes - captures all deleted data</td>
+                            <td>No - only Recycle Bin contents</td>
+                        </tr>
+                        <tr>
+                            <td><strong>File Slack Capture</strong></td>
+                            <td>Yes - complete slack space</td>
+                            <td>No - not captured</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Unallocated Space</strong></td>
+                            <td>Yes - all unallocated sectors</td>
+                            <td>No - not captured</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Hidden Partitions</strong></td>
+                            <td>Yes - all partitions captured</td>
+                            <td>No - only mounted volumes</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Boot Records</strong></td>
+                            <td>Yes - MBR/GPT captured</td>
+                            <td>No - not captured</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Time Required</strong></td>
+                            <td>Longer (entire device)</td>
+                            <td>Shorter (only active files)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Storage Required</strong></td>
+                            <td>Equal to source device size</td>
+                            <td>Equal to active data size</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Court Admissibility</strong></td>
+                            <td>Strong - industry standard</td>
+                            <td>Weak - may be challenged</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section 4: Image Types -->
+        <section id="section-image-types" data-section="4">
+            <h2><span aria-hidden="true">💾</span> Types of Forensic Images</h2>
+
+            <p>Forensic examiners can create different types of images depending on the investigation requirements, legal constraints, and available time. Understanding when to use each type is essential for effective evidence collection.</p>
+
+            <div class="tabs-container">
+                <div class="tab-buttons" role="tablist">
+                    <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="tab-physical" id="btn-physical">Physical Image</button>
+                    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-logical" id="btn-logical">Logical Image</button>
+                    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-targeted" id="btn-targeted">Targeted Image</button>
+                </div>
+
+                <div class="tab-content active" role="tabpanel" id="tab-physical" aria-labelledby="btn-physical">
+                    <h3>Physical Image (Full Disk Image)</h3>
+                    <p>A physical image is a complete bit-for-bit copy of the entire storage device, from the first sector to the last. This is the gold standard for forensic acquisition.</p>
+
+                    <h4>What It Captures:</h4>
+                    <ul>
+                        <li>All partitions (including hidden and deleted partitions)</li>
+                        <li>Master Boot Record (MBR) or GUID Partition Table (GPT)</li>
+                        <li>All file systems on the device</li>
+                        <li>All allocated and unallocated space</li>
+                        <li>File slack space</li>
+                        <li>Bad sectors (marked as such)</li>
+                    </ul>
+
+                    <h4>When to Use:</h4>
+                    <ul>
+                        <li>Criminal investigations requiring complete evidence preservation</li>
+                        <li>When deleted file recovery is anticipated</li>
+                        <li>When hidden partitions may exist</li>
+                        <li>When you have sufficient time and storage capacity</li>
+                        <li>When legal requirements mandate complete acquisition</li>
+                    </ul>
+
+                    <h4>Advantages:</h4>
+                    <ul>
+                        <li>Most complete evidence capture</li>
+                        <li>Highest court admissibility</li>
+                        <li>Allows for any type of analysis</li>
+                    </ul>
+
+                    <h4>Disadvantages:</h4>
+                    <ul>
+                        <li>Requires storage equal to device capacity</li>
+                        <li>Takes longest to acquire</li>
+                        <li>May capture irrelevant data</li>
+                    </ul>
+
+                    <div class="info-box">
+                        <h4><span aria-hidden="true">ℹ️</span> Storage Consideration</h4>
+                        <p>A physical image of a 1TB drive requires at least 1TB of storage space (more if using uncompressed raw format). Always ensure your destination media has sufficient capacity before beginning acquisition.</p>
+                    </div>
+                </div>
+
+                <div class="tab-content" role="tabpanel" id="tab-logical" aria-labelledby="btn-logical">
+                    <h3>Logical Image (Volume Image)</h3>
+                    <p>A logical image captures a specific partition or volume rather than the entire physical device. It includes all data within that partition, including unallocated space within the partition boundaries.</p>
+
+                    <h4>What It Captures:</h4>
+                    <ul>
+                        <li>All files and folders in the selected partition</li>
+                        <li>Deleted files within the partition</li>
+                        <li>Unallocated space within the partition</li>
+                        <li>File slack within the partition</li>
+                        <li>File system metadata (MFT for NTFS, etc.)</li>
+                    </ul>
+
+                    <h4>What It Does NOT Capture:</h4>
+                    <ul>
+                        <li>Other partitions on the device</li>
+                        <li>Space between partitions</li>
+                        <li>MBR/GPT partition tables</li>
+                        <li>Hidden or deleted partitions</li>
+                    </ul>
+
+                    <h4>When to Use:</h4>
+                    <ul>
+                        <li>When only specific volumes are relevant</li>
+                        <li>When time constraints exist</li>
+                        <li>When storage capacity is limited</li>
+                        <li>Civil litigation with defined scope</li>
+                        <li>When legal authority is limited to specific data</li>
+                    </ul>
+
+                    <div class="warning-box">
+                        <h4><span aria-hidden="true">⚠️</span> Important Limitation</h4>
+                        <p>Logical images miss evidence that may exist outside partition boundaries or in hidden partitions. If a suspect created a hidden partition to store illicit files, a logical image of the visible partition would not capture this evidence.</p>
+                    </div>
+                </div>
+
+                <div class="tab-content" role="tabpanel" id="tab-targeted" aria-labelledby="btn-targeted">
+                    <h3>Targeted Image (Selective Acquisition)</h3>
+                    <p>A targeted image captures only specific files, folders, or data types relevant to the investigation. This is the most limited form of forensic acquisition.</p>
+
+                    <h4>What It Captures:</h4>
+                    <ul>
+                        <li>Specifically selected files and folders</li>
+                        <li>Specific file types (e.g., all .docx files)</li>
+                        <li>Files from specific date ranges</li>
+                        <li>Specific user profiles or directories</li>
+                    </ul>
+
+                    <h4>What It Does NOT Capture:</h4>
+                    <ul>
+                        <li>Deleted files (unless specifically targeted)</li>
+                        <li>Unallocated space</li>
+                        <li>File slack</li>
+                        <li>Files outside selection criteria</li>
+                        <li>System artifacts and metadata</li>
+                    </ul>
+
+                    <h4>When to Use:</h4>
+                    <ul>
+                        <li>eDiscovery with narrow scope</li>
+                        <li>When legal authority is very limited</li>
+                        <li>Preliminary triage before full acquisition</li>
+                        <li>When specific files are known targets</li>
+                        <li>Extremely time-sensitive situations</li>
+                    </ul>
+
+                    <div class="warning-box">
+                        <h4><span aria-hidden="true">⚠️</span> Significant Limitations</h4>
+                        <p>Targeted acquisition is <strong>not recommended</strong> for criminal investigations or situations where comprehensive evidence is needed. It may miss critical evidence and can be challenged as incomplete. Always document why targeted acquisition was chosen over more complete methods.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <caption class="visually-hidden">Comparison of forensic image types</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Image Type</th>
+                            <th scope="col">Scope</th>
+                            <th scope="col">Deleted Files</th>
+                            <th scope="col">Unallocated Space</th>
+                            <th scope="col">Best For</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Physical</strong></td>
+                            <td>Entire device</td>
+                            <td>Yes</td>
+                            <td>Yes (all)</td>
+                            <td>Criminal cases, complete analysis</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Logical</strong></td>
+                            <td>Single partition</td>
+                            <td>Yes (within partition)</td>
+                            <td>Yes (within partition)</td>
+                            <td>Defined scope, time constraints</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Targeted</strong></td>
+                            <td>Selected files only</td>
+                            <td>Only if selected</td>
+                            <td>No</td>
+                            <td>eDiscovery, triage, narrow scope</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="key-concept">
+                <h4><span aria-hidden="true">💡</span> Decision Framework</h4>
+                <p>When deciding which image type to create, ask yourself:</p>
+                <ol>
+                    <li><strong>What is the legal scope?</strong> Search warrants and legal authority may dictate acquisition limits.</li>
+                    <li><strong>What evidence might exist?</strong> If deleted files are likely relevant, physical imaging is necessary.</li>
+                    <li><strong>What are the time constraints?</strong> Physical imaging takes longer but provides complete evidence.</li>
+                    <li><strong>What storage is available?</strong> Ensure you have capacity for your chosen image type.</li>
+                </ol>
+                <p><strong>When in doubt, choose the most complete option your circumstances allow.</strong></p>
+            </div>
+        </section>
+
+        <!-- Section 5: Imaging Process -->
+        <section id="section-process" data-section="5">
+            <h2><span aria-hidden="true">🔄</span> The Forensic Imaging Process</h2>
+
+            <p>Creating a forensic image follows a structured process designed to maintain evidence integrity. While specific tools and commands vary (covered in Modules 6.3 and 6.4), the fundamental workflow remains consistent.</p>
+
+            <div class="process-steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Preparation</h4>
+                        <p>Before touching the evidence, prepare your environment:</p>
+                        <ul>
+                            <li>Document the evidence (photos, serial numbers, condition)</li>
+                            <li>Verify your forensic workstation is ready</li>
+                            <li>Ensure destination media is forensically wiped and has sufficient capacity</li>
+                            <li>Prepare write blocking hardware or software</li>
+                            <li>Have chain of custody forms ready</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Write Protection</h4>
+                        <p>Connect the source media through a write blocker:</p>
+                        <ul>
+                            <li>Hardware write blocker: Connect between evidence drive and workstation</li>
+                            <li>Software write blocker: Enable before connecting drive</li>
+                            <li>Verify write protection is active before proceeding</li>
+                            <li>Document the write blocking method used</li>
+                        </ul>
+                        <p><em>Detailed in Module 6.2: Write Blockers and Forensic Duplicators</em></p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Pre-Image Hash</h4>
+                        <p>Calculate hash values of the source media:</p>
+                        <ul>
+                            <li>Generate MD5 and/or SHA-1/SHA-256 hash of source</li>
+                            <li>Document hash values in your notes</li>
+                            <li>This establishes the baseline for integrity verification</li>
+                        </ul>
+                        <p><em>Detailed in Module 6.5: Hash Verification</em></p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>Image Acquisition</h4>
+                        <p>Create the forensic image using appropriate tools:</p>
+                        <ul>
+                            <li>Select the appropriate image format (raw, E01, AFF)</li>
+                            <li>Configure compression and segmentation options</li>
+                            <li>Begin the imaging process</li>
+                            <li>Monitor for errors during acquisition</li>
+                            <li>Document start time, end time, and any issues</li>
+                        </ul>
+                        <p><em>Detailed in Modules 6.3 and 6.4: Acquisition Tools</em></p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h4>Post-Image Verification</h4>
+                        <p>Verify the image integrity:</p>
+                        <ul>
+                            <li>Calculate hash of the created image</li>
+                            <li>Compare to pre-image hash—they must match exactly</li>
+                            <li>If hashes don't match, investigate and re-image if necessary</li>
+                            <li>Document verification results</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">6</div>
+                    <div class="step-content">
+                        <h4>Documentation</h4>
+                        <p>Complete all required documentation:</p>
+                        <ul>
+                            <li>Update chain of custody</li>
+                            <li>Record all hash values</li>
+                            <li>Document tools used and their versions</li>
+                            <li>Note any errors or anomalies</li>
+                            <li>Store original evidence securely</li>
+                        </ul>
+                        <p><em>Detailed in Module 6.7: Documentation Best Practices</em></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title">Forensic Imaging Workflow</div>
+                <div class="diagram-ascii" role="img" aria-label="Flowchart showing the forensic imaging process from preparation through documentation">
+┌─────────────────────────────────────────────────────────────────────┐
+│                    FORENSIC IMAGING WORKFLOW                        │
+└─────────────────────────────────────────────────────────────────────┘
+
+    ┌──────────────┐
+    │  PREPARATION │
+    │  - Document  │
+    │  - Prepare   │
+    │    equipment │
+    └──────┬───────┘
+           │
+           ▼
+    ┌──────────────┐
+    │    WRITE     │
+    │  PROTECTION  │◄─── Hardware or Software Write Blocker
+    │   ENABLED    │
+    └──────┬───────┘
+           │
+           ▼
+    ┌──────────────┐
+    │  PRE-IMAGE   │
+    │    HASH      │──── Record: MD5 / SHA-256
+    │              │
+    └──────┬───────┘
+           │
+           ▼
+    ┌──────────────┐
+    │    IMAGE     │
+    │ ACQUISITION  │──── dd / FTK Imager / Guymager
+    │              │
+    └──────┬───────┘
+           │
+           ▼
+    ┌──────────────┐      ┌─────────────┐
+    │  POST-IMAGE  │      │   HASHES    │
+    │    HASH      │─────►│   MATCH?    │
+    │              │      └──────┬──────┘
+    └──────────────┘             │
+                          ┌──────┴──────┐
+                          │             │
+                         YES           NO
+                          │             │
+                          ▼             ▼
+                   ┌────────────┐ ┌────────────┐
+                   │  SUCCESS   │ │ INVESTIGATE│
+                   │ DOCUMENT   │ │ & RE-IMAGE │
+                   │  RESULTS   │ └────────────┘
+                   └────────────┘
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h4><span aria-hidden="true">ℹ️</span> Time Expectations</h4>
+                <p>Forensic imaging takes significantly longer than logical copying. As a general rule:</p>
+                <ul>
+                    <li><strong>USB 2.0:</strong> ~30-60 MB/s = ~4-8 hours for 1TB</li>
+                    <li><strong>USB 3.0:</strong> ~100-150 MB/s = ~2-3 hours for 1TB</li>
+                    <li><strong>SATA (direct):</strong> ~150-200 MB/s = ~1.5-2 hours for 1TB</li>
+                    <li><strong>NVMe:</strong> ~500+ MB/s = ~30-45 minutes for 1TB</li>
+                </ul>
+                <p>Always plan for imaging to take longer than expected. Hardware issues, bad sectors, and verification add time.</p>
+            </div>
+        </section>
+
+        <!-- Section 6: Interactive Practice -->
+        <section id="section-interactive" data-section="6">
+            <h2><span aria-hidden="true">🎮</span> Interactive Practice</h2>
+
+            <!-- Flashcards -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon" aria-hidden="true">🎴</span>
+                    <span class="card-title">Key Concept Flashcards</span>
+                </div>
+                <p>Click each card to reveal the definition. Use these to test your understanding of key terms.</p>
+
+                <div class="flashcard-container">
+                    <div class="flashcard" id="flashcard" onclick="flipCard()" onkeypress="handleFlashcardKey(event)" tabindex="0" role="button" aria-label="Flashcard. Press Enter or Space to flip.">
+                        <div class="flashcard-inner">
+                            <div class="flashcard-front">
+                                <span id="flashcard-term">Forensic Image</span>
+                            </div>
+                            <div class="flashcard-back">
+                                <span id="flashcard-definition">A bit-for-bit copy of a storage device that captures every sector, including deleted files, unallocated space, and system areas.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="flashcard-hint">Click or press Enter to flip the card</p>
+                    <div class="flashcard-counter" id="flashcard-counter">Card 1 of 6</div>
+                    <div class="flashcard-nav">
+                        <button onclick="prevCard()" aria-label="Previous card">← Previous</button>
+                        <button onclick="nextCard()" aria-label="Next card">Next →</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Knowledge Check Quiz -->
+            <div class="quiz-container" id="quiz1">
+                <h3>Knowledge Check 1</h3>
+                <p class="quiz-question">A forensic examiner needs to recover files that a suspect deleted and emptied from the Recycle Bin. Which acquisition method is REQUIRED?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz1" id="q1a" value="a">
+                        <label for="q1a">A) Logical copy using Windows Explorer</label>
+                    </div>
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz1" id="q1b" value="b">
+                        <label for="q1b">B) Targeted image of the user's Documents folder</label>
+                    </div>
+                    <div class="quiz-option" data-correct="true">
+                        <input type="radio" name="quiz1" id="q1c" value="c">
+                        <label for="q1c">C) Physical forensic image of the entire drive</label>
+                    </div>
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz1" id="q1d" value="d">
+                        <label for="q1d">D) Any method will work for deleted file recovery</label>
+                    </div>
+                </div>
+                <button class="quiz-btn" onclick="checkQuiz('quiz1')">Check Answer</button>
+                <div class="quiz-feedback" id="quiz1-feedback"></div>
+            </div>
+
+            <div class="quiz-container" id="quiz2">
+                <h3>Knowledge Check 2</h3>
+                <p class="quiz-question">What is the PRIMARY purpose of calculating hash values before and after creating a forensic image?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz2" id="q2a" value="a">
+                        <label for="q2a">A) To compress the image file for storage</label>
+                    </div>
+                    <div class="quiz-option" data-correct="true">
+                        <input type="radio" name="quiz2" id="q2b" value="b">
+                        <label for="q2b">B) To verify the image is an exact copy of the original</label>
+                    </div>
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz2" id="q2c" value="c">
+                        <label for="q2c">C) To encrypt the forensic image</label>
+                    </div>
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz2" id="q2d" value="d">
+                        <label for="q2d">D) To identify the file system type</label>
+                    </div>
+                </div>
+                <button class="quiz-btn" onclick="checkQuiz('quiz2')">Check Answer</button>
+                <div class="quiz-feedback" id="quiz2-feedback"></div>
+            </div>
+
+            <div class="quiz-container" id="quiz3">
+                <h3>Knowledge Check 3</h3>
+                <p class="quiz-question">Which of the following is captured by a forensic image but NOT by a logical copy?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz3" id="q3a" value="a">
+                        <label for="q3a">A) Word documents in the Documents folder</label>
+                    </div>
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz3" id="q3b" value="b">
+                        <label for="q3b">B) Files in the Recycle Bin</label>
+                    </div>
+                    <div class="quiz-option" data-correct="true">
+                        <input type="radio" name="quiz3" id="q3c" value="c">
+                        <label for="q3c">C) Unallocated disk space containing deleted file remnants</label>
+                    </div>
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz3" id="q3d" value="d">
+                        <label for="q3d">D) Installed programs in Program Files</label>
+                    </div>
+                </div>
+                <button class="quiz-btn" onclick="checkQuiz('quiz3')">Check Answer</button>
+                <div class="quiz-feedback" id="quiz3-feedback"></div>
+            </div>
+
+            <!-- Scenario Exercise -->
+            <div class="scenario-container" id="scenario1">
+                <div class="scenario-header">
+                    <span class="scenario-icon" aria-hidden="true">🔍</span>
+                    <span class="scenario-title">Scenario: Choosing the Right Acquisition Method</span>
+                </div>
+                <div class="scenario-description">
+                    <p><strong>Situation:</strong> You are a forensic examiner called to investigate a corporate data theft case. An employee is suspected of copying proprietary designs to a USB drive before resigning. The company's legal team has obtained a court order to examine the employee's work laptop (500GB SSD). The IT department reports the employee "wiped" their files before returning the laptop. You have 4 hours before the laptop must be returned.</p>
+                    <p><strong>Question:</strong> What type of forensic image should you create?</p>
+                </div>
+                <div class="scenario-choices">
+                    <button class="scenario-choice" data-correct="false" onclick="checkScenario(this, 'scenario1')">
+                        <strong>A) Targeted image</strong> - Only capture the employee's user profile folder to save time
+                    </button>
+                    <button class="scenario-choice" data-correct="true" onclick="checkScenario(this, 'scenario1')">
+                        <strong>B) Physical image</strong> - Create a complete bit-for-bit image of the entire SSD
+                    </button>
+                    <button class="scenario-choice" data-correct="false" onclick="checkScenario(this, 'scenario1')">
+                        <strong>C) Logical copy</strong> - Copy all visible files using standard file copy methods
+                    </button>
+                    <button class="scenario-choice" data-correct="false" onclick="checkScenario(this, 'scenario1')">
+                        <strong>D) No image needed</strong> - Since files were wiped, there's nothing to recover
+                    </button>
+                </div>
+                <div class="scenario-result" id="scenario1-result"></div>
+            </div>
+        </section>
+
+        <!-- Section 7: Summary -->
+        <section id="section-summary" data-section="7">
+            <h2><span aria-hidden="true">📋</span> Module Summary</h2>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon" aria-hidden="true">✅</span>
+                    <span class="card-title">Key Takeaways</span>
+                </div>
+
+                <h4>Core Concepts</h4>
+                <ul>
+                    <li><strong>Forensic imaging</strong> creates a bit-for-bit copy of storage media, capturing all data including deleted files, slack space, and unallocated areas</li>
+                    <li><strong>Logical copying</strong> only captures files visible to the operating system, missing critical evidence</li>
+                    <li><strong>Evidence integrity</strong> is maintained through write protection and hash verification</li>
+                </ul>
+
+                <h4>Image Types</h4>
+                <ul>
+                    <li><strong>Physical image:</strong> Complete device copy—gold standard for investigations</li>
+                    <li><strong>Logical image:</strong> Single partition copy—useful when scope is limited</li>
+                    <li><strong>Targeted image:</strong> Selected files only—limited use cases, may miss evidence</li>
+                </ul>
+
+                <h4>Process Steps</h4>
+                <ol>
+                    <li>Preparation and documentation</li>
+                    <li>Write protection implementation</li>
+                    <li>Pre-image hash calculation</li>
+                    <li>Image acquisition</li>
+                    <li>Post-image hash verification</li>
+                    <li>Complete documentation</li>
+                </ol>
+            </div>
+
+            <div class="highlight-box">
+                <h4>Remember</h4>
+                <p><strong>The acquisition phase is your ONE chance to capture evidence correctly.</strong> Once you begin analysis on a working copy, you cannot go back and capture data you missed. When in doubt, always choose the most complete acquisition method available.</p>
+            </div>
+
+            <div class="checklist">
+                <h3><span aria-hidden="true">☑️</span> Module Completion Checklist</h3>
+                <p>Before moving to Module 6.2, ensure you can:</p>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check1" onchange="updateChecklist(this)">
+                    <label for="check1">Define forensic imaging and explain its purpose</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check2" onchange="updateChecklist(this)">
+                    <label for="check2">Distinguish between forensic imaging and logical copying</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check3" onchange="updateChecklist(this)">
+                    <label for="check3">Identify when to use physical, logical, and targeted images</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check4" onchange="updateChecklist(this)">
+                    <label for="check4">Explain why bit-for-bit copies are essential for evidence integrity</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check5" onchange="updateChecklist(this)">
+                    <label for="check5">Describe the six steps of the forensic imaging process</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check6" onchange="updateChecklist(this)">
+                    <label for="check6">Complete all knowledge check questions</label>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon" aria-hidden="true">🔜</span>
+                    <span class="card-title">Coming Up Next</span>
+                </div>
+                <h4>Module 6.2: Write Blockers and Forensic Duplicators</h4>
+                <p>In the next module, you'll learn about the critical tools that prevent accidental modification of evidence during acquisition:</p>
+                <ul>
+                    <li>Hardware write blockers and how they work</li>
+                    <li>Software write blocking solutions</li>
+                    <li>Forensic duplicator devices</li>
+                    <li>Verifying write protection is active</li>
+                    <li>Selecting the right tool for different scenarios</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 Mendocino College | CSC 156 - Digital Forensics Fundamentals</p>
+        <p>Module 6.1: Forensic Imaging Fundamentals | Week 6: Data Acquisition and Preservation</p>
+        <p>Instructor: David Pai | Spring 2026</p>
+        <div class="footer-links">
+            <a href="#section-overview">Back to Top</a>
+            <a href="#">Module 6.2: Write Blockers →</a>
+        </div>
+    </footer>
+
+    <script>
+        // Progress Tracking
+        let sectionsCompleted = new Set();
+        const totalSections = 7;
+
+        function updateProgress() {
+            const percent = Math.round((sectionsCompleted.size / totalSections) * 100);
+            document.getElementById('progress-percent').textContent = percent;
+            document.getElementById('progress-fill').style.width = percent + '%';
+            document.getElementById('progress-fill').setAttribute('aria-valuenow', percent);
+            
+            // Save to session storage
+            sessionStorage.setItem('module61Progress', JSON.stringify([...sectionsCompleted]));
+        }
+
+        // Load progress from session storage
+        function loadProgress() {
+            const saved = sessionStorage.getItem('module61Progress');
+            if (saved) {
+                sectionsCompleted = new Set(JSON.parse(saved));
+                updateProgress();
+            }
+        }
+
+        // Track section visibility
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const sectionNum = entry.target.dataset.section;
+                    if (sectionNum) {
+                        sectionsCompleted.add(sectionNum);
+                        updateProgress();
+                    }
+                }
+            });
+        }, { threshold: 0.3 });
+
+        document.querySelectorAll('section[data-section]').forEach(section => {
+            observer.observe(section);
+        });
+
+        // Accordion functionality
+        document.querySelectorAll('.accordion-header').forEach(header => {
+            header.addEventListener('click', function() {
+                const item = this.parentElement;
+                const isActive = item.classList.contains('active');
+                
+                // Close all accordions
+                document.querySelectorAll('.accordion-item').forEach(i => {
+                    i.classList.remove('active');
+                    i.querySelector('.accordion-header').setAttribute('aria-expanded', 'false');
+                });
+                
+                // Open clicked one if it wasn't active
+                if (!isActive) {
+                    item.classList.add('active');
+                    this.setAttribute('aria-expanded', 'true');
+                }
+            });
+
+            header.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click();
+                }
+            });
+        });
+
+        // Tab functionality
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tabId = this.getAttribute('aria-controls');
+                
+                // Update buttons
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('active');
+                    b.setAttribute('aria-selected', 'false');
+                });
+                this.classList.add('active');
+                this.setAttribute('aria-selected', 'true');
+                
+                // Update content
+                document.querySelectorAll('.tab-content').forEach(c => {
+                    c.classList.remove('active');
+                });
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Quiz functionality
+        function checkQuiz(quizId) {
+            const quiz = document.getElementById(quizId);
+            const options = quiz.querySelectorAll('.quiz-option');
+            const feedback = document.getElementById(quizId + '-feedback');
+            const selected = quiz.querySelector('input[type="radio"]:checked');
+            
+            if (!selected) {
+                feedback.textContent = 'Please select an answer.';
+                feedback.className = 'quiz-feedback show incorrect';
+                return;
+            }
+            
+            const selectedOption = selected.closest('.quiz-option');
+            const isCorrect = selectedOption.dataset.correct === 'true';
+            
+            // Reset all options
+            options.forEach(opt => {
+                opt.classList.remove('correct', 'incorrect');
+            });
+            
+            // Mark selected
+            if (isCorrect) {
+                selectedOption.classList.add('correct');
+                feedback.className = 'quiz-feedback show correct';
+                
+                if (quizId === 'quiz1') {
+                    feedback.innerHTML = '<strong>Correct!</strong> A physical forensic image captures unallocated space where deleted files reside. Logical copies and targeted images would miss this critical evidence.';
+                } else if (quizId === 'quiz2') {
+                    feedback.innerHTML = '<strong>Correct!</strong> Hash values serve as digital fingerprints. If the pre-image and post-image hashes match, it proves the image is an exact duplicate of the original with no modifications.';
+                } else if (quizId === 'quiz3') {
+                    feedback.innerHTML = '<strong>Correct!</strong> Unallocated space contains remnants of deleted files and is only captured by forensic imaging, not logical copying.';
+                }
+            } else {
+                selectedOption.classList.add('incorrect');
+                // Show correct answer
+                options.forEach(opt => {
+                    if (opt.dataset.correct === 'true') {
+                        opt.classList.add('correct');
+                    }
+                });
+                feedback.className = 'quiz-feedback show incorrect';
+                
+                if (quizId === 'quiz1') {
+                    feedback.innerHTML = '<strong>Incorrect.</strong> The correct answer is C. Deleted files that have been emptied from the Recycle Bin exist in unallocated space, which is only captured by forensic imaging.';
+                } else if (quizId === 'quiz2') {
+                    feedback.innerHTML = '<strong>Incorrect.</strong> The correct answer is B. Hash values verify that the forensic image is an exact, unmodified copy of the original evidence.';
+                } else if (quizId === 'quiz3') {
+                    feedback.innerHTML = '<strong>Incorrect.</strong> The correct answer is C. Unallocated space is not visible to the operating system and is only captured through forensic imaging.';
+                }
+            }
+            
+            // Disable further changes
+            quiz.querySelector('.quiz-btn').disabled = true;
+        }
+
+        // Scenario functionality
+        function checkScenario(button, scenarioId) {
+            const container = document.getElementById(scenarioId);
+            const choices = container.querySelectorAll('.scenario-choice');
+            const result = document.getElementById(scenarioId + '-result');
+            
+            // Disable all choices
+            choices.forEach(choice => {
+                choice.disabled = true;
+                choice.classList.remove('selected');
+            });
+            
+            button.classList.add('selected');
+            const isCorrect = button.dataset.correct === 'true';
+            
+            if (isCorrect) {
+                button.classList.add('correct');
+                result.className = 'scenario-result show';
+                result.style.background = '#e8f5e9';
+                result.style.border = '1px solid #2e7d32';
+                result.style.color = '#1b5e20';
+                result.innerHTML = `
+                    <strong>✓ Excellent choice!</strong><br><br>
+                    A physical image is the correct choice because:
+                    <ul>
+                        <li>The employee "wiped" their files, meaning evidence exists in unallocated space</li>
+                        <li>Only a physical image captures unallocated space where deleted files can be recovered</li>
+                        <li>A 500GB SSD can be imaged in approximately 1-2 hours via USB 3.0, leaving time for verification</li>
+                        <li>This is a court-ordered investigation requiring the most complete evidence capture</li>
+                    </ul>
+                `;
+            } else {
+                button.classList.add('incorrect');
+                // Show correct answer
+                choices.forEach(choice => {
+                    if (choice.dataset.correct === 'true') {
+                        choice.classList.add('correct');
+                    }
+                });
+                result.className = 'scenario-result show';
+                result.style.background = '#ffebee';
+                result.style.border = '1px solid #c62828';
+                result.style.color = '#b71c1c';
+                result.innerHTML = `
+                    <strong>✗ Not the best choice.</strong><br><br>
+                    The correct answer is <strong>B) Physical image</strong>.<br><br>
+                    Since the employee "wiped" their files, the evidence now exists in unallocated space. Only a physical forensic image captures unallocated space. A targeted image, logical copy, or no image would fail to recover the deleted evidence.
+                `;
+            }
+        }
+
+        // Flashcard functionality
+        const flashcards = [
+            {
+                term: "Forensic Image",
+                definition: "A bit-for-bit copy of a storage device that captures every sector, including deleted files, unallocated space, and system areas."
+            },
+            {
+                term: "Bit-for-Bit Copy",
+                definition: "A copying method that duplicates every single bit from source media, regardless of whether it contains active data, deleted data, or appears empty."
+            },
+            {
+                term: "Logical Copy",
+                definition: "A file-level copy that only captures files and folders visible to the operating system, missing deleted files, slack space, and unallocated areas."
+            },
+            {
+                term: "Evidence Integrity",
+                definition: "The assurance that digital evidence has not been altered from acquisition through analysis, verified through cryptographic hash values."
+            },
+            {
+                term: "Physical Image",
+                definition: "A complete bit-for-bit copy of an entire storage device, including all partitions, boot records, and unallocated space. The gold standard for forensic acquisition."
+            },
+            {
+                term: "Forensically Sound",
+                definition: "A process that ensures digital evidence is collected, preserved, and analyzed without modification, maintaining admissibility in legal proceedings."
+            }
+        ];
+
+        let currentCard = 0;
+
+        function flipCard() {
+            document.getElementById('flashcard').classList.toggle('flipped');
+        }
+
+        function handleFlashcardKey(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                flipCard();
+            }
+        }
+
+        function updateFlashcard() {
+            const card = flashcards[currentCard];
+            document.getElementById('flashcard-term').textContent = card.term;
+            document.getElementById('flashcard-definition').textContent = card.definition;
+            document.getElementById('flashcard-counter').textContent = `Card ${currentCard + 1} of ${flashcards.length}`;
+            document.getElementById('flashcard').classList.remove('flipped');
+        }
+
+        function nextCard() {
+            currentCard = (currentCard + 1) % flashcards.length;
+            updateFlashcard();
+        }
+
+        function prevCard() {
+            currentCard = (currentCard - 1 + flashcards.length) % flashcards.length;
+            updateFlashcard();
+        }
+
+        // Checklist functionality
+        function updateChecklist(checkbox) {
+            const item = checkbox.closest('.checklist-item');
+            if (checkbox.checked) {
+                item.classList.add('checked');
+            } else {
+                item.classList.remove('checked');
+            }
+            
+            // Save to session storage
+            const checkboxes = document.querySelectorAll('.checklist-item input[type="checkbox"]');
+            const states = [];
+            checkboxes.forEach(cb => states.push(cb.checked));
+            sessionStorage.setItem('module61Checklist', JSON.stringify(states));
+        }
+
+        // Load checklist from session storage
+        function loadChecklist() {
+            const saved = sessionStorage.getItem('module61Checklist');
+            if (saved) {
+                const states = JSON.parse(saved);
+                const checkboxes = document.querySelectorAll('.checklist-item input[type="checkbox"]');
+                checkboxes.forEach((cb, index) => {
+                    if (states[index]) {
+                        cb.checked = true;
+                        cb.closest('.checklist-item').classList.add('checked');
+                    }
+                });
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+            loadChecklist();
+            updateFlashcard();
+        });
+
+        // Smooth scrolling for navigation
+        document.querySelectorAll('nav a').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const target = document.getElementById(targetId);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                    target.focus();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
