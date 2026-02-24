@@ -1,0 +1,2741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 6.6: Evidence Preservation Best Practices | CSC 156</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #1a1a2e;
+            background-color: #ffffff;
+            font-size: 16px;
+        }
+
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #0d47a1;
+            color: #ffffff;
+            padding: 8px 16px;
+            z-index: 1000;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #ffffff;
+            padding: 24px;
+            text-align: center;
+            border-bottom: 4px solid #0f3460;
+        }
+
+        header h1 {
+            font-size: 1.875rem;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .course-info {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .module-badge {
+            display: inline-block;
+            background: #e94560;
+            color: #ffffff;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        nav {
+            background: #f8f9fa;
+            padding: 16px 24px;
+            border-bottom: 1px solid #dee2e6;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        nav a {
+            color: #1a1a2e;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        nav a:hover,
+        nav a:focus {
+            background: #0d47a1;
+            color: #ffffff;
+            outline: none;
+        }
+
+        nav a:focus {
+            outline: 3px solid #e94560;
+            outline-offset: 2px;
+        }
+
+        .progress-container {
+            background: #e8f4f8;
+            padding: 20px 24px;
+            border-bottom: 1px solid #b8d4e3;
+        }
+
+        .progress-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .progress-title {
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .progress-stats {
+            font-size: 0.875rem;
+            color: #495057;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: #dee2e6;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0d47a1, #1976d2);
+            border-radius: 6px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .time-estimate {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #fff3cd;
+            color: #856404;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        section {
+            margin-bottom: 48px;
+            scroll-margin-top: 80px;
+        }
+
+        h2 {
+            color: #1a1a2e;
+            font-size: 1.75rem;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #0d47a1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h3 {
+            color: #16213e;
+            font-size: 1.375rem;
+            margin: 24px 0 16px 0;
+        }
+
+        h4 {
+            color: #0f3460;
+            font-size: 1.125rem;
+            margin: 20px 0 12px 0;
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: #2d3748;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .card-icon {
+            font-size: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .definition-box {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-left: 5px solid #0d47a1;
+            padding: 20px 24px;
+            margin: 20px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .definition-box h4 {
+            color: #0d47a1;
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        .definition-box p {
+            margin-bottom: 0;
+            color: #1a1a2e;
+        }
+
+        .key-concept {
+            background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+            border-left: 5px solid #f57c00;
+            padding: 20px 24px;
+            margin: 20px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .key-concept h4 {
+            color: #e65100;
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            border-left: 5px solid #c62828;
+            padding: 20px 24px;
+            margin: 20px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .warning-box h4 {
+            color: #c62828;
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-left: 5px solid #2e7d32;
+            padding: 20px 24px;
+            margin: 20px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .info-box h4 {
+            color: #2e7d32;
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        .example-box {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            border-left: 5px solid #7b1fa2;
+            padding: 20px 24px;
+            margin: 20px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .example-box h4 {
+            color: #7b1fa2;
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        pre {
+            background: #1a1a2e;
+            color: #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin: 16px 0;
+            white-space: pre;
+            word-wrap: normal;
+        }
+
+        code {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background: #e9ecef;
+            color: #c62828;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        pre code {
+            background: transparent;
+            color: #e9ecef;
+            padding: 0;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        th {
+            background: #0d47a1;
+            color: #ffffff;
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #dee2e6;
+            color: #2d3748;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        tr:hover {
+            background: #e3f2fd;
+        }
+
+        ul, ol {
+            margin: 16px 0;
+            padding-left: 24px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            color: #2d3748;
+        }
+
+        li::marker {
+            color: #0d47a1;
+        }
+
+        /* Three Copy Rule Visual */
+        .copy-rule-container {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .copy-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .copy-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid #dee2e6;
+            transition: all 0.3s ease;
+        }
+
+        .copy-card:hover {
+            border-color: #0d47a1;
+            box-shadow: 0 4px 12px rgba(13, 71, 161, 0.15);
+        }
+
+        .copy-card.original {
+            border-top: 4px solid #c62828;
+        }
+
+        .copy-card.master {
+            border-top: 4px solid #2e7d32;
+        }
+
+        .copy-card.working {
+            border-top: 4px solid #1565c0;
+        }
+
+        .copy-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+
+        .copy-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+
+        .copy-subtitle {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 12px;
+        }
+
+        .copy-description {
+            font-size: 0.95rem;
+            color: #495057;
+            text-align: left;
+        }
+
+        .copy-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        .badge-critical {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .badge-protected {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .badge-active {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        /* Storage Requirements */
+        .storage-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .storage-item {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .storage-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .storage-content h5 {
+            margin: 0 0 4px 0;
+            color: #1a1a2e;
+            font-size: 1rem;
+        }
+
+        .storage-content p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #495057;
+        }
+
+        /* Packaging Guide */
+        .packaging-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 24px 0;
+        }
+
+        .packaging-card {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .packaging-header {
+            background: #f8f9fa;
+            padding: 16px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .packaging-header h4 {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .packaging-body {
+            padding: 16px;
+        }
+
+        .packaging-body ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .packaging-body li {
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+        }
+
+        /* Lifecycle Diagram */
+        .lifecycle-container {
+            background: #1a1a2e;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            overflow-x: auto;
+        }
+
+        .lifecycle-title {
+            color: #ffffff;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .lifecycle-diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 16px 0;
+        }
+
+        .lifecycle-step {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 16px 20px;
+            text-align: center;
+            min-width: 140px;
+            transition: all 0.3s ease;
+        }
+
+        .lifecycle-step:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #90caf9;
+        }
+
+        .lifecycle-step.active {
+            background: rgba(13, 71, 161, 0.5);
+            border-color: #90caf9;
+        }
+
+        .lifecycle-step-icon {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+
+        .lifecycle-step-title {
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .lifecycle-arrow {
+            color: #90caf9;
+            font-size: 1.5rem;
+        }
+
+        /* Retention Policy */
+        .retention-table {
+            margin: 24px 0;
+        }
+
+        .retention-row {
+            display: flex;
+            border: 1px solid #dee2e6;
+            border-bottom: none;
+            background: #ffffff;
+        }
+
+        .retention-row:first-child {
+            border-radius: 8px 8px 0 0;
+        }
+
+        .retention-row:last-child {
+            border-bottom: 1px solid #dee2e6;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .retention-row.header {
+            background: #0d47a1;
+            color: #ffffff;
+        }
+
+        .retention-cell {
+            padding: 14px 16px;
+            flex: 1;
+            border-right: 1px solid #dee2e6;
+        }
+
+        .retention-cell:last-child {
+            border-right: none;
+        }
+
+        .retention-row.header .retention-cell {
+            font-weight: 600;
+            border-right-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Checklist Styles */
+        .preservation-checklist {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .checklist-section {
+            margin-bottom: 24px;
+        }
+
+        .checklist-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .checklist-section h4 {
+            color: #0d47a1;
+            margin-top: 0;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checklist-items {
+            display: grid;
+            gap: 8px;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            background: #ffffff;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .checklist-item:hover {
+            border-color: #0d47a1;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checklist-item label {
+            flex: 1;
+            cursor: pointer;
+            color: #2d3748;
+            font-size: 0.95rem;
+        }
+
+        .checklist-item.checked {
+            background: #e8f5e9;
+            border-color: #2e7d32;
+        }
+
+        .checklist-item.checked label {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+
+        /* Accordion */
+        .accordion {
+            margin: 20px 0;
+        }
+
+        .accordion-item {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            background: #f8f9fa;
+            padding: 16px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: #1a1a2e;
+            transition: all 0.3s ease;
+            border: none;
+            width: 100%;
+            text-align: left;
+            font-size: 1rem;
+        }
+
+        .accordion-header:hover,
+        .accordion-header:focus {
+            background: #e3f2fd;
+            outline: none;
+        }
+
+        .accordion-header:focus {
+            outline: 3px solid #0d47a1;
+            outline-offset: -3px;
+        }
+
+        .accordion-header::after {
+            content: '+';
+            font-size: 1.5rem;
+            font-weight: 300;
+            transition: transform 0.3s ease;
+            color: #0d47a1;
+        }
+
+        .accordion-item.active .accordion-header::after {
+            transform: rotate(45deg);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+            background: #ffffff;
+        }
+
+        .accordion-item.active .accordion-content {
+            max-height: 3000px;
+        }
+
+        .accordion-body {
+            padding: 20px;
+        }
+
+        /* Quiz */
+        .quiz-container {
+            background: #f8f9fa;
+            border: 2px solid #0d47a1;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .quiz-question {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 16px;
+            font-size: 1.1rem;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            background: #ffffff;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-option:hover {
+            border-color: #0d47a1;
+            background: #e3f2fd;
+        }
+
+        .quiz-option input[type="radio"] {
+            margin-right: 12px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .quiz-option label {
+            cursor: pointer;
+            flex: 1;
+            color: #2d3748;
+        }
+
+        .quiz-option.correct {
+            border-color: #2e7d32;
+            background: #e8f5e9;
+        }
+
+        .quiz-option.incorrect {
+            border-color: #c62828;
+            background: #ffebee;
+        }
+
+        .quiz-feedback {
+            margin-top: 16px;
+            padding: 16px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .quiz-feedback.show {
+            display: block;
+        }
+
+        .quiz-feedback.correct {
+            background: #e8f5e9;
+            border: 1px solid #2e7d32;
+            color: #1b5e20;
+        }
+
+        .quiz-feedback.incorrect {
+            background: #ffebee;
+            border: 1px solid #c62828;
+            color: #b71c1c;
+        }
+
+        .quiz-btn {
+            margin-top: 16px;
+            padding: 12px 24px;
+            background: #0d47a1;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-btn:hover {
+            background: #1565c0;
+        }
+
+        .quiz-btn:focus {
+            outline: 3px solid #e94560;
+            outline-offset: 2px;
+        }
+
+        .quiz-btn:disabled {
+            background: #9e9e9e;
+            cursor: not-allowed;
+        }
+
+        /* Objectives List */
+        .objectives-list {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .objectives-list h3 {
+            color: #2e7d32;
+            margin-top: 0;
+        }
+
+        .objectives-list ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .objectives-list li {
+            padding: 10px 0;
+            padding-left: 32px;
+            position: relative;
+            border-bottom: 1px solid rgba(46, 125, 50, 0.2);
+        }
+
+        .objectives-list li:last-child {
+            border-bottom: none;
+        }
+
+        .objectives-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #2e7d32;
+            font-weight: 700;
+        }
+
+        .cslo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin: 16px 0;
+        }
+
+        /* Scenario */
+        .scenario-container {
+            background: #f8f9fa;
+            border: 2px solid #0d47a1;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .scenario-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .scenario-icon {
+            font-size: 2rem;
+        }
+
+        .scenario-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .scenario-description {
+            background: #ffffff;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+        }
+
+        .scenario-choices {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .scenario-choice {
+            padding: 16px;
+            background: #ffffff;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-size: 1rem;
+            color: #2d3748;
+        }
+
+        .scenario-choice:hover {
+            border-color: #0d47a1;
+            background: #e3f2fd;
+        }
+
+        .scenario-choice:focus {
+            outline: 3px solid #0d47a1;
+            outline-offset: 2px;
+        }
+
+        .scenario-choice.correct {
+            border-color: #2e7d32;
+            background: #e8f5e9;
+        }
+
+        .scenario-choice.incorrect {
+            border-color: #c62828;
+            background: #ffebee;
+        }
+
+        .scenario-result {
+            margin-top: 20px;
+            padding: 16px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .scenario-result.show {
+            display: block;
+        }
+
+        /* Flashcard */
+        .flashcard-container {
+            margin: 24px 0;
+        }
+
+        .flashcard {
+            perspective: 1000px;
+            height: 220px;
+            cursor: pointer;
+        }
+
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-front,
+        .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .flashcard-front {
+            background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
+            color: #ffffff;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .flashcard-back {
+            background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
+            color: #ffffff;
+            transform: rotateY(180deg);
+            font-size: 1rem;
+        }
+
+        .flashcard-hint {
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-top: 8px;
+        }
+
+        .flashcard-nav {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .flashcard-nav button {
+            padding: 10px 20px;
+            background: #0d47a1;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .flashcard-nav button:hover {
+            background: #1565c0;
+        }
+
+        .flashcard-nav button:focus {
+            outline: 3px solid #e94560;
+            outline-offset: 2px;
+        }
+
+        .flashcard-counter {
+            text-align: center;
+            color: #495057;
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%);
+            border: 2px solid #0288d1;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 20px 0;
+        }
+
+        .highlight-box h4 {
+            color: #01579b;
+            margin-top: 0;
+        }
+
+        /* Completion Checklist */
+        .completion-checklist {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .completion-checklist h3 {
+            margin-top: 0;
+        }
+
+        .completion-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .completion-item:last-child {
+            border-bottom: none;
+        }
+
+        .completion-item input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+        }
+
+        .completion-item label {
+            flex: 1;
+            cursor: pointer;
+            color: #2d3748;
+        }
+
+        .completion-item.checked label {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+
+        footer {
+            background: #1a1a2e;
+            color: #ffffff;
+            padding: 32px 24px;
+            text-align: center;
+            margin-top: 48px;
+        }
+
+        footer p {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 8px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: #90caf9;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover,
+        .footer-links a:focus {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            nav a {
+                text-align: center;
+            }
+
+            .copy-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .storage-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .packaging-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .lifecycle-diagram {
+                flex-direction: column;
+            }
+
+            .lifecycle-arrow {
+                transform: rotate(90deg);
+            }
+        }
+
+        @media print {
+            nav, .progress-container, .quiz-container, .scenario-container {
+                display: none;
+            }
+
+            body {
+                font-size: 12pt;
+            }
+
+            .card {
+                break-inside: avoid;
+            }
+        }
+
+        :focus-visible {
+            outline: 3px solid #0d47a1;
+            outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+                animation: none !important;
+            }
+
+            .flashcard-inner {
+                transition: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header>
+        <h1>Module 6.6: Evidence Preservation Best Practices</h1>
+        <p class="course-info">CSC 156 - Digital Forensics Fundamentals | Week 6: Data Acquisition and Preservation</p>
+        <span class="module-badge">Module 6 of 7</span>
+    </header>
+
+    <nav aria-label="Module sections">
+        <ul>
+            <li><a href="#section-overview">Overview</a></li>
+            <li><a href="#section-three-copy">Three-Copy Rule</a></li>
+            <li><a href="#section-handling">Physical Handling</a></li>
+            <li><a href="#section-storage">Storage Requirements</a></li>
+            <li><a href="#section-lifecycle">Evidence Lifecycle</a></li>
+            <li><a href="#section-retention">Retention Policies</a></li>
+            <li><a href="#section-practice">Practice</a></li>
+            <li><a href="#section-summary">Summary</a></li>
+        </ul>
+    </nav>
+
+    <div class="progress-container">
+        <div class="progress-wrapper">
+            <div class="progress-header">
+                <span class="progress-title">📊 Module Progress</span>
+                <span class="progress-stats"><span id="progress-percent">0</span>% Complete</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <span class="time-estimate">⏱️ Estimated Time: 40-45 minutes</span>
+        </div>
+    </div>
+
+    <main id="main-content">
+        <!-- Section 1: Overview -->
+        <section id="section-overview" data-section="1">
+            <h2><span aria-hidden="true">🎯</span> Module Overview</h2>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon" aria-hidden="true">📋</span>
+                    <span class="card-title">What You'll Learn</span>
+                </div>
+                <p>Evidence preservation extends far beyond the initial acquisition. This module covers the critical practices required to maintain evidence integrity throughout the entire investigation lifecycle—from collection through potential court presentation and long-term storage.</p>
+                <p>According to NIST SP 800-86: <em>"In situations where evidence needs to be preserved for legal or disciplinary proceedings, a clearly defined chain of custody should be followed to avoid allegations of mishandling or tampering of evidence."</em></p>
+            </div>
+
+            <div class="objectives-list">
+                <h3><span aria-hidden="true">✓</span> Learning Objectives</h3>
+                <p>By the end of this module, you will be able to:</p>
+                <ul>
+                    <li>Apply the three-copy rule for forensic evidence preservation</li>
+                    <li>Implement proper physical evidence handling procedures</li>
+                    <li>Establish secure evidence storage protocols</li>
+                    <li>Maintain evidence integrity throughout the investigation lifecycle</li>
+                    <li>Prepare evidence for potential legal proceedings</li>
+                    <li>Apply appropriate retention policies for digital evidence</li>
+                </ul>
+            </div>
+
+            <div class="cslo-badge">
+                <span aria-hidden="true">🎓</span>
+                CSLO 1: Explain the legal considerations involved in seizing and examining digital evidence
+            </div>
+            <div class="cslo-badge">
+                <span aria-hidden="true">🎓</span>
+                CSLO 4: Prepare forensic documentation and reports
+            </div>
+
+            <div class="key-concept">
+                <h4><span aria-hidden="true">💡</span> Connection to Week 2</h4>
+                <p>This module builds directly on the chain of custody concepts from Week 2. While chain of custody documents <em>who</em> handled evidence and <em>when</em>, this module focuses on <em>how</em> to properly handle, store, and preserve that evidence to maintain its integrity and admissibility.</p>
+            </div>
+        </section>
+
+        <!-- Section 2: Three-Copy Rule -->
+        <section id="section-three-copy" data-section="2">
+            <h2><span aria-hidden="true">📀</span> The Three-Copy Rule</h2>
+
+            <div class="definition-box">
+                <h4>Three-Copy Rule</h4>
+                <p>A forensic best practice requiring the creation and maintenance of three separate copies of digital evidence: the original evidence (preserved untouched), a master forensic image (verified backup), and a working copy (used for analysis). This approach protects against data loss while ensuring evidence integrity.</p>
+            </div>
+
+            <div class="copy-rule-container">
+                <h3 style="text-align: center; margin-bottom: 8px;">Evidence Copy Hierarchy</h3>
+                <p style="text-align: center; color: #6c757d; margin-bottom: 20px;">Each copy serves a specific purpose in the forensic workflow</p>
+
+                <div class="copy-cards">
+                    <div class="copy-card original">
+                        <div class="copy-icon">💾</div>
+                        <div class="copy-title">Original Evidence</div>
+                        <div class="copy-subtitle">The Source Device</div>
+                        <div class="copy-description">
+                            <ul style="text-align: left; padding-left: 20px; margin: 0;">
+                                <li>Never modified after acquisition</li>
+                                <li>Stored in secure evidence locker</li>
+                                <li>Only accessed to create new images</li>
+                                <li>Maintains legal chain of custody</li>
+                                <li>May be required for court presentation</li>
+                            </ul>
+                        </div>
+                        <span class="copy-badge badge-critical">🔒 DO NOT MODIFY</span>
+                    </div>
+
+                    <div class="copy-card master">
+                        <div class="copy-icon">🗃️</div>
+                        <div class="copy-title">Master Image</div>
+                        <div class="copy-subtitle">Verified Forensic Copy</div>
+                        <div class="copy-description">
+                            <ul style="text-align: left; padding-left: 20px; margin: 0;">
+                                <li>Bit-for-bit copy of original</li>
+                                <li>Hash-verified against source</li>
+                                <li>Stored on secure server/media</li>
+                                <li>Used to create working copies</li>
+                                <li>Backup if original is damaged</li>
+                            </ul>
+                        </div>
+                        <span class="copy-badge badge-protected">✓ VERIFIED BACKUP</span>
+                    </div>
+
+                    <div class="copy-card working">
+                        <div class="copy-icon">🔍</div>
+                        <div class="copy-title">Working Copy</div>
+                        <div class="copy-subtitle">Analysis Instance</div>
+                        <div class="copy-description">
+                            <ul style="text-align: left; padding-left: 20px; margin: 0;">
+                                <li>Created from master image</li>
+                                <li>Used for all analysis work</li>
+                                <li>Can be regenerated if needed</li>
+                                <li>May be mounted read-write</li>
+                                <li>Protects master from changes</li>
+                            </ul>
+                        </div>
+                        <span class="copy-badge badge-active">⚡ ACTIVE ANALYSIS</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Working Copy Workflow</h3>
+
+            <div class="lifecycle-container">
+                <div class="lifecycle-title">Evidence Copy Creation Flow</div>
+                <div class="lifecycle-diagram">
+                    <div class="lifecycle-step">
+                        <div class="lifecycle-step-icon">💾</div>
+                        <div class="lifecycle-step-title">Original<br>Evidence</div>
+                    </div>
+                    <div class="lifecycle-arrow">→</div>
+                    <div class="lifecycle-step">
+                        <div class="lifecycle-step-icon">📥</div>
+                        <div class="lifecycle-step-title">Forensic<br>Acquisition</div>
+                    </div>
+                    <div class="lifecycle-arrow">→</div>
+                    <div class="lifecycle-step">
+                        <div class="lifecycle-step-icon">🗃️</div>
+                        <div class="lifecycle-step-title">Master<br>Image</div>
+                    </div>
+                    <div class="lifecycle-arrow">→</div>
+                    <div class="lifecycle-step active">
+                        <div class="lifecycle-step-icon">🔍</div>
+                        <div class="lifecycle-step-title">Working<br>Copy</div>
+                    </div>
+                    <div class="lifecycle-arrow">→</div>
+                    <div class="lifecycle-step">
+                        <div class="lifecycle-step-icon">📊</div>
+                        <div class="lifecycle-step-title">Analysis<br>Results</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h4><span aria-hidden="true">ℹ️</span> Why Three Copies?</h4>
+                <ul>
+                    <li><strong>Redundancy:</strong> Protects against hardware failure, media degradation, or accidental damage</li>
+                    <li><strong>Integrity:</strong> Original remains pristine for court; master provides verified reference</li>
+                    <li><strong>Flexibility:</strong> Working copy allows analysis without risking evidence contamination</li>
+                    <li><strong>Verification:</strong> Can always compare working copy hash to master to verify no modifications</li>
+                </ul>
+            </div>
+
+            <div class="warning-box">
+                <h4><span aria-hidden="true">⚠️</span> Critical Rule</h4>
+                <p><strong>Never perform analysis directly on the original evidence or master image.</strong> Always work from a verified working copy. If the working copy becomes corrupted or modified during analysis, you can simply create a new one from the master image.</p>
+            </div>
+
+            <div class="example-box">
+                <h4>Practical Example: Evidence Storage Structure</h4>
+                <pre><code>\\FORENSICS-NAS\Cases\2026\CORP-0087\
+├── Evidence\
+│   ├── Original\
+│   │   └── [Physical device stored in evidence locker]
+│   │
+│   ├── Master_Images\
+│   │   ├── E001_laptop_hdd.E01
+│   │   ├── E001_laptop_hdd.E01.txt (hash log)
+│   │   ├── E002_usb_drive.E01
+│   │   └── E002_usb_drive.E01.txt
+│   │
+│   └── Working_Copies\
+│       ├── E001_working_20260223.E01
+│       └── E002_working_20260223.E01
+│
+├── Documentation\
+│   ├── Chain_of_Custody.pdf
+│   ├── Acquisition_Logs\
+│   └── Analysis_Notes\
+│
+└── Reports\
+    └── [Final reports]</code></pre>
+            </div>
+        </section>
+
+        <!-- Section 3: Physical Handling -->
+        <section id="section-handling" data-section="3">
+            <h2><span aria-hidden="true">🧤</span> Physical Evidence Handling</h2>
+
+            <p>Proper physical handling of digital evidence is essential to prevent damage, contamination, or loss. Different types of evidence require different handling procedures.</p>
+
+            <h3>General Handling Principles</h3>
+
+            <div class="storage-grid">
+                <div class="storage-item">
+                    <div class="storage-icon">🧤</div>
+                    <div class="storage-content">
+                        <h5>Wear Gloves</h5>
+                        <p>Use anti-static gloves when handling storage media to prevent ESD damage and avoid fingerprint contamination</p>
+                    </div>
+                </div>
+                <div class="storage-item">
+                    <div class="storage-icon">⚡</div>
+                    <div class="storage-content">
+                        <h5>Anti-Static Precautions</h5>
+                        <p>Use ESD wrist straps and anti-static mats when handling bare drives or circuit boards</p>
+                    </div>
+                </div>
+                <div class="storage-item">
+                    <div class="storage-icon">📸</div>
+                    <div class="storage-content">
+                        <h5>Document Everything</h5>
+                        <p>Photograph evidence before, during, and after handling. Note any anomalies or damage</p>
+                    </div>
+                </div>
+                <div class="storage-item">
+                    <div class="storage-icon">🔗</div>
+                    <div class="storage-content">
+                        <h5>Maintain Chain of Custody</h5>
+                        <p>Update chain of custody documentation immediately for every transfer or access</p>
+                    </div>
+                </div>
+                <div class="storage-item">
+                    <div class="storage-icon">🚫</div>
+                    <div class="storage-content">
+                        <h5>Never Leave Unattended</h5>
+                        <p>Evidence must be in your custody, secured storage, or documented transfer at all times</p>
+                    </div>
+                </div>
+                <div class="storage-item">
+                    <div class="storage-icon">✍️</div>
+                    <div class="storage-content">
+                        <h5>Label Clearly</h5>
+                        <p>All evidence containers must be clearly labeled with case number, item number, and date</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Evidence Packaging Guidelines</h3>
+
+            <div class="packaging-grid">
+                <div class="packaging-card">
+                    <div class="packaging-header">
+                        <span aria-hidden="true">💿</span>
+                        <h4>Hard Drives (HDD/SSD)</h4>
+                    </div>
+                    <div class="packaging-body">
+                        <ul>
+                            <li>Place in anti-static bags</li>
+                            <li>Use padded containers for transport</li>
+                            <li>Store upright (not stacked)</li>
+                            <li>Protect from magnetic fields</li>
+                            <li>Label with make, model, serial number</li>
+                            <li>Note capacity and interface type</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="packaging-card">
+                    <div class="packaging-header">
+                        <span aria-hidden="true">📱</span>
+                        <h4>Mobile Devices</h4>
+                    </div>
+                    <div class="packaging-body">
+                        <ul>
+                            <li>Use Faraday bags if network isolation needed</li>
+                            <li>Enable airplane mode if accessible</li>
+                            <li>Document battery level</li>
+                            <li>Keep charged if possible (prevents data loss)</li>
+                            <li>Note screen lock status</li>
+                            <li>Photograph screen before packaging</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="packaging-card">
+                    <div class="packaging-header">
+                        <span aria-hidden="true">💻</span>
+                        <h4>Computers (Desktop/Laptop)</h4>
+                    </div>
+                    <div class="packaging-body">
+                        <ul>
+                            <li>Use original packaging if available</li>
+                            <li>Otherwise, use padded boxes</li>
+                            <li>Secure loose components</li>
+                            <li>Document all connected peripherals</li>
+                            <li>Note power state when collected</li>
+                            <li>Seal all ports with evidence tape</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="packaging-card">
+                    <div class="packaging-header">
+                        <span aria-hidden="true">🔌</span>
+                        <h4>Small Media (USB, SD Cards)</h4>
+                    </div>
+                    <div class="packaging-body">
+                        <ul>
+                            <li>Anti-static bags required</li>
+                            <li>Use labeled containers to prevent loss</li>
+                            <li>Never place loose in evidence bags</li>
+                            <li>Document any visible labels or markings</li>
+                            <li>Note capacity if visible</li>
+                            <li>Photograph before packaging</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Handling Procedures by Phase</h3>
+
+            <div class="accordion">
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>Before Acquisition</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <ul>
+                                <li>Work in a clean, static-free environment</li>
+                                <li>Gather all necessary tools and packaging materials</li>
+                                <li>Prepare documentation forms</li>
+                                <li>Verify write blocker functionality</li>
+                                <li>Set up photography equipment</li>
+                                <li>Ensure proper lighting for documentation</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>During Acquisition</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <ul>
+                                <li>Use anti-static precautions when handling drives</li>
+                                <li>Document any anomalies or difficulties immediately</li>
+                                <li>Maintain chain of custody throughout the process</li>
+                                <li>Never leave evidence unattended</li>
+                                <li>Photograph each step of the process</li>
+                                <li>Note environmental conditions (temperature, humidity)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>After Acquisition</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <ul>
+                                <li>Store original evidence in secure, controlled environment</li>
+                                <li>Maintain appropriate temperature and humidity</li>
+                                <li>Protect from magnetic fields and physical damage</li>
+                                <li>Document storage location and access controls</li>
+                                <li>Update chain of custody with storage information</li>
+                                <li>Verify hash values of forensic images</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h4><span aria-hidden="true">⚠️</span> Common Handling Mistakes</h4>
+                <ul>
+                    <li><strong>Stacking hard drives:</strong> Can cause physical damage and data loss</li>
+                    <li><strong>Placing near magnets:</strong> Magnetic fields can corrupt data on HDDs</li>
+                    <li><strong>Extreme temperatures:</strong> Heat or cold can damage storage media</li>
+                    <li><strong>Static discharge:</strong> ESD can destroy electronic components</li>
+                    <li><strong>Leaving devices powered on:</strong> Battery drain can cause data loss on mobile devices</li>
+                    <li><strong>Inadequate labeling:</strong> Can lead to evidence mix-ups</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 4: Storage Requirements -->
+        <section id="section-storage" data-section="4">
+            <h2><span aria-hidden="true">🔒</span> Evidence Storage Requirements</h2>
+
+            <p>Proper storage is essential for maintaining evidence integrity over time. Both physical security and environmental controls must be addressed.</p>
+
+            <h3>Physical Security Requirements</h3>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon" aria-hidden="true">🏢</span>
+                    <span class="card-title">Secure Storage Facility</span>
+                </div>
+                <div class="storage-grid">
+                    <div class="storage-item">
+                        <div class="storage-icon">🔐</div>
+                        <div class="storage-content">
+                            <h5>Access Control</h5>
+                            <p>Locked storage area with keycard, key, or combination access. Dual-lock systems preferred for high-value evidence.</p>
+                        </div>
+                    </div>
+                    <div class="storage-item">
+                        <div class="storage-icon">📋</div>
+                        <div class="storage-content">
+                            <h5>Access Logging</h5>
+                            <p>Maintain detailed log of all access: who, when, why, and duration. Electronic logging systems preferred.</p>
+                        </div>
+                    </div>
+                    <div class="storage-item">
+                        <div class="storage-icon">👥</div>
+                        <div class="storage-content">
+                            <h5>Limited Personnel</h5>
+                            <p>Restrict access to authorized personnel only. Maintain current list of authorized individuals.</p>
+                        </div>
+                    </div>
+                    <div class="storage-item">
+                        <div class="storage-icon">🏷️</div>
+                        <div class="storage-content">
+                            <h5>Tamper-Evident Seals</h5>
+                            <p>Use tamper-evident seals on all evidence containers. Document seal numbers and condition.</p>
+                        </div>
+                    </div>
+                    <div class="storage-item">
+                        <div class="storage-icon">📹</div>
+                        <div class="storage-content">
+                            <h5>Surveillance</h5>
+                            <p>Video surveillance of evidence storage areas when possible. Retain recordings per policy.</p>
+                        </div>
+                    </div>
+                    <div class="storage-item">
+                        <div class="storage-icon">🔥</div>
+                        <div class="storage-content">
+                            <h5>Fire Protection</h5>
+                            <p>Fire suppression systems appropriate for electronic equipment (clean agent, not water).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Environmental Controls</h3>
+
+            <div class="table-container">
+                <table>
+                    <caption class="visually-hidden">Environmental requirements for evidence storage</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Factor</th>
+                            <th scope="col">Requirement</th>
+                            <th scope="col">Why It Matters</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Temperature</strong></td>
+                            <td>60-75°F (15-24°C)</td>
+                            <td>Extreme temperatures can damage storage media and cause data degradation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Humidity</strong></td>
+                            <td>30-50% relative humidity</td>
+                            <td>High humidity causes corrosion; low humidity increases static electricity</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Light Exposure</strong></td>
+                            <td>Minimal</td>
+                            <td>UV light can degrade some storage media over time</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Magnetic Fields</strong></td>
+                            <td>Away from sources</td>
+                            <td>Strong magnetic fields can corrupt data on magnetic media (HDDs, tapes)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Physical Protection</strong></td>
+                            <td>Secure from damage</td>
+                            <td>Drops, impacts, and vibration can cause physical damage to drives</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Dust/Contaminants</strong></td>
+                            <td>Clean environment</td>
+                            <td>Particles can damage drive heads and contaminate evidence</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Digital Evidence Storage</h3>
+
+            <div class="info-box">
+                <h4><span aria-hidden="true">ℹ️</span> Forensic Image Storage Best Practices</h4>
+                <ul>
+                    <li><strong>Secure server storage:</strong> Store master images on access-controlled network storage</li>
+                    <li><strong>RAID protection:</strong> Use RAID arrays to protect against drive failure</li>
+                    <li><strong>Backup strategy:</strong> Maintain offsite backups of critical evidence</li>
+                    <li><strong>Access restrictions:</strong> Limit access to authorized forensic staff only</li>
+                    <li><strong>Audit logging:</strong> Enable file access logging on evidence storage</li>
+                    <li><strong>Encryption:</strong> Consider encryption for sensitive evidence at rest</li>
+                </ul>
+            </div>
+
+            <div class="example-box">
+                <h4>Example: Evidence Storage Documentation</h4>
+                <pre><code>EVIDENCE STORAGE LOG
+═══════════════════════════════════════════════════════════
+
+Case Number: 2026-CORP-0087
+Evidence Item: E001 - HP EliteBook 840 G8 Laptop
+
+PHYSICAL STORAGE:
+Location: Evidence Room 105, Locker 23-B
+Storage Date: 2026-01-29 16:00 hours
+Stored By: Forensic Examiner Sarah Chen, Badge #DF-2156
+Seal Number: EV-2026-4521
+Seal Condition: Intact, initialed
+
+ENVIRONMENTAL CONDITIONS:
+Temperature: 68°F (20°C)
+Humidity: 45% RH
+Special Notes: Stored separately from magnetic media
+
+DIGITAL STORAGE:
+Master Image Location: \\FORENSICS-NAS\Cases\2026\CORP-0087\
+Retention Period: 7 years (per agency policy)
+Access Restricted To: Authorized forensic staff
+Backup Location: Offsite backup server (encrypted)
+
+ACCESS LOG:
+Date        Time    Name              Purpose           Duration
+2026-01-29  16:00   S. Chen           Initial storage   5 min
+2026-01-30  09:15   S. Chen           Verification      10 min
+2026-02-05  14:30   Det. Martinez     Court prep        30 min</code></pre>
+            </div>
+        </section>
+
+        <!-- Section 5: Evidence Lifecycle -->
+        <section id="section-lifecycle" data-section="5">
+            <h2><span aria-hidden="true">🔄</span> Evidence Lifecycle Management</h2>
+
+            <p>Evidence must be properly managed throughout its entire lifecycle—from initial collection through final disposition. Each phase has specific preservation requirements.</p>
+
+            <div class="lifecycle-container">
+                <div class="lifecycle-title">Evidence Lifecycle Phases</div>
+                <div class="lifecycle-diagram">
+                    <div class="lifecycle-step">
+                        <div class="lifecycle-step-icon">📥</div>
+                        <div class="lifecycle-step-title">Collection</div>
+                    </div>
+                    <div class="lifecycle-arrow">→</div>
+                    <div class="lifecycle-step">
+                        <div class="lifecycle-step-icon">🔬</div>
+                        <div class="lifecycle-step-title">Examination</div>
+                    </div>
+                    <div class="lifecycle-arrow">→</div>
+                    <div class="lifecycle-step">
+                        <div class="lifecycle-step-icon">📊</div>
+                        <div class="lifecycle-step-title">Analysis</div>
+                    </div>
+                    <div class="lifecycle-arrow">→</div>
+                    <div class="lifecycle-step">
+                        <div class="lifecycle-step-icon">📋</div>
+                        <div class="lifecycle-step-title">Reporting</div>
+                    </div>
+                    <div class="lifecycle-arrow">→</div>
+                    <div class="lifecycle-step">
+                        <div class="lifecycle-step-icon">⚖️</div>
+                        <div class="lifecycle-step-title">Presentation</div>
+                    </div>
+                    <div class="lifecycle-arrow">→</div>
+                    <div class="lifecycle-step">
+                        <div class="lifecycle-step-icon">🗄️</div>
+                        <div class="lifecycle-step-title">Retention</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Preservation Requirements by Phase</h3>
+
+            <div class="accordion">
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>📥 Collection Phase</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <h4>Key Preservation Actions:</h4>
+                            <ul>
+                                <li>Document evidence condition before handling</li>
+                                <li>Photograph evidence in place (in situ)</li>
+                                <li>Use write blockers before any access</li>
+                                <li>Calculate source hash values</li>
+                                <li>Create forensic image with verification</li>
+                                <li>Package evidence properly</li>
+                                <li>Complete chain of custody documentation</li>
+                            </ul>
+                            <div class="key-concept">
+                                <h4><span aria-hidden="true">💡</span> Critical Point</h4>
+                                <p>The collection phase sets the foundation for all subsequent work. Errors here cannot be corrected later and may compromise the entire investigation.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>🔬 Examination Phase</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <h4>Key Preservation Actions:</h4>
+                            <ul>
+                                <li>Work only from verified working copies</li>
+                                <li>Verify hash values before beginning examination</li>
+                                <li>Document all tools and methods used</li>
+                                <li>Maintain detailed examination notes</li>
+                                <li>Re-verify hash values after examination</li>
+                                <li>Store original evidence securely during examination</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>📊 Analysis Phase</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <h4>Key Preservation Actions:</h4>
+                            <ul>
+                                <li>Continue working from verified copies</li>
+                                <li>Document analysis methodology</li>
+                                <li>Preserve intermediate results and artifacts</li>
+                                <li>Maintain clear audit trail of analysis steps</li>
+                                <li>Back up analysis work regularly</li>
+                                <li>Verify evidence integrity periodically</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>⚖️ Presentation Phase (Court)</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <h4>Key Preservation Actions:</h4>
+                            <ul>
+                                <li>Verify evidence integrity before court presentation</li>
+                                <li>Transport evidence securely (maintain custody)</li>
+                                <li>Be prepared to demonstrate chain of custody</li>
+                                <li>Have hash verification documentation ready</li>
+                                <li>Return evidence to secure storage after proceedings</li>
+                                <li>Document any court access to evidence</li>
+                            </ul>
+                            <div class="warning-box">
+                                <h4><span aria-hidden="true">⚠️</span> Court Preparation</h4>
+                                <p>Before presenting evidence in court, always re-verify hash values and review the complete chain of custody. Be prepared to explain every transfer and access documented in the chain of custody log.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" aria-expanded="false">
+                        <span>🗄️ Retention Phase</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <h4>Key Preservation Actions:</h4>
+                            <ul>
+                                <li>Store according to retention policy requirements</li>
+                                <li>Maintain environmental controls</li>
+                                <li>Perform periodic integrity checks</li>
+                                <li>Migrate to new media formats if necessary</li>
+                                <li>Continue access logging</li>
+                                <li>Prepare for eventual disposition</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Long-Term Preservation Challenges</h3>
+
+            <div class="table-container">
+                <table>
+                    <caption class="visually-hidden">Digital evidence preservation challenges</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Challenge</th>
+                            <th scope="col">Risk</th>
+                            <th scope="col">Mitigation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Media Degradation</strong></td>
+                            <td>Storage media fails over time (bit rot, mechanical failure)</td>
+                            <td>Regular integrity checks, redundant storage, media migration</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Format Obsolescence</strong></td>
+                            <td>Image formats may become unsupported</td>
+                            <td>Use standard formats (E01, Raw), maintain format documentation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Technology Changes</strong></td>
+                            <td>Hardware/software to read evidence becomes unavailable</td>
+                            <td>Maintain legacy equipment, convert to current formats</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Staff Turnover</strong></td>
+                            <td>Knowledge of evidence location/handling lost</td>
+                            <td>Comprehensive documentation, evidence management systems</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Storage Costs</strong></td>
+                            <td>Long-term storage becomes expensive</td>
+                            <td>Tiered storage, compression, clear retention policies</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section 6: Retention Policies -->
+        <section id="section-retention" data-section="6">
+            <h2><span aria-hidden="true">📅</span> Evidence Retention Policies</h2>
+
+            <p>Evidence must be retained for specific periods depending on the case type, jurisdiction, and organizational policies. Understanding retention requirements is essential for proper evidence management.</p>
+
+            <h3>Typical Retention Periods</h3>
+
+            <div class="table-container">
+                <table>
+                    <caption class="visually-hidden">Evidence retention periods by case type</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Case Type</th>
+                            <th scope="col">Typical Retention</th>
+                            <th scope="col">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Criminal - Felony</strong></td>
+                            <td>Until case closed + appeals exhausted, or indefinitely for serious crimes</td>
+                            <td>May be required for post-conviction review; some jurisdictions require permanent retention for capital cases</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Criminal - Misdemeanor</strong></td>
+                            <td>3-7 years after case disposition</td>
+                            <td>Varies by jurisdiction and offense type</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Civil Litigation</strong></td>
+                            <td>Until case resolved + statute of limitations for appeals</td>
+                            <td>Typically 3-7 years; check with legal counsel</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Corporate Investigation</strong></td>
+                            <td>Per organizational policy (typically 5-7 years)</td>
+                            <td>May be longer for regulatory compliance requirements</td>
+                        </tr>
+                        <tr>
+                            <td><strong>HR/Employment</strong></td>
+                            <td>Duration of employment + 3-7 years</td>
+                            <td>EEOC and state requirements vary</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Regulatory Compliance</strong></td>
+                            <td>Per specific regulation requirements</td>
+                            <td>HIPAA, SOX, PCI-DSS, etc. have specific requirements</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="warning-box">
+                <h4><span aria-hidden="true">⚠️</span> Important Considerations</h4>
+                <ul>
+                    <li><strong>When in doubt, retain:</strong> If unclear whether evidence should be preserved, preserve it by default</li>
+                    <li><strong>Legal holds:</strong> Evidence subject to legal hold must be retained regardless of standard policy</li>
+                    <li><strong>Consult legal counsel:</strong> Always verify retention requirements with legal advisors for specific cases</li>
+                    <li><strong>Document decisions:</strong> Record the basis for retention period decisions</li>
+                </ul>
+            </div>
+
+            <h3>Evidence Disposition</h3>
+
+            <p>When retention periods expire, evidence must be properly disposed of according to policy:</p>
+
+            <div class="info-box">
+                <h4><span aria-hidden="true">ℹ️</span> Disposition Procedures</h4>
+                <ol>
+                    <li><strong>Verify retention period has expired</strong> - Confirm no legal holds or pending matters</li>
+                    <li><strong>Obtain authorization</strong> - Get approval from appropriate authority (supervisor, legal)</li>
+                    <li><strong>Document disposition</strong> - Record what was disposed, when, how, and by whom</li>
+                    <li><strong>Secure destruction</strong> - Use appropriate destruction methods:
+                        <ul>
+                            <li>Physical media: Degaussing, shredding, or certified destruction</li>
+                            <li>Digital files: Secure deletion with verification</li>
+                        </ul>
+                    </li>
+                    <li><strong>Obtain destruction certificate</strong> - If using third-party destruction service</li>
+                    <li><strong>Update evidence tracking</strong> - Mark evidence as disposed in tracking system</li>
+                </ol>
+            </div>
+
+            <div class="example-box">
+                <h4>Evidence Disposition Documentation</h4>
+                <pre><code>EVIDENCE DISPOSITION RECORD
+═══════════════════════════════════════════════════════════
+
+Case Number: 2019-CORP-0042
+Evidence Items: E001-E005 (5 items total)
+Original Collection Date: 2019-03-15
+Case Closed Date: 2020-06-30
+Retention Period: 5 years post-closure
+Retention Expiration: 2025-06-30
+
+DISPOSITION AUTHORIZATION:
+Authorized By: Director James Wilson
+Authorization Date: 2025-07-01
+Authorization Reference: Memo #2025-DISP-0089
+
+DISPOSITION DETAILS:
+Disposition Date: 2025-07-15
+Disposition Method: Certified destruction by SecureShred Inc.
+Destruction Certificate: SS-2025-4521
+Witnessed By: Evidence Technician Maria Garcia
+
+ITEMS DISPOSED:
+E001 - HP EliteBook laptop - Physically destroyed
+E002 - SanDisk USB drive - Physically destroyed
+E003 - Seagate external HDD - Physically destroyed
+E004-E005 - Forensic images - Securely deleted, verified
+
+DIGITAL RECORDS:
+Forensic images securely deleted from:
+- Primary storage: \\FORENSICS-NAS\Cases\2019\CORP-0042\
+- Backup storage: Offsite backup server
+Deletion verified by: IT Security Team
+Verification date: 2025-07-15
+
+Disposition Completed By: Evidence Technician Maria Garcia
+Date: 2025-07-15</code></pre>
+            </div>
+        </section>
+
+        <!-- Section 7: Practice -->
+        <section id="section-practice" data-section="7">
+            <h2><span aria-hidden="true">🎮</span> Interactive Practice</h2>
+
+            <!-- Flashcards -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon" aria-hidden="true">🎴</span>
+                    <span class="card-title">Key Concept Flashcards</span>
+                </div>
+
+                <div class="flashcard-container">
+                    <div class="flashcard" id="flashcard" onclick="flipCard()" onkeypress="handleFlashcardKey(event)" tabindex="0" role="button" aria-label="Flashcard. Press Enter or Space to flip.">
+                        <div class="flashcard-inner">
+                            <div class="flashcard-front">
+                                <span id="flashcard-term">Three-Copy Rule</span>
+                            </div>
+                            <div class="flashcard-back">
+                                <span id="flashcard-definition">Best practice requiring three copies of evidence: original (untouched), master image (verified backup), and working copy (for analysis).</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="flashcard-hint">Click or press Enter to flip</p>
+                    <div class="flashcard-counter" id="flashcard-counter">Card 1 of 6</div>
+                    <div class="flashcard-nav">
+                        <button onclick="prevCard()">← Previous</button>
+                        <button onclick="nextCard()">Next →</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preservation Checklist -->
+            <div class="preservation-checklist">
+                <h3><span aria-hidden="true">✅</span> Evidence Preservation Checklist</h3>
+                <p>Use this checklist to verify proper evidence preservation. Check off items as you complete them.</p>
+
+                <div class="checklist-section">
+                    <h4><span aria-hidden="true">📥</span> Collection Phase</h4>
+                    <div class="checklist-items">
+                        <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                            <input type="checkbox" id="coll1">
+                            <label for="coll1">Evidence photographed in place before handling</label>
+                        </div>
+                        <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                            <input type="checkbox" id="coll2">
+                            <label for="coll2">Write blocker verified functional before connection</label>
+                        </div>
+                        <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                            <input type="checkbox" id="coll3">
+                            <label for="coll3">Source hash values calculated and documented</label>
+                        </div>
+                        <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                            <input type="checkbox" id="coll4">
+                            <label for="coll4">Forensic image created and verified</label>
+                        </div>
+                        <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                            <input type="checkbox" id="coll5">
+                            <label for="coll5">Chain of custody form completed</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="checklist-section">
+                    <h4><span aria-hidden="true">📦</span> Storage Phase</h4>
+                    <div class="checklist-items">
+                        <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                            <input type="checkbox" id="stor1">
+                            <label for="stor1">Evidence properly packaged (anti-static bags, padding)</label>
+                        </div>
+                        <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                            <input type="checkbox" id="stor2">
+                            <label for="stor2">Tamper-evident seals applied and documented</label>
+                        </div>
+                        <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                            <input type="checkbox" id="stor3">
+                            <label for="stor3">Evidence stored in secure, access-controlled location</label>
+                        </div>
+                        <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                            <input type="checkbox" id="stor4">
+                            <label for="stor4">Environmental conditions appropriate (temp, humidity)</label>
+                        </div>
+                        <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                            <input type="checkbox" id="stor5">
+                            <label for="stor5">Storage location documented in chain of custody</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="checklist-section">
+                    <h4><span aria-hidden="true">💾</span> Digital Preservation</h4>
+                    <div class="checklist-items">
+                        <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                            <input type="checkbox" id="dig1">
+                            <label for="dig1">Master image stored on secure server</label>
+                        </div>
+                        <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                            <input type="checkbox" id="dig2">
+                            <label for="dig2">Working copy created from master image</label>
+                        </div>
+                        <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                            <input type="checkbox" id="dig3">
+                            <label for="dig3">Backup copy maintained (offsite preferred)</label>
+                        </div>
+                        <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                            <input type="checkbox" id="dig4">
+                            <label for="dig4">Access restricted to authorized personnel</label>
+                        </div>
+                        <div class="checklist-item" onclick="toggleChecklistItem(this)">
+                            <input type="checkbox" id="dig5">
+                            <label for="dig5">Hash verification log maintained</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quizzes -->
+            <div class="quiz-container" id="quiz1">
+                <h3>Knowledge Check 1</h3>
+                <p class="quiz-question">According to the three-copy rule, which copy should be used for forensic analysis?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz1" id="q1a" value="a">
+                        <label for="q1a">A) The original evidence</label>
+                    </div>
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz1" id="q1b" value="b">
+                        <label for="q1b">B) The master image</label>
+                    </div>
+                    <div class="quiz-option" data-correct="true">
+                        <input type="radio" name="quiz1" id="q1c" value="c">
+                        <label for="q1c">C) The working copy</label>
+                    </div>
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz1" id="q1d" value="d">
+                        <label for="q1d">D) Any of the three copies</label>
+                    </div>
+                </div>
+                <button class="quiz-btn" onclick="checkQuiz('quiz1')">Check Answer</button>
+                <div class="quiz-feedback" id="quiz1-feedback"></div>
+            </div>
+
+            <div class="quiz-container" id="quiz2">
+                <h3>Knowledge Check 2</h3>
+                <p class="quiz-question">What is the recommended humidity range for evidence storage?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz2" id="q2a" value="a">
+                        <label for="q2a">A) 10-20% relative humidity</label>
+                    </div>
+                    <div class="quiz-option" data-correct="true">
+                        <input type="radio" name="quiz2" id="q2b" value="b">
+                        <label for="q2b">B) 30-50% relative humidity</label>
+                    </div>
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz2" id="q2c" value="c">
+                        <label for="q2c">C) 60-80% relative humidity</label>
+                    </div>
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz2" id="q2d" value="d">
+                        <label for="q2d">D) Humidity doesn't affect digital evidence</label>
+                    </div>
+                </div>
+                <button class="quiz-btn" onclick="checkQuiz('quiz2')">Check Answer</button>
+                <div class="quiz-feedback" id="quiz2-feedback"></div>
+            </div>
+
+            <div class="quiz-container" id="quiz3">
+                <h3>Knowledge Check 3</h3>
+                <p class="quiz-question">What type of packaging is required for hard drives and SSDs?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" data-correct="true">
+                        <input type="radio" name="quiz3" id="q3a" value="a">
+                        <label for="q3a">A) Anti-static bags with padded containers</label>
+                    </div>
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz3" id="q3b" value="b">
+                        <label for="q3b">B) Standard plastic bags</label>
+                    </div>
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz3" id="q3c" value="c">
+                        <label for="q3c">C) Paper envelopes</label>
+                    </div>
+                    <div class="quiz-option" data-correct="false">
+                        <input type="radio" name="quiz3" id="q3d" value="d">
+                        <label for="q3d">D) No special packaging required</label>
+                    </div>
+                </div>
+                <button class="quiz-btn" onclick="checkQuiz('quiz3')">Check Answer</button>
+                <div class="quiz-feedback" id="quiz3-feedback"></div>
+            </div>
+
+            <!-- Scenario -->
+            <div class="scenario-container" id="scenario1">
+                <div class="scenario-header">
+                    <span class="scenario-icon" aria-hidden="true">🔍</span>
+                    <span class="scenario-title">Scenario: Evidence Storage Decision</span>
+                </div>
+                <div class="scenario-description">
+                    <p><strong>Situation:</strong> You've completed imaging a suspect's laptop for a corporate investigation. The case is expected to take 6-12 months to resolve. You need to determine the proper storage approach for the evidence.</p>
+                    <p><strong>Available resources:</strong></p>
+                    <ul>
+                        <li>Secure evidence locker (climate controlled)</li>
+                        <li>Network attached storage with access controls</li>
+                        <li>Your personal workstation</li>
+                        <li>Offsite backup service</li>
+                    </ul>
+                    <p><strong>Question:</strong> What is the proper storage approach?</p>
+                </div>
+                <div class="scenario-choices">
+                    <button class="scenario-choice" data-correct="false" onclick="checkScenario(this, 'scenario1')">
+                        <strong>A)</strong> Store the laptop and forensic images on your personal workstation for easy access during analysis
+                    </button>
+                    <button class="scenario-choice" data-correct="true" onclick="checkScenario(this, 'scenario1')">
+                        <strong>B)</strong> Store the physical laptop in the evidence locker, master image on NAS with access controls, working copy on your workstation, and backup copy offsite
+                    </button>
+                    <button class="scenario-choice" data-correct="false" onclick="checkScenario(this, 'scenario1')">
+                        <strong>C)</strong> Keep the laptop at your desk for the duration of the investigation so you can access it easily
+                    </button>
+                    <button class="scenario-choice" data-correct="false" onclick="checkScenario(this, 'scenario1')">
+                        <strong>D)</strong> Store everything in the evidence locker and retrieve it each time you need to perform analysis
+                    </button>
+                </div>
+                <div class="scenario-result" id="scenario1-result"></div>
+            </div>
+        </section>
+
+        <!-- Section 8: Summary -->
+        <section id="section-summary" data-section="8">
+            <h2><span aria-hidden="true">📋</span> Module Summary</h2>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon" aria-hidden="true">✅</span>
+                    <span class="card-title">Key Takeaways</span>
+                </div>
+
+                <h4>Three-Copy Rule</h4>
+                <ul>
+                    <li><strong>Original evidence:</strong> Never modified, stored securely, maintains legal chain</li>
+                    <li><strong>Master image:</strong> Verified forensic copy, used to create working copies</li>
+                    <li><strong>Working copy:</strong> Used for all analysis, can be regenerated if needed</li>
+                </ul>
+
+                <h4>Physical Handling</h4>
+                <ul>
+                    <li>Use anti-static precautions for all storage media</li>
+                    <li>Proper packaging: anti-static bags, padded containers, Faraday bags for mobile devices</li>
+                    <li>Document everything: photograph, label, maintain chain of custody</li>
+                    <li>Never leave evidence unattended</li>
+                </ul>
+
+                <h4>Storage Requirements</h4>
+                <ul>
+                    <li>Physical security: locked storage, access control, tamper-evident seals</li>
+                    <li>Environmental: 60-75°F, 30-50% humidity, away from magnetic fields</li>
+                    <li>Digital: secure servers, access restrictions, backup strategy</li>
+                </ul>
+
+                <h4>Evidence Lifecycle</h4>
+                <ul>
+                    <li>Preservation requirements exist at every phase</li>
+                    <li>Verify hash values before and after each phase</li>
+                    <li>Maintain documentation throughout lifecycle</li>
+                    <li>Follow retention policies for proper disposition</li>
+                </ul>
+            </div>
+
+            <div class="highlight-box">
+                <h4>NIST Guidance</h4>
+                <p><em>"If it is unclear whether or not evidence needs to be preserved, by default it generally should be preserved."</em> — NIST SP 800-86</p>
+                <p>When in doubt about preservation requirements, always err on the side of caution and preserve the evidence.</p>
+            </div>
+
+            <div class="completion-checklist">
+                <h3><span aria-hidden="true">☑️</span> Module Completion Checklist</h3>
+                <div class="completion-item">
+                    <input type="checkbox" id="check1" onchange="updateCompletionChecklist(this)">
+                    <label for="check1">Explain the three-copy rule and its purpose</label>
+                </div>
+                <div class="completion-item">
+                    <input type="checkbox" id="check2" onchange="updateCompletionChecklist(this)">
+                    <label for="check2">Describe proper physical evidence handling procedures</label>
+                </div>
+                <div class="completion-item">
+                    <input type="checkbox" id="check3" onchange="updateCompletionChecklist(this)">
+                    <label for="check3">Identify evidence storage requirements (physical and environmental)</label>
+                </div>
+                <div class="completion-item">
+                    <input type="checkbox" id="check4" onchange="updateCompletionChecklist(this)">
+                    <label for="check4">Explain preservation requirements at each lifecycle phase</label>
+                </div>
+                <div class="completion-item">
+                    <input type="checkbox" id="check5" onchange="updateCompletionChecklist(this)">
+                    <label for="check5">Describe evidence retention and disposition procedures</label>
+                </div>
+                <div class="completion-item">
+                    <input type="checkbox" id="check6" onchange="updateCompletionChecklist(this)">
+                    <label for="check6">Complete all knowledge check questions</label>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon" aria-hidden="true">🔜</span>
+                    <span class="card-title">Coming Up Next</span>
+                </div>
+                <h4>Module 6.7: Acquisition Documentation</h4>
+                <p>In the final module of Week 6, you'll learn about comprehensive documentation practices:</p>
+                <ul>
+                    <li>Acquisition log requirements and formats</li>
+                    <li>Chain of custody documentation specifics</li>
+                    <li>Creating legally defensible records</li>
+                    <li>Documentation templates and best practices</li>
+                    <li>Preparing documentation for court presentation</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 Mendocino College | CSC 156 - Digital Forensics Fundamentals</p>
+        <p>Module 6.6: Evidence Preservation Best Practices | Week 6: Data Acquisition and Preservation</p>
+        <p>Instructor: David Pai | Spring 2026</p>
+        <div class="footer-links">
+            <a href="#section-overview">Back to Top</a>
+            <a href="#">← Module 6.5: Hash Verification</a>
+            <a href="#">Module 6.7: Documentation →</a>
+        </div>
+    </footer>
+
+    <script>
+        // Progress Tracking
+        let sectionsCompleted = new Set();
+        const totalSections = 8;
+
+        function updateProgress() {
+            const percent = Math.round((sectionsCompleted.size / totalSections) * 100);
+            document.getElementById('progress-percent').textContent = percent;
+            document.getElementById('progress-fill').style.width = percent + '%';
+            document.getElementById('progress-fill').setAttribute('aria-valuenow', percent);
+            sessionStorage.setItem('module66Progress', JSON.stringify([...sectionsCompleted]));
+        }
+
+        function loadProgress() {
+            const saved = sessionStorage.getItem('module66Progress');
+            if (saved) {
+                sectionsCompleted = new Set(JSON.parse(saved));
+                updateProgress();
+            }
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const sectionNum = entry.target.dataset.section;
+                    if (sectionNum) {
+                        sectionsCompleted.add(sectionNum);
+                        updateProgress();
+                    }
+                }
+            });
+        }, { threshold: 0.3 });
+
+        document.querySelectorAll('section[data-section]').forEach(section => {
+            observer.observe(section);
+        });
+
+        // Accordion
+        document.querySelectorAll('.accordion-header').forEach(header => {
+            header.addEventListener('click', function() {
+                const item = this.parentElement;
+                const isActive = item.classList.contains('active');
+                const container = item.parentElement;
+                
+                container.querySelectorAll('.accordion-item').forEach(i => {
+                    i.classList.remove('active');
+                    i.querySelector('.accordion-header').setAttribute('aria-expanded', 'false');
+                });
+                
+                if (!isActive) {
+                    item.classList.add('active');
+                    this.setAttribute('aria-expanded', 'true');
+                }
+            });
+        });
+
+        // Checklist toggle
+        function toggleChecklistItem(item) {
+            const checkbox = item.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+            item.classList.toggle('checked', checkbox.checked);
+        }
+
+        // Quiz
+        function checkQuiz(quizId) {
+            const quiz = document.getElementById(quizId);
+            const options = quiz.querySelectorAll('.quiz-option');
+            const feedback = document.getElementById(quizId + '-feedback');
+            const selected = quiz.querySelector('input[type="radio"]:checked');
+            
+            if (!selected) {
+                feedback.textContent = 'Please select an answer.';
+                feedback.className = 'quiz-feedback show incorrect';
+                return;
+            }
+            
+            const selectedOption = selected.closest('.quiz-option');
+            const isCorrect = selectedOption.dataset.correct === 'true';
+            
+            options.forEach(opt => opt.classList.remove('correct', 'incorrect'));
+            
+            if (isCorrect) {
+                selectedOption.classList.add('correct');
+                feedback.className = 'quiz-feedback show correct';
+                
+                const messages = {
+                    'quiz1': '<strong>Correct!</strong> The working copy should always be used for analysis. This protects the original evidence and master image from any accidental modifications during examination.',
+                    'quiz2': '<strong>Correct!</strong> 30-50% relative humidity is optimal. High humidity causes corrosion, while low humidity increases static electricity risk.',
+                    'quiz3': '<strong>Correct!</strong> Hard drives and SSDs require anti-static bags to prevent ESD damage, plus padded containers for physical protection during transport and storage.'
+                };
+                feedback.innerHTML = messages[quizId];
+            } else {
+                selectedOption.classList.add('incorrect');
+                options.forEach(opt => {
+                    if (opt.dataset.correct === 'true') opt.classList.add('correct');
+                });
+                feedback.className = 'quiz-feedback show incorrect';
+                
+                const messages = {
+                    'quiz1': '<strong>Incorrect.</strong> The working copy should be used for analysis. Never analyze directly on the original evidence or master image.',
+                    'quiz2': '<strong>Incorrect.</strong> The recommended humidity range is 30-50%. This prevents both corrosion (from high humidity) and static discharge (from low humidity).',
+                    'quiz3': '<strong>Incorrect.</strong> Hard drives and SSDs require anti-static bags and padded containers to prevent ESD damage and physical damage.'
+                };
+                feedback.innerHTML = messages[quizId];
+            }
+            
+            quiz.querySelector('.quiz-btn').disabled = true;
+        }
+
+        // Scenario
+        function checkScenario(button, scenarioId) {
+            const container = document.getElementById(scenarioId);
+            const choices = container.querySelectorAll('.scenario-choice');
+            const result = document.getElementById(scenarioId + '-result');
+            
+            choices.forEach(choice => {
+                choice.disabled = true;
+                choice.classList.remove('selected');
+            });
+            
+            button.classList.add('selected');
+            const isCorrect = button.dataset.correct === 'true';
+            
+            if (isCorrect) {
+                button.classList.add('correct');
+                result.className = 'scenario-result show';
+                result.style.background = '#e8f5e9';
+                result.style.border = '1px solid #2e7d32';
+                result.style.color = '#1b5e20';
+                result.innerHTML = `
+                    <strong>✓ Correct!</strong><br><br>
+                    This approach follows the three-copy rule and best practices:
+                    <ul>
+                        <li><strong>Physical laptop:</strong> Secured in evidence locker (original evidence)</li>
+                        <li><strong>Master image:</strong> On NAS with access controls (verified backup)</li>
+                        <li><strong>Working copy:</strong> On your workstation for analysis</li>
+                        <li><strong>Offsite backup:</strong> Additional protection against data loss</li>
+                    </ul>
+                    This provides proper security, redundancy, and accessibility for the investigation.
+                `;
+            } else {
+                button.classList.add('incorrect');
+                choices.forEach(choice => {
+                    if (choice.dataset.correct === 'true') choice.classList.add('correct');
+                });
+                result.className = 'scenario-result show';
+                result.style.background = '#ffebee';
+                result.style.border = '1px solid #c62828';
+                result.style.color = '#b71c1c';
+                result.innerHTML = `
+                    <strong>✗ Incorrect.</strong><br><br>
+                    The correct answer is <strong>B</strong>. This follows the three-copy rule:
+                    <ul>
+                        <li>Physical evidence must be in secure storage, not at your desk</li>
+                        <li>Master images need access-controlled storage, not personal workstations</li>
+                        <li>Working copies are for analysis, created from the master</li>
+                        <li>Offsite backup provides disaster recovery protection</li>
+                    </ul>
+                `;
+            }
+        }
+
+        // Flashcards
+        const flashcards = [
+            { term: "Three-Copy Rule", definition: "Best practice requiring three copies of evidence: original (untouched), master image (verified backup), and working copy (for analysis)." },
+            { term: "Working Copy", definition: "A copy of the forensic image used for analysis. Created from the master image and can be regenerated if corrupted or modified." },
+            { term: "Chain of Custody", definition: "Chronological documentation recording the sequence of custody, control, transfer, analysis, and disposition of evidence." },
+            { term: "Tamper-Evident Seal", definition: "A seal that shows visible evidence of tampering if removed or broken. Used on evidence containers to prove integrity." },
+            { term: "Evidence Retention", definition: "The period during which evidence must be preserved, determined by case type, jurisdiction, and organizational policy." },
+            { term: "Anti-Static Bag", definition: "Specialized packaging that prevents electrostatic discharge (ESD) damage to electronic components and storage media." }
+        ];
+
+        let currentCard = 0;
+
+        function flipCard() {
+            document.getElementById('flashcard').classList.toggle('flipped');
+        }
+
+        function handleFlashcardKey(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                flipCard();
+            }
+        }
+
+        function updateFlashcard() {
+            document.getElementById('flashcard-term').textContent = flashcards[currentCard].term;
+            document.getElementById('flashcard-definition').textContent = flashcards[currentCard].definition;
+            document.getElementById('flashcard-counter').textContent = `Card ${currentCard + 1} of ${flashcards.length}`;
+            document.getElementById('flashcard').classList.remove('flipped');
+        }
+
+        function nextCard() {
+            currentCard = (currentCard + 1) % flashcards.length;
+            updateFlashcard();
+        }
+
+        function prevCard() {
+            currentCard = (currentCard - 1 + flashcards.length) % flashcards.length;
+            updateFlashcard();
+        }
+
+        // Completion Checklist
+        function updateCompletionChecklist(checkbox) {
+            const item = checkbox.closest('.completion-item');
+            item.classList.toggle('checked', checkbox.checked);
+            
+            const states = [];
+            document.querySelectorAll('.completion-item input').forEach(cb => states.push(cb.checked));
+            sessionStorage.setItem('module66Checklist', JSON.stringify(states));
+        }
+
+        function loadCompletionChecklist() {
+            const saved = sessionStorage.getItem('module66Checklist');
+            if (saved) {
+                const states = JSON.parse(saved);
+                document.querySelectorAll('.completion-item input').forEach((cb, i) => {
+                    if (states[i]) {
+                        cb.checked = true;
+                        cb.closest('.completion-item').classList.add('checked');
+                    }
+                });
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+            loadCompletionChecklist();
+            updateFlashcard();
+        });
+
+        // Smooth scrolling
+        document.querySelectorAll('nav a').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.getElementById(this.getAttribute('href').substring(1));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                    target.focus();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
