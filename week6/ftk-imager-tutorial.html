@@ -1,0 +1,2273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="CSC 156 Digital Forensics Fundamentals - FTK Imager Tutorial: Download, Install, and Use FTK Imager from Exterro">
+<title>FTK Imager Tutorial &mdash; CSC 156 Digital Forensics</title>
+<style>
+  /* ===== RESET & BASE ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --forest:    #1a4d2e;
+    --forest-dk: #122e1c;
+    --forest-lt: #2a6b42;
+    --tan:       #d4a574;
+    --tan-lt:    #e8c9a0;
+    --tan-dk:    #b8854e;
+    --white:     #ffffff;
+    --off-white: #f8f5f0;
+    --gray-50:   #f9fafb;
+    --gray-100:  #f3f4f6;
+    --gray-200:  #e5e7eb;
+    --gray-300:  #d1d5db;
+    --gray-500:  #6b7280;
+    --gray-600:  #4b5563;
+    --gray-700:  #374151;
+    --gray-800:  #1f2937;
+    --gray-900:  #111827;
+    --blue:      #1d4ed8;
+    --blue-lt:   #dbeafe;
+    --green:     #166534;
+    --green-lt:  #dcfce7;
+    --amber:     #92400e;
+    --amber-lt:  #fef3c7;
+    --red:       #991b1b;
+    --red-lt:    #fee2e2;
+    --code-bg:   #1e2a1a;
+    --code-text: #a8d5b5;
+    --radius:    8px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow:    0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
+    --transition: 0.2s ease;
+    --font-body: 'Georgia', 'Times New Roman', serif;
+    --font-ui:   'Segoe UI', system-ui, -apple-system, sans-serif;
+    --font-mono: 'Consolas', 'Courier New', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-ui);
+    background: var(--off-white);
+    color: var(--gray-800);
+    line-height: 1.6;
+    font-size: 16px;
+  }
+
+  /* ===== SKIP LINK (ACCESSIBILITY) ===== */
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--forest);
+    color: var(--white);
+    padding: 8px 16px;
+    z-index: 9999;
+    font-weight: 600;
+    border-radius: 0 0 4px 0;
+    text-decoration: none;
+    transition: top var(--transition);
+  }
+  .skip-link:focus { top: 0; }
+
+  /* ===== TOP BANNER ===== */
+  .site-banner {
+    background: var(--forest-dk);
+    color: var(--tan-lt);
+    font-size: 0.75rem;
+    text-align: center;
+    padding: 6px 16px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ===== HEADER ===== */
+  .site-header {
+    background: var(--forest);
+    color: var(--white);
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-lg);
+  }
+  .header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 0;
+  }
+  .header-logo {
+    width: 42px;
+    height: 42px;
+    background: var(--tan);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+  .header-text { flex: 1; }
+  .header-text h1 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--white);
+  }
+  .header-text p {
+    font-size: 0.78rem;
+    color: var(--tan-lt);
+    margin-top: 2px;
+  }
+  .header-badge {
+    background: var(--tan);
+    color: var(--forest-dk);
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  /* ===== PROGRESS BAR ===== */
+  .progress-bar-wrap {
+    background: var(--gray-200);
+    height: 6px;
+    position: sticky;
+    top: 66px;
+    z-index: 99;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--tan-dk), var(--tan));
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  /* ===== LAYOUT ===== */
+  .page-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+
+  /* ===== SIDEBAR NAV ===== */
+  .sidebar {
+    position: sticky;
+    top: 84px;
+  }
+  .sidebar-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .sidebar-header {
+    background: var(--forest);
+    color: var(--white);
+    padding: 12px 16px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .sidebar-nav { padding: 8px 0; }
+  .sidebar-nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    text-decoration: none;
+    color: var(--gray-700);
+    font-size: 0.85rem;
+    transition: background var(--transition), color var(--transition);
+    border-left: 3px solid transparent;
+  }
+  .sidebar-nav a:hover {
+    background: var(--gray-50);
+    color: var(--forest);
+    border-left-color: var(--tan);
+  }
+  .sidebar-nav a.active {
+    background: var(--gray-50);
+    color: var(--forest);
+    border-left-color: var(--forest);
+    font-weight: 600;
+  }
+  .sidebar-nav .nav-num {
+    width: 22px;
+    height: 22px;
+    background: var(--gray-200);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    color: var(--gray-600);
+  }
+  .sidebar-nav a.active .nav-num,
+  .sidebar-nav a:hover .nav-num {
+    background: var(--tan);
+    color: var(--forest-dk);
+  }
+  .sidebar-nav a.completed .nav-num {
+    background: var(--green);
+    color: var(--white);
+  }
+  .sidebar-nav a.completed .nav-num::after { content: '✓'; }
+
+  .progress-summary {
+    padding: 12px 16px;
+    border-top: 1px solid var(--gray-200);
+    font-size: 0.78rem;
+    color: var(--gray-600);
+  }
+  .progress-summary strong { color: var(--forest); }
+
+  /* ===== MAIN CONTENT ===== */
+  .main-content { min-width: 0; }
+
+  /* ===== HERO ===== */
+  .hero {
+    background: linear-gradient(135deg, var(--forest-dk) 0%, var(--forest) 50%, var(--forest-lt) 100%);
+    color: var(--white);
+    border-radius: var(--radius);
+    padding: 40px 36px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 180px; height: 180px;
+    background: rgba(212,165,116,0.12);
+    border-radius: 50%;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -50px; right: 60px;
+    width: 250px; height: 250px;
+    background: rgba(212,165,116,0.07);
+    border-radius: 50%;
+  }
+  .hero-tag {
+    display: inline-block;
+    background: var(--tan);
+    color: var(--forest-dk);
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .hero h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    line-height: 1.2;
+    position: relative;
+  }
+  .hero p {
+    color: rgba(255,255,255,0.85);
+    font-size: 0.95rem;
+    max-width: 520px;
+    position: relative;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    position: relative;
+  }
+  .hero-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: var(--tan-lt);
+  }
+  .hero-meta-item span { font-size: 1rem; }
+
+  /* ===== SECTION CONTAINERS ===== */
+  .tutorial-section {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 24px;
+    overflow: hidden;
+    scroll-margin-top: 100px;
+  }
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 24px;
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--transition);
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+  .section-head:hover { background: var(--gray-50); }
+  .section-head:focus-visible {
+    outline: 3px solid var(--forest);
+    outline-offset: -3px;
+  }
+  .section-num {
+    width: 36px; height: 36px;
+    background: var(--forest);
+    color: var(--white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .tutorial-section.completed .section-num { background: var(--green); }
+  .section-title-wrap { flex: 1; }
+  .section-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    line-height: 1.2;
+  }
+  .section-subtitle {
+    font-size: 0.78rem;
+    color: var(--gray-500);
+    margin-top: 2px;
+  }
+  .section-toggle {
+    font-size: 1.2rem;
+    color: var(--gray-400);
+    transition: transform var(--transition);
+    flex-shrink: 0;
+  }
+  .tutorial-section.open .section-toggle { transform: rotate(180deg); }
+  .section-body {
+    padding: 0 24px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease, padding 0.2s ease;
+  }
+  .tutorial-section.open .section-body {
+    max-height: 9999px;
+    padding: 0 24px 28px;
+  }
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--gray-200);
+    margin-bottom: 24px;
+  }
+
+  /* ===== CALLOUT BOXES ===== */
+  .callout {
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin: 16px 0;
+    display: flex;
+    gap: 12px;
+    font-size: 0.9rem;
+  }
+  .callout-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
+  .callout-content h4 { font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; }
+  .callout-content p, .callout-content ul { font-size: 0.875rem; }
+  .callout-content ul { padding-left: 16px; margin-top: 6px; }
+  .callout-content li { margin-bottom: 4px; }
+
+  .callout-info    { background: var(--blue-lt);  border-left: 4px solid #3b82f6; }
+  .callout-info    .callout-icon { color: var(--blue); }
+  .callout-info    h4 { color: #1e40af; }
+
+  .callout-success { background: var(--green-lt); border-left: 4px solid #22c55e; }
+  .callout-success .callout-icon { color: var(--green); }
+  .callout-success h4 { color: var(--green); }
+
+  .callout-warn    { background: var(--amber-lt); border-left: 4px solid #f59e0b; }
+  .callout-warn    .callout-icon { color: #b45309; }
+  .callout-warn    h4 { color: var(--amber); }
+
+  .callout-danger  { background: var(--red-lt);   border-left: 4px solid #ef4444; }
+  .callout-danger  .callout-icon { color: var(--red); }
+  .callout-danger  h4 { color: var(--red); }
+
+  .callout-forensic {
+    background: #f0f4e8;
+    border-left: 4px solid var(--forest);
+  }
+  .callout-forensic .callout-icon { color: var(--forest); }
+  .callout-forensic h4 { color: var(--forest-dk); }
+
+  /* ===== STEPS ===== */
+  .steps-list { counter-reset: steps; list-style: none; padding: 0; }
+  .step-item {
+    counter-increment: steps;
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .step-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 17px;
+    top: 38px;
+    bottom: -10px;
+    width: 2px;
+    background: var(--gray-200);
+  }
+  .step-num-wrap {
+    flex-shrink: 0;
+    width: 36px; height: 36px;
+    background: var(--forest);
+    color: var(--white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  .step-num-wrap::before { content: counter(steps); }
+  .step-content { flex: 1; padding-top: 6px; }
+  .step-content h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin-bottom: 6px;
+  }
+  .step-content p, .step-content ul {
+    font-size: 0.88rem;
+    color: var(--gray-700);
+  }
+  .step-content ul { padding-left: 18px; margin-top: 6px; }
+  .step-content li { margin-bottom: 4px; }
+
+  /* ===== CODE BLOCKS ===== */
+  .code-wrap {
+    background: var(--code-bg);
+    border-radius: var(--radius);
+    margin: 12px 0;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .code-lang {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--tan-lt);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .code-copy-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--gray-300);
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--font-ui);
+    transition: background var(--transition), color var(--transition);
+  }
+  .code-copy-btn:hover { background: rgba(255,255,255,0.18); color: var(--white); }
+  .code-copy-btn:focus-visible { outline: 2px solid var(--tan); outline-offset: 2px; }
+  pre {
+    margin: 0;
+    padding: 16px;
+    overflow-x: auto;
+    white-space: pre;
+    tab-size: 4;
+  }
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.84rem;
+    line-height: 1.6;
+    color: var(--code-text);
+    white-space: pre;
+  }
+  /* Inline code */
+  p code, li code, td code {
+    background: #e8f0e9;
+    color: var(--forest-dk);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.83em;
+    white-space: nowrap;
+  }
+
+  /* ===== INTERFACE SIMULATOR ===== */
+  .ui-sim {
+    background: #f0f0f0;
+    border: 2px solid #999;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 16px 0;
+    font-family: var(--font-ui);
+    font-size: 0.82rem;
+  }
+  .ui-sim-titlebar {
+    background: linear-gradient(180deg, #e8e8e8, #d0d0d0);
+    border-bottom: 1px solid #aaa;
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ui-sim-btn {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.2);
+  }
+  .ui-sim-btn.red   { background: #ff5f57; }
+  .ui-sim-btn.yellow{ background: #febc2e; }
+  .ui-sim-btn.green { background: #28c840; }
+  .ui-sim-title { flex: 1; text-align: center; font-size: 0.75rem; color: #555; }
+  .ui-sim-menu {
+    background: #e8e8e8;
+    border-bottom: 1px solid #ccc;
+    padding: 3px 8px;
+    display: flex;
+    gap: 2px;
+  }
+  .ui-sim-menu span {
+    padding: 3px 8px;
+    border-radius: 3px;
+    cursor: default;
+    color: #333;
+  }
+  .ui-sim-menu span:hover { background: #0057d8; color: white; }
+  .ui-sim-body { padding: 12px 16px; background: white; }
+  .ui-sim-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .ui-sim-label { width: 140px; color: #333; font-weight: 500; flex-shrink: 0; }
+  .ui-sim-input {
+    flex: 1;
+    border: 1px solid #aaa;
+    padding: 3px 8px;
+    border-radius: 3px;
+    background: white;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: #111;
+  }
+  .ui-sim-radio { display: flex; gap: 14px; }
+  .ui-sim-radio-opt { display: flex; align-items: center; gap: 5px; color: #333; }
+  .ui-sim-check { display: flex; align-items: center; gap: 8px; color: #333; margin-bottom: 6px; }
+  .ui-sim-actions {
+    padding: 10px 16px;
+    background: #f5f5f5;
+    border-top: 1px solid #ddd;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+  .ui-btn-primary {
+    background: var(--forest);
+    color: white;
+    border: none;
+    padding: 6px 18px;
+    border-radius: 3px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-ui);
+  }
+  .ui-btn-secondary {
+    background: #ddd;
+    color: #333;
+    border: none;
+    padding: 6px 18px;
+    border-radius: 3px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    font-family: var(--font-ui);
+  }
+
+  /* ===== HASH DISPLAY ===== */
+  .hash-display {
+    background: var(--code-bg);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin: 10px 0;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--code-text);
+    word-break: break-all;
+  }
+  .hash-label { color: var(--tan-lt); font-weight: 700; margin-bottom: 4px; font-size: 0.72rem; letter-spacing: 0.06em; }
+  .hash-value { color: #c8e6a0; }
+  .hash-match {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--green-lt);
+    color: var(--green);
+    font-family: var(--font-ui);
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-top: 8px;
+  }
+
+  /* ===== KNOWLEDGE CHECK ===== */
+  .quiz-section {
+    background: #f8fdf9;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    margin-top: 24px;
+  }
+  .quiz-section h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--forest);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .quiz-question { margin-bottom: 22px; }
+  .quiz-question p {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 10px;
+  }
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 2px solid var(--gray-200);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color var(--transition), background var(--transition);
+    background: white;
+    font-size: 0.875rem;
+    color: var(--gray-700);
+    text-align: left;
+    width: 100%;
+    font-family: var(--font-ui);
+  }
+  .quiz-option:hover { border-color: var(--forest); background: var(--gray-50); }
+  .quiz-option:focus-visible { outline: 3px solid var(--forest); outline-offset: 2px; }
+  .quiz-option.correct { border-color: #22c55e; background: var(--green-lt); color: var(--green); font-weight: 600; }
+  .quiz-option.incorrect { border-color: #ef4444; background: var(--red-lt); color: var(--red); }
+  .quiz-option.disabled { cursor: default; }
+  .quiz-option .opt-indicator { font-size: 1rem; }
+  .quiz-feedback {
+    margin-top: 8px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    display: none;
+  }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.correct-fb { background: var(--green-lt); color: var(--green); }
+  .quiz-feedback.incorrect-fb { background: var(--red-lt); color: var(--red); }
+
+  /* ===== COMPARISON TABLE ===== */
+  .comparison-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.85rem; }
+  .comparison-table th {
+    background: var(--forest);
+    color: var(--white);
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+  .comparison-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--gray-200);
+    color: var(--gray-700);
+    vertical-align: top;
+  }
+  .comparison-table tr:nth-child(even) td { background: var(--gray-50); }
+  .comparison-table tr:hover td { background: #f0f4ee; }
+  .badge-yes { color: var(--green); font-weight: 700; }
+  .badge-no  { color: var(--red);   font-weight: 700; }
+  .badge-partial { color: #92400e; font-weight: 700; }
+
+  /* ===== CHECKLIST ===== */
+  .checklist { list-style: none; padding: 0; margin: 12px 0; }
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--gray-100);
+    font-size: 0.875rem;
+    color: var(--gray-700);
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .chk-box {
+    width: 20px; height: 20px;
+    border: 2px solid var(--gray-300);
+    border-radius: 4px;
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition), border-color var(--transition);
+    background: white;
+    margin-top: 1px;
+  }
+  .chk-box:hover { border-color: var(--forest); }
+  .chk-box.checked { background: var(--forest); border-color: var(--forest); color: white; font-size: 0.75rem; }
+  .chk-text { flex: 1; cursor: pointer; line-height: 1.4; }
+  .chk-text.checked { text-decoration: line-through; color: var(--gray-400); }
+
+  /* ===== SECTION COMPLETE BUTTON ===== */
+  .mark-complete-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--forest);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-ui);
+    margin-top: 24px;
+    transition: background var(--transition);
+  }
+  .mark-complete-btn:hover { background: var(--forest-dk); }
+  .mark-complete-btn:focus-visible { outline: 3px solid var(--tan); outline-offset: 2px; }
+  .mark-complete-btn.done { background: var(--green); cursor: default; }
+
+  /* ===== GLOSSARY TERMS ===== */
+  .term {
+    border-bottom: 2px dotted var(--forest);
+    cursor: help;
+    color: var(--forest);
+    position: relative;
+  }
+  .term-tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--gray-900);
+    color: white;
+    font-size: 0.78rem;
+    padding: 8px 12px;
+    border-radius: 6px;
+    width: 220px;
+    text-align: center;
+    z-index: 200;
+    pointer-events: none;
+    line-height: 1.4;
+  }
+  .term-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--gray-900);
+  }
+  .term:hover .term-tooltip,
+  .term:focus .term-tooltip { display: block; }
+
+  /* ===== INFO GRID ===== */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin: 16px 0;
+  }
+  .info-card {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 14px;
+  }
+  .info-card-icon { font-size: 1.5rem; margin-bottom: 8px; }
+  .info-card h4 { font-size: 0.8rem; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .info-card p { font-size: 0.875rem; color: var(--gray-800); font-weight: 600; }
+
+  /* ===== FOOTER ===== */
+  .site-footer {
+    background: var(--forest-dk);
+    color: rgba(255,255,255,0.7);
+    padding: 24px;
+    text-align: center;
+    font-size: 0.8rem;
+    margin-top: 40px;
+  }
+  .site-footer a { color: var(--tan-lt); }
+  .site-footer strong { color: white; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 800px) {
+    .page-wrap {
+      grid-template-columns: 1fr;
+      padding: 20px 16px 60px;
+    }
+    .sidebar { position: static; display: none; }
+    .hero { padding: 28px 22px; }
+    .hero h2 { font-size: 1.4rem; }
+  }
+
+  /* ===== PRINT ===== */
+  @media print {
+    .site-header, .sidebar, .progress-bar-wrap, .site-banner { display: none; }
+    .page-wrap { grid-template-columns: 1fr; }
+    .tutorial-section.open .section-body, .section-body { max-height: none !important; padding: 0 24px 24px !important; }
+    .section-head { cursor: default; }
+  }
+
+  /* ===== FOCUS VISIBLE (GLOBAL) ===== */
+  :focus-visible { outline: 3px solid var(--forest); outline-offset: 2px; }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .tutorial-section { animation: fadeSlideIn 0.3s ease both; }
+</style>
+</head>
+<body>
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<div class="site-banner" role="banner">
+  CSC 156 &mdash; Digital Forensics Fundamentals &bull; Mendocino College &bull; Tool Tutorial Series
+</div>
+
+<header class="site-header" role="banner">
+  <div class="header-inner">
+    <div class="header-logo" aria-hidden="true">&#128269;</div>
+    <div class="header-text">
+      <h1>FTK Imager Tutorial</h1>
+      <p>Downloading, Installing, and Using FTK Imager from Exterro</p>
+    </div>
+    <span class="header-badge">CSC 156</span>
+  </div>
+</header>
+
+<div class="progress-bar-wrap" role="progressbar" aria-label="Reading progress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="readingProgressBar">
+  <div class="progress-bar-fill" id="readingFill"></div>
+</div>
+
+<div class="page-wrap">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" aria-label="Tutorial sections navigation">
+    <div class="sidebar-card">
+      <div class="sidebar-header">&#128247; Tutorial Contents</div>
+      <nav class="sidebar-nav" aria-label="Jump to section">
+        <a href="#sec-overview"  id="nav-0" class="active"><span class="nav-num">1</span> What is FTK Imager?</a>
+        <a href="#sec-download"  id="nav-1"><span class="nav-num">2</span> Downloading FTK Imager</a>
+        <a href="#sec-install"   id="nav-2"><span class="nav-num">3</span> Installation</a>
+        <a href="#sec-interface" id="nav-3"><span class="nav-num">4</span> Interface Overview</a>
+        <a href="#sec-imaging"   id="nav-4"><span class="nav-num">5</span> Creating a Disk Image</a>
+        <a href="#sec-verify"    id="nav-5"><span class="nav-num">6</span> Verification &amp; Hashing</a>
+        <a href="#sec-acquire"   id="nav-6"><span class="nav-num">7</span> Adding Evidence Items</a>
+        <a href="#sec-export"    id="nav-7"><span class="nav-num">8</span> Exporting &amp; Reports</a>
+        <a href="#sec-cli"       id="nav-8"><span class="nav-num">9</span> Command-Line Reference</a>
+        <a href="#sec-quiz"      id="nav-9"><span class="nav-num">10</span> Knowledge Check</a>
+      </nav>
+      <div class="progress-summary">
+        <strong id="sectionsDone">0</strong> of <strong>10</strong> sections complete
+        <div style="margin-top:6px;background:var(--gray-200);border-radius:10px;height:6px;overflow:hidden">
+          <div id="sidebarProgress" style="height:100%;background:var(--forest);width:0%;transition:width 0.4s ease;border-radius:10px;"></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="main-content" class="main-content">
+
+    <!-- HERO -->
+    <div class="hero" role="region" aria-label="Tutorial introduction">
+      <div class="hero-tag">&#128270; Tool Tutorial &mdash; Week 1 &amp; 2</div>
+      <h2>FTK Imager by Exterro</h2>
+      <p>Learn to download, install, and use one of digital forensics&rsquo; most essential free imaging tools &mdash; trusted by law enforcement, legal professionals, and cybersecurity practitioners worldwide.</p>
+      <div class="hero-meta">
+        <div class="hero-meta-item"><span>&#9200;</span> Estimated time: 60&ndash;90 minutes</div>
+        <div class="hero-meta-item"><span>&#128187;</span> Windows / macOS / Linux</div>
+        <div class="hero-meta-item"><span>&#128176;</span> Free tool</div>
+        <div class="hero-meta-item"><span>&#9994;</span> Beginner friendly</div>
+      </div>
+    </div>
+
+    <!-- ===== SECTION 1: OVERVIEW ===== -->
+    <article class="tutorial-section open" id="sec-overview">
+      <button class="section-head" aria-expanded="true" aria-controls="body-overview" onclick="toggleSection(this)">
+        <div class="section-num" aria-hidden="true">1</div>
+        <div class="section-title-wrap">
+          <div class="section-title">What is FTK Imager?</div>
+          <div class="section-subtitle">Background, purpose, and forensic importance</div>
+        </div>
+        <span class="section-toggle" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="section-body" id="body-overview" role="region">
+        <hr class="section-divider" aria-hidden="true">
+
+        <p>FTK Imager is a free forensic imaging and previewing tool developed by <strong>Exterro</strong> (formerly AccessData). It is one of the most widely used tools in digital forensics for creating forensically sound copies of digital evidence, previewing file systems, and generating hash values to verify integrity.</p>
+
+        <div class="callout callout-forensic">
+          <div class="callout-icon" aria-hidden="true">&#128373;</div>
+          <div class="callout-content">
+            <h4>Forensic Significance</h4>
+            <p>FTK Imager creates bit-for-bit copies of storage media, meaning every bit from the original device is duplicated exactly &mdash; including deleted files, slack space, and unallocated clusters. This makes it court-admissible evidence when proper procedures are followed.</p>
+          </div>
+        </div>
+
+        <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);margin:20px 0 12px">Key Capabilities</h3>
+
+        <div class="info-grid">
+          <div class="info-card">
+            <div class="info-card-icon" aria-hidden="true">&#128190;</div>
+            <h4>Disk Imaging</h4>
+            <p>Create forensic images in Raw (dd), E01, AFF, and SMART formats</p>
+          </div>
+          <div class="info-card">
+            <div class="info-card-icon" aria-hidden="true">&#128273;</div>
+            <h4>Hash Verification</h4>
+            <p>Generate and verify MD5, SHA-1, and SHA-256 hash values automatically</p>
+          </div>
+          <div class="info-card">
+            <div class="info-card-icon" aria-hidden="true">&#128269;</div>
+            <h4>Evidence Preview</h4>
+            <p>Browse file systems, view deleted files, and preview content before imaging</p>
+          </div>
+          <div class="info-card">
+            <div class="info-card-icon" aria-hidden="true">&#129302;</div>
+            <h4>Memory Capture</h4>
+            <p>Acquire volatile memory (RAM) from live Windows systems for analysis</p>
+          </div>
+          <div class="info-card">
+            <div class="info-card-icon" aria-hidden="true">&#128196;</div>
+            <h4>Report Generation</h4>
+            <p>Export case reports with hash values, file listings, and metadata</p>
+          </div>
+          <div class="info-card">
+            <div class="info-card-icon" aria-hidden="true">&#128225;</div>
+            <h4>Free &amp; Portable</h4>
+            <p>No license cost; portable version runs from USB without installation</p>
+          </div>
+        </div>
+
+        <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);margin:20px 0 12px">How FTK Imager Compares</h3>
+
+        <div style="overflow-x:auto">
+          <table class="comparison-table" aria-label="Forensic imaging tool comparison">
+            <caption style="text-align:left;font-size:0.8rem;color:var(--gray-500);margin-bottom:8px;caption-side:top">Table 1 &mdash; Forensic Imaging Tool Comparison</caption>
+            <thead>
+              <tr>
+                <th scope="col">Feature</th>
+                <th scope="col">FTK Imager</th>
+                <th scope="col">dd / dcfldd</th>
+                <th scope="col">Guymager</th>
+                <th scope="col">EnCase</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Cost</td><td class="badge-yes">Free</td><td class="badge-yes">Free</td><td class="badge-yes">Free</td><td class="badge-no">$$$$</td></tr>
+              <tr><td>GUI Interface</td><td class="badge-yes">Yes</td><td class="badge-no">No</td><td class="badge-yes">Yes</td><td class="badge-yes">Yes</td></tr>
+              <tr><td>E01 Format</td><td class="badge-yes">Yes</td><td class="badge-no">No</td><td class="badge-yes">Yes</td><td class="badge-yes">Yes</td></tr>
+              <tr><td>Windows</td><td class="badge-yes">Yes</td><td class="badge-partial">Via WSL</td><td class="badge-no">Linux only</td><td class="badge-yes">Yes</td></tr>
+              <tr><td>Hash Verification</td><td class="badge-yes">Yes</td><td class="badge-partial">Manual</td><td class="badge-yes">Yes</td><td class="badge-yes">Yes</td></tr>
+              <tr><td>Memory Acquisition</td><td class="badge-yes">Yes</td><td class="badge-no">No</td><td class="badge-no">No</td><td class="badge-yes">Yes</td></tr>
+              <tr><td>Court Accepted</td><td class="badge-yes">Yes</td><td class="badge-yes">Yes</td><td class="badge-yes">Yes</td><td class="badge-yes">Yes</td></tr>
+              <tr><td>Beginner Friendly</td><td class="badge-yes">&#9733;&#9733;&#9733;&#9733;&#9733;</td><td class="badge-partial">&#9733;&#9733;&#9733;&#9734;&#9734;</td><td class="badge-partial">&#9733;&#9733;&#9733;&#9733;&#9734;</td><td class="badge-yes">&#9733;&#9733;&#9733;&#9733;&#9733;</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-icon" aria-hidden="true">&#8505;</div>
+          <div class="callout-content">
+            <h4>CSLO Connection</h4>
+            <p>This tutorial supports the CSLO: <em>&ldquo;Perform data collection using forensic technology methods in accordance with evidence handling procedures.&rdquo;</em> Mastering FTK Imager is central to your ability to collect and preserve digital evidence properly.</p>
+          </div>
+        </div>
+
+        <button class="mark-complete-btn" onclick="markComplete(this, 0)" aria-label="Mark section 1 as complete">
+          <span aria-hidden="true">&#9744;</span> Mark Section Complete
+        </button>
+      </div>
+    </article>
+
+    <!-- ===== SECTION 2: DOWNLOAD ===== -->
+    <article class="tutorial-section" id="sec-download">
+      <button class="section-head" aria-expanded="false" aria-controls="body-download" onclick="toggleSection(this)">
+        <div class="section-num" aria-hidden="true">2</div>
+        <div class="section-title-wrap">
+          <div class="section-title">Downloading FTK Imager</div>
+          <div class="section-subtitle">Obtaining the installer from Exterro&rsquo;s official website</div>
+        </div>
+        <span class="section-toggle" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="section-body" id="body-download" role="region">
+        <hr class="section-divider" aria-hidden="true">
+
+        <div class="callout callout-warn">
+          <div class="callout-icon" aria-hidden="true">&#9888;</div>
+          <div class="callout-content">
+            <h4>Always Download from the Official Source</h4>
+            <p>Only download FTK Imager from Exterro&rsquo;s official website. Third-party downloads may be modified, infected, or outdated. Using an unverified tool on evidence media could compromise the integrity of your investigation.</p>
+          </div>
+        </div>
+
+        <p>Exterro acquired AccessData (original developer of FTK and FTK Imager) and now distributes FTK Imager as a free standalone tool. A free registration is required to download.</p>
+
+        <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);margin:20px 0 12px">Download Steps</h3>
+
+        <ol class="steps-list" aria-label="FTK Imager download steps">
+          <li class="step-item">
+            <div class="step-num-wrap" aria-hidden="true"></div>
+            <div class="step-content">
+              <h4>Navigate to Exterro&rsquo;s Website</h4>
+              <p>Open your browser and go to the official Exterro FTK product page:</p>
+              <div class="code-wrap">
+                <div class="code-header">
+                  <span class="code-lang">URL</span>
+                  <button class="code-copy-btn" onclick="copyCode(this)" aria-label="Copy URL to clipboard">Copy</button>
+                </div>
+                <pre><code>https://www.exterro.com/ftk-product-downloads/ftk-imager-4-7-3-81</code></pre>
+              </div>
+              <p style="margin-top:8px">Alternatively, search <strong>&ldquo;Exterro FTK Imager download&rdquo;</strong> and select the official <code>exterro.com</code> result.</p>
+            </div>
+          </li>
+          <li class="step-item">
+            <div class="step-num-wrap" aria-hidden="true"></div>
+            <div class="step-content">
+              <h4>Complete the Registration Form</h4>
+              <p>Exterro requires a free account to download. Fill in the registration form with:</p>
+              <ul>
+                <li>First and last name</li>
+                <li>Email address (use your college email: <code>@mendocino.edu</code>)</li>
+                <li>Organization / company name (enter &ldquo;Mendocino College&rdquo;)</li>
+                <li>Job title (enter &ldquo;Student&rdquo;)</li>
+                <li>Country and region</li>
+              </ul>
+              <div class="callout callout-info" style="margin-top:12px">
+                <div class="callout-icon" aria-hidden="true">&#8505;</div>
+                <div class="callout-content">
+                  <p>You will receive a confirmation email. Check your spam folder if it does not arrive within 5 minutes. The download link will be included in the confirmation.</p>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li class="step-item">
+            <div class="step-num-wrap" aria-hidden="true"></div>
+            <div class="step-content">
+              <h4>Select the Correct Version</h4>
+              <p>The download page offers several versions. Select based on your operating system:</p>
+              <div style="overflow-x:auto">
+                <table class="comparison-table" aria-label="FTK Imager version selection">
+                  <thead>
+                    <tr>
+                      <th scope="col">Platform</th>
+                      <th scope="col">File to Download</th>
+                      <th scope="col">Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Windows (x64)</td><td><code>FTK_Imager_4.7.3.81.exe</code></td><td>Recommended for most students</td></tr>
+                    <tr><td>Windows Portable</td><td><code>FTK_Imager_Lite_4.7.3.81.zip</code></td><td>Runs from USB, no install needed</td></tr>
+                    <tr><td>macOS</td><td><code>FTK_Imager_macOS_4.7.3.81.dmg</code></td><td>macOS 10.15+ required</td></tr>
+                    <tr><td>Linux (x64)</td><td><code>FTK_Imager_Linux_4.7.3.81.tar.gz</code></td><td>CLI version; GUI limited</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </li>
+          <li class="step-item">
+            <div class="step-num-wrap" aria-hidden="true"></div>
+            <div class="step-content">
+              <h4>Verify the Downloaded File Hash</h4>
+              <p>Before installing, verify the file&rsquo;s integrity by comparing its hash to the value published on Exterro&rsquo;s website. This confirms the file was not corrupted or tampered with during download.</p>
+
+              <p style="margin-top:10px"><strong>On Windows (PowerShell):</strong></p>
+              <div class="code-wrap">
+                <div class="code-header">
+                  <span class="code-lang">PowerShell</span>
+                  <button class="code-copy-btn" onclick="copyCode(this)" aria-label="Copy PowerShell command">Copy</button>
+                </div>
+                <pre><code>Get-FileHash "C:\Users\YourName\Downloads\FTK_Imager_4.7.3.81.exe" -Algorithm SHA256</code></pre>
+              </div>
+
+              <p style="margin-top:12px"><strong>On macOS / Linux (Terminal):</strong></p>
+              <div class="code-wrap">
+                <div class="code-header">
+                  <span class="code-lang">Bash</span>
+                  <button class="code-copy-btn" onclick="copyCode(this)" aria-label="Copy bash command">Copy</button>
+                </div>
+                <pre><code>shasum -a 256 ~/Downloads/FTK_Imager_macOS_4.7.3.81.dmg</code></pre>
+              </div>
+
+              <p style="margin-top:12px">Compare the output against Exterro&rsquo;s published hash. Example output (illustrative):</p>
+              <div class="hash-display" aria-label="Example hash verification output">
+                <div class="hash-label">SHA-256 HASH &mdash; YOUR DOWNLOADED FILE</div>
+                <div class="hash-value">3a7f9c2e4b8d1f6a0e5c9b3d7f2a4e8c1b6d9f3a7c2e5b8d1f4a9e0c3b6d9f2a</div>
+                <div class="hash-label" style="margin-top:12px">SHA-256 HASH &mdash; EXTERRO&rsquo;S PUBLISHED VALUE</div>
+                <div class="hash-value">3a7f9c2e4b8d1f6a0e5c9b3d7f2a4e8c1b6d9f3a7c2e5b8d1f4a9e0c3b6d9f2a</div>
+                <div class="hash-match" role="status">&#10003; HASH MATCH &mdash; File integrity verified</div>
+              </div>
+
+              <div class="callout callout-danger" style="margin-top:12px">
+                <div class="callout-icon" aria-hidden="true">&#128721;</div>
+                <div class="callout-content">
+                  <h4>Hash Mismatch = Do Not Install</h4>
+                  <p>If the hash values do not match exactly, delete the file immediately and re-download. A mismatch indicates corruption or tampering.</p>
+                </div>
+              </div>
+            </div>
+          </li>
+        </ol>
+
+        <button class="mark-complete-btn" onclick="markComplete(this, 1)" aria-label="Mark section 2 as complete">
+          <span aria-hidden="true">&#9744;</span> Mark Section Complete
+        </button>
+      </div>
+    </article>
+
+    <!-- ===== SECTION 3: INSTALL ===== -->
+    <article class="tutorial-section" id="sec-install">
+      <button class="section-head" aria-expanded="false" aria-controls="body-install" onclick="toggleSection(this)">
+        <div class="section-num" aria-hidden="true">3</div>
+        <div class="section-title-wrap">
+          <div class="section-title">Installation</div>
+          <div class="section-subtitle">Step-by-step installation on Windows, macOS, and Linux</div>
+        </div>
+        <span class="section-toggle" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="section-body" id="body-install" role="region">
+        <hr class="section-divider" aria-hidden="true">
+
+        <!-- TABBED INSTALLER -->
+        <div role="tablist" aria-label="Installation platform tabs" style="display:flex;gap:0;border-bottom:2px solid var(--gray-200);margin-bottom:20px">
+          <button role="tab" id="tab-win" aria-selected="true"  aria-controls="panel-win" onclick="switchTab('win')"  style="padding:10px 20px;font-size:0.875rem;font-weight:600;background:var(--forest);color:white;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-family:var(--font-ui);margin-right:4px">&#127970; Windows</button>
+          <button role="tab" id="tab-mac" aria-selected="false" aria-controls="panel-mac" onclick="switchTab('mac')" style="padding:10px 20px;font-size:0.875rem;font-weight:600;background:var(--gray-200);color:var(--gray-700);border:none;border-radius:6px 6px 0 0;cursor:pointer;font-family:var(--font-ui);margin-right:4px">&#63743; macOS</button>
+          <button role="tab" id="tab-lin" aria-selected="false" aria-controls="panel-lin" onclick="switchTab('lin')" style="padding:10px 20px;font-size:0.875rem;font-weight:600;background:var(--gray-200);color:var(--gray-700);border:none;border-radius:6px 6px 0 0;cursor:pointer;font-family:var(--font-ui)">&#128039; Linux</button>
+        </div>
+
+        <div id="panel-win" role="tabpanel" aria-labelledby="tab-win">
+          <div class="callout callout-info">
+            <div class="callout-icon" aria-hidden="true">&#8505;</div>
+            <div class="callout-content">
+              <h4>Requirements</h4>
+              <p>Windows 10 / 11 (64-bit), Administrator privileges, 4 GB RAM minimum (8 GB recommended), 500 MB free disk space.</p>
+            </div>
+          </div>
+          <ol class="steps-list" aria-label="Windows installation steps" style="margin-top:16px">
+            <li class="step-item">
+              <div class="step-num-wrap" aria-hidden="true"></div>
+              <div class="step-content">
+                <h4>Run the Installer</h4>
+                <p>Right-click <code>FTK_Imager_4.7.3.81.exe</code> and select <strong>&ldquo;Run as administrator&rdquo;</strong>. This is required for proper driver installation. Accept the UAC prompt.</p>
+              </div>
+            </li>
+            <li class="step-item">
+              <div class="step-num-wrap" aria-hidden="true"></div>
+              <div class="step-content">
+                <h4>Accept the License Agreement</h4>
+                <p>Read and accept the End User License Agreement (EULA). FTK Imager is free for educational and professional use. Click <strong>Next</strong>.</p>
+              </div>
+            </li>
+            <li class="step-item">
+              <div class="step-num-wrap" aria-hidden="true"></div>
+              <div class="step-content">
+                <h4>Choose Installation Directory</h4>
+                <p>The default path is recommended:</p>
+                <div class="code-wrap">
+                  <div class="code-header"><span class="code-lang">Path</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div>
+                  <pre><code>C:\Program Files\AccessData\FTK Imager\</code></pre>
+                </div>
+                <p style="margin-top:8px">Click <strong>Install</strong>. Installation typically takes 30&ndash;60 seconds.</p>
+              </div>
+            </li>
+            <li class="step-item">
+              <div class="step-num-wrap" aria-hidden="true"></div>
+              <div class="step-content">
+                <h4>Complete Installation &amp; Launch</h4>
+                <p>When installation completes, click <strong>Finish</strong>. You can optionally check <em>&ldquo;Launch FTK Imager&rdquo;</em> to open it immediately. A shortcut will be placed on your desktop and in the Start menu.</p>
+              </div>
+            </li>
+            <li class="step-item">
+              <div class="step-num-wrap" aria-hidden="true"></div>
+              <div class="step-content">
+                <h4>Verify Installation</h4>
+                <div class="code-wrap">
+                  <div class="code-header"><span class="code-lang">PowerShell</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div>
+                  <pre><code>Get-Command "C:\Program Files\AccessData\FTK Imager\FTK Imager.exe"</code></pre>
+                </div>
+                <p style="margin-top:8px">Confirm the version number appears in <strong>Help &rarr; About FTK Imager</strong>.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <div id="panel-mac" role="tabpanel" aria-labelledby="tab-mac" style="display:none">
+          <div class="callout callout-warn">
+            <div class="callout-icon" aria-hidden="true">&#9888;</div>
+            <div class="callout-content">
+              <h4>ARM Mac (Apple Silicon) Note</h4>
+              <p>FTK Imager for macOS runs via Rosetta 2 on M1/M2/M3 chips. Functionality is limited compared to the Windows version. For full features, use Windows (via Boot Camp or a VM).</p>
+            </div>
+          </div>
+          <ol class="steps-list" style="margin-top:16px">
+            <li class="step-item">
+              <div class="step-num-wrap" aria-hidden="true"></div>
+              <div class="step-content">
+                <h4>Open the DMG File</h4>
+                <p>Double-click <code>FTK_Imager_macOS_4.7.3.81.dmg</code>. Drag the FTK Imager icon into your <strong>Applications</strong> folder.</p>
+              </div>
+            </li>
+            <li class="step-item">
+              <div class="step-num-wrap" aria-hidden="true"></div>
+              <div class="step-content">
+                <h4>Allow Gatekeeper</h4>
+                <p>On first launch, macOS may block the app. Go to <strong>System Preferences &rarr; Security &amp; Privacy &rarr; General</strong> and click <strong>&ldquo;Open Anyway&rdquo;</strong> next to the FTK Imager warning.</p>
+                <div class="code-wrap">
+                  <div class="code-header"><span class="code-lang">Terminal (alternative)</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div>
+                  <pre><code>xattr -d com.apple.quarantine /Applications/FTK\ Imager.app</code></pre>
+                </div>
+              </div>
+            </li>
+            <li class="step-item">
+              <div class="step-num-wrap" aria-hidden="true"></div>
+              <div class="step-content">
+                <h4>Grant Disk Access</h4>
+                <p>Go to <strong>System Preferences &rarr; Security &amp; Privacy &rarr; Privacy &rarr; Full Disk Access</strong>. Click the lock icon, then add FTK Imager. This is required for reading disk devices.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <div id="panel-lin" role="tabpanel" aria-labelledby="tab-lin" style="display:none">
+          <div class="callout callout-info">
+            <div class="callout-icon" aria-hidden="true">&#8505;</div>
+            <div class="callout-content">
+              <h4>Linux Note</h4>
+              <p>FTK Imager on Linux is a command-line tool. For GUI-based imaging on Linux, consider <strong>Guymager</strong> instead. Both produce forensically sound E01 images.</p>
+            </div>
+          </div>
+          <ol class="steps-list" style="margin-top:16px">
+            <li class="step-item">
+              <div class="step-num-wrap" aria-hidden="true"></div>
+              <div class="step-content">
+                <h4>Extract the Archive</h4>
+                <div class="code-wrap">
+                  <div class="code-header"><span class="code-lang">Bash</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div>
+                  <pre><code>tar -xzf FTK_Imager_Linux_4.7.3.81.tar.gz -C /opt/ftk-imager/
+sudo chmod +x /opt/ftk-imager/ftkimager</code></pre>
+                </div>
+              </div>
+            </li>
+            <li class="step-item">
+              <div class="step-num-wrap" aria-hidden="true"></div>
+              <div class="step-content">
+                <h4>Add to PATH (Optional)</h4>
+                <div class="code-wrap">
+                  <div class="code-header"><span class="code-lang">Bash</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div>
+                  <pre><code>echo 'export PATH="$PATH:/opt/ftk-imager"' >> ~/.bashrc
+source ~/.bashrc
+ftkimager --version</code></pre>
+                </div>
+              </div>
+            </li>
+            <li class="step-item">
+              <div class="step-num-wrap" aria-hidden="true"></div>
+              <div class="step-content">
+                <h4>Install Dependencies</h4>
+                <div class="code-wrap">
+                  <div class="code-header"><span class="code-lang">Bash (Ubuntu/Debian)</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div>
+                  <pre><code>sudo apt-get install -y libfuse2 libssl1.1 libewf-dev</code></pre>
+                </div>
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <button class="mark-complete-btn" onclick="markComplete(this, 2)" aria-label="Mark section 3 as complete">
+          <span aria-hidden="true">&#9744;</span> Mark Section Complete
+        </button>
+      </div>
+    </article>
+
+    <!-- ===== SECTION 4: INTERFACE ===== -->
+    <article class="tutorial-section" id="sec-interface">
+      <button class="section-head" aria-expanded="false" aria-controls="body-interface" onclick="toggleSection(this)">
+        <div class="section-num" aria-hidden="true">4</div>
+        <div class="section-title-wrap">
+          <div class="section-title">Interface Overview</div>
+          <div class="section-subtitle">Navigating FTK Imager&rsquo;s main panels and menus</div>
+        </div>
+        <span class="section-toggle" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="section-body" id="body-interface" role="region">
+        <hr class="section-divider" aria-hidden="true">
+
+        <p>FTK Imager uses a four-panel layout common to forensic tools. Understanding each panel is essential before beginning any investigation.</p>
+
+        <div class="ui-sim" aria-label="FTK Imager interface simulator">
+          <div class="ui-sim-titlebar">
+            <div class="ui-sim-btn red"    aria-hidden="true"></div>
+            <div class="ui-sim-btn yellow" aria-hidden="true"></div>
+            <div class="ui-sim-btn green"  aria-hidden="true"></div>
+            <span class="ui-sim-title">FTK Imager 4.7.3.81 &mdash; [No Evidence Loaded]</span>
+          </div>
+          <div class="ui-sim-menu" aria-label="Application menu bar">
+            <span role="menuitem" tabindex="0">File</span>
+            <span role="menuitem" tabindex="0">View</span>
+            <span role="menuitem" tabindex="0">Mode</span>
+            <span role="menuitem" tabindex="0">Help</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #ccc;background:white">
+            <div style="border-right:1px solid #ccc;padding:10px;min-height:120px">
+              <div style="font-size:0.72rem;font-weight:700;color:#666;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em">Evidence Tree</div>
+              <div style="font-size:0.8rem;color:#333;font-family:var(--font-mono)">
+                &#128196; [No Evidence]<br>
+                <span style="color:#999">&nbsp;&nbsp;Add evidence item to begin</span>
+              </div>
+            </div>
+            <div style="padding:10px;min-height:120px">
+              <div style="font-size:0.72rem;font-weight:700;color:#666;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em">File List</div>
+              <div style="font-size:0.78rem;color:#999;font-style:italic">Select a folder to view contents</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;background:white">
+            <div style="border-right:1px solid #ccc;padding:10px;border-top:1px solid #ccc">
+              <div style="font-size:0.72rem;font-weight:700;color:#666;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em">Viewer / Hex Panel</div>
+              <div style="background:#1e2a1a;color:#a8d5b5;font-family:var(--font-mono);font-size:0.7rem;padding:8px;border-radius:4px">
+                00 00 00 00 00 00 00 00  &#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;<br>
+                00 00 00 00 00 00 00 00  &#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;
+              </div>
+            </div>
+            <div style="padding:10px;border-top:1px solid #ccc">
+              <div style="font-size:0.72rem;font-weight:700;color:#666;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em">Properties / Case Info</div>
+              <div style="font-size:0.78rem;color:#666">
+                Case Number: &mdash;<br>
+                Examiner: &mdash;<br>
+                Notes: &mdash;
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);margin:22px 0 12px">Panel Descriptions</h3>
+
+        <ul class="checklist" aria-label="Interface panels" role="list">
+          <li>
+            <div class="chk-box" aria-hidden="true">&#9654;</div>
+            <span class="chk-text"><strong>Evidence Tree (Top Left):</strong> Hierarchical view of all loaded evidence items. Displays drives, partitions, folders, and files in a tree structure similar to Windows Explorer.</span>
+          </li>
+          <li>
+            <div class="chk-box" aria-hidden="true">&#9654;</div>
+            <span class="chk-text"><strong>File List (Top Right):</strong> Shows contents of the selected folder in the Evidence Tree. Includes file name, size, created/modified/accessed timestamps, and file type.</span>
+          </li>
+          <li>
+            <div class="chk-box" aria-hidden="true">&#9654;</div>
+            <span class="chk-text"><strong>Viewer Panel (Bottom Left):</strong> Displays the selected file in multiple view modes: Natural (rendered), Text, and Hex. The hex view shows raw bytes &mdash; critical for file signature analysis.</span>
+          </li>
+          <li>
+            <div class="chk-box" aria-hidden="true">&#9654;</div>
+            <span class="chk-text"><strong>Properties Panel (Bottom Right):</strong> Metadata for the selected file or the case. Shows hash values, file attributes, case information, and investigator notes.</span>
+          </li>
+        </ul>
+
+        <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);margin:22px 0 12px">Key Menu Options</h3>
+
+        <div style="overflow-x:auto">
+          <table class="comparison-table" aria-label="FTK Imager menu reference">
+            <thead>
+              <tr>
+                <th scope="col">Menu</th>
+                <th scope="col">Option</th>
+                <th scope="col">Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>File</td><td>Add Evidence Item</td><td>Load a disk, image file, or logical drive for analysis</td></tr>
+              <tr><td>File</td><td>Create Disk Image</td><td>Image a physical or logical drive</td></tr>
+              <tr><td>File</td><td>Capture Memory</td><td>Acquire live RAM from the running system</td></tr>
+              <tr><td>File</td><td>Decrypt AD Encryption</td><td>Decrypt files encrypted with AccessData tools</td></tr>
+              <tr><td>Mode</td><td>Obtain Protected Files</td><td>Copy Windows system files in use (locked files)</td></tr>
+              <tr><td>Mode</td><td>Mount Image to Drive</td><td>Mount an image file as a read-only drive letter</td></tr>
+              <tr><td>View</td><td>Properties</td><td>Toggle the Properties panel display</td></tr>
+              <tr><td>Help</td><td>About FTK Imager</td><td>Version and license information</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <button class="mark-complete-btn" onclick="markComplete(this, 3)" aria-label="Mark section 4 as complete">
+          <span aria-hidden="true">&#9744;</span> Mark Section Complete
+        </button>
+      </div>
+    </article>
+
+    <!-- ===== SECTION 5: IMAGING ===== -->
+    <article class="tutorial-section" id="sec-imaging">
+      <button class="section-head" aria-expanded="false" aria-controls="body-imaging" onclick="toggleSection(this)">
+        <div class="section-num" aria-hidden="true">5</div>
+        <div class="section-title-wrap">
+          <div class="section-title">Creating a Forensic Disk Image</div>
+          <div class="section-subtitle">Step-by-step imaging workflow with format selection</div>
+        </div>
+        <span class="section-toggle" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="section-body" id="body-imaging" role="region">
+        <hr class="section-divider" aria-hidden="true">
+
+        <div class="callout callout-forensic">
+          <div class="callout-icon" aria-hidden="true">&#128373;</div>
+          <div class="callout-content">
+            <h4>Forensic Principle: Write Protection</h4>
+            <p>Always attach a <strong><span class="term" tabindex="0">write blocker<span class="term-tooltip">A hardware or software device that prevents any data from being written to an evidence drive, preserving its integrity.</span></span></strong> before connecting evidence media to your workstation. FTK Imager includes software write-blocking, but a hardware write blocker is preferred for chain of custody.</p>
+          </div>
+        </div>
+
+        <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);margin:20px 0 12px">Imaging Workflow</h3>
+
+        <ol class="steps-list" aria-label="Disk imaging steps">
+          <li class="step-item">
+            <div class="step-num-wrap" aria-hidden="true"></div>
+            <div class="step-content">
+              <h4>Launch Create Disk Image</h4>
+              <p>Go to <strong>File &rarr; Create Disk Image&hellip;</strong> or click the imaging toolbar icon. The source selection dialog appears.</p>
+            </div>
+          </li>
+          <li class="step-item">
+            <div class="step-num-wrap" aria-hidden="true"></div>
+            <div class="step-content">
+              <h4>Select the Source</h4>
+              <p>Choose the type of source media:</p>
+              <ul>
+                <li><strong>Physical Drive</strong> &mdash; Image an entire physical disk (recommended for most cases)</li>
+                <li><strong>Logical Drive</strong> &mdash; Image a specific partition/volume</li>
+                <li><strong>Image File</strong> &mdash; Re-image from an existing forensic image</li>
+                <li><strong>Contents of a Folder</strong> &mdash; Logical acquisition of a directory</li>
+                <li><strong>Fernico Device / Multiple CDs/DVDs</strong> &mdash; Optical media</li>
+              </ul>
+            </div>
+          </li>
+          <li class="step-item">
+            <div class="step-num-wrap" aria-hidden="true"></div>
+            <div class="step-content">
+              <h4>Configure Image Destination &amp; Format</h4>
+              <p>Click <strong>Add&hellip;</strong> to set the output destination. Select your image format:</p>
+
+              <div class="ui-sim" aria-label="Create Image dialog simulator">
+                <div class="ui-sim-titlebar">
+                  <div class="ui-sim-btn red" aria-hidden="true"></div>
+                  <div class="ui-sim-btn yellow" aria-hidden="true"></div>
+                  <div class="ui-sim-btn green" aria-hidden="true"></div>
+                  <span class="ui-sim-title">Create Image</span>
+                </div>
+                <div class="ui-sim-body">
+                  <p style="font-size:0.78rem;font-weight:700;margin-bottom:10px;color:#333">Select Image Type:</p>
+                  <div class="ui-sim-radio" aria-label="Image format options">
+                    <label class="ui-sim-radio-opt"><input type="radio" name="imgfmt" checked> Raw (dd)</label>
+                    <label class="ui-sim-radio-opt"><input type="radio" name="imgfmt"> SMART</label>
+                    <label class="ui-sim-radio-opt"><input type="radio" name="imgfmt"> E01</label>
+                    <label class="ui-sim-radio-opt"><input type="radio" name="imgfmt"> AFF</label>
+                  </div>
+                  <div class="ui-sim-field" style="margin-top:14px">
+                    <span class="ui-sim-label">Image Destination:</span>
+                    <span class="ui-sim-input">E:\Cases\Case-2025-001\Evidence\</span>
+                  </div>
+                  <div class="ui-sim-field">
+                    <span class="ui-sim-label">Image Filename:</span>
+                    <span class="ui-sim-input">evidence_001</span>
+                  </div>
+                  <div class="ui-sim-field">
+                    <span class="ui-sim-label">Segment Size (MB):</span>
+                    <span class="ui-sim-input">2047</span>
+                  </div>
+                  <label class="ui-sim-check"><input type="checkbox" checked> Verify images after they are created</label>
+                  <label class="ui-sim-check"><input type="checkbox" checked> Create directory listings of all files in the image after they are created</label>
+                </div>
+                <div class="ui-sim-actions">
+                  <button class="ui-btn-secondary" type="button">Back</button>
+                  <button class="ui-btn-primary" type="button">Start</button>
+                </div>
+              </div>
+
+              <div style="overflow-x:auto;margin-top:12px">
+                <table class="comparison-table" aria-label="Image format comparison">
+                  <thead>
+                    <tr><th scope="col">Format</th><th scope="col">Extension</th><th scope="col">Best For</th><th scope="col">Compression</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td><strong>Raw (dd)</strong></td><td><code>.dd / .raw</code></td><td>Maximum compatibility, Linux tools</td><td class="badge-no">None</td></tr>
+                    <tr><td><strong>E01</strong></td><td><code>.E01</code></td><td>Court cases, EnCase compatibility</td><td class="badge-yes">Yes</td></tr>
+                    <tr><td><strong>AFF</strong></td><td><code>.aff</code></td><td>Open format, metadata embedding</td><td class="badge-yes">Yes</td></tr>
+                    <tr><td><strong>SMART</strong></td><td><code>.s01</code></td><td>AccessData/FTK ecosystem</td><td class="badge-yes">Yes</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="callout callout-success" style="margin-top:12px">
+                <div class="callout-icon" aria-hidden="true">&#10003;</div>
+                <div class="callout-content">
+                  <h4>Recommended: E01 Format for Court Cases</h4>
+                  <p>E01 is the industry standard. It supports compression (saving storage space), embedded hash values, and case metadata &mdash; all in a single container file. It is widely accepted by prosecutors and courts.</p>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li class="step-item">
+            <div class="step-num-wrap" aria-hidden="true"></div>
+            <div class="step-content">
+              <h4>Enter Case Information</h4>
+              <p>For E01 images, you will be prompted to enter case metadata embedded directly in the image file:</p>
+              <ul>
+                <li><strong>Case Number:</strong> Your case identifier (e.g., <code>2025-FE-001</code>)</li>
+                <li><strong>Evidence Number:</strong> Evidence item identifier (e.g., <code>E001</code>)</li>
+                <li><strong>Unique Description:</strong> Brief description (e.g., <code>Suspect laptop HDD - 500GB</code>)</li>
+                <li><strong>Examiner:</strong> Your full name and badge/employee number</li>
+                <li><strong>Notes:</strong> Additional context (date, location seized, etc.)</li>
+              </ul>
+              <div class="callout callout-forensic" style="margin-top:10px">
+                <div class="callout-icon" aria-hidden="true">&#128373;</div>
+                <div class="callout-content">
+                  <p>This metadata is embedded in the E01 file and cannot be changed after creation without invalidating the hash. Fill it in accurately before clicking Start.</p>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li class="step-item">
+            <div class="step-num-wrap" aria-hidden="true"></div>
+            <div class="step-content">
+              <h4>Monitor Progress and Completion</h4>
+              <p>FTK Imager displays a progress dialog showing:</p>
+              <ul>
+                <li>Elapsed and estimated time remaining</li>
+                <li>Data written and percentage complete</li>
+                <li>Current imaging speed (MB/s)</li>
+                <li>Bad sectors encountered (document any bad sectors in your case notes)</li>
+              </ul>
+              <p style="margin-top:8px">Imaging a 500 GB drive typically takes 1&ndash;3 hours depending on USB speed and drive health. <strong>Do not disconnect the drive or interrupt the process.</strong></p>
+            </div>
+          </li>
+        </ol>
+
+        <button class="mark-complete-btn" onclick="markComplete(this, 4)" aria-label="Mark section 5 as complete">
+          <span aria-hidden="true">&#9744;</span> Mark Section Complete
+        </button>
+      </div>
+    </article>
+
+    <!-- ===== SECTION 6: VERIFICATION ===== -->
+    <article class="tutorial-section" id="sec-verify">
+      <button class="section-head" aria-expanded="false" aria-controls="body-verify" onclick="toggleSection(this)">
+        <div class="section-num" aria-hidden="true">6</div>
+        <div class="section-title-wrap">
+          <div class="section-title">Verification &amp; Hash Values</div>
+          <div class="section-subtitle">Confirming forensic integrity with cryptographic hashing</div>
+        </div>
+        <span class="section-toggle" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="section-body" id="body-verify" role="region">
+        <hr class="section-divider" aria-hidden="true">
+
+        <p><span class="term" tabindex="0">Hash verification<span class="term-tooltip">The process of computing a cryptographic hash of the original and copy, then comparing them to confirm they are identical.</span></span> is the cornerstone of forensic integrity. After imaging completes, FTK Imager automatically computes hash values of both the source and the image, then compares them.</p>
+
+        <div class="info-grid">
+          <div class="info-card">
+            <div class="info-card-icon" aria-hidden="true">&#128275;</div>
+            <h4>MD5</h4>
+            <p>128-bit hash. Fast, widely accepted. Collision vulnerabilities exist but irrelevant for forensic integrity checks.</p>
+          </div>
+          <div class="info-card">
+            <div class="info-card-icon" aria-hidden="true">&#128274;</div>
+            <h4>SHA-1</h4>
+            <p>160-bit hash. More robust than MD5. Being phased out of some contexts but still accepted in court.</p>
+          </div>
+          <div class="info-card">
+            <div class="info-card-icon" aria-hidden="true">&#128272;</div>
+            <h4>SHA-256</h4>
+            <p>256-bit hash. Current gold standard. Recommended for all new cases. Computationally intensive but definitive.</p>
+          </div>
+        </div>
+
+        <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);margin:20px 0 12px">Verification Results Display</h3>
+
+        <p>After imaging, FTK Imager displays a verification summary. Here is an example of a successful verification:</p>
+
+        <div class="hash-display" role="region" aria-label="Example hash verification results">
+          <div class="hash-label">CASE: 2025-FE-001 &bull; EVIDENCE: E001 &bull; EXAMINER: J. Smith</div>
+          <br>
+          <div class="hash-label">SOURCE DRIVE &mdash; WD Blue 500GB (PhysicalDrive1)</div>
+          <div class="hash-value">MD5 :&nbsp;&nbsp;&nbsp; a3f2c9e7b5d1e8f4a6c2b9d7e3f5a1c8</div>
+          <div class="hash-value">SHA1 :&nbsp;&nbsp; 7a3f9c2e4b8d1f6a0e5c9b3d7f2a4e8c1b6d9f3a</div>
+          <div class="hash-value">SHA256 : 3a7f9c2e4b8d1f6a0e5c9b3d7f2a4e8c1b6d9f3a7c2e5b8d1f4a9e0c3b6d9f2a</div>
+          <br>
+          <div class="hash-label">IMAGE FILE &mdash; evidence_001.E01</div>
+          <div class="hash-value">MD5 :&nbsp;&nbsp;&nbsp; a3f2c9e7b5d1e8f4a6c2b9d7e3f5a1c8</div>
+          <div class="hash-value">SHA1 :&nbsp;&nbsp; 7a3f9c2e4b8d1f6a0e5c9b3d7f2a4e8c1b6d9f3a</div>
+          <div class="hash-value">SHA256 : 3a7f9c2e4b8d1f6a0e5c9b3d7f2a4e8c1b6d9f3a7c2e5b8d1f4a9e0c3b6d9f2a</div>
+          <br>
+          <div class="hash-match" role="status" aria-live="polite">&#10003; All hash values match &mdash; Image integrity VERIFIED</div>
+        </div>
+
+        <div class="callout callout-forensic" style="margin-top:16px">
+          <div class="callout-icon" aria-hidden="true">&#128196;</div>
+          <div class="callout-content">
+            <h4>Document Everything</h4>
+            <p>Save the verification report (File &rarr; Report) and include it in your case file. Hash values and verification results must be documented before any analysis begins. Your case notes should record the date, time, tool version, and examiner for each imaging session.</p>
+          </div>
+        </div>
+
+        <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);margin:20px 0 12px">Manual Hash Verification</h3>
+        <p>You can also manually verify a pre-existing image file:</p>
+        <div class="code-wrap">
+          <div class="code-header"><span class="code-lang">FTK Imager &mdash; Verify Image</span></div>
+          <pre><code>File &#8594; Verify Disk/Image...
+&#8594; Select: evidence_001.E01
+&#8594; Click: Verify
+&#8594; Review: Hash comparison results</code></pre>
+        </div>
+
+        <div class="code-wrap">
+          <div class="code-header"><span class="code-lang">PowerShell &mdash; Manual Verification</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code># Compute hash of existing image file
+Get-FileHash "E:\Cases\Case-2025-001\Evidence\evidence_001.E01" -Algorithm SHA256
+
+# Compare output hash against your documentation
+# Values must match exactly (case-insensitive)</code></pre>
+        </div>
+
+        <button class="mark-complete-btn" onclick="markComplete(this, 5)" aria-label="Mark section 6 as complete">
+          <span aria-hidden="true">&#9744;</span> Mark Section Complete
+        </button>
+      </div>
+    </article>
+
+    <!-- ===== SECTION 7: ADDING EVIDENCE ===== -->
+    <article class="tutorial-section" id="sec-acquire">
+      <button class="section-head" aria-expanded="false" aria-controls="body-acquire" onclick="toggleSection(this)">
+        <div class="section-num" aria-hidden="true">7</div>
+        <div class="section-title-wrap">
+          <div class="section-title">Adding &amp; Browsing Evidence Items</div>
+          <div class="section-subtitle">Loading images and drives for forensic examination</div>
+        </div>
+        <span class="section-toggle" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="section-body" id="body-acquire" role="region">
+        <hr class="section-divider" aria-hidden="true">
+
+        <p>Once you have a forensic image, you can load it into FTK Imager for examination without modifying the original. This is how you begin the analysis phase of an investigation.</p>
+
+        <ol class="steps-list" aria-label="Steps to add an evidence item">
+          <li class="step-item">
+            <div class="step-num-wrap" aria-hidden="true"></div>
+            <div class="step-content">
+              <h4>Add Evidence Item</h4>
+              <p>Go to <strong>File &rarr; Add Evidence Item&hellip;</strong> Select the source type:</p>
+              <ul>
+                <li><strong>Image File</strong> &mdash; Load an existing <code>.E01</code>, <code>.dd</code>, or <code>.aff</code> image</li>
+                <li><strong>Physical Drive</strong> &mdash; Directly browse a write-blocked drive</li>
+                <li><strong>Logical Drive</strong> &mdash; Browse a specific volume/partition</li>
+                <li><strong>Contents of a Folder</strong> &mdash; Browse a specific directory</li>
+              </ul>
+            </div>
+          </li>
+          <li class="step-item">
+            <div class="step-num-wrap" aria-hidden="true"></div>
+            <div class="step-content">
+              <h4>Browse the Evidence Tree</h4>
+              <p>Once loaded, expand the evidence tree to see the full file system. Key areas to examine:</p>
+              <ul>
+                <li><code>[root]</code> &mdash; Top-level drive/partition</li>
+                <li><code>[unallocated space]</code> &mdash; Areas where deleted files reside</li>
+                <li><code>[orphan files]</code> &mdash; Files with lost parent directory references</li>
+                <li><code>$Recycle.Bin</code> &mdash; Recycle Bin contents (Windows)</li>
+                <li><code>Windows\System32</code> &mdash; Operating system files</li>
+                <li><code>Users\[name]\AppData</code> &mdash; User application data (browser history, etc.)</li>
+              </ul>
+            </div>
+          </li>
+          <li class="step-item">
+            <div class="step-num-wrap" aria-hidden="true"></div>
+            <div class="step-content">
+              <h4>View File Properties &amp; Hashes</h4>
+              <p>Click any file to view its properties in the bottom-right panel. Right-click &rarr; <strong>Export File Hash List</strong> to generate a full hash manifest of all files.</p>
+              <div class="callout callout-info">
+                <div class="callout-icon" aria-hidden="true">&#8505;</div>
+                <div class="callout-content">
+                  <p>Files highlighted in <strong style="color:red">red</strong> in the file list are <em>deleted files</em> that have been recovered from the file system metadata (MFT entries). These are still forensically accessible even after deletion.</p>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li class="step-item">
+            <div class="step-num-wrap" aria-hidden="true"></div>
+            <div class="step-content">
+              <h4>Export Files of Interest</h4>
+              <p>Right-click any file or folder &rarr; <strong>Export Files&hellip;</strong> Choose your destination. Exported files should always go into a dedicated <em>working copy</em> folder, <strong>never</strong> back to the evidence drive.</p>
+              <div class="code-wrap">
+                <div class="code-header"><span class="code-lang">Recommended Folder Structure</span></div>
+                <pre><code>Cases/
+&#9492;&#9472;&#9472; Case-2025-001/
+    &#9500;&#9472;&#9472; Evidence/          &#8592; Original images (read-only)
+    &#9500;&#9472;&#9472; WorkingCopy/       &#8592; Exported items for analysis
+    &#9500;&#9472;&#9472; Reports/           &#8592; FTK Imager reports
+    &#9492;&#9472;&#9472; Notes/             &#8592; Investigator case notes</code></pre>
+              </div>
+            </div>
+          </li>
+        </ol>
+
+        <button class="mark-complete-btn" onclick="markComplete(this, 6)" aria-label="Mark section 7 as complete">
+          <span aria-hidden="true">&#9744;</span> Mark Section Complete
+        </button>
+      </div>
+    </article>
+
+    <!-- ===== SECTION 8: EXPORT & REPORTS ===== -->
+    <article class="tutorial-section" id="sec-export">
+      <button class="section-head" aria-expanded="false" aria-controls="body-export" onclick="toggleSection(this)">
+        <div class="section-num" aria-hidden="true">8</div>
+        <div class="section-title-wrap">
+          <div class="section-title">Exporting &amp; Generating Reports</div>
+          <div class="section-subtitle">Creating documentation-ready outputs from your examination</div>
+        </div>
+        <span class="section-toggle" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="section-body" id="body-export" role="region">
+        <hr class="section-divider" aria-hidden="true">
+
+        <p>FTK Imager can generate several types of reports and exports that become part of your official case documentation.</p>
+
+        <div style="overflow-x:auto">
+          <table class="comparison-table" aria-label="FTK Imager export types">
+            <thead>
+              <tr><th scope="col">Export Type</th><th scope="col">How to Access</th><th scope="col">Output</th><th scope="col">Use In</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Image Verification Report</td><td>File &rarr; Report</td><td>Text file with hash values and case info</td><td>Case file, court submission</td></tr>
+              <tr><td>File Hash List</td><td>Right-click &rarr; Export File Hash List</td><td>CSV with MD5/SHA-1 for all files</td><td>Evidence catalog, database comparison</td></tr>
+              <tr><td>Directory Listing</td><td>Created automatically with E01</td><td>Text file with all file paths and sizes</td><td>Case file, chain of custody</td></tr>
+              <tr><td>Custom Content Image</td><td>File &rarr; Create Custom Content Image</td><td>Image containing only selected files</td><td>Targeted acquisitions</td></tr>
+              <tr><td>Memory Image</td><td>File &rarr; Capture Memory</td><td>Raw memory dump (<code>.mem</code> / <code>.raw</code>)</td><td>Volatility / memory forensics</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);margin:20px 0 12px">Generating the Verification Report</h3>
+
+        <ol class="steps-list" aria-label="Verification report generation steps">
+          <li class="step-item">
+            <div class="step-num-wrap" aria-hidden="true"></div>
+            <div class="step-content"><h4>Go to File &rarr; Report</h4><p>After loading or creating an image, this option becomes available.</p></div>
+          </li>
+          <li class="step-item">
+            <div class="step-num-wrap" aria-hidden="true"></div>
+            <div class="step-content"><h4>Select Output Location</h4><p>Save to your <code>Cases/[CaseNum]/Reports/</code> folder. The report is a plain text file compatible with any word processor.</p></div>
+          </li>
+          <li class="step-item">
+            <div class="step-num-wrap" aria-hidden="true"></div>
+            <div class="step-content">
+              <h4>Review Report Contents</h4>
+              <p>The report includes: case information, tool version, source device details, image format, segment sizes, hash values for source and image, verification result, date/time stamp, and examiner name. <strong>Print and sign a physical copy for your chain of custody documentation.</strong></p>
+            </div>
+          </li>
+        </ol>
+
+        <div class="callout callout-warn">
+          <div class="callout-icon" aria-hidden="true">&#9888;</div>
+          <div class="callout-content">
+            <h4>Export Checklist Before Closing a Case</h4>
+            <ul>
+              <li>&#9745; Verification report saved and printed</li>
+              <li>&#9745; File hash list exported and stored</li>
+              <li>&#9745; Directory listing archived</li>
+              <li>&#9745; All exported files cataloged in case notes</li>
+              <li>&#9745; Original evidence image write-protected and stored separately</li>
+            </ul>
+          </div>
+        </div>
+
+        <button class="mark-complete-btn" onclick="markComplete(this, 7)" aria-label="Mark section 8 as complete">
+          <span aria-hidden="true">&#9744;</span> Mark Section Complete
+        </button>
+      </div>
+    </article>
+
+    <!-- ===== SECTION 9: CLI REFERENCE ===== -->
+    <article class="tutorial-section" id="sec-cli">
+      <button class="section-head" aria-expanded="false" aria-controls="body-cli" onclick="toggleSection(this)">
+        <div class="section-num" aria-hidden="true">9</div>
+        <div class="section-title-wrap">
+          <div class="section-title">Command-Line Reference</div>
+          <div class="section-subtitle">Using ftkimager from the command line (Linux / Windows CLI)</div>
+        </div>
+        <span class="section-toggle" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="section-body" id="body-cli" role="region">
+        <hr class="section-divider" aria-hidden="true">
+
+        <p>The <code>ftkimager</code> command-line tool (available on Linux and Windows) allows scripted, automated acquisitions &mdash; useful for large-scale investigations or when a GUI is not practical.</p>
+
+        <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);margin:16px 0 10px">Syntax</h3>
+        <div class="code-wrap">
+          <div class="code-header"><span class="code-lang">Syntax</span></div>
+          <pre><code>ftkimager [source] [destination] [options]</code></pre>
+        </div>
+
+        <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);margin:20px 0 10px">Common Examples</h3>
+
+        <p><strong>Create a raw (dd) image from a physical drive:</strong></p>
+        <div class="code-wrap">
+          <div class="code-header"><span class="code-lang">Bash</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code>sudo ftkimager /dev/sdb /cases/case001/evidence_001 \
+  --case-number "2025-FE-001" \
+  --evidence-number "E001" \
+  --description "Suspect USB drive - 32GB" \
+  --examiner "Jane Smith" \
+  --compress</code></pre>
+        </div>
+
+        <p style="margin-top:14px"><strong>Create an E01 image:</strong></p>
+        <div class="code-wrap">
+          <div class="code-header"><span class="code-lang">Bash</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code>sudo ftkimager /dev/sdb /cases/case001/evidence_001 \
+  --e01 \
+  --case-number "2025-FE-001" \
+  --evidence-number "E001" \
+  --compress \
+  --verify</code></pre>
+        </div>
+
+        <p style="margin-top:14px"><strong>Compute file hash only (no imaging):</strong></p>
+        <div class="code-wrap">
+          <div class="code-header"><span class="code-lang">Bash</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code>ftkimager /dev/sdb --hash-logfile /cases/case001/hashes.txt</code></pre>
+        </div>
+
+        <p style="margin-top:14px"><strong>Windows &mdash; Image a physical drive:</strong></p>
+        <div class="code-wrap">
+          <div class="code-header"><span class="code-lang">cmd (Run as Administrator)</span><button class="code-copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><code>"C:\Program Files\AccessData\FTK Imager\ftkimager.exe" ^
+  \\.\PhysicalDrive1 ^
+  E:\Cases\Case-2025-001\Evidence\evidence_001 ^
+  --e01 --compress --verify ^
+  --case-number "2025-FE-001" ^
+  --evidence-number "E001" ^
+  --examiner "John Smith"</code></pre>
+        </div>
+
+        <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);margin:20px 0 10px">Key CLI Options</h3>
+        <div style="overflow-x:auto">
+          <table class="comparison-table" aria-label="FTK Imager CLI options reference">
+            <thead>
+              <tr><th scope="col">Option</th><th scope="col">Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>--e01</code></td><td>Output in E01 (Expert Witness) format</td></tr>
+              <tr><td><code>--compress</code></td><td>Enable compression (E01 / SMART only)</td></tr>
+              <tr><td><code>--verify</code></td><td>Verify image after creation (compares hashes)</td></tr>
+              <tr><td><code>--frag [size]</code></td><td>Set segment size in MB (default: 1500)</td></tr>
+              <tr><td><code>--case-number</code></td><td>Embed case number in E01 metadata</td></tr>
+              <tr><td><code>--evidence-number</code></td><td>Embed evidence number in E01 metadata</td></tr>
+              <tr><td><code>--examiner</code></td><td>Embed examiner name in E01 metadata</td></tr>
+              <tr><td><code>--description</code></td><td>Embed evidence description in E01 metadata</td></tr>
+              <tr><td><code>--hash-logfile</code></td><td>Write hash values to a log file</td></tr>
+              <tr><td><code>--list-drives</code></td><td>List all available drives on the system</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <button class="mark-complete-btn" onclick="markComplete(this, 8)" aria-label="Mark section 9 as complete">
+          <span aria-hidden="true">&#9744;</span> Mark Section Complete
+        </button>
+      </div>
+    </article>
+
+    <!-- ===== SECTION 10: KNOWLEDGE CHECK ===== -->
+    <article class="tutorial-section" id="sec-quiz">
+      <button class="section-head" aria-expanded="false" aria-controls="body-quiz" onclick="toggleSection(this)">
+        <div class="section-num" aria-hidden="true">10</div>
+        <div class="section-title-wrap">
+          <div class="section-title">Knowledge Check</div>
+          <div class="section-subtitle">Test your understanding of FTK Imager concepts</div>
+        </div>
+        <span class="section-toggle" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="section-body" id="body-quiz" role="region">
+        <hr class="section-divider" aria-hidden="true">
+
+        <div class="quiz-section" role="form" aria-label="Knowledge check quiz">
+          <h3><span aria-hidden="true">&#10067;</span> Knowledge Check &mdash; FTK Imager</h3>
+
+          <!-- Q1 -->
+          <div class="quiz-question" id="q1">
+            <p>1. What does FTK stand for in &ldquo;FTK Imager&rdquo;?</p>
+            <div class="quiz-options" role="radiogroup" aria-labelledby="q1">
+              <button class="quiz-option" onclick="checkAnswer(this,'wrong')" aria-pressed="false">
+                <span class="opt-indicator" aria-hidden="true">A</span> File Transfer Kit
+              </button>
+              <button class="quiz-option" onclick="checkAnswer(this,'correct')" aria-pressed="false">
+                <span class="opt-indicator" aria-hidden="true">B</span> Forensic Toolkit
+              </button>
+              <button class="quiz-option" onclick="checkAnswer(this,'wrong')" aria-pressed="false">
+                <span class="opt-indicator" aria-hidden="true">C</span> File Tracking Kernel
+              </button>
+              <button class="quiz-option" onclick="checkAnswer(this,'wrong')" aria-pressed="false">
+                <span class="opt-indicator" aria-hidden="true">D</span> Forensic Trace Keeper
+              </button>
+            </div>
+            <div class="quiz-feedback" id="q1-fb"></div>
+          </div>
+
+          <!-- Q2 -->
+          <div class="quiz-question" id="q2">
+            <p>2. Which image format supports embedded case metadata, compression, and is most accepted in court proceedings?</p>
+            <div class="quiz-options" role="radiogroup" aria-labelledby="q2">
+              <button class="quiz-option" onclick="checkAnswer(this,'wrong')" aria-pressed="false">
+                <span class="opt-indicator" aria-hidden="true">A</span> Raw (.dd)
+              </button>
+              <button class="quiz-option" onclick="checkAnswer(this,'wrong')" aria-pressed="false">
+                <span class="opt-indicator" aria-hidden="true">B</span> AFF (.aff)
+              </button>
+              <button class="quiz-option" onclick="checkAnswer(this,'correct')" aria-pressed="false">
+                <span class="opt-indicator" aria-hidden="true">C</span> E01 (Expert Witness Format)
+              </button>
+              <button class="quiz-option" onclick="checkAnswer(this,'wrong')" aria-pressed="false">
+                <span class="opt-indicator" aria-hidden="true">D</span> ZIP archive
+              </button>
+            </div>
+            <div class="quiz-feedback" id="q2-fb"></div>
+          </div>
+
+          <!-- Q3 -->
+          <div class="quiz-question" id="q3">
+            <p>3. Why is hash verification performed after creating a forensic image?</p>
+            <div class="quiz-options" role="radiogroup" aria-labelledby="q3">
+              <button class="quiz-option" onclick="checkAnswer(this,'wrong')" aria-pressed="false">
+                <span class="opt-indicator" aria-hidden="true">A</span> To compress the image file and save storage space
+              </button>
+              <button class="quiz-option" onclick="checkAnswer(this,'correct')" aria-pressed="false">
+                <span class="opt-indicator" aria-hidden="true">B</span> To confirm the image is an exact, unmodified copy of the source
+              </button>
+              <button class="quiz-option" onclick="checkAnswer(this,'wrong')" aria-pressed="false">
+                <span class="opt-indicator" aria-hidden="true">C</span> To speed up the analysis phase of the investigation
+              </button>
+              <button class="quiz-option" onclick="checkAnswer(this,'wrong')" aria-pressed="false">
+                <span class="opt-indicator" aria-hidden="true">D</span> To encrypt the image for secure storage
+              </button>
+            </div>
+            <div class="quiz-feedback" id="q3-fb"></div>
+          </div>
+
+          <!-- Q4 -->
+          <div class="quiz-question" id="q4">
+            <p>4. What device should be used before connecting a suspect drive to a forensic workstation?</p>
+            <div class="quiz-options" role="radiogroup" aria-labelledby="q4">
+              <button class="quiz-option" onclick="checkAnswer(this,'wrong')" aria-pressed="false">
+                <span class="opt-indicator" aria-hidden="true">A</span> Network switch
+              </button>
+              <button class="quiz-option" onclick="checkAnswer(this,'wrong')" aria-pressed="false">
+                <span class="opt-indicator" aria-hidden="true">B</span> USB hub
+              </button>
+              <button class="quiz-option" onclick="checkAnswer(this,'correct')" aria-pressed="false">
+                <span class="opt-indicator" aria-hidden="true">C</span> Hardware write blocker
+              </button>
+              <button class="quiz-option" onclick="checkAnswer(this,'wrong')" aria-pressed="false">
+                <span class="opt-indicator" aria-hidden="true">D</span> Antivirus scanner
+              </button>
+            </div>
+            <div class="quiz-feedback" id="q4-fb"></div>
+          </div>
+
+          <!-- Q5 -->
+          <div class="quiz-question" id="q5">
+            <p>5. In FTK Imager&rsquo;s interface, where would you find deleted files that have been recovered from the file system?</p>
+            <div class="quiz-options" role="radiogroup" aria-labelledby="q5">
+              <button class="quiz-option" onclick="checkAnswer(this,'wrong')" aria-pressed="false">
+                <span class="opt-indicator" aria-hidden="true">A</span> Properties panel (bottom right)
+              </button>
+              <button class="quiz-option" onclick="checkAnswer(this,'correct')" aria-pressed="false">
+                <span class="opt-indicator" aria-hidden="true">B</span> File list panel, highlighted in red
+              </button>
+              <button class="quiz-option" onclick="checkAnswer(this,'wrong')" aria-pressed="false">
+                <span class="opt-indicator" aria-hidden="true">C</span> Hex viewer panel
+              </button>
+              <button class="quiz-option" onclick="checkAnswer(this,'wrong')" aria-pressed="false">
+                <span class="opt-indicator" aria-hidden="true">D</span> The Windows Recycle Bin on the host machine
+              </button>
+            </div>
+            <div class="quiz-feedback" id="q5-fb"></div>
+          </div>
+
+          <!-- Score display -->
+          <div id="quiz-score" style="display:none;margin-top:16px;padding:16px 20px;background:var(--green-lt);border-radius:var(--radius);border:2px solid #22c55e;font-weight:600;color:var(--green)" role="status" aria-live="polite"></div>
+        </div>
+
+        <button class="mark-complete-btn" onclick="markComplete(this, 9)" aria-label="Mark section 10 as complete">
+          <span aria-hidden="true">&#9744;</span> Mark Section Complete
+        </button>
+      </div>
+    </article>
+
+  </main>
+</div>
+
+<!-- FOOTER -->
+<footer class="site-footer" role="contentinfo">
+  <p><strong>CSC 156 &mdash; Digital Forensics Fundamentals</strong> &bull; Mendocino College</p>
+  <p style="margin-top:6px">FTK Imager is a trademark of <strong>Exterro, Inc.</strong> This tutorial is for educational purposes only.</p>
+  <p style="margin-top:6px">&#9995; Always obtain proper legal authorization before imaging any device. &#9995;</p>
+  <p style="margin-top:10px;font-size:0.72rem;color:rgba(255,255,255,0.45)">Content aligned with CSLO: &ldquo;Perform data collection using forensic technology methods in accordance with evidence handling procedures.&rdquo;</p>
+</footer>
+
+<script>
+/* ===== SESSION PROGRESS ===== */
+var completedSections = JSON.parse(sessionStorage.getItem('ftk_completed') || '[]');
+var quizAnswers       = JSON.parse(sessionStorage.getItem('ftk_quiz')      || '{}');
+var quizCorrect = 0;
+
+function saveProgress() {
+  sessionStorage.setItem('ftk_completed', JSON.stringify(completedSections));
+}
+
+/* ===== SECTION TOGGLE ===== */
+function toggleSection(btn) {
+  var section = btn.closest('.tutorial-section');
+  var isOpen  = section.classList.contains('open');
+  section.classList.toggle('open', !isOpen);
+  btn.setAttribute('aria-expanded', !isOpen);
+}
+
+/* ===== MARK COMPLETE ===== */
+function markComplete(btn, idx) {
+  if (btn.classList.contains('done')) return;
+  btn.classList.add('done');
+  btn.innerHTML = '<span aria-hidden="true">&#9745;</span> Section Complete!';
+  btn.setAttribute('aria-label', 'Section ' + (idx+1) + ' marked as complete');
+  btn.closest('.tutorial-section').classList.add('completed');
+  btn.closest('.tutorial-section').querySelector('.section-num').textContent = '✓';
+
+  if (!completedSections.includes(idx)) completedSections.push(idx);
+  saveProgress();
+  updateProgressUI();
+}
+
+function updateProgressUI() {
+  var done  = completedSections.length;
+  var total = 10;
+  var pct   = Math.round((done / total) * 100);
+
+  document.getElementById('sectionsDone').textContent   = done;
+  document.getElementById('sidebarProgress').style.width = pct + '%';
+
+  var bar = document.getElementById('readingFill');
+  bar.style.width = pct + '%';
+  document.getElementById('readingProgressBar').setAttribute('aria-valuenow', pct);
+
+  // Update sidebar links
+  completedSections.forEach(function(i) {
+    var link = document.getElementById('nav-' + i);
+    if (link) link.classList.add('completed');
+  });
+}
+
+/* ===== TAB SWITCHING (INSTALL) ===== */
+function switchTab(platform) {
+  var panels = ['win','mac','lin'];
+  var tabs   = ['win','mac','lin'];
+  panels.forEach(function(p) {
+    var panel = document.getElementById('panel-' + p);
+    var tab   = document.getElementById('tab-'   + p);
+    var active = (p === platform);
+    if (panel) panel.style.display = active ? 'block' : 'none';
+    if (tab) {
+      tab.setAttribute('aria-selected', active);
+      tab.style.background = active ? 'var(--forest)' : 'var(--gray-200)';
+      tab.style.color      = active ? 'white' : 'var(--gray-700)';
+    }
+  });
+}
+
+/* ===== QUIZ ===== */
+var quizTotal = 5;
+quizCorrect = 0;
+
+function checkAnswer(btn, result) {
+  var qDiv = btn.closest('.quiz-question');
+  // Disable all options in this question
+  qDiv.querySelectorAll('.quiz-option').forEach(function(opt) {
+    opt.classList.add('disabled');
+    opt.setAttribute('aria-disabled', 'true');
+    opt.onclick = null;
+  });
+
+  var fbDiv = qDiv.querySelector('.quiz-feedback');
+  if (result === 'correct') {
+    btn.classList.add('correct');
+    btn.setAttribute('aria-pressed', 'true');
+    fbDiv.textContent = '&#10003; Correct! ' + getExplanation(qDiv.id);
+    fbDiv.className   = 'quiz-feedback show correct-fb';
+    quizCorrect++;
+  } else {
+    btn.classList.add('incorrect');
+    btn.setAttribute('aria-pressed', 'true');
+    fbDiv.textContent = '&#10007; Incorrect. ' + getExplanation(qDiv.id);
+    fbDiv.className   = 'quiz-feedback show incorrect-fb';
+    // Highlight correct
+    qDiv.querySelectorAll('.quiz-option').forEach(function(opt) {
+      if (opt.getAttribute('onclick') === null) {
+        // already disabled
+      }
+    });
+  }
+
+  // Replace innerHTML safely using text
+  fbDiv.innerHTML = (result === 'correct' ? '\u2713 Correct! ' : '\u2717 Incorrect. ') + getExplanation(qDiv.id);
+
+  saveQuizState();
+  checkAllAnswered();
+}
+
+function getExplanation(id) {
+  var explanations = {
+    q1: 'FTK stands for Forensic Toolkit, originally developed by AccessData, now maintained by Exterro.',
+    q2: 'E01 (Expert Witness Format) is the industry standard for court submissions, supporting compression and embedded case metadata.',
+    q3: 'Hash verification confirms that every bit in the image matches the source drive, establishing forensic integrity and admissibility.',
+    q4: 'A hardware write blocker prevents any data from being written to the evidence drive, protecting chain of custody.',
+    q5: 'Deleted files appear highlighted in red in the File List panel. They remain in the file system metadata (MFT) even after deletion.'
+  };
+  return explanations[id] || '';
+}
+
+function checkAllAnswered() {
+  var allQuestions = document.querySelectorAll('.quiz-question');
+  var answered = 0;
+  allQuestions.forEach(function(q) {
+    if (q.querySelector('.quiz-option.correct, .quiz-option.incorrect')) answered++;
+  });
+  if (answered === quizTotal) {
+    var scoreDiv = document.getElementById('quiz-score');
+    scoreDiv.style.display = 'block';
+    scoreDiv.innerHTML = '&#127881; Quiz Complete! You scored <strong>' + quizCorrect + ' out of ' + quizTotal + '</strong>. ' +
+      (quizCorrect === quizTotal ? 'Perfect score! You are ready to use FTK Imager.' :
+       quizCorrect >= 3 ? 'Good work! Review the sections for any questions you missed.' :
+       'Review the tutorial sections and try again.');
+    scoreDiv.style.background = quizCorrect === quizTotal ? 'var(--green-lt)' : quizCorrect >= 3 ? '#fef3c7' : 'var(--red-lt)';
+    scoreDiv.style.borderColor = quizCorrect === quizTotal ? '#22c55e' : quizCorrect >= 3 ? '#f59e0b' : '#ef4444';
+    scoreDiv.style.color = quizCorrect === quizTotal ? 'var(--green)' : quizCorrect >= 3 ? '#92400e' : 'var(--red)';
+  }
+}
+
+function saveQuizState() {
+  sessionStorage.setItem('ftk_quiz_score', quizCorrect);
+}
+
+/* ===== COPY CODE ===== */
+function copyCode(btn) {
+  var pre  = btn.closest('.code-wrap').querySelector('pre');
+  var text = pre ? pre.innerText : '';
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function() {
+      btn.textContent = 'Copied!';
+      setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+    });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.textContent = 'Copied!';
+    setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+  }
+}
+
+/* ===== READING PROGRESS (scroll) ===== */
+function updateReadingProgress() {
+  var scrollTop  = window.scrollY || document.documentElement.scrollTop;
+  var docHeight  = document.documentElement.scrollHeight - window.innerHeight;
+  var pct = docHeight > 0 ? Math.min(100, Math.round((scrollTop / docHeight) * 100)) : 0;
+  // Only update reading bar; section progress handled separately
+  if (completedSections.length === 0) {
+    document.getElementById('readingFill').style.width = pct + '%';
+    document.getElementById('readingProgressBar').setAttribute('aria-valuenow', pct);
+  }
+}
+window.addEventListener('scroll', updateReadingProgress, { passive: true });
+
+/* ===== SIDEBAR ACTIVE SECTION ===== */
+function updateActiveSidebarLink() {
+  var sections = document.querySelectorAll('.tutorial-section');
+  var scrollMid = window.scrollY + window.innerHeight * 0.35;
+  var activeIdx = 0;
+  sections.forEach(function(sec, i) {
+    if (sec.getBoundingClientRect().top + window.scrollY <= scrollMid) activeIdx = i;
+  });
+  document.querySelectorAll('.sidebar-nav a').forEach(function(a, i) {
+    a.classList.toggle('active', i === activeIdx);
+  });
+}
+window.addEventListener('scroll', updateActiveSidebarLink, { passive: true });
+
+/* ===== INIT ===== */
+(function init() {
+  // Restore completed sections from session
+  completedSections.forEach(function(idx) {
+    var section = document.querySelectorAll('.tutorial-section')[idx];
+    if (!section) return;
+    section.classList.add('completed');
+    section.querySelector('.section-num').textContent = '&#10003;';
+    var btn = section.querySelector('.mark-complete-btn');
+    if (btn) {
+      btn.classList.add('done');
+      btn.innerHTML = '<span aria-hidden="true">&#9745;</span> Section Complete!';
+    }
+  });
+  updateProgressUI();
+})();
+</script>
+</body>
+</html>
