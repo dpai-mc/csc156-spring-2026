@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CSC 156 Digital Forensics Fundamentals - Week 6: Data Acquisition and Preservation Overview">
+    <meta name="author" content="Mendocino College Computer Science Department">
+    <title>Week 6: Data Acquisition and Preservation | CSC 156</title>
+    <style>
+        /* CSS Reset and Base Styles */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --primary-color: #1a5f7a;
+            --primary-dark: #134b61;
+            --secondary-color: #57837b;
+            --accent-color: #c38e70;
+            --success-color: #2e7d32;
+            --warning-color: #f57c00;
+            --info-color: #0288d1;
+            --background-color: #fafafa;
+            --surface-color: #ffffff;
+            --text-primary: #212121;
+            --text-secondary: #616161;
+            --border-color: #e0e0e0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1), 0 6px 10px rgba(0,0,0,0.08);
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --transition-fast: 0.15s ease;
+            --transition-normal: 0.25s ease;
+            --focus-outline: 3px solid #1a5f7a;
+            --focus-offset: 2px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: var(--background-color);
+            min-height: 100vh;
+        }
+
+        /* Skip Link for Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            font-weight: 600;
+            z-index: 1000;
+            transition: top var(--transition-fast);
+        }
+
+        .skip-link:focus {
+            top: 1rem;
+            outline: var(--focus-outline);
+            outline-offset: var(--focus-offset);
+        }
+
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .course-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+
+        header h1 {
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+        }
+
+        .week-subtitle {
+            font-size: 1.125rem;
+            opacity: 0.95;
+            font-weight: 400;
+        }
+
+        /* Quick Stats Bar */
+        .stats-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            background: var(--surface-color);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--background-color);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+        }
+
+        .stat-icon {
+            font-size: 1.25rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        /* Main Content */
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        /* Section Styles */
+        .section {
+            background: var(--surface-color);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            background: var(--background-color);
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background var(--transition-fast);
+        }
+
+        .section-header:hover {
+            background: #f0f0f0;
+        }
+
+        .section-header:focus {
+            outline: var(--focus-outline);
+            outline-offset: calc(-1 * var(--focus-offset));
+        }
+
+        .section-header:focus:not(:focus-visible) {
+            outline: none;
+        }
+
+        .section-header:focus-visible {
+            outline: var(--focus-outline);
+            outline-offset: calc(-1 * var(--focus-offset));
+        }
+
+        .section-title-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .section h2 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .toggle-icon {
+            font-size: 1.25rem;
+            transition: transform var(--transition-normal);
+            color: var(--text-secondary);
+        }
+
+        .section.expanded .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .section-content {
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.3s ease;
+        }
+
+        .section.expanded .section-content {
+            padding: 1.5rem;
+            max-height: 3000px;
+        }
+
+        /* Overview Section */
+        .overview-text {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            line-height: 1.7;
+        }
+
+        .time-breakdown {
+            background: var(--background-color);
+            border-radius: var(--radius-md);
+            padding: 1rem 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .time-breakdown h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .time-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .time-table th,
+        .time-table td {
+            text-align: left;
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .time-table th {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .time-table tr:last-child td {
+            border-bottom: none;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        /* Learning Objectives List */
+        .objectives-list {
+            list-style: none;
+            counter-reset: objective-counter;
+        }
+
+        .objectives-list li {
+            counter-increment: objective-counter;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--background-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 0.75rem;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .objectives-list li:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .objectives-list li:last-child {
+            margin-bottom: 0;
+        }
+
+        .objective-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1.75rem;
+            height: 1.75rem;
+            background: var(--secondary-color);
+            color: white;
+            border-radius: 50%;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .objective-number::before {
+            content: counter(objective-counter);
+        }
+
+        .objective-text {
+            flex: 1;
+            color: var(--text-primary);
+        }
+
+        .objective-text strong {
+            color: var(--primary-color);
+        }
+
+        /* CSLO Card */
+        .cslo-card {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-left: 4px solid var(--success-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .cslo-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .cslo-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .cslo-badge {
+            background: var(--success-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .cslo-title {
+            font-weight: 600;
+            color: var(--success-color);
+        }
+
+        .cslo-text {
+            color: var(--text-primary);
+            font-style: italic;
+            line-height: 1.6;
+        }
+
+        .performance-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            background: rgba(46, 125, 50, 0.1);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            color: var(--success-color);
+        }
+
+        /* Certification Cards */
+        .cert-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .cert-card {
+            background: var(--background-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .cert-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .cert-name {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .cert-domain {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Topics Section */
+        .topic-category {
+            margin-bottom: 1.5rem;
+        }
+
+        .topic-category:last-child {
+            margin-bottom: 0;
+        }
+
+        .topic-category-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .topic-category-icon {
+            font-size: 1.25rem;
+        }
+
+        .topic-category-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .topic-list {
+            list-style: none;
+        }
+
+        .topic-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            background: var(--background-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 0.5rem;
+            transition: background var(--transition-fast);
+        }
+
+        .topic-item:hover {
+            background: #f0f0f0;
+        }
+
+        .topic-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .topic-bullet {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .topic-text {
+            flex: 1;
+        }
+
+        .topic-text strong {
+            color: var(--text-primary);
+        }
+
+        .topic-description {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Modules Section */
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .module-card {
+            background: var(--background-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            border: 1px solid var(--border-color);
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .module-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .module-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .module-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.25rem;
+            height: 2.25rem;
+            background: var(--primary-color);
+            color: white;
+            border-radius: var(--radius-sm);
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .module-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+
+        .module-description {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .module-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .module-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* Assignment Section */
+        .assignment-card {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-left: 4px solid var(--info-color);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+        }
+
+        .assignment-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .assignment-title-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .assignment-icon {
+            font-size: 1.5rem;
+        }
+
+        .assignment-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .assignment-points {
+            background: var(--info-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+        }
+
+        .assignment-objective {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .lab-parts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .lab-part {
+            background: rgba(255,255,255,0.7);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+        }
+
+        .lab-part-header {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lab-part-tasks {
+            list-style: none;
+            font-size: 0.9rem;
+        }
+
+        .lab-part-tasks li {
+            padding: 0.25rem 0;
+            padding-left: 1rem;
+            position: relative;
+            color: var(--text-secondary);
+        }
+
+        .lab-part-tasks li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--primary-color);
+        }
+
+        /* Info Box */
+        .info-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: #fff3e0;
+            border-left: 4px solid var(--warning-color);
+            border-radius: var(--radius-md);
+            margin-top: 1.5rem;
+        }
+
+        .info-box-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .info-box-content {
+            flex: 1;
+        }
+
+        .info-box-title {
+            font-weight: 600;
+            color: var(--warning-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .info-box-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Resources Section */
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .resource-category {
+            background: var(--background-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+        }
+
+        .resource-category-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .resource-category-icon {
+            font-size: 1.25rem;
+        }
+
+        .resource-category-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .resource-list {
+            list-style: none;
+        }
+
+        .resource-list li {
+            padding: 0.5rem 0;
+            padding-left: 1.25rem;
+            position: relative;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .resource-list li:last-child {
+            border-bottom: none;
+        }
+
+        .resource-list li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--primary-color);
+        }
+
+        /* Prerequisites Section */
+        .prereq-box {
+            background: var(--background-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .prereq-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .prereq-icon {
+            font-size: 1.25rem;
+        }
+
+        .prereq-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .prereq-text {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .prereq-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .prereq-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            background: var(--primary-color);
+            color: white;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: background var(--transition-fast);
+        }
+
+        .prereq-link:hover,
+        .prereq-link:focus {
+            background: var(--primary-dark);
+        }
+
+        .prereq-link:focus {
+            outline: var(--focus-outline);
+            outline-offset: var(--focus-offset);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--primary-dark);
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .footer-subtitle {
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        /* Expand All Button */
+        .controls {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .expand-all-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .expand-all-btn:hover {
+            background: var(--background-color);
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .expand-all-btn:focus {
+            outline: var(--focus-outline);
+            outline-offset: var(--focus-offset);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .stats-bar {
+                padding: 0.75rem 1rem;
+            }
+
+            .stat-item {
+                flex: 1 1 calc(50% - 0.5rem);
+                justify-content: center;
+                font-size: 0.85rem;
+            }
+
+            main {
+                padding: 1rem;
+            }
+
+            .section-content {
+                padding: 1rem;
+            }
+
+            .section.expanded .section-content {
+                padding: 1rem;
+            }
+
+            .modules-grid,
+            .cert-grid,
+            .resources-grid,
+            .lab-parts {
+                grid-template-columns: 1fr;
+            }
+
+            .assignment-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stat-item {
+                flex: 1 1 100%;
+            }
+
+            header {
+                padding: 1.5rem 1rem;
+            }
+
+            .section-title-group {
+                flex-wrap: wrap;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .skip-link,
+            .controls,
+            .toggle-icon {
+                display: none;
+            }
+
+            .section-content {
+                max-height: none !important;
+                padding: 1rem !important;
+            }
+
+            .section {
+                break-inside: avoid;
+            }
+
+            body {
+                font-size: 12pt;
+            }
+        }
+
+        /* Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+
+            html {
+                scroll-behavior: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header role="banner">
+        <span class="course-badge">CSC 156 - Digital Forensics Fundamentals</span>
+        <h1>Week 6: Data Acquisition and Preservation</h1>
+        <p class="week-subtitle">Forensic Imaging, Write Protection, and Hash Verification</p>
+    </header>
+
+    <div class="stats-bar" role="complementary" aria-label="Week statistics">
+        <div class="stat-item">
+            <span class="stat-icon" aria-hidden="true">📅</span>
+            <span class="stat-label">Duration:</span>
+            <span class="stat-value">5 Days</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-icon" aria-hidden="true">📚</span>
+            <span class="stat-label">Lecture:</span>
+            <span class="stat-value">2 Hours</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-icon" aria-hidden="true">🔬</span>
+            <span class="stat-label">Lab:</span>
+            <span class="stat-value">3 Hours</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-icon" aria-hidden="true">⏰</span>
+            <span class="stat-label">Total Time:</span>
+            <span class="stat-value">~12-14 Hours</span>
+        </div>
+    </div>
+
+    <main id="main-content" role="main">
+        <div class="controls">
+            <button class="expand-all-btn" id="expandAllBtn" aria-expanded="false" aria-controls="sections-container">
+                <span aria-hidden="true">⊕</span>
+                <span class="btn-text">Expand All Sections</span>
+            </button>
+        </div>
+
+        <div id="sections-container">
+            <!-- Section 1: Week Overview -->
+            <section class="section expanded" id="section-overview">
+                <button class="section-header" aria-expanded="true" aria-controls="content-overview">
+                    <div class="section-title-group">
+                        <span class="section-number" aria-hidden="true">1</span>
+                        <h2>Week Overview</h2>
+                    </div>
+                    <span class="toggle-icon" aria-hidden="true">▼</span>
+                </button>
+                <div class="section-content" id="content-overview">
+                    <p class="overview-text">
+                        Week 6 represents a critical transition point in the course—moving from understanding how data is stored (Weeks 4-5) to how to properly collect that data for forensic analysis. This week covers the essential techniques for creating forensically sound copies of digital evidence, including forensic imaging, write protection, and cryptographic hash verification. These skills are fundamental to maintaining evidence integrity and ensuring admissibility in legal proceedings.
+                    </p>
+                    <p class="overview-text">
+                        You will learn to use industry-standard tools including <strong>dd</strong>, <strong>dcfldd</strong>, <strong>FTK Imager</strong>, and <strong>Guymager</strong> to create forensic images. Understanding the difference between forensic imaging and logical copying, and knowing when to apply each method, is crucial for any digital forensics professional.
+                    </p>
+
+                    <div class="time-breakdown">
+                        <h3>Time Breakdown</h3>
+                        <table class="time-table" role="table" aria-label="Weekly time allocation">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Activity</th>
+                                    <th scope="col">Hours</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Lecture Hours</td>
+                                    <td>2</td>
+                                </tr>
+                                <tr>
+                                    <td>Lab Hours</td>
+                                    <td>3</td>
+                                </tr>
+                                <tr>
+                                    <td>Learning Modules</td>
+                                    <td>~5-6</td>
+                                </tr>
+                                <tr>
+                                    <td>Reading &amp; Study</td>
+                                    <td>~2-3</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total Student Time</strong></td>
+                                    <td><strong>~12-14</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 2: Learning Objectives -->
+            <section class="section" id="section-objectives">
+                <button class="section-header" aria-expanded="false" aria-controls="content-objectives">
+                    <div class="section-title-group">
+                        <span class="section-number" aria-hidden="true">2</span>
+                        <h2>Learning Objectives</h2>
+                    </div>
+                    <span class="toggle-icon" aria-hidden="true">▼</span>
+                </button>
+                <div class="section-content" id="content-objectives">
+                    <p class="overview-text">By the end of Week 6, students will be able to:</p>
+                    <ol class="objectives-list">
+                        <li>
+                            <span class="objective-number" aria-hidden="true"></span>
+                            <span class="objective-text"><strong>Differentiate</strong> between forensic imaging and logical copying, explaining when each method is appropriate</span>
+                        </li>
+                        <li>
+                            <span class="objective-number" aria-hidden="true"></span>
+                            <span class="objective-text"><strong>Explain</strong> the purpose and operation of hardware and software write blockers</span>
+                        </li>
+                        <li>
+                            <span class="objective-number" aria-hidden="true"></span>
+                            <span class="objective-text"><strong>Create</strong> forensically sound disk images using industry-standard tools (dd, FTK Imager, Guymager)</span>
+                        </li>
+                        <li>
+                            <span class="objective-number" aria-hidden="true"></span>
+                            <span class="objective-text"><strong>Calculate and verify</strong> data integrity using cryptographic hash algorithms (MD5, SHA-1, SHA-256)</span>
+                        </li>
+                        <li>
+                            <span class="objective-number" aria-hidden="true"></span>
+                            <span class="objective-text"><strong>Document</strong> the acquisition process in accordance with evidence handling procedures</span>
+                        </li>
+                        <li>
+                            <span class="objective-number" aria-hidden="true"></span>
+                            <span class="objective-text"><strong>Select</strong> appropriate acquisition methods based on evidence type, time constraints, and legal requirements</span>
+                        </li>
+                        <li>
+                            <span class="objective-number" aria-hidden="true"></span>
+                            <span class="objective-text"><strong>Troubleshoot</strong> common acquisition problems and implement solutions</span>
+                        </li>
+                        <li>
+                            <span class="objective-number" aria-hidden="true"></span>
+                            <span class="objective-text"><strong>Explain</strong> the forensic implications of acquiring data from SSDs versus HDDs</span>
+                        </li>
+                    </ol>
+                </div>
+            </section>
+
+            <!-- Section 3: Course Student Learning Outcomes -->
+            <section class="section" id="section-cslo">
+                <button class="section-header" aria-expanded="false" aria-controls="content-cslo">
+                    <div class="section-title-group">
+                        <span class="section-number" aria-hidden="true">3</span>
+                        <h2>Course Student Learning Outcomes (CSLOs)</h2>
+                    </div>
+                    <span class="toggle-icon" aria-hidden="true">▼</span>
+                </button>
+                <div class="section-content" id="content-cslo">
+                    <p class="overview-text">This week's content directly addresses the following Course Student Learning Outcome:</p>
+                    
+                    <div class="cslo-card">
+                        <div class="cslo-header">
+                            <span class="cslo-badge">Primary</span>
+                            <span class="cslo-title">CSLO 3</span>
+                        </div>
+                        <p class="cslo-text">
+                            "Perform data collection using forensic technology methods in accordance with evidence handling procedures."
+                        </p>
+                        <span class="performance-indicator">
+                            <span aria-hidden="true">🎯</span>
+                            Expected Performance: 75% mastery
+                        </span>
+                    </div>
+
+                    <div class="info-box">
+                        <span class="info-box-icon" aria-hidden="true">💡</span>
+                        <div class="info-box-content">
+                            <p class="info-box-title">Assessment Connection</p>
+                            <p class="info-box-text">
+                                Your mastery of CSLO 3 will be primarily assessed through the Forensic Imaging and Hash Verification Lab this week, where you will demonstrate proper evidence collection techniques using multiple forensic tools.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 4: Professional Certification Alignment -->
+            <section class="section" id="section-certs">
+                <button class="section-header" aria-expanded="false" aria-controls="content-certs">
+                    <div class="section-title-group">
+                        <span class="section-number" aria-hidden="true">4</span>
+                        <h2>Professional Certification Alignment</h2>
+                    </div>
+                    <span class="toggle-icon" aria-hidden="true">▼</span>
+                </button>
+                <div class="section-content" id="content-certs">
+                    <p class="overview-text">
+                        Week 6 content aligns with multiple professional certification domains, helping you prepare for industry-recognized credentials:
+                    </p>
+                    <div class="cert-grid">
+                        <div class="cert-card">
+                            <p class="cert-name">IACIS CFCE</p>
+                            <p class="cert-domain">Data Acquisition</p>
+                        </div>
+                        <div class="cert-card">
+                            <p class="cert-name">GIAC GCFE</p>
+                            <p class="cert-domain">Forensic Acquisition and Analysis</p>
+                        </div>
+                        <div class="cert-card">
+                            <p class="cert-name">GIAC GCFA</p>
+                            <p class="cert-domain">Evidence Acquisition</p>
+                        </div>
+                        <div class="cert-card">
+                            <p class="cert-name">EC-Council CHFI</p>
+                            <p class="cert-domain">Data Acquisition and Duplication</p>
+                        </div>
+                    </div>
+
+                    <div class="info-box">
+                        <span class="info-box-icon" aria-hidden="true">🎓</span>
+                        <div class="info-box-content">
+                            <p class="info-box-title">Career Advantage</p>
+                            <p class="info-box-text">
+                                Data acquisition is a core competency tested on all major digital forensics certifications. The hands-on skills you develop this week directly prepare you for certification exam practical components.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 5: Topics Covered -->
+            <section class="section" id="section-topics">
+                <button class="section-header" aria-expanded="false" aria-controls="content-topics">
+                    <div class="section-title-group">
+                        <span class="section-number" aria-hidden="true">5</span>
+                        <h2>Topics Covered This Week</h2>
+                    </div>
+                    <span class="toggle-icon" aria-hidden="true">▼</span>
+                </button>
+                <div class="section-content" id="content-topics">
+                    <div class="topic-category">
+                        <div class="topic-category-header">
+                            <span class="topic-category-icon" aria-hidden="true">📚</span>
+                            <h3 class="topic-category-title">Lecture Topics</h3>
+                        </div>
+                        <ul class="topic-list">
+                            <li class="topic-item">
+                                <span class="topic-bullet" aria-hidden="true">▸</span>
+                                <div class="topic-text">
+                                    <strong>Forensic Imaging vs. Logical Copying</strong>
+                                    <span class="topic-description">Understanding the critical differences and when to use each approach</span>
+                                </div>
+                            </li>
+                            <li class="topic-item">
+                                <span class="topic-bullet" aria-hidden="true">▸</span>
+                                <div class="topic-text">
+                                    <strong>Write Blockers and Forensic Duplicators</strong>
+                                    <span class="topic-description">Hardware and software solutions for preventing evidence modification</span>
+                                </div>
+                            </li>
+                            <li class="topic-item">
+                                <span class="topic-bullet" aria-hidden="true">▸</span>
+                                <div class="topic-text">
+                                    <strong>Data Acquisition Tools</strong>
+                                    <span class="topic-description">Hands-on with dd, dcfldd, FTK Imager, and Guymager</span>
+                                </div>
+                            </li>
+                            <li class="topic-item">
+                                <span class="topic-bullet" aria-hidden="true">▸</span>
+                                <div class="topic-text">
+                                    <strong>Hash Verification</strong>
+                                    <span class="topic-description">Using MD5, SHA-1, and SHA-256 for data integrity verification</span>
+                                </div>
+                            </li>
+                            <li class="topic-item">
+                                <span class="topic-bullet" aria-hidden="true">▸</span>
+                                <div class="topic-text">
+                                    <strong>Evidence Preservation Techniques</strong>
+                                    <span class="topic-description">Best practices for maintaining chain of custody during acquisition</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="topic-category">
+                        <div class="topic-category-header">
+                            <span class="topic-category-icon" aria-hidden="true">🔬</span>
+                            <h3 class="topic-category-title">Lab Activities</h3>
+                        </div>
+                        <ul class="topic-list">
+                            <li class="topic-item">
+                                <span class="topic-bullet" aria-hidden="true">▸</span>
+                                <div class="topic-text">
+                                    <strong>Create Forensic Images Using Multiple Tools</strong>
+                                    <span class="topic-description">Practice with dd/dcfldd (Linux) and FTK Imager (Windows)</span>
+                                </div>
+                            </li>
+                            <li class="topic-item">
+                                <span class="topic-bullet" aria-hidden="true">▸</span>
+                                <div class="topic-text">
+                                    <strong>Use Write Blockers with Various Storage Media</strong>
+                                    <span class="topic-description">Hardware and software write blocking techniques</span>
+                                </div>
+                            </li>
+                            <li class="topic-item">
+                                <span class="topic-bullet" aria-hidden="true">▸</span>
+                                <div class="topic-text">
+                                    <strong>Hash Verification and Documentation</strong>
+                                    <span class="topic-description">Calculate, verify, and document cryptographic hashes</span>
+                                </div>
+                            </li>
+                            <li class="topic-item">
+                                <span class="topic-bullet" aria-hidden="true">▸</span>
+                                <div class="topic-text">
+                                    <strong>Image Verification and Conversion</strong>
+                                    <span class="topic-description">Mount images and convert between formats (raw, E01)</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 6: Learning Modules -->
+            <section class="section" id="section-modules">
+                <button class="section-header" aria-expanded="false" aria-controls="content-modules">
+                    <div class="section-title-group">
+                        <span class="section-number" aria-hidden="true">6</span>
+                        <h2>Learning Modules</h2>
+                    </div>
+                    <span class="toggle-icon" aria-hidden="true">▼</span>
+                </button>
+                <div class="section-content" id="content-modules">
+                    <p class="overview-text">
+                        Week 6 consists of seven comprehensive learning modules that progress from foundational acquisition concepts to advanced troubleshooting and documentation practices:
+                    </p>
+                    <div class="modules-grid">
+                        <article class="module-card">
+                            <div class="module-header">
+                                <span class="module-number">1</span>
+                                <h3 class="module-title">Acquisition Fundamentals</h3>
+                            </div>
+                            <p class="module-description">
+                                Understanding the difference between forensic imaging and logical copying, and why forensic imaging is essential for evidence integrity.
+                            </p>
+                            <div class="module-meta">
+                                <span><span aria-hidden="true">⏱️</span> ~45 min</span>
+                            </div>
+                        </article>
+
+                        <article class="module-card">
+                            <div class="module-header">
+                                <span class="module-number">2</span>
+                                <h3 class="module-title">Write Protection</h3>
+                            </div>
+                            <p class="module-description">
+                                Hardware and software write blockers, their operation, and critical role in maintaining evidence integrity during acquisition.
+                            </p>
+                            <div class="module-meta">
+                                <span><span aria-hidden="true">⏱️</span> ~40 min</span>
+                            </div>
+                        </article>
+
+                        <article class="module-card">
+                            <div class="module-header">
+                                <span class="module-number">3</span>
+                                <h3 class="module-title">Imaging Tools - Command Line</h3>
+                            </div>
+                            <p class="module-description">
+                                Using dd and dcfldd in Linux environments for forensic imaging, including proper syntax and parameters.
+                            </p>
+                            <div class="module-meta">
+                                <span><span aria-hidden="true">⏱️</span> ~50 min</span>
+                            </div>
+                        </article>
+
+                        <article class="module-card">
+                            <div class="module-header">
+                                <span class="module-number">4</span>
+                                <h3 class="module-title">Imaging Tools - GUI Applications</h3>
+                            </div>
+                            <p class="module-description">
+                                Using FTK Imager and Guymager for forensic imaging, including E01 format creation and verification.
+                            </p>
+                            <div class="module-meta">
+                                <span><span aria-hidden="true">⏱️</span> ~50 min</span>
+                            </div>
+                        </article>
+
+                        <article class="module-card">
+                            <div class="module-header">
+                                <span class="module-number">5</span>
+                                <h3 class="module-title">Cryptographic Hash Verification</h3>
+                            </div>
+                            <p class="module-description">
+                                Understanding MD5, SHA-1, and SHA-256 algorithms for verifying data integrity and detecting modifications.
+                            </p>
+                            <div class="module-meta">
+                                <span><span aria-hidden="true">⏱️</span> ~45 min</span>
+                            </div>
+                        </article>
+
+                        <article class="module-card">
+                            <div class="module-header">
+                                <span class="module-number">6</span>
+                                <h3 class="module-title">SSD Acquisition Challenges</h3>
+                            </div>
+                            <p class="module-description">
+                                Special considerations for acquiring data from solid-state drives, including TRIM, wear leveling, and encryption.
+                            </p>
+                            <div class="module-meta">
+                                <span><span aria-hidden="true">⏱️</span> ~40 min</span>
+                            </div>
+                        </article>
+
+                        <article class="module-card">
+                            <div class="module-header">
+                                <span class="module-number">7</span>
+                                <h3 class="module-title">Documentation &amp; Troubleshooting</h3>
+                            </div>
+                            <p class="module-description">
+                                Proper documentation of the acquisition process and troubleshooting common problems encountered during imaging.
+                            </p>
+                            <div class="module-meta">
+                                <span><span aria-hidden="true">⏱️</span> ~40 min</span>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="info-box">
+                        <span class="info-box-icon" aria-hidden="true">📖</span>
+                        <div class="info-box-content">
+                            <p class="info-box-title">Module Access</p>
+                            <p class="info-box-text">
+                                Detailed content for each learning module is available separately in the course learning management system. Complete modules in order for the best learning experience.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 7: Assignment -->
+            <section class="section" id="section-assignment">
+                <button class="section-header" aria-expanded="false" aria-controls="content-assignment">
+                    <div class="section-title-group">
+                        <span class="section-number" aria-hidden="true">7</span>
+                        <h2>Assignment</h2>
+                    </div>
+                    <span class="toggle-icon" aria-hidden="true">▼</span>
+                </button>
+                <div class="section-content" id="content-assignment">
+                    <div class="assignment-card">
+                        <div class="assignment-header">
+                            <div class="assignment-title-group">
+                                <span class="assignment-icon" aria-hidden="true">🔬</span>
+                                <h3 class="assignment-title">Lab Activity 6: Forensic Imaging and Hash Verification</h3>
+                            </div>
+                            <span class="assignment-points">20 Points</span>
+                        </div>
+                        
+                        <p class="assignment-objective">
+                            <strong>Objective:</strong> Demonstrate proficiency in creating forensically sound disk images using multiple tools and verifying data integrity through cryptographic hashing.
+                        </p>
+
+                        <div class="lab-parts">
+                            <div class="lab-part">
+                                <p class="lab-part-header">
+                                    <span aria-hidden="true">📁</span>
+                                    Part 1: Imaging with dd/dcfldd (Linux)
+                                </p>
+                                <ul class="lab-part-tasks">
+                                    <li>Connect USB drive via write blocker</li>
+                                    <li>Identify device using lsblk or fdisk -l</li>
+                                    <li>Create raw image with appropriate parameters</li>
+                                    <li>Calculate MD5 and SHA-256 hashes</li>
+                                    <li>Document process and verify hash match</li>
+                                </ul>
+                            </div>
+                            <div class="lab-part">
+                                <p class="lab-part-header">
+                                    <span aria-hidden="true">💻</span>
+                                    Part 2: Imaging with FTK Imager (Windows)
+                                </p>
+                                <ul class="lab-part-tasks">
+                                    <li>Connect USB drive via write blocker</li>
+                                    <li>Create E01 format image with compression</li>
+                                    <li>Enter appropriate case information</li>
+                                    <li>Verify image after creation</li>
+                                    <li>Compare hashes with Part 1 results</li>
+                                </ul>
+                            </div>
+                            <div class="lab-part">
+                                <p class="lab-part-header">
+                                    <span aria-hidden="true">✅</span>
+                                    Part 3: Image Verification &amp; Conversion
+                                </p>
+                                <ul class="lab-part-tasks">
+                                    <li>Mount E01 image and verify accessibility</li>
+                                    <li>Convert between image formats</li>
+                                    <li>Verify integrity after conversion</li>
+                                    <li>Complete lab documentation</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-box">
+                        <span class="info-box-icon" aria-hidden="true">📋</span>
+                        <div class="info-box-content">
+                            <p class="info-box-title">Lab Submission</p>
+                            <p class="info-box-text">
+                                Detailed lab instructions and the submission template are available separately in the course learning management system. Be sure to document every step of your process and include all hash values in your report.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 8: Recommended Resources -->
+            <section class="section" id="section-resources">
+                <button class="section-header" aria-expanded="false" aria-controls="content-resources">
+                    <div class="section-title-group">
+                        <span class="section-number" aria-hidden="true">8</span>
+                        <h2>Recommended Resources</h2>
+                    </div>
+                    <span class="toggle-icon" aria-hidden="true">▼</span>
+                </button>
+                <div class="section-content" id="content-resources">
+                    <div class="resources-grid">
+                        <div class="resource-category">
+                            <div class="resource-category-header">
+                                <span class="resource-category-icon" aria-hidden="true">🛠️</span>
+                                <h3 class="resource-category-title">Forensic Tools</h3>
+                            </div>
+                            <ul class="resource-list">
+                                <li>FTK Imager (AccessData/Exterro)</li>
+                                <li>Guymager (Linux imaging tool)</li>
+                                <li>dd / dcfldd (command-line utilities)</li>
+                                <li>Autopsy / The Sleuth Kit</li>
+                            </ul>
+                        </div>
+                        <div class="resource-category">
+                            <div class="resource-category-header">
+                                <span class="resource-category-icon" aria-hidden="true">📖</span>
+                                <h3 class="resource-category-title">Documentation</h3>
+                            </div>
+                            <ul class="resource-list">
+                                <li>NIST SP 800-86: Guide to Integrating Forensic Techniques</li>
+                                <li>SWGDE Best Practices for Data Acquisition</li>
+                                <li>NIST CFTT Program Reports</li>
+                            </ul>
+                        </div>
+                        <div class="resource-category">
+                            <div class="resource-category-header">
+                                <span class="resource-category-icon" aria-hidden="true">🎬</span>
+                                <h3 class="resource-category-title">Video Resources</h3>
+                            </div>
+                            <ul class="resource-list">
+                                <li>13Cubed YouTube Channel</li>
+                                <li>SANS DFIR Webcasts</li>
+                                <li>DFIR Diva Tutorials</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 9: Prerequisites -->
+            <section class="section" id="section-prereqs">
+                <button class="section-header" aria-expanded="false" aria-controls="content-prereqs">
+                    <div class="section-title-group">
+                        <span class="section-number" aria-hidden="true">9</span>
+                        <h2>Prerequisites &amp; Prior Knowledge</h2>
+                    </div>
+                    <span class="toggle-icon" aria-hidden="true">▼</span>
+                </button>
+                <div class="section-content" id="content-prereqs">
+                    <div class="prereq-box">
+                        <div class="prereq-header">
+                            <span class="prereq-icon" aria-hidden="true">🔗</span>
+                            <h3 class="prereq-title">Building on Previous Weeks</h3>
+                        </div>
+                        <p class="prereq-text">
+                            This week builds directly on concepts from Weeks 4 and 5. Before proceeding, ensure you understand:
+                        </p>
+                        <ul class="resource-list" style="margin-top: 0.75rem;">
+                            <li><strong>Week 4:</strong> HDD vs. SSD architecture, storage interfaces, boot processes (BIOS/UEFI, MBR/GPT)</li>
+                            <li><strong>Week 5:</strong> File system structures (FAT, NTFS, ext), MFT analysis, deleted file recovery, unallocated areas</li>
+                        </ul>
+                        <p class="prereq-text" style="margin-top: 0.75rem;">
+                            Review these topics if needed before proceeding with Week 6 content.
+                        </p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer role="contentinfo">
+        <div class="footer-content">
+            <p class="footer-title">CSC 156 - Digital Forensics Fundamentals</p>
+            <p class="footer-subtitle">Mendocino College | Computer Science Department</p>
+        </div>
+    </footer>
+
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get all section headers
+            const sectionHeaders = document.querySelectorAll('.section-header');
+            const expandAllBtn = document.getElementById('expandAllBtn');
+            let allExpanded = false;
+
+            // Function to toggle a single section
+            function toggleSection(section, forceState) {
+                const isExpanded = section.classList.contains('expanded');
+                const header = section.querySelector('.section-header');
+                const content = section.querySelector('.section-content');
+                
+                if (forceState !== undefined) {
+                    if (forceState) {
+                        section.classList.add('expanded');
+                        header.setAttribute('aria-expanded', 'true');
+                    } else {
+                        section.classList.remove('expanded');
+                        header.setAttribute('aria-expanded', 'false');
+                    }
+                } else {
+                    section.classList.toggle('expanded');
+                    header.setAttribute('aria-expanded', !isExpanded);
+                }
+            }
+
+            // Add click handlers to section headers
+            sectionHeaders.forEach(function(header) {
+                header.addEventListener('click', function() {
+                    const section = this.closest('.section');
+                    toggleSection(section);
+                    updateExpandAllButton();
+                });
+
+                // Add keyboard support
+                header.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        const section = this.closest('.section');
+                        toggleSection(section);
+                        updateExpandAllButton();
+                    }
+                });
+            });
+
+            // Function to update expand all button state
+            function updateExpandAllButton() {
+                const sections = document.querySelectorAll('.section');
+                const expandedCount = document.querySelectorAll('.section.expanded').length;
+                allExpanded = expandedCount === sections.length;
+                
+                const btnText = expandAllBtn.querySelector('.btn-text');
+                if (allExpanded) {
+                    btnText.textContent = 'Collapse All Sections';
+                    expandAllBtn.setAttribute('aria-expanded', 'true');
+                } else {
+                    btnText.textContent = 'Expand All Sections';
+                    expandAllBtn.setAttribute('aria-expanded', 'false');
+                }
+            }
+
+            // Expand all button handler
+            expandAllBtn.addEventListener('click', function() {
+                const sections = document.querySelectorAll('.section');
+                allExpanded = !allExpanded;
+                
+                sections.forEach(function(section) {
+                    toggleSection(section, allExpanded);
+                });
+                
+                updateExpandAllButton();
+            });
+
+            // Initialize button state
+            updateExpandAllButton();
+
+            // Announce page load for screen readers
+            const announcement = document.createElement('div');
+            announcement.setAttribute('role', 'status');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.setAttribute('aria-atomic', 'true');
+            announcement.className = 'sr-only';
+            announcement.style.cssText = 'position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;';
+            announcement.textContent = 'Week 6 overview page loaded. Use tab to navigate through sections. Press Enter or Space to expand or collapse sections.';
+            document.body.appendChild(announcement);
+
+            // Remove announcement after it's been read
+            setTimeout(function() {
+                announcement.remove();
+            }, 3000);
+        });
+    </script>
+</body>
+</html>
