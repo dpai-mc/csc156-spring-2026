@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="CSC 156 Digital Forensics — Student Lab Guide: Write a forensic .dd image to a USB drive using Win32DiskImager to create a practice evidence drive.">
+<title>Lab: Write a .dd Image to USB &mdash; CSC 156</title>
+<style>
+/* ===== RESET & TOKENS ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --forest:      #1a4d2e;
+  --forest-dk:   #122e1c;
+  --forest-lt:   #2a6b42;
+  --forest-pale: #e8f0eb;
+  --tan:         #d4a574;
+  --tan-lt:      #e8c9a0;
+  --white:       #ffffff;
+  --off-white:   #f7f5f1;
+  --gray-50:     #f9fafb;
+  --gray-100:    #f3f4f6;
+  --gray-200:    #e5e7eb;
+  --gray-300:    #d1d5db;
+  --gray-400:    #9ca3af;
+  --gray-500:    #6b7280;
+  --gray-600:    #4b5563;
+  --gray-700:    #374151;
+  --gray-800:    #1f2937;
+  --gray-900:    #111827;
+  --blue-lt:     #dbeafe;
+  --blue-bdr:    #3b82f6;
+  --blue-txt:    #1e40af;
+  --green-lt:    #dcfce7;
+  --green-bdr:   #22c55e;
+  --green-txt:   #166534;
+  --amber-lt:    #fef3c7;
+  --amber-bdr:   #f59e0b;
+  --amber-txt:   #92400e;
+  --red-lt:      #fee2e2;
+  --red-bdr:     #ef4444;
+  --red-txt:     #991b1b;
+  --code-bg:     #1a2a1e;
+  --code-txt:    #a8d5b5;
+  --radius:      8px;
+  --shadow:      0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg:   0 8px 24px rgba(0,0,0,0.10);
+  --font-ui:     'Segoe UI', system-ui, sans-serif;
+  --font-mono:   'Consolas', 'Courier New', monospace;
+  --trans:       0.18s ease;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-ui);
+  background: var(--off-white);
+  color: var(--gray-800);
+  line-height: 1.65;
+  font-size: 16px;
+}
+
+/* ===== ACCESSIBILITY ===== */
+.skip-link {
+  position: absolute; top: -40px; left: 0;
+  background: var(--forest); color: white;
+  padding: 8px 16px; z-index: 9999; font-weight: 600;
+  border-radius: 0 0 4px 0; text-decoration: none;
+  transition: top var(--trans);
+}
+.skip-link:focus { top: 0; }
+:focus-visible { outline: 3px solid var(--forest); outline-offset: 2px; }
+
+/* ===== TOP BANNER ===== */
+.course-banner {
+  background: var(--forest-dk); color: var(--tan-lt);
+  text-align: center; padding: 5px 16px;
+  font-size: 0.74rem; letter-spacing: 0.05em;
+}
+
+/* ===== HEADER ===== */
+.site-header {
+  background: var(--forest); color: white;
+  padding: 0 20px; position: sticky; top: 0;
+  z-index: 100; box-shadow: var(--shadow-lg);
+}
+.header-inner {
+  max-width: 900px; margin: 0 auto;
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 0;
+}
+.header-icon {
+  width: 42px; height: 42px; background: var(--tan);
+  border-radius: 8px; display: flex; align-items: center;
+  justify-content: center; font-size: 1.3rem; flex-shrink: 0;
+}
+.header-text h1 { font-size: 1rem; font-weight: 700; line-height: 1.2; }
+.header-text p  { font-size: 0.75rem; color: var(--tan-lt); margin-top: 1px; }
+.header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.badge {
+  font-size: 0.68rem; font-weight: 700; padding: 4px 10px;
+  border-radius: 20px; letter-spacing: 0.05em; white-space: nowrap;
+}
+.badge-tan     { background: var(--tan); color: var(--forest-dk); }
+.badge-outline { border: 1.5px solid rgba(255,255,255,0.35); color: rgba(255,255,255,0.8); }
+
+/* ===== PROGRESS BAR ===== */
+.progress-bar {
+  height: 4px; background: var(--gray-200);
+  position: sticky; top: 68px; z-index: 99;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--forest-lt), var(--tan));
+  width: 0%; transition: width 0.15s linear;
+}
+
+/* ===== LAYOUT ===== */
+.page-wrap {
+  max-width: 900px; margin: 0 auto;
+  padding: 28px 20px 80px;
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar { position: sticky; top: 82px; }
+.toc-box {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius); overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.toc-head {
+  background: var(--forest); color: white;
+  padding: 10px 14px; font-size: 0.73rem; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+.toc-links { padding: 5px 0; }
+.toc-links a {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px; text-decoration: none;
+  color: var(--gray-700); font-size: 0.8rem;
+  border-left: 3px solid transparent;
+  transition: all var(--trans);
+}
+.toc-links a:hover  { background: var(--gray-50); color: var(--forest); border-left-color: var(--tan); }
+.toc-links a.active { background: var(--forest-pale); color: var(--forest); border-left-color: var(--forest); font-weight: 600; }
+.toc-links a.done   { color: var(--green-txt); }
+.step-dot {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--gray-200); color: var(--gray-600);
+  font-size: 0.62rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.toc-links a.active .step-dot { background: var(--forest); color: white; }
+.toc-links a.done   .step-dot { background: var(--green-txt); color: white; }
+.toc-progress {
+  border-top: 1px solid var(--gray-200);
+  padding: 8px 12px; font-size: 0.73rem; color: var(--gray-500);
+}
+.toc-prog-bar { height: 5px; background: var(--gray-200); border-radius: 3px; margin-top: 5px; overflow: hidden; }
+.toc-prog-fill { height: 100%; background: var(--forest); border-radius: 3px; transition: width 0.4s; }
+
+/* ===== HERO ===== */
+.hero {
+  background: linear-gradient(135deg, var(--forest-dk), var(--forest) 65%, #305c40 100%);
+  color: white; border-radius: var(--radius);
+  padding: 32px 28px; margin-bottom: 24px;
+  position: relative; overflow: hidden;
+}
+.hero::after {
+  content: '';
+  position: absolute; bottom: -30px; right: -30px;
+  width: 160px; height: 160px;
+  background: rgba(212,165,116,0.08); border-radius: 50%;
+  pointer-events: none;
+}
+.hero-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(212,165,116,0.18); border: 1px solid rgba(212,165,116,0.35);
+  color: var(--tan-lt); font-size: 0.71rem; font-weight: 700;
+  padding: 4px 11px; border-radius: 20px;
+  letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 12px;
+}
+.hero h2 {
+  font-size: 1.65rem; font-weight: 800; line-height: 1.15;
+  margin-bottom: 9px; position: relative;
+}
+.hero p { color: rgba(255,255,255,0.8); font-size: 0.9rem; max-width: 480px; position: relative; }
+.hero-meta {
+  display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; position: relative;
+}
+.hero-chip {
+  background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.16);
+  color: rgba(255,255,255,0.85); font-size: 0.76rem;
+  padding: 5px 11px; border-radius: 20px;
+  display: flex; align-items: center; gap: 5px;
+}
+
+/* ===== STEP CARDS ===== */
+.step-card {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  margin-bottom: 18px; overflow: hidden;
+  scroll-margin-top: 88px;
+}
+.step-head {
+  display: flex; align-items: center; gap: 14px;
+  padding: 15px 20px; cursor: pointer; user-select: none;
+  background: none; border: none; width: 100%; text-align: left;
+  transition: background var(--trans);
+}
+.step-head:hover { background: var(--gray-50); }
+.step-head:focus-visible { outline: 3px solid var(--forest); outline-offset: -3px; }
+.step-num {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--forest); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem; font-weight: 700; flex-shrink: 0;
+  transition: background var(--trans);
+}
+.step-card.done .step-num { background: var(--green-txt); }
+.step-label { flex: 1; }
+.step-title { font-size: 1rem; font-weight: 700; color: var(--gray-900); }
+.step-hint  { font-size: 0.75rem; color: var(--gray-500); margin-top: 2px; }
+.step-chevron { color: var(--gray-400); font-size: 0.95rem; flex-shrink: 0; transition: transform var(--trans); }
+.step-card.open .step-chevron { transform: rotate(180deg); }
+
+.step-body {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.45s ease, padding 0.2s ease;
+  padding: 0 20px;
+}
+.step-card.open .step-body { max-height: 10000px; padding: 0 20px 24px; }
+.step-rule { border: none; border-top: 1px solid var(--gray-200); margin-bottom: 20px; }
+
+/* ===== CALLOUTS ===== */
+.note {
+  border-radius: 6px; padding: 12px 16px; margin: 12px 0;
+  display: flex; gap: 10px; font-size: 0.875rem;
+}
+.note-icon { font-size: 1.05rem; flex-shrink: 0; margin-top: 2px; }
+.note h4 { font-size: 0.82rem; font-weight: 700; margin-bottom: 3px; }
+.note p, .note ul { font-size: 0.875rem; }
+.note ul { padding-left: 14px; margin-top: 4px; }
+.note li { margin-bottom: 3px; }
+
+.note-info   { background: var(--blue-lt);  border-left: 4px solid var(--blue-bdr); }
+.note-info   .note-icon, .note-info h4   { color: var(--blue-txt); }
+.note-ok     { background: var(--green-lt); border-left: 4px solid var(--green-bdr); }
+.note-ok     .note-icon, .note-ok h4     { color: var(--green-txt); }
+.note-warn   { background: var(--amber-lt); border-left: 4px solid var(--amber-bdr); }
+.note-warn   .note-icon, .note-warn h4   { color: var(--amber-txt); }
+.note-stop   { background: var(--red-lt);   border-left: 4px solid var(--red-bdr); }
+.note-stop   .note-icon, .note-stop h4   { color: var(--red-txt); }
+.note-forest { background: var(--forest-pale); border-left: 4px solid var(--forest); }
+.note-forest .note-icon, .note-forest h4 { color: var(--forest-dk); }
+
+/* ===== NUMBERED STEPS INSIDE CARD ===== */
+.steps { counter-reset: s; list-style: none; padding: 0; margin: 14px 0; }
+.step  { counter-increment: s; display: flex; gap: 13px; margin-bottom: 16px; position: relative; }
+.step:not(:last-child)::before {
+  content: ''; position: absolute; left: 14px; top: 30px; bottom: -6px;
+  width: 2px; background: var(--gray-200);
+}
+.sn {
+  flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
+  background: var(--forest); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700;
+}
+.sn::before { content: counter(s); }
+.sc { flex: 1; padding-top: 5px; }
+.sc h4 { font-size: 0.93rem; font-weight: 700; color: var(--gray-800); margin-bottom: 4px; }
+.sc p, .sc ul { font-size: 0.875rem; color: var(--gray-700); }
+.sc ul { padding-left: 15px; margin-top: 4px; }
+.sc li { margin-bottom: 3px; }
+
+/* ===== CODE ===== */
+.code-wrap {
+  background: var(--code-bg); border-radius: var(--radius);
+  margin: 10px 0; overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.code-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 13px; background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.code-lang { font-size: 0.67rem; font-weight: 700; color: var(--tan-lt); letter-spacing: 0.08em; text-transform: uppercase; }
+.copy-btn {
+  background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.14);
+  color: var(--gray-300); font-size: 0.68rem; padding: 3px 9px;
+  border-radius: 4px; cursor: pointer; font-family: var(--font-ui);
+  transition: background var(--trans);
+}
+.copy-btn:hover { background: rgba(255,255,255,0.18); color: white; }
+.copy-btn:focus-visible { outline: 2px solid var(--tan); outline-offset: 2px; }
+pre { margin: 0; padding: 13px 15px; overflow-x: auto; }
+pre code {
+  font-family: var(--font-mono); font-size: 0.82rem;
+  line-height: 1.65; color: var(--code-txt);
+  white-space: pre; tab-size: 4;
+}
+p code, li code, td code {
+  background: #e4ece6; color: #14341e;
+  padding: 1px 5px; border-radius: 3px;
+  font-size: 0.82em; font-family: var(--font-mono); white-space: nowrap;
+}
+
+/* ===== SIMULATED WINDOWS UI ===== */
+.win-dialog {
+  background: #f0f0f0; border: 1px solid #999;
+  border-radius: 8px; overflow: hidden; margin: 12px 0;
+  box-shadow: 4px 4px 12px rgba(0,0,0,0.25); max-width: 440px;
+}
+.win-titlebar {
+  background: linear-gradient(135deg, #0078d4, #005a9e);
+  padding: 7px 12px; display: flex; align-items: center; gap: 8px;
+}
+.win-title { flex: 1; font-size: 0.78rem; font-weight: 600; color: white; }
+.win-btns  { display: flex; gap: 4px; }
+.win-btn   { width: 14px; height: 14px; border-radius: 50%; border: none; cursor: default; }
+.win-btn.m { background: #febc2e; }
+.win-btn.x { background: #ff5f57; }
+.win-body  { padding: 16px 18px; font-size: 0.83rem; color: var(--gray-800); }
+.win-body p { margin-bottom: 8px; }
+.win-field {
+  display: flex; align-items: center; gap: 8px; margin: 8px 0;
+  font-size: 0.8rem;
+}
+.win-field label { min-width: 90px; color: var(--gray-600); font-size: 0.78rem; }
+.win-input {
+  flex: 1; background: white; border: 1px solid #999;
+  padding: 4px 7px; font-size: 0.78rem; font-family: var(--font-mono);
+  border-radius: 3px; color: var(--gray-800);
+}
+.win-dropdown {
+  background: white; border: 1px solid #999;
+  padding: 4px 22px 4px 7px; font-size: 0.78rem; font-family: var(--font-ui);
+  border-radius: 3px; color: var(--gray-800); min-width: 80px;
+  appearance: none; position: relative;
+}
+.win-select-wrap { position: relative; display: inline-block; }
+.win-select-wrap::after { content: '▼'; position: absolute; right: 6px; top: 4px; font-size: 0.55rem; color: #555; pointer-events: none; }
+.win-row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+.win-action-btn {
+  background: #0078d4; color: white; border: none;
+  padding: 5px 18px; border-radius: 4px; font-size: 0.8rem;
+  cursor: pointer; font-family: var(--font-ui);
+}
+.win-action-btn.secondary { background: var(--gray-200); color: var(--gray-800); }
+.win-warn-icon { font-size: 2rem; margin-bottom: 8px; }
+.win-warn-text { font-size: 0.85rem; font-weight: 600; }
+.win-warn-sub  { font-size: 0.78rem; color: var(--gray-600); margin-top: 4px; }
+
+/* ===== WIN32DISKIMAGER SIM ===== */
+.w32di-sim {
+  background: #f0f0f0; border: 2px solid #555;
+  border-radius: 4px; overflow: hidden; margin: 14px 0;
+  max-width: 500px; box-shadow: var(--shadow-lg);
+}
+.w32di-titlebar {
+  background: linear-gradient(to bottom, #4a7cc7, #2d5fa5);
+  padding: 5px 10px; display: flex; align-items: center;
+  justify-content: space-between;
+}
+.w32di-title { font-size: 0.75rem; font-weight: 600; color: white; }
+.w32di-ctrls { display: flex; gap: 3px; }
+.w32di-ctrl { width: 16px; height: 14px; background: #c0c0c0; border: 1px solid #888; font-size: 0.55rem; display: flex; align-items: center; justify-content: center; cursor: default; }
+.w32di-body { padding: 14px; }
+.w32di-row  { display: flex; align-items: center; gap: 6px; margin-bottom: 9px; }
+.w32di-lbl  { font-size: 0.75rem; min-width: 80px; color: #333; }
+.w32di-box  {
+  flex: 1; background: white; border: 1px inset #aaa;
+  padding: 3px 7px; font-size: 0.75rem; font-family: var(--font-mono);
+  color: #333; min-height: 22px;
+}
+.w32di-browse {
+  background: #e0e0e0; border: 1px outset #bbb;
+  padding: 3px 8px; font-size: 0.72rem; cursor: pointer;
+}
+.w32di-device {
+  background: white; border: 1px inset #aaa;
+  padding: 3px 7px; font-size: 0.75rem; min-width: 70px; color: #333;
+}
+.w32di-progress { margin: 10px 0; }
+.w32di-pbar-bg {
+  height: 16px; background: white; border: 1px inset #aaa;
+  border-radius: 2px; overflow: hidden;
+}
+.w32di-pbar-fill {
+  height: 100%; background: linear-gradient(90deg, #2d5fa5, #4a7cc7);
+  transition: width 1s;
+}
+.w32di-btns { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+.w32di-btn {
+  background: #e0e0e0; border: 1px outset #bbb;
+  padding: 4px 20px; font-size: 0.78rem; cursor: pointer;
+  font-family: var(--font-ui); min-width: 80px;
+}
+.w32di-btn.primary { background: #d0e8ff; border-color: #2d5fa5; }
+.w32di-highlight { background: #fffde7; border: 2px dashed #f59e0b; border-radius: 4px; padding: 3px 6px; }
+.w32di-filter-note {
+  background: #fff8e1; border: 1px solid #f59e0b;
+  border-radius: 4px; padding: 8px 10px; margin-top: 8px;
+  font-size: 0.76rem; color: #7c5300;
+}
+
+/* ===== HASH RECORD TABLE ===== */
+.hash-record {
+  background: var(--code-bg); border-radius: var(--radius);
+  padding: 16px 18px; margin: 12px 0;
+}
+.hash-record h4 { font-size: 0.72rem; font-weight: 700; color: var(--tan-lt); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+.hash-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.hash-key { font-size: 0.7rem; font-weight: 700; color: var(--tan-lt); min-width: 100px; flex-shrink: 0; font-family: var(--font-mono); }
+.hash-val { font-size: 0.78rem; color: #b5d9c0; font-family: var(--font-mono); word-break: break-all; }
+.hash-blank {
+  flex: 1; border-bottom: 1px dashed rgba(168,213,181,0.3);
+  min-width: 100px; height: 16px; cursor: text; padding: 0 4px;
+  color: #b5d9c0; font-family: var(--font-mono); font-size: 0.78rem;
+  background: transparent; outline: none;
+}
+.hash-blank:focus { border-bottom-color: var(--tan); outline: none; }
+.hash-match { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; margin-top: 8px; }
+.hash-match.ok   { color: #69db7c; }
+.hash-match.fail { color: #ff8a80; }
+
+/* ===== CHECKLIST ===== */
+.checklist { list-style: none; padding: 0; margin: 12px 0; }
+.checklist li {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 7px 0; border-bottom: 1px solid var(--gray-100);
+  font-size: 0.875rem;
+}
+.checklist li:last-child { border: none; }
+.chk {
+  width: 20px; height: 20px; border: 2px solid var(--gray-300);
+  border-radius: 4px; flex-shrink: 0; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: white; transition: all var(--trans); margin-top: 1px;
+  font-size: 0.7rem;
+}
+.chk:hover { border-color: var(--forest); }
+.chk.on { background: var(--forest); border-color: var(--forest); color: white; }
+.chk-lbl { flex: 1; cursor: pointer; line-height: 1.4; }
+.chk-lbl.done { text-decoration: line-through; color: var(--gray-400); }
+
+/* ===== MARK DONE BUTTON ===== */
+.done-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--forest); color: white; border: none;
+  padding: 9px 18px; border-radius: var(--radius);
+  font-size: 0.875rem; font-weight: 600; cursor: pointer;
+  font-family: var(--font-ui); margin-top: 20px;
+  transition: background var(--trans);
+}
+.done-btn:hover { background: var(--forest-dk); }
+.done-btn.done  { background: var(--green-txt); cursor: default; }
+.done-btn:focus-visible { outline: 3px solid var(--tan); outline-offset: 2px; }
+
+/* ===== SUBMIT BOX ===== */
+.submit-box {
+  background: var(--forest-pale); border: 2px solid var(--forest);
+  border-radius: var(--radius); padding: 18px 20px; margin-top: 20px;
+}
+.submit-box h4 { font-size: 0.9rem; font-weight: 700; color: var(--forest); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.submit-box p  { font-size: 0.875rem; color: var(--gray-700); }
+.submit-box ul { font-size: 0.875rem; color: var(--gray-700); padding-left: 16px; margin-top: 6px; }
+.submit-box li { margin-bottom: 4px; }
+
+/* ===== QUIZ ===== */
+.quiz-box {
+  background: var(--gray-50); border: 2px solid var(--gray-200);
+  border-radius: var(--radius); padding: 18px 20px; margin-top: 18px;
+}
+.quiz-box h3 { font-size: 0.93rem; font-weight: 700; color: var(--forest); margin-bottom: 16px; }
+.qblock { margin-bottom: 18px; }
+.qblock p { font-size: 0.9rem; font-weight: 600; color: var(--gray-800); margin-bottom: 8px; }
+.qopts { display: flex; flex-direction: column; gap: 6px; }
+.qopt {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 12px; border: 2px solid var(--gray-200); border-radius: 6px;
+  cursor: pointer; background: white; font-size: 0.875rem;
+  color: var(--gray-700); text-align: left; width: 100%;
+  font-family: var(--font-ui); transition: all var(--trans);
+}
+.qopt:hover { border-color: var(--forest); background: var(--gray-50); }
+.qopt:focus-visible { outline: 3px solid var(--forest); }
+.qopt.correct   { border-color: var(--green-bdr); background: var(--green-lt); color: var(--green-txt); font-weight: 600; cursor: default; }
+.qopt.incorrect { border-color: var(--red-bdr);   background: var(--red-lt);   color: var(--red-txt);   cursor: default; }
+.qfb { display: none; margin-top: 6px; padding: 8px 12px; border-radius: 5px; font-size: 0.84rem; }
+.qfb.show { display: block; }
+.qfb.ok  { background: var(--green-lt); color: var(--green-txt); }
+.qfb.err { background: var(--red-lt);   color: var(--red-txt); }
+#quiz-score { display: none; margin-top: 12px; padding: 12px 16px; border-radius: var(--radius); font-weight: 600; font-size: 0.9rem; }
+
+/* ===== DATA TABLE ===== */
+.dtbl { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.84rem; }
+.dtbl th { background: var(--forest); color: white; padding: 8px 12px; text-align: left; font-size: 0.77rem; }
+.dtbl td { padding: 7px 12px; border-bottom: 1px solid var(--gray-200); color: var(--gray-700); }
+.dtbl tr:nth-child(even) td { background: var(--gray-50); }
+
+/* ===== FOOTER ===== */
+.site-footer {
+  background: var(--forest-dk); color: rgba(255,255,255,0.6);
+  padding: 20px; text-align: center; font-size: 0.77rem;
+}
+.site-footer strong { color: white; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 720px) {
+  .page-wrap { grid-template-columns: 1fr; padding: 16px 12px 60px; }
+  .sidebar { display: none; }
+  .hero h2 { font-size: 1.3rem; }
+}
+@media print {
+  .site-header, .sidebar, .progress-bar, .course-banner { display: none; }
+  .page-wrap { grid-template-columns: 1fr; }
+  .step-body { max-height: none !important; padding: 0 20px 20px !important; }
+}
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to main content</a>
+
+<div class="course-banner">
+  CSC 156 &mdash; Digital Forensics Fundamentals &bull; Mendocino College
+</div>
+
+<header class="site-header" role="banner">
+  <div class="header-inner">
+    <div class="header-icon" aria-hidden="true">&#128190;</div>
+    <div class="header-text">
+      <h1>Lab: Write a .dd Image to a USB Drive</h1>
+      <p>Create your own forensic evidence practice drive using Win32DiskImager</p>
+    </div>
+    <div class="header-right">
+      <span class="badge badge-tan">CSC 156</span>
+      <span class="badge badge-outline">&#128218; Student Lab</span>
+    </div>
+  </div>
+</header>
+
+<div class="progress-bar" role="progressbar" aria-label="Page reading progress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="pgBar">
+  <div class="progress-fill" id="pgFill"></div>
+</div>
+
+<div class="page-wrap">
+
+  <!-- SIDEBAR TOC -->
+  <aside class="sidebar" aria-label="Lab steps navigation">
+    <div class="toc-box">
+      <div class="toc-head">&#128196; Lab Steps</div>
+      <nav class="toc-links" aria-label="Jump to step">
+        <a href="#s0" id="tn-0" class="active"><span class="step-dot">1</span> What You&rsquo;ll Do</a>
+        <a href="#s1" id="tn-1"><span class="step-dot">2</span> What You Need</a>
+        <a href="#s2" id="tn-2"><span class="step-dot">3</span> Install Win32DiskImager</a>
+        <a href="#s3" id="tn-3"><span class="step-dot">4</span> Download the .dd File</a>
+        <a href="#s4" id="tn-4"><span class="step-dot">5</span> VirtualBox USB Setup</a>
+        <a href="#s5" id="tn-5"><span class="step-dot">6</span> Write the Image</a>
+        <a href="#s6" id="tn-6"><span class="step-dot">7</span> The &ldquo;Format?&rdquo; Dialog</a>
+        <a href="#s7" id="tn-7"><span class="step-dot">8</span> Verify with FTK Imager</a>
+        <a href="#s8" id="tn-8"><span class="step-dot">9</span> Record Your Hashes</a>
+        <a href="#s9" id="tn-9"><span class="step-dot">10</span> Knowledge Check</a>
+      </nav>
+      <div class="toc-progress">
+        <div><span id="doneCount">0</span> of 10 steps done</div>
+        <div class="toc-prog-bar"><div class="toc-prog-fill" id="tocFill" style="width:0%"></div></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="main">
+
+    <!-- HERO -->
+    <div class="hero" role="region" aria-label="Lab overview">
+      <div class="hero-tag">&#128270; Lab Exercise &mdash; Forensic Disk Imaging</div>
+      <h2>Write a Forensic .dd Image<br>to a USB Drive</h2>
+      <p>You&rsquo;ll use Win32DiskImager to write one of the Lab 5 disk images directly onto a USB drive &mdash; making the USB behave exactly like the original evidence disk. Then you&rsquo;ll use FTK Imager to verify your work with hash values.</p>
+      <div class="hero-meta">
+        <span class="hero-chip">&#9200; ~45&ndash;60 minutes</span>
+        <span class="hero-chip">&#127970; Windows 11 (host or VM)</span>
+        <span class="hero-chip">&#128190; 2 GB+ USB drive required</span>
+        <span class="hero-chip">&#128170; Beginner-friendly</span>
+      </div>
+    </div>
+
+    <!-- ======== STEP 1: OVERVIEW ======== -->
+    <article class="step-card open" id="s0">
+      <button class="step-head" aria-expanded="true" aria-controls="b0" onclick="tog(this)">
+        <div class="step-num" aria-hidden="true">1</div>
+        <div class="step-label">
+          <div class="step-title">What You&rsquo;ll Do &mdash; The Big Picture</div>
+          <div class="step-hint">Understand the goal before you start</div>
+        </div>
+        <span class="step-chevron" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="step-body" id="b0" role="region">
+        <hr class="step-rule" aria-hidden="true">
+
+        <p>In Lab 5 you worked with <code>.dd</code> files loaded directly in FTK Imager as files on your computer. This lab takes it one step further &mdash; you&rsquo;ll write one of those same disk images <em>onto</em> a USB drive so that FTK Imager sees it as a real physical disk, just like an actual piece of evidence.</p>
+
+        <div class="note note-forest">
+          <div class="note-icon" aria-hidden="true">&#128270;</div>
+          <div>
+            <h4>Why Does This Matter?</h4>
+            <p>In a real investigation, you receive a physical drive &mdash; not a file. By writing the <code>.dd</code> image to a USB, you&rsquo;re practicing exactly what an investigator does: taking custody of physical media, creating a forensic copy of it, and verifying the copy with hash values. The USB <em>becomes</em> the evidence drive.</p>
+          </div>
+        </div>
+
+        <h3 style="font-size:0.95rem;font-weight:700;margin:18px 0 10px">What happens under the hood</h3>
+        <div style="overflow-x:auto">
+          <table class="dtbl" aria-label="File copy vs raw write comparison">
+            <thead><tr><th scope="col">What you do</th><th scope="col">What Windows sees on USB</th><th scope="col">What FTK Imager sees</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>Copy the <code>.dd</code> file normally (drag &amp; drop)</td>
+                <td>A normal USB drive with a file called <code>evidence.dd</code> on it</td>
+                <td>A USB drive. The <code>.dd</code> file is just a document sitting on it.</td>
+              </tr>
+              <tr style="background:#e8f0eb">
+                <td><strong>Write the <code>.dd</code> with Win32DiskImager (this lab)</strong></td>
+                <td>Windows can&rsquo;t read the USB at all &mdash; shows a &ldquo;Format?&rdquo; warning</td>
+                <td><strong>A physical disk with the original filesystem inside</strong> &mdash; just like a real evidence drive &#10003;</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="note note-warn">
+          <div class="note-icon" aria-hidden="true">&#9888;</div>
+          <div>
+            <h4>Your USB drive will be completely erased</h4>
+            <p>Win32DiskImager overwrites every byte on the USB drive &mdash; all existing files on it will be permanently gone. Use a USB drive with nothing on it you need to keep. A 2 GB or larger drive works for the 1 GB Lab 5 images.</p>
+          </div>
+        </div>
+
+        <button class="done-btn" onclick="markDone(this,0)" aria-label="Mark step 1 complete">
+          <span aria-hidden="true">&#9744;</span> Got it &mdash; Mark Complete
+        </button>
+      </div>
+    </article>
+
+    <!-- ======== STEP 2: WHAT YOU NEED ======== -->
+    <article class="step-card" id="s1">
+      <button class="step-head" aria-expanded="false" aria-controls="b1" onclick="tog(this)">
+        <div class="step-num" aria-hidden="true">2</div>
+        <div class="step-label">
+          <div class="step-title">What You Need Before You Start</div>
+          <div class="step-hint">Gather everything first</div>
+        </div>
+        <span class="step-chevron" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="step-body" id="b1" role="region">
+        <hr class="step-rule" aria-hidden="true">
+
+        <ul class="checklist" role="list" aria-label="Prerequisites checklist">
+          <li>
+            <div class="chk" onclick="toggleChk(this)" role="checkbox" aria-checked="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')toggleChk(this)"></div>
+            <span class="chk-lbl">A <strong>USB drive, 2 GB or larger</strong>, that you don&rsquo;t mind erasing completely. USB 3.0 is faster but USB 2.0 works fine.</span>
+          </li>
+          <li>
+            <div class="chk" onclick="toggleChk(this)" role="checkbox" aria-checked="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')toggleChk(this)"></div>
+            <span class="chk-lbl"><strong>Windows 11</strong> &mdash; either your regular Windows computer <em>or</em> your VirtualBox Windows 11 VM (see Step 5 for VM setup)</span>
+          </li>
+          <li>
+            <div class="chk" onclick="toggleChk(this)" role="checkbox" aria-checked="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')toggleChk(this)"></div>
+            <span class="chk-lbl"><strong>Win32DiskImager</strong> &mdash; you&rsquo;ll download and install this in Step 3</span>
+          </li>
+          <li>
+            <div class="chk" onclick="toggleChk(this)" role="checkbox" aria-checked="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')toggleChk(this)"></div>
+            <span class="chk-lbl"><strong>A Lab 5 <code>.dd</code> image file</strong> downloaded to your computer &mdash; get the link from your instructor (Step 4)</span>
+          </li>
+          <li>
+            <div class="chk" onclick="toggleChk(this)" role="checkbox" aria-checked="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')toggleChk(this)"></div>
+            <span class="chk-lbl"><strong>FTK Imager</strong> already installed &mdash; you&rsquo;ll use it in Step 8 to verify the write</span>
+          </li>
+          <li>
+            <div class="chk" onclick="toggleChk(this)" role="checkbox" aria-checked="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ')toggleChk(this)"></div>
+            <span class="chk-lbl">About <strong>45&ndash;60 minutes</strong> (most of which is waiting for the write to finish)</span>
+          </li>
+        </ul>
+
+        <div class="note note-info">
+          <div class="note-icon" aria-hidden="true">&#8505;</div>
+          <div>
+            <h4>USB Drive Size vs. the Image File</h4>
+            <p>The Lab 5 images are 1 GB (<code>.dd</code> files). Your USB drive needs to have at least 1 GB of actual storage capacity &mdash; meaning a &ldquo;1 GB&rdquo; labeled USB will likely not work due to the difference between manufacturer-stated GB and real usable space. A <strong>2 GB or larger</strong> USB drive is safe.</p>
+          </div>
+        </div>
+
+        <button class="done-btn" onclick="markDone(this,1)" aria-label="Mark step 2 complete">
+          <span aria-hidden="true">&#9744;</span> Mark Complete
+        </button>
+      </div>
+    </article>
+
+    <!-- ======== STEP 3: INSTALL WIN32DISKIMAGER ======== -->
+    <article class="step-card" id="s2">
+      <button class="step-head" aria-expanded="false" aria-controls="b2" onclick="tog(this)">
+        <div class="step-num" aria-hidden="true">3</div>
+        <div class="step-label">
+          <div class="step-title">Download &amp; Install Win32DiskImager</div>
+          <div class="step-hint">Free, one-time install &mdash; takes about 2 minutes</div>
+        </div>
+        <span class="step-chevron" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="step-body" id="b2" role="region">
+        <hr class="step-rule" aria-hidden="true">
+
+        <ol class="steps" aria-label="Installation steps">
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Go to the SourceForge download page</h4>
+              <p>Open a web browser and navigate to:</p>
+              <div class="code-wrap">
+                <div class="code-hd"><span class="code-lang">URL</span><button class="copy-btn" onclick="doCopy(this)" aria-label="Copy URL">Copy</button></div>
+                <pre><code>https://sourceforge.net/projects/win32diskimager/files/latest/download</code></pre>
+              </div>
+              <p style="margin-top:8px">The download should start automatically. If it doesn&rsquo;t, click the green <strong>Download</strong> button. You&rsquo;re looking for <code>win32diskimager-1.0.0-install.exe</code> (about 17 MB).</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Run the installer as Administrator</h4>
+              <p>Once the download finishes, find it in your Downloads folder. <strong>Right-click</strong> on <code>win32diskimager-1.0.0-install.exe</code> &rarr; select <strong>Run as administrator</strong>. Click <strong>Yes</strong> on the UAC prompt.</p>
+              <div class="note note-info">
+                <div class="note-icon" aria-hidden="true">&#8505;</div>
+                <div><p>You must run it as Administrator. Win32DiskImager needs elevated permissions to access physical disk drives. If you just double-click it, it may install but then fail to see your USB drive later.</p></div>
+              </div>
+            </div>
+          </li>
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Complete the installer</h4>
+              <p>Click through the setup wizard: Accept the license &rarr; choose the install location (default is fine) &rarr; click <strong>Install</strong> &rarr; click <strong>Finish</strong>. The installer will create a Start Menu shortcut.</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Verify the install</h4>
+              <p>Open the Start Menu and search for <strong>Win32DiskImager</strong>. It should appear. Do <em>not</em> launch it yet &mdash; first connect your USB drive, then always launch it by right-clicking &rarr; <strong>Run as administrator</strong>.</p>
+              <div class="note note-warn">
+                <div class="note-icon" aria-hidden="true">&#9888;</div>
+                <div><h4>Always launch as Administrator</h4>
+                  <p>Every time you use Win32DiskImager, launch it with Run as administrator. If you launch it normally, it won&rsquo;t be able to write to physical drives and the Device dropdown will be empty or grayed out.</p>
+                </div>
+              </div>
+            </div>
+          </li>
+        </ol>
+
+        <button class="done-btn" onclick="markDone(this,2)" aria-label="Mark step 3 complete">
+          <span aria-hidden="true">&#9744;</span> Mark Complete
+        </button>
+      </div>
+    </article>
+
+    <!-- ======== STEP 4: DOWNLOAD .DD FILE ======== -->
+    <article class="step-card" id="s3">
+      <button class="step-head" aria-expanded="false" aria-controls="b3" onclick="tog(this)">
+        <div class="step-num" aria-hidden="true">4</div>
+        <div class="step-label">
+          <div class="step-title">Download the .dd Image File</div>
+          <div class="step-hint">Get your Lab 5 disk image onto your computer</div>
+        </div>
+        <span class="step-chevron" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="step-body" id="b3" role="region">
+        <hr class="step-rule" aria-hidden="true">
+
+        <div class="note note-forest">
+          <div class="note-icon" aria-hidden="true">&#128196;</div>
+          <div>
+            <h4>Instructor Note &mdash; Link Provided Separately</h4>
+            <p>Your instructor has provided a link to the Lab 5 <code>.dd</code> image files in Canvas. Download one of the <strong>1 GB <code>.dd</code> files</strong> from that link to a location you can easily find &mdash; your Desktop or a <code>C:\ForensicLab\</code> folder works well.</p>
+          </div>
+        </div>
+
+        <ol class="steps" aria-label="Download steps">
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Download the file</h4>
+              <p>Click the link from your instructor and download the <code>.dd</code> file. These files are approximately 1 GB so the download may take a few minutes depending on your connection speed.</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Note where it saved</h4>
+              <p>Remember the full path to the file. You&rsquo;ll need to browse to it inside Win32DiskImager. For example:</p>
+              <div class="code-wrap">
+                <div class="code-hd"><span class="code-lang">Example path</span></div>
+                <pre><code>C:\Users\YourName\Downloads\lab5-evidence.dd
+  &mdash;or&mdash;
+C:\ForensicLab\lab5-evidence.dd</code></pre>
+              </div>
+            </div>
+          </li>
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Verify the download with a hash (optional but good practice)</h4>
+              <p>Your instructor may have provided a known-good hash value for the file. If so, verify it now with PowerShell. Open PowerShell (no admin needed for this) and run:</p>
+              <div class="code-wrap">
+                <div class="code-hd"><span class="code-lang">PowerShell</span><button class="copy-btn" onclick="doCopy(this)" aria-label="Copy PowerShell hash command">Copy</button></div>
+                <pre><code>Get-FileHash "C:\Users\YourName\Downloads\lab5-evidence.dd" -Algorithm SHA256</code></pre>
+              </div>
+              <p style="margin-top:8px">Compare the output to the hash your instructor provided. They should match exactly. This confirms the file downloaded correctly and hasn&rsquo;t been corrupted.</p>
+            </div>
+          </li>
+        </ol>
+
+        <button class="done-btn" onclick="markDone(this,3)" aria-label="Mark step 4 complete">
+          <span aria-hidden="true">&#9744;</span> Mark Complete
+        </button>
+      </div>
+    </article>
+
+    <!-- ======== STEP 5: VIRTUALBOX USB ======== -->
+    <article class="step-card" id="s4">
+      <button class="step-head" aria-expanded="false" aria-controls="b4" onclick="tog(this)">
+        <div class="step-num" aria-hidden="true">5</div>
+        <div class="step-label">
+          <div class="step-title">Using a VirtualBox VM? Set Up USB Passthrough First</div>
+          <div class="step-hint">Skip this step if you&rsquo;re on a real Windows 11 computer</div>
+        </div>
+        <span class="step-chevron" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="step-body" id="b4" role="region">
+        <hr class="step-rule" aria-hidden="true">
+
+        <div class="note note-info">
+          <div class="note-icon" aria-hidden="true">&#8505;</div>
+          <div>
+            <h4>Not using a VM? Skip to Step 6.</h4>
+            <p>If you are running Windows 11 directly on your computer (not inside VirtualBox), you can skip this entire step and go straight to Step 6.</p>
+          </div>
+        </div>
+
+        <p>By default, VirtualBox does <strong>not</strong> automatically give your Windows 11 VM access to USB drives you plug into your physical computer. The USB drive will be visible to your host OS (Mac, Linux, or Windows host) but the VM won&rsquo;t see it &mdash; and Win32DiskImager inside the VM won&rsquo;t be able to use it. You need to enable <strong>USB passthrough</strong>.</p>
+
+        <div class="note note-warn">
+          <div class="note-icon" aria-hidden="true">&#9888;</div>
+          <div>
+            <h4>Do this with the VM powered off</h4>
+            <p>The USB settings shown below must be configured while your Windows 11 VM is shut down, not while it is running or saved/paused. Shut it down completely first.</p>
+          </div>
+        </div>
+
+        <h3 style="font-size:0.95rem;font-weight:700;color:var(--gray-800);margin:16px 0 10px">Enable USB 3.0 Controller in VirtualBox</h3>
+        <ol class="steps" aria-label="VirtualBox USB passthrough setup">
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Open VM Settings</h4>
+              <p>In the VirtualBox Manager window, select your Windows 11 VM from the list (make sure it says <em>Powered Off</em>). Click the <strong>Settings</strong> gear icon at the top.</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Go to the USB section</h4>
+              <p>In the Settings window, click <strong>USB</strong> in the left panel.</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Enable USB and select the controller</h4>
+              <p>Make sure the <strong>Enable USB Controller</strong> checkbox is ticked. Then select <strong>USB 3.0 (xHCI) Controller</strong>. If you only see USB 1.1 and USB 2.0, you may need to install the VirtualBox Extension Pack (see note below).</p>
+              <div class="note note-info">
+                <div class="note-icon" aria-hidden="true">&#8505;</div>
+                <div>
+                  <h4>VirtualBox Extension Pack</h4>
+                  <p>USB 3.0 support requires the VirtualBox Extension Pack, which is a free separate download from <code>virtualbox.org/wiki/Downloads</code>. Download the Extension Pack that matches your VirtualBox version, double-click it to install, then return to this USB settings step. USB 2.0 will also work &mdash; it will just be slower.</p>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Add a USB Device Filter for your drive</h4>
+              <p>Click the <strong>+</strong> icon on the right side of the USB Devices list. <strong>Plug in your USB drive now</strong> if you haven&rsquo;t already. Your USB drive should appear in the list. Click on it to add it as a filter. This tells VirtualBox to automatically give the VM control of this specific USB device when it&rsquo;s plugged in.</p>
+              <p style="margin-top:6px">Click <strong>OK</strong> to save the settings.</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Start the VM and confirm the USB drive appears</h4>
+              <p>Start your Windows 11 VM. Once it boots, open <strong>File Explorer</strong> inside the VM. Your USB drive should appear as a drive letter (like <code>D:</code> or <code>E:</code>).</p>
+              <p style="margin-top:6px">If it doesn&rsquo;t appear automatically, try: in the VirtualBox menu bar at the top of the VM window, go to <strong>Devices &rarr; USB</strong> and click on your USB device name to manually attach it.</p>
+              <div class="note note-ok">
+                <div class="note-icon" aria-hidden="true">&#10003;</div>
+                <div><p>Once your USB drive shows up in File Explorer <em>inside</em> the VM, you&rsquo;re ready. Continue to Step 6.</p></div>
+              </div>
+            </div>
+          </li>
+        </ol>
+
+        <div class="note note-stop">
+          <div class="note-icon" aria-hidden="true">&#128721;</div>
+          <div>
+            <h4>Troubleshooting: USB drive not appearing in the VM</h4>
+            <ul>
+              <li><strong>VM host is Mac or Linux:</strong> You may need to add your user account to the <code>vboxusers</code> group. On Mac/Linux, run: <code>sudo usermod -aG vboxusers $USER</code> then log out and back in.</li>
+              <li><strong>USB controlled by host OS:</strong> On a Windows host, right-click the USB icon in the system tray (bottom-right) and &ldquo;Eject&rdquo; the drive from the host before the VM can claim it.</li>
+              <li><strong>Extension Pack version mismatch:</strong> The Extension Pack version must exactly match your VirtualBox version number. Check both in VirtualBox &rarr; Help &rarr; About.</li>
+              <li><strong>Still not working?</strong> Ask your instructor &mdash; some VirtualBox configurations on lab computers may need additional setup.</li>
+            </ul>
+          </div>
+        </div>
+
+        <button class="done-btn" onclick="markDone(this,4)" aria-label="Mark step 5 complete">
+          <span aria-hidden="true">&#9744;</span> Mark Complete
+        </button>
+      </div>
+    </article>
+
+    <!-- ======== STEP 6: WRITE THE IMAGE ======== -->
+    <article class="step-card" id="s5">
+      <button class="step-head" aria-expanded="false" aria-controls="b5" onclick="tog(this)">
+        <div class="step-num" aria-hidden="true">6</div>
+        <div class="step-label">
+          <div class="step-title">Write the .dd Image to Your USB Drive</div>
+          <div class="step-hint">The main event &mdash; follow each step carefully</div>
+        </div>
+        <span class="step-chevron" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="step-body" id="b5" role="region">
+        <hr class="step-rule" aria-hidden="true">
+
+        <div class="note note-stop">
+          <div class="note-icon" aria-hidden="true">&#128721;</div>
+          <div>
+            <h4>Plug in your USB drive before launching Win32DiskImager</h4>
+            <p>Connect your USB drive first, then launch the application. If you open Win32DiskImager before plugging in the USB, it may not appear in the Device list. If that happens, plug in the USB drive and click the refresh icon inside the app.</p>
+          </div>
+        </div>
+
+        <ol class="steps" aria-label="Write steps">
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Launch Win32DiskImager as Administrator</h4>
+              <p>Open the Start Menu &rarr; search for <strong>Win32DiskImager</strong> &rarr; right-click it &rarr; <strong>Run as administrator</strong>. Click <strong>Yes</strong> on the UAC prompt. The application window opens.</p>
+            </div>
+          </li>
+
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Select your .dd file &mdash; change the file type filter first</h4>
+              <p>Click the small <strong>folder icon</strong> next to the Image File field. A standard Windows file browser opens.</p>
+
+              <div class="w32di-sim" aria-label="Win32DiskImager open file dialog">
+                <div class="w32di-titlebar">
+                  <span class="w32di-title">Win32DiskImager 1.0.0</span>
+                  <div class="w32di-ctrls">
+                    <div class="w32di-ctrl">&#8722;</div>
+                    <div class="w32di-ctrl">&#9633;</div>
+                    <div class="w32di-ctrl">&#10005;</div>
+                  </div>
+                </div>
+                <div class="w32di-body">
+                  <div class="w32di-row">
+                    <span class="w32di-lbl">Image File:</span>
+                    <div class="w32di-box" style="flex:1">&nbsp;</div>
+                    <button class="w32di-browse" aria-label="Browse for file">&#128193;</button>
+                  </div>
+                  <div class="w32di-filter-note">
+                    &#9888; <strong>Important:</strong> The file browser defaults to showing only <code>*.img</code> files. Your <code>.dd</code> file will be <em>invisible</em> until you change this!<br><br>
+                    In the file browser, find the <strong>file type dropdown</strong> (bottom-right, usually showing <code>Disk Images (*.img *.IMG)</code>) and change it to <strong>&#42;.&#42; (All files)</strong>. Your <code>.dd</code> file will then appear.
+                  </div>
+                  <div class="w32di-row" style="margin-top:10px">
+                    <span class="w32di-lbl">Device:</span>
+                    <div class="w32di-device">[ G:\ &#9660; ]</div>
+                  </div>
+                </div>
+              </div>
+
+              <p style="margin-top:10px">After changing the filter, navigate to where you saved the <code>.dd</code> file, select it, and click <strong>Open</strong>.</p>
+              <p style="margin-top:6px">The Image File box should now show the full path to your <code>.dd</code> file.</p>
+            </div>
+          </li>
+
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Confirm the correct Device is selected</h4>
+              <p>Look at the <strong>Device</strong> dropdown on the right side. It shows drive letters for removable devices &mdash; it should show your USB drive&rsquo;s letter (like <code>[G:\]</code> or <code>[E:\]</code>).</p>
+
+              <div class="note note-stop">
+                <div class="note-icon" aria-hidden="true">&#128721;</div>
+                <div>
+                  <h4>Double-check this is your USB drive, not another drive</h4>
+                  <p>Win32DiskImager only shows removable drives in this list, which reduces the risk &mdash; but verify it matches what you expect. Open File Explorer, find your USB drive, note its drive letter, and confirm it matches what Win32DiskImager shows. The data on the selected drive will be <strong>permanently destroyed</strong>.</p>
+                </div>
+              </div>
+            </div>
+          </li>
+
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Click &ldquo;Write&rdquo;</h4>
+              <p>Click the <strong>Write</strong> button. Win32DiskImager will show a confirmation dialog:</p>
+
+              <div class="win-dialog" aria-label="Win32DiskImager write confirmation dialog">
+                <div class="win-titlebar">
+                  <span class="win-title">Confirm overwrite</span>
+                  <div class="win-btns"><div class="win-btn x"></div></div>
+                </div>
+                <div class="win-body">
+                  <p>&#9888; Are you sure you want to write to this device?</p>
+                  <p style="font-size:0.8rem;color:#555">This will overwrite all data on the selected device. This operation cannot be undone.</p>
+                  <div class="win-row">
+                    <button class="win-action-btn secondary">No</button>
+                    <button class="win-action-btn">Yes</button>
+                  </div>
+                </div>
+              </div>
+
+              <p style="margin-top:10px">Confirm you have the right drive selected, then click <strong>Yes</strong>. The write begins immediately.</p>
+            </div>
+          </li>
+
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Wait for the write to complete</h4>
+              <p>A progress bar shows the write progress. Expected times for a 1 GB image:</p>
+              <div style="overflow-x:auto">
+                <table class="dtbl" aria-label="Expected write times">
+                  <thead><tr><th scope="col">USB Type</th><th scope="col">Typical Speed</th><th scope="col">~Time for 1 GB</th></tr></thead>
+                  <tbody>
+                    <tr><td>USB 2.0</td><td>~15&ndash;25 MB/s</td><td>1&ndash;2 minutes</td></tr>
+                    <tr><td>USB 3.0 / 3.1</td><td>~60&ndash;120 MB/s</td><td>Under 1 minute</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p style="margin-top:8px">Don&rsquo;t unplug the USB drive while the progress bar is moving. Wait until you see the &ldquo;Write Successful&rdquo; message.</p>
+            </div>
+          </li>
+        </ol>
+
+        <button class="done-btn" onclick="markDone(this,5)" aria-label="Mark step 6 complete">
+          <span aria-hidden="true">&#9744;</span> Mark Complete
+        </button>
+      </div>
+    </article>
+
+    <!-- ======== STEP 7: FORMAT DIALOG ======== -->
+    <article class="step-card" id="s6">
+      <button class="step-head" aria-expanded="false" aria-controls="b6" onclick="tog(this)">
+        <div class="step-num" aria-hidden="true">7</div>
+        <div class="step-label">
+          <div class="step-title">The &ldquo;You Need to Format the Disk&rdquo; Dialog</div>
+          <div class="step-hint">Don&rsquo;t panic &mdash; this is expected. Here&rsquo;s what to do.</div>
+        </div>
+        <span class="step-chevron" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="step-body" id="b6" role="region">
+        <hr class="step-rule" aria-hidden="true">
+
+        <p>As soon as the write finishes (and sometimes during the write), Windows will pop up a dialog that looks alarming:</p>
+
+        <div class="win-dialog" aria-label="Windows format disk dialog simulation">
+          <div class="win-titlebar">
+            <span class="win-title">Microsoft Windows</span>
+            <div class="win-btns"><div class="win-btn x"></div></div>
+          </div>
+          <div class="win-body">
+            <div class="win-warn-icon" aria-hidden="true">&#128190;</div>
+            <div class="win-warn-text">You need to format the disk in Drive G: before you can use it.</div>
+            <div class="win-warn-sub" style="margin:8px 0">Do you want to format it?</div>
+            <div class="win-row">
+              <button class="win-action-btn secondary" style="background:#d32f2f;color:white;border-color:#b71c1c">Format disk</button>
+              <button class="win-action-btn">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="note note-stop" style="margin-top:14px">
+          <div class="note-icon" aria-hidden="true">&#128721;</div>
+          <div>
+            <h4>Click &ldquo;Cancel&rdquo; &mdash; Do NOT click &ldquo;Format disk&rdquo;</h4>
+            <p>Clicking &ldquo;Format disk&rdquo; would erase the image you just wrote and turn the USB back into a blank drive. Your work would be gone. <strong>Always click Cancel.</strong></p>
+          </div>
+        </div>
+
+        <div class="note note-forest" style="margin-top:10px">
+          <div class="note-icon" aria-hidden="true">&#128270;</div>
+          <div>
+            <h4>Why does Windows show this?</h4>
+            <p>The USB drive now contains a forensic disk image with its own filesystem (from the original imaged device). Windows doesn&rsquo;t recognize this filesystem format and assumes the drive is blank or damaged. This is correct behavior &mdash; it means the write worked. FTK Imager, unlike Windows Explorer, knows how to read it properly.</p>
+            <p style="margin-top:6px">In a real forensics job, seeing this dialog when you connect evidence media is actually a <em>good</em> sign &mdash; it means the drive hasn&rsquo;t been tampered with or re-formatted.</p>
+          </div>
+        </div>
+
+        <p style="margin-top:14px">After clicking Cancel, Win32DiskImager should display: <strong>&ldquo;Write Successful.&rdquo;</strong> You can now close Win32DiskImager.</p>
+
+        <button class="done-btn" onclick="markDone(this,6)" aria-label="Mark step 7 complete">
+          <span aria-hidden="true">&#9744;</span> Mark Complete
+        </button>
+      </div>
+    </article>
+
+    <!-- ======== STEP 8: VERIFY WITH FTK IMAGER ======== -->
+    <article class="step-card" id="s7">
+      <button class="step-head" aria-expanded="false" aria-controls="b7" onclick="tog(this)">
+        <div class="step-num" aria-hidden="true">8</div>
+        <div class="step-label">
+          <div class="step-title">Verify the Write with FTK Imager</div>
+          <div class="step-hint">Confirm your USB is readable as a forensic evidence drive</div>
+        </div>
+        <span class="step-chevron" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="step-body" id="b7" role="region">
+        <hr class="step-rule" aria-hidden="true">
+
+        <p>Win32DiskImager said &ldquo;Write Successful&rdquo; but let&rsquo;s confirm it actually worked by opening the USB in FTK Imager the same way you would open real evidence media.</p>
+
+        <ol class="steps" aria-label="FTK Imager verification steps">
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Open FTK Imager</h4>
+              <p>Launch FTK Imager. You don&rsquo;t need to run it as Administrator just to browse evidence, but you will need Administrator access if you want to image the USB (which is what you&rsquo;ll do next lab).</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Add your USB as a Physical Drive evidence item</h4>
+              <p>Go to <strong>File &rarr; Add Evidence Item&hellip;</strong></p>
+              <p style="margin-top:6px">In the dialog that opens, select <strong>Physical Drive</strong> and click <strong>Next</strong>.</p>
+              <p style="margin-top:6px">In the drive list, find your USB drive. It will appear with its size (approximately 1 GB, matching the image). Click <strong>Finish</strong>.</p>
+              <div class="note note-info">
+                <div class="note-icon" aria-hidden="true">&#8505;</div>
+                <div><p>Select <strong>Physical Drive</strong>, not &ldquo;Image File.&rdquo; You&rsquo;re treating the USB as a physical piece of evidence, just like a real hard drive.</p></div>
+              </div>
+            </div>
+          </li>
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Expand the evidence tree</h4>
+              <p>In the Evidence Tree panel (top-left of FTK Imager), expand your USB drive entry. You should see:</p>
+              <ul>
+                <li>A partition (e.g., <code>Partition 1</code>)</li>
+                <li>A filesystem label and folder structure</li>
+                <li>Files and folders from the original disk image</li>
+              </ul>
+              <div class="note note-ok">
+                <div class="note-icon" aria-hidden="true">&#10003;</div>
+                <div><p>If you can see a filesystem structure with folders and files, <strong>the write was successful!</strong> The USB is presenting itself as the original evidence disk. Proceed to Step 9 to record your hash values.</p></div>
+              </div>
+              <div class="note note-warn">
+                <div class="note-icon" aria-hidden="true">&#9888;</div>
+                <div>
+                  <h4>If the tree shows only &ldquo;Unpartitioned Space&rdquo; or nothing</h4>
+                  <p>This usually means the write was interrupted or the wrong drive was selected. Remove the USB drive, repeat Step 6 carefully, and check that the device letter was correct.</p>
+                </div>
+              </div>
+            </div>
+          </li>
+        </ol>
+
+        <button class="done-btn" onclick="markDone(this,7)" aria-label="Mark step 8 complete">
+          <span aria-hidden="true">&#9744;</span> Mark Complete
+        </button>
+      </div>
+    </article>
+
+    <!-- ======== STEP 9: RECORD HASHES ======== -->
+    <article class="step-card" id="s8">
+      <button class="step-head" aria-expanded="false" aria-controls="b8" onclick="tog(this)">
+        <div class="step-num" aria-hidden="true">9</div>
+        <div class="step-label">
+          <div class="step-title">Record Your Hash Values</div>
+          <div class="step-hint">Generate and compare hashes &mdash; this is your deliverable</div>
+        </div>
+        <span class="step-chevron" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="step-body" id="b8" role="region">
+        <hr class="step-rule" aria-hidden="true">
+
+        <p>Hash verification is the heart of forensic integrity. You need to confirm that what&rsquo;s on the USB drive is identical to the original <code>.dd</code> file. You&rsquo;ll compute hashes two ways and compare them.</p>
+
+        <h3 style="font-size:0.95rem;font-weight:700;color:var(--gray-800);margin:0 0 12px">Part A: Hash the original .dd file</h3>
+        <p>Open <strong>PowerShell</strong> (no admin needed) and run these two commands. Replace the path with wherever your <code>.dd</code> file is saved:</p>
+        <div class="code-wrap">
+          <div class="code-hd"><span class="code-lang">PowerShell &mdash; Hash the source .dd file</span><button class="copy-btn" onclick="doCopy(this)" aria-label="Copy hash commands">Copy</button></div>
+          <pre><code>Get-FileHash "C:\Users\YourName\Downloads\lab5-evidence.dd" -Algorithm MD5
+Get-FileHash "C:\Users\YourName\Downloads\lab5-evidence.dd" -Algorithm SHA256</code></pre>
+        </div>
+        <p style="margin-top:8px">Record both values below. The output shows a <code>Hash</code> column &mdash; copy the long alphanumeric string.</p>
+
+        <div class="hash-record" aria-label="Hash recording area for source file">
+          <h4>Source .dd File Hashes</h4>
+          <div class="hash-row">
+            <span class="hash-key">MD5:</span>
+            <input class="hash-blank" type="text" placeholder="paste MD5 hash here" aria-label="Source file MD5 hash value">
+          </div>
+          <div class="hash-row">
+            <span class="hash-key">SHA-256:</span>
+            <input class="hash-blank" type="text" placeholder="paste SHA-256 hash here" aria-label="Source file SHA-256 hash value">
+          </div>
+        </div>
+
+        <h3 style="font-size:0.95rem;font-weight:700;color:var(--gray-800);margin:20px 0 12px">Part B: Hash the USB drive using FTK Imager</h3>
+        <p>With your USB drive still loaded in FTK Imager as a Physical Drive:</p>
+        <ol class="steps" aria-label="FTK Imager hash steps">
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Right-click the USB physical drive</h4>
+              <p>In the Evidence Tree, right-click directly on the top-level entry for your USB physical drive (not a partition or folder inside it &mdash; the top-level item).</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Select &ldquo;Verify Drive/Image&hellip;&rdquo;</h4>
+              <p>FTK Imager will read every sector of the USB drive and compute its MD5 and SHA-256 hashes. For a 1 GB drive this takes about 1&ndash;3 minutes. A progress dialog shows the status.</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="sn" aria-hidden="true"></div>
+            <div class="sc">
+              <h4>Record the results</h4>
+              <p>When complete, FTK Imager shows the hash values for the drive. Record them here:</p>
+            </div>
+          </li>
+        </ol>
+
+        <div class="hash-record" aria-label="Hash recording area for USB drive">
+          <h4>USB Physical Drive Hashes (from FTK Imager Verify)</h4>
+          <div class="hash-row">
+            <span class="hash-key">MD5:</span>
+            <input class="hash-blank" type="text" placeholder="paste MD5 hash here" aria-label="USB drive MD5 hash value">
+          </div>
+          <div class="hash-row">
+            <span class="hash-key">SHA-256:</span>
+            <input class="hash-blank" type="text" placeholder="paste SHA-256 hash here" aria-label="USB drive SHA-256 hash value">
+          </div>
+        </div>
+
+        <h3 style="font-size:0.95rem;font-weight:700;color:var(--gray-800);margin:20px 0 10px">Part C: Compare the hashes</h3>
+        <p>The MD5 from Part A should <strong>exactly match</strong> the MD5 from Part B. Same for SHA-256. Even one character difference means something went wrong.</p>
+
+        <div class="note note-ok">
+          <div class="note-icon" aria-hidden="true">&#10003;</div>
+          <div>
+            <h4>&#127881; If hashes match: the write is verified!</h4>
+            <p>The USB drive is a bit-for-bit identical copy of the original <code>.dd</code> file. This is exactly what a forensic investigator confirms before proceeding with any analysis. Your USB is now a verified evidence drive.</p>
+          </div>
+        </div>
+
+        <div class="note note-stop">
+          <div class="note-icon" aria-hidden="true">&#128721;</div>
+          <div>
+            <h4>If hashes don&rsquo;t match:</h4>
+            <ul>
+              <li>Did Windows format the USB when you weren&rsquo;t looking? Check by browsing it in FTK Imager &mdash; if it looks empty or like a blank FAT drive, it was formatted. Repeat Step 6.</li>
+              <li>Did you hash the right <code>.dd</code> file in Part A? Make sure the path points to the same file you used in Win32DiskImager.</li>
+              <li>Was the write interrupted? If the progress bar didn&rsquo;t fully complete, repeat Step 6.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="submit-box" role="region" aria-label="Submission requirements">
+          <h4>&#128203; What to Submit</h4>
+          <p>Include the following in your lab report for this exercise:</p>
+          <ul>
+            <li>The name of the <code>.dd</code> image file you used</li>
+            <li>MD5 and SHA-256 hash of the <strong>source <code>.dd</code> file</strong> (from PowerShell)</li>
+            <li>MD5 and SHA-256 hash of the <strong>USB physical drive</strong> (from FTK Imager Verify)</li>
+            <li>A statement of whether the hashes <strong>match or do not match</strong>, and what this means</li>
+            <li>A screenshot of FTK Imager showing the USB evidence tree with files visible</li>
+            <li>A screenshot of the FTK Imager Verify Results dialog showing the hash values</li>
+          </ul>
+        </div>
+
+        <button class="done-btn" onclick="markDone(this,8)" aria-label="Mark step 9 complete">
+          <span aria-hidden="true">&#9744;</span> Mark Complete
+        </button>
+      </div>
+    </article>
+
+    <!-- ======== STEP 10: QUIZ ======== -->
+    <article class="step-card" id="s9">
+      <button class="step-head" aria-expanded="false" aria-controls="b9" onclick="tog(this)">
+        <div class="step-num" aria-hidden="true">10</div>
+        <div class="step-label">
+          <div class="step-title">Knowledge Check</div>
+          <div class="step-hint">5 quick questions to confirm you understand what you did</div>
+        </div>
+        <span class="step-chevron" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="step-body" id="b9" role="region">
+        <hr class="step-rule" aria-hidden="true">
+
+        <div class="quiz-box" role="form" aria-label="Knowledge check questions">
+          <h3>&#10067; Check Your Understanding</h3>
+
+          <div class="qblock" id="q1">
+            <p>1. Why do you need to change the file type filter to <code>*.*</code> when browsing for your <code>.dd</code> file in Win32DiskImager?</p>
+            <div class="qopts" role="radiogroup">
+              <button class="qopt" onclick="ans(this,'wrong')">A &nbsp; The <code>.dd</code> format is encrypted and requires special filtering</button>
+              <button class="qopt" onclick="ans(this,'correct')">B &nbsp; Win32DiskImager defaults to showing only <code>*.img</code> files, so <code>.dd</code> files are hidden until you show all file types</button>
+              <button class="qopt" onclick="ans(this,'wrong')">C &nbsp; <code>.dd</code> files are stored in a separate system folder that requires elevated access to browse</button>
+              <button class="qopt" onclick="ans(this,'wrong')">D &nbsp; You don&rsquo;t need to &mdash; <code>.dd</code> files always appear automatically</button>
+            </div>
+            <div class="qfb" id="q1fb"></div>
+          </div>
+
+          <div class="qblock" id="q2">
+            <p>2. Windows shows &ldquo;You need to format the disk before you can use it&rdquo; after the write completes. What does this tell you?</p>
+            <div class="qopts" role="radiogroup">
+              <button class="qopt" onclick="ans(this,'wrong')">A &nbsp; The write failed and you need to try again</button>
+              <button class="qopt" onclick="ans(this,'wrong')">B &nbsp; You should click &ldquo;Format disk&rdquo; to prepare the USB for FTK Imager</button>
+              <button class="qopt" onclick="ans(this,'correct')">C &nbsp; The write succeeded &mdash; Windows doesn&rsquo;t recognize the forensic filesystem, which is expected. Click Cancel.</button>
+              <button class="qopt" onclick="ans(this,'wrong')">D &nbsp; The USB drive is broken and should be replaced</button>
+            </div>
+            <div class="qfb" id="q2fb"></div>
+          </div>
+
+          <div class="qblock" id="q3">
+            <p>3. After writing the image to USB, you add it to FTK Imager. Which evidence item type should you select?</p>
+            <div class="qopts" role="radiogroup">
+              <button class="qopt" onclick="ans(this,'wrong')">A &nbsp; Image File &mdash; because it was created from a <code>.dd</code> image</button>
+              <button class="qopt" onclick="ans(this,'correct')">B &nbsp; Physical Drive &mdash; you&rsquo;re treating the USB as a physical piece of evidence media</button>
+              <button class="qopt" onclick="ans(this,'wrong')">C &nbsp; Logical Drive &mdash; because the USB has a drive letter assigned by Windows</button>
+              <button class="qopt" onclick="ans(this,'wrong')">D &nbsp; Contents of a Folder &mdash; to browse the files on it</button>
+            </div>
+            <div class="qfb" id="q3fb"></div>
+          </div>
+
+          <div class="qblock" id="q4">
+            <p>4. You compare the SHA-256 hash of the source <code>.dd</code> file with the SHA-256 hash FTK Imager computed from the USB drive. They match exactly. What does this prove?</p>
+            <div class="qopts" role="radiogroup">
+              <button class="qopt" onclick="ans(this,'wrong')">A &nbsp; The USB drive is faster than average</button>
+              <button class="qopt" onclick="ans(this,'wrong')">B &nbsp; FTK Imager is working correctly</button>
+              <button class="qopt" onclick="ans(this,'correct')">C &nbsp; Every bit on the USB drive is identical to the original <code>.dd</code> file &mdash; the write is forensically verified</button>
+              <button class="qopt" onclick="ans(this,'wrong')">D &nbsp; The hash algorithm is not sensitive enough to detect small differences</button>
+            </div>
+            <div class="qfb" id="q4fb"></div>
+          </div>
+
+          <div class="qblock" id="q5">
+            <p>5. You&rsquo;re using a VirtualBox Windows 11 VM and your USB drive doesn&rsquo;t appear in Win32DiskImager&rsquo;s Device list. What is the most likely cause?</p>
+            <div class="qopts" role="radiogroup">
+              <button class="qopt" onclick="ans(this,'wrong')">A &nbsp; Win32DiskImager doesn&rsquo;t work inside virtual machines</button>
+              <button class="qopt" onclick="ans(this,'wrong')">B &nbsp; The USB drive needs to be reformatted before VirtualBox can see it</button>
+              <button class="qopt" onclick="ans(this,'correct')">C &nbsp; USB passthrough has not been configured &mdash; the USB is connected to the host OS, not passed through to the VM</button>
+              <button class="qopt" onclick="ans(this,'wrong')">D &nbsp; You need to install a USB driver inside the VM</button>
+            </div>
+            <div class="qfb" id="q5fb"></div>
+          </div>
+
+          <div id="quiz-score" role="status" aria-live="polite"></div>
+        </div>
+
+        <button class="done-btn" onclick="markDone(this,9)" aria-label="Mark step 10 complete">
+          <span aria-hidden="true">&#9744;</span> Mark Complete
+        </button>
+      </div>
+    </article>
+
+  </main>
+</div>
+
+<footer class="site-footer" role="contentinfo">
+  <p><strong>CSC 156 &mdash; Digital Forensics Fundamentals</strong> &bull; Mendocino College</p>
+  <p style="margin-top:4px">Win32DiskImager &trade; ImageWriter Developers (SourceForge) &bull; FTK Imager &trade; Exterro, Inc.</p>
+  <p style="margin-top:6px;font-size:0.7rem;color:rgba(255,255,255,0.35)">CSLO: &ldquo;Perform data collection using forensic technology methods in accordance with evidence handling procedures.&rdquo;</p>
+</footer>
+
+<script>
+/* ===== SESSION ===== */
+var doneList = JSON.parse(sessionStorage.getItem('stu_ddu') || '[]');
+
+function save(){ sessionStorage.setItem('stu_ddu', JSON.stringify(doneList)); }
+
+/* ===== TOGGLE SECTIONS ===== */
+function tog(btn){
+  var card = btn.closest('.step-card');
+  var open = card.classList.contains('open');
+  card.classList.toggle('open', !open);
+  btn.setAttribute('aria-expanded', String(!open));
+}
+
+/* ===== MARK DONE ===== */
+function markDone(btn, idx){
+  if(btn.classList.contains('done')) return;
+  btn.classList.add('done');
+  btn.innerHTML = '<span aria-hidden="true">&#9745;</span> Done!';
+  var card = btn.closest('.step-card');
+  card.classList.add('done');
+  var num = card.querySelector('.step-num');
+  if(num) num.textContent = '\u2713';
+  if(!doneList.includes(idx)) doneList.push(idx);
+  save(); updateUI();
+}
+
+function updateUI(){
+  var pct = Math.round((doneList.length / 10) * 100);
+  var tf = document.getElementById('tocFill');
+  var dc = document.getElementById('doneCount');
+  if(tf) tf.style.width = pct + '%';
+  if(dc) dc.textContent = doneList.length;
+  doneList.forEach(function(i){
+    var a = document.getElementById('tn-' + i);
+    if(a) a.classList.add('done');
+  });
+}
+
+/* ===== SCROLL ===== */
+window.addEventListener('scroll', function(){
+  var s = window.scrollY;
+  var h = document.documentElement.scrollHeight - window.innerHeight;
+  var p = h > 0 ? Math.round((s/h)*100) : 0;
+  var f = document.getElementById('pgFill');
+  if(f) f.style.width = p + '%';
+  document.getElementById('pgBar').setAttribute('aria-valuenow', p);
+
+  var cards = document.querySelectorAll('.step-card');
+  var mid = s + window.innerHeight * 0.35;
+  var ai = 0;
+  cards.forEach(function(c,i){ if(c.getBoundingClientRect().top + s <= mid) ai = i; });
+  document.querySelectorAll('.toc-links a').forEach(function(a,i){
+    a.classList.toggle('active', i === ai);
+  });
+}, { passive: true });
+
+/* ===== CHECKLISTS ===== */
+function toggleChk(el){
+  var on = el.classList.toggle('on');
+  el.setAttribute('aria-checked', on ? 'true' : 'false');
+  el.textContent = on ? '\u2713' : '';
+  var lbl = el.nextElementSibling;
+  if(lbl) lbl.classList.toggle('done', on);
+}
+
+/* ===== COPY CODE ===== */
+function doCopy(btn){
+  var pre = btn.closest('.code-wrap').querySelector('pre');
+  var txt = pre ? pre.innerText : '';
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(txt).then(function(){
+      btn.textContent = 'Copied!';
+      setTimeout(function(){ btn.textContent = 'Copy'; }, 2000);
+    });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    btn.textContent = 'Copied!';
+    setTimeout(function(){ btn.textContent = 'Copy'; }, 2000);
+  }
+}
+
+/* ===== QUIZ ===== */
+var qExplanations = {
+  q1: 'Win32DiskImager\'s built-in file browser only shows .img files by default. Since .dd files have a different extension, they\'re filtered out and invisible until you change the dropdown to show all files (*.*).',
+  q2: 'The "format disk" dialog is Windows failing to recognize the forensic filesystem on the USB. This is completely normal and expected — it means the raw write worked. Clicking Cancel is always the right move. Clicking "Format disk" would destroy your work.',
+  q3: 'You select Physical Drive because you\'re treating the USB as if it were a real physical evidence disk — which it now effectively is. Selecting "Image File" would be correct if you were opening a .dd file stored on your hard drive.',
+  q4: 'SHA-256 is cryptographically deterministic: identical data always produces an identical hash, and even a single bit difference produces a completely different hash. Matching hashes prove bit-for-bit identity — the standard of forensic integrity.',
+  q5: 'VirtualBox does not share USB devices with the guest VM by default. The USB is connected to your physical host computer. You must configure USB passthrough in VirtualBox Settings so the guest VM can see and control the device.'
+};
+
+var qScore = 0;
+var qTotal = 5;
+
+function ans(btn, result){
+  var qDiv = btn.closest('.qblock');
+  qDiv.querySelectorAll('.qopt').forEach(function(o){
+    o.onclick = null;
+    o.setAttribute('aria-disabled','true');
+  });
+  var fb = qDiv.querySelector('.qfb');
+  if(result === 'correct'){
+    btn.classList.add('correct');
+    qScore++;
+    fb.innerHTML = '\u2713 Correct! ' + qExplanations[qDiv.id];
+    fb.className = 'qfb show ok';
+  } else {
+    btn.classList.add('incorrect');
+    fb.innerHTML = '\u2717 Not quite. ' + qExplanations[qDiv.id];
+    fb.className = 'qfb show err';
+  }
+
+  /* check if all answered */
+  var qs = document.querySelectorAll('.qblock');
+  var answered = 0;
+  qs.forEach(function(q){ if(q.querySelector('.qopt.correct, .qopt.incorrect')) answered++; });
+  if(answered < qTotal) return;
+
+  var r = document.getElementById('quiz-score');
+  r.style.display = 'block';
+  r.style.borderRadius = '8px';
+  r.style.padding = '12px 16px';
+  r.style.marginTop = '14px';
+
+  if(qScore === qTotal){
+    r.style.background = '#dcfce7'; r.style.color = '#166534';
+    r.innerHTML = '\u{1F389} Perfect score! You got ' + qScore + '/' + qTotal + '. You understood every step of this lab.';
+  } else if(qScore >= 3){
+    r.style.background = '#fef3c7'; r.style.color = '#92400e';
+    r.innerHTML = '\u{1F4DA} Good work! You got ' + qScore + '/' + qTotal + '. Review the explanations for any you missed and re-read those steps.';
+  } else {
+    r.style.background = '#fee2e2'; r.style.color = '#991b1b';
+    r.innerHTML = '\u26A0\uFE0F You got ' + qScore + '/' + qTotal + '. Please re-read the tutorial steps carefully before your lab session.';
+  }
+  sessionStorage.setItem('stu_ddu_quiz', qScore);
+}
+
+/* ===== INIT ===== */
+(function(){
+  doneList.forEach(function(idx){
+    var cards = document.querySelectorAll('.step-card');
+    if(!cards[idx]) return;
+    cards[idx].classList.add('done');
+    var n = cards[idx].querySelector('.step-num');
+    if(n) n.textContent = '\u2713';
+    var b = cards[idx].querySelector('.done-btn');
+    if(b){ b.classList.add('done'); b.innerHTML = '<span aria-hidden="true">\u2611</span> Done!'; }
+  });
+  updateUI();
+})();
+</script>
+</body>
+</html>
