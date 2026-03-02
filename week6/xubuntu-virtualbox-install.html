@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Installing Xubuntu Minimal in VirtualBox – CSC 156</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            line-height: 1.7;
+            color: #1a1a2e;
+            background: #f4f1eb;
+        }
+
+        /* ---- HEADER ---- */
+        header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+            color: #fff;
+            padding: 2.5rem 2rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        header::before {
+            content: '';
+            position: absolute;
+            top: -40px; right: -40px;
+            width: 260px; height: 260px;
+            background: radial-gradient(circle, rgba(230,126,34,0.18) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .header-inner {
+            max-width: 1300px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        .course-tag {
+            display: inline-block;
+            font-family: 'Courier New', monospace;
+            font-size: 0.78rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #e67e22;
+            background: rgba(230,126,34,0.15);
+            border: 1px solid rgba(230,126,34,0.4);
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            margin-bottom: 0.9rem;
+        }
+        header h1 {
+            font-size: clamp(1.6rem, 3.5vw, 2.6rem);
+            font-weight: 700;
+            line-height: 1.25;
+            margin-bottom: 0.6rem;
+            color: #fff;
+        }
+        header h1 span { color: #e67e22; }
+        .header-meta {
+            font-family: 'Courier New', monospace;
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.55);
+            letter-spacing: 0.04em;
+        }
+        .header-meta span { color: rgba(255,255,255,0.8); }
+
+        /* ---- LAYOUT ---- */
+        .page-body {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        /* ---- INTRO CARD ---- */
+        .intro-card {
+            background: #fff;
+            border-left: 5px solid #0f3460;
+            border-radius: 4px;
+            padding: 1.4rem 1.6rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+        .intro-card p { color: #374151; font-size: 0.97rem; }
+        .intro-card strong { color: #0f3460; }
+
+        /* ---- VIDEO + TRANSCRIPT SECTION ---- */
+        .video-section {
+            background: #fff;
+            border-radius: 6px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.09);
+            padding: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+        .video-section h2 {
+            font-size: 1.2rem;
+            color: #0f3460;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .video-section h2::before {
+            content: '▶';
+            color: #e67e22;
+            font-size: 0.9rem;
+        }
+
+        .media-row {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        @media (min-width: 1024px) {
+            .media-row { flex-direction: row; }
+            .video-col { flex: 0 0 66%; }
+            .transcript-col { flex: 1; }
+        }
+
+        .video-wrapper {
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%;
+            position: relative;
+            background: #000;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            border: none;
+        }
+
+        .transcript-panel {
+            background: #fafaf8;
+            border: 1px solid #e5e0d8;
+            border-radius: 4px;
+            overflow-y: scroll;
+            height: 24rem;
+            padding: 0.75rem;
+        }
+        .transcript-line {
+            padding: 0.45rem 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            color: #374151;
+            line-height: 1.55;
+            transition: background 0.15s;
+        }
+        .transcript-line:hover { background: #f0ede7; }
+        .active-transcript-line {
+            background: #fef3e2;
+            font-weight: 600;
+            border-left: 4px solid #e67e22;
+            padding-left: 11px;
+        }
+        .transcript-label {
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #9ca3af;
+            padding: 0.4rem 0.75rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        /* ---- SECTION HEADINGS ---- */
+        .section-heading {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 2.5rem 0 1.2rem;
+        }
+        .step-badge {
+            background: #0f3460;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 0.3rem 0.7rem;
+            border-radius: 3px;
+            white-space: nowrap;
+            letter-spacing: 0.05em;
+        }
+        .section-heading h2 {
+            font-size: 1.35rem;
+            color: #1a1a2e;
+            font-weight: 700;
+        }
+
+        /* ---- STEP CARDS ---- */
+        .step-card {
+            background: #fff;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            padding: 1.4rem 1.6rem;
+            margin-bottom: 1.4rem;
+        }
+        .step-card h3 {
+            font-size: 1.05rem;
+            color: #0f3460;
+            margin-bottom: 0.8rem;
+            font-weight: 700;
+        }
+        .step-card p, .step-card li {
+            font-size: 0.93rem;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        .step-card ul, .step-card ol {
+            padding-left: 1.4rem;
+            margin: 0.5rem 0;
+        }
+        .step-card li { margin-bottom: 0.35rem; }
+
+        /* ---- INFO BOXES ---- */
+        .box {
+            border-radius: 4px;
+            padding: 1rem 1.2rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            display: flex;
+            gap: 0.8rem;
+            align-items: flex-start;
+        }
+        .box-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 0.05rem; }
+        .box-info { background: #eff6ff; border-left: 4px solid #3b82f6; color: #1e40af; }
+        .box-warn { background: #fff7ed; border-left: 4px solid #f59e0b; color: #92400e; }
+        .box-success { background: #f0fdf4; border-left: 4px solid #22c55e; color: #15803d; }
+        .box-tip { background: #fdf4ff; border-left: 4px solid #a855f7; color: #7e22ce; }
+        .box p { margin: 0; }
+        .box strong { color: inherit; }
+
+        /* ---- COMMAND BLOCKS ---- */
+        .cmd-block {
+            background: #1a1a2e;
+            border-radius: 6px;
+            padding: 1rem 1.2rem;
+            margin: 0.75rem 0;
+            position: relative;
+            font-family: 'Courier New', monospace;
+        }
+        .cmd-block pre {
+            color: #a3e635;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            line-height: 1.6;
+            padding-right: 3rem;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.65rem; right: 0.65rem;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #d1d5db;
+            font-size: 0.72rem;
+            font-family: 'Courier New', monospace;
+            padding: 0.3rem 0.65rem;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.15s;
+            letter-spacing: 0.05em;
+        }
+        .copy-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+        .copy-btn.copied { background: rgba(34,197,94,0.25); border-color: #22c55e; color: #86efac; }
+        .cmd-label {
+            font-family: 'Courier New', monospace;
+            font-size: 0.72rem;
+            color: rgba(163,230,53,0.5);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 0.3rem;
+        }
+
+        /* ---- SPEC TABLE ---- */
+        .spec-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            margin: 0.75rem 0;
+        }
+        .spec-table th {
+            background: #0f3460;
+            color: #fff;
+            text-align: left;
+            padding: 0.55rem 1rem;
+            font-size: 0.82rem;
+            letter-spacing: 0.05em;
+            font-family: 'Courier New', monospace;
+        }
+        .spec-table td {
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            color: #374151;
+        }
+        .spec-table tr:last-child td { border-bottom: none; }
+        .spec-table tr:nth-child(even) td { background: #f9fafb; }
+        .spec-table td:first-child { font-weight: 600; color: #1a1a2e; width: 40%; }
+        .spec-table td code {
+            background: #f0ede7;
+            padding: 0.1rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #0f3460;
+        }
+
+        /* ---- CHECKLIST ---- */
+        .checklist { list-style: none; padding: 0; }
+        .checklist li {
+            padding: 0.45rem 0;
+            border-bottom: 1px solid #f0ede7;
+            display: flex;
+            gap: 0.6rem;
+            align-items: flex-start;
+            font-size: 0.92rem;
+            color: #374151;
+        }
+        .checklist li:last-child { border-bottom: none; }
+        .checklist li::before {
+            content: '☐';
+            color: #e67e22;
+            flex-shrink: 0;
+            margin-top: 0.05rem;
+        }
+
+        /* ---- NEXT STEPS ---- */
+        .next-steps {
+            background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            color: #fff;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-top: 2.5rem;
+        }
+        .next-steps h2 { color: #e67e22; font-size: 1.2rem; margin-bottom: 1rem; }
+        .next-steps ul { list-style: none; padding: 0; }
+        .next-steps li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            gap: 0.6rem;
+            font-size: 0.93rem;
+            color: rgba(255,255,255,0.85);
+        }
+        .next-steps li:last-child { border-bottom: none; }
+        .next-steps li::before { content: '→'; color: #e67e22; }
+
+        /* ---- FOOTER ---- */
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.78rem;
+            color: #9ca3af;
+            border-top: 1px solid #e5e0d8;
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-inner">
+        <div class="course-tag">CSC 156 · Lab Tutorial</div>
+        <h1>Installing <span>Xubuntu Minimal</span> in VirtualBox</h1>
+        <p class="header-meta">
+            Platform: <span>Windows 11 Host · VirtualBox 7.x</span> &nbsp;|&nbsp;
+            OS: <span>Xubuntu 24.04 LTS (Minimal)</span> &nbsp;|&nbsp;
+            Approximate Time: <span>25–30 min</span>
+        </p>
+    </div>
+</header>
+
+<div class="page-body">
+
+    <!-- INTRO -->
+    <div class="intro-card">
+        <p>
+            This tutorial walks you through creating a <strong>Xubuntu Minimal virtual machine</strong> inside VirtualBox
+            on your Windows 11 computer. Xubuntu uses the lightweight <strong>XFCE desktop environment</strong>, which is
+            faster and uses fewer resources than standard Ubuntu — making it ideal for running inside a VM.
+            You will also install <strong>VirtualBox Guest Additions</strong> for better display support and USB passthrough,
+            which is required to complete later lab exercises.
+        </p>
+    </div>
+
+    <!-- VIDEO + TRANSCRIPT -->
+    <div class="video-section">
+        <h2>Video Walkthrough</h2>
+        <div class="media-row">
+            <div class="video-col">
+                <div class="video-wrapper">
+                    <iframe id="youtube-player"
+                        src="https://www.youtube.com/embed/q0LKtUJ4RgA?enablejsapi=1"
+                        title="Installing Xubuntu Minimal in VirtualBox"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin"
+                        allowfullscreen>
+                    </iframe>
+                </div>
+            </div>
+            <div class="transcript-col">
+                <div class="transcript-panel" id="transcript-container">
+                    <span class="transcript-label">Interactive Transcript — click to seek</span>
+                    <p style="color:#9ca3af;font-size:0.85rem;padding:0.5rem 0.75rem;">Loading transcript…</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================= STEP 1 ========================= -->
+    <div class="section-heading">
+        <span class="step-badge">STEP 1</span>
+        <h2>Download the Xubuntu Minimal ISO</h2>
+    </div>
+
+    <div class="step-card">
+        <h3>Why Xubuntu Minimal?</h3>
+        <p>Standard Ubuntu ships with a full desktop experience (GNOME) and bundled apps, which consumes significant RAM and disk space inside a VM. Xubuntu Minimal strips this down to a functional XFCE desktop with fewer pre-installed apps:</p>
+        <table class="spec-table" style="margin-top:0.75rem;">
+            <thead><tr><th>ISO</th><th>Approx. Size</th><th>Desktop</th></tr></thead>
+            <tbody>
+                <tr><td>Ubuntu 24.04 Desktop</td><td>~6.5 GB</td><td>GNOME (full)</td></tr>
+                <tr><td>Xubuntu 24.04 Minimal</td><td>~3 GB</td><td>XFCE (lightweight)</td></tr>
+            </tbody>
+        </table>
+        <div class="box box-info" style="margin-top:1rem;">
+            <span class="box-icon">ℹ️</span>
+            <p><strong>ISO File:</strong> Your instructor will provide a download link to the Xubuntu Minimal ISO on the course tutorial page. Download it to your <strong>Downloads</strong> folder before proceeding. You do not need to use BitTorrent — direct download mirrors (such as LeaseWeb or Indiana University) are available on the Xubuntu website.</p>
+        </div>
+        <p>The download URL for the Xubuntu minimal ISO is:</p>
+        <div class="cmd-block">
+            <div class="cmd-label">URL</div>
+            <pre>https://xubuntu.org/download/</pre>
+            <button class="copy-btn" onclick="copyCmd(this, 'https://xubuntu.org/download/')">COPY</button>
+        </div>
+        <div class="box box-warn">
+            <span class="box-icon">⚠️</span>
+            <p>Make sure to select the <strong>Minimal</strong> ISO, not the standard desktop ISO. Verify the file size is approximately 2.9–3.1 GB after download.</p>
+        </div>
+    </div>
+
+    <!-- ========================= STEP 2 ========================= -->
+    <div class="section-heading">
+        <span class="step-badge">STEP 2</span>
+        <h2>Create the Virtual Machine in VirtualBox</h2>
+    </div>
+
+    <div class="step-card">
+        <h3>Create a New VM</h3>
+        <p>Open VirtualBox Manager and click <strong>New</strong> to start the wizard. Enter the following settings:</p>
+        <table class="spec-table" style="margin-top:0.75rem;">
+            <thead><tr><th>Setting</th><th>Value</th></tr></thead>
+            <tbody>
+                <tr><td>Name</td><td><code>xubuntu-26-spring</code> (or similar)</td></tr>
+                <tr><td>ISO Image</td><td>Browse to your downloaded Xubuntu ISO</td></tr>
+                <tr><td>Type / Version</td><td><code>Linux</code> / <code>Ubuntu (64-bit)</code></td></tr>
+                <tr><td>Unattended Install</td><td>Do <strong>NOT</strong> enable — leave unchecked</td></tr>
+                <tr><td>Base Memory (RAM)</td><td><code>4096 MB</code> (4 GB) recommended; 2 GB minimum</td></tr>
+                <tr><td>Processors (CPUs)</td><td><code>2</code> (increase if your host has extra cores)</td></tr>
+                <tr><td>Virtual Hard Disk</td><td><code>25 GB</code></td></tr>
+            </tbody>
+        </table>
+        <div class="box box-info" style="margin-top:1rem;">
+            <span class="box-icon">ℹ️</span>
+            <p>2 GB RAM is the minimum that works. If your computer has 16 GB or more, setting the VM to <strong>4 GB</strong> gives a noticeably smoother experience.</p>
+        </div>
+    </div>
+
+    <div class="step-card">
+        <h3>Configure Display Settings</h3>
+        <p>After the VM is created, open <strong>Settings → Display</strong> before starting it:</p>
+        <table class="spec-table">
+            <thead><tr><th>Setting</th><th>Value</th></tr></thead>
+            <tbody>
+                <tr><td>Video Memory</td><td><code>128 MB</code></td></tr>
+                <tr><td>Graphics Controller</td><td><code>VMSVGA</code> (preferred; try VBoxSVGA if issues)</td></tr>
+                <tr><td>3D Acceleration</td><td>Enable (improves display performance)</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="step-card">
+        <h3>Configure Other Settings</h3>
+        <p>Still in <strong>Settings</strong>, make these additional adjustments:</p>
+        <table class="spec-table">
+            <thead><tr><th>Category</th><th>Action</th></tr></thead>
+            <tbody>
+                <tr><td>Audio</td><td>Disable — not needed for this lab</td></tr>
+                <tr><td>Network</td><td>Leave as NAT (default) — keep enabled</td></tr>
+                <tr><td>USB</td><td>Enable USB; select <code>USB 2.0</code> or <code>3.0</code> to match your drive</td></tr>
+                <tr><td>USB Device Filters</td><td>Click <strong>Add empty filter</strong> — configure after install</td></tr>
+                <tr><td>Shared Folders</td><td>Optional: add a host folder for easy file transfer between host and VM</td></tr>
+            </tbody>
+        </table>
+        <div class="box box-tip">
+            <span class="box-icon">💡</span>
+            <p><strong>Shared Folders</strong> let you drag files between your Windows desktop and the VM without USB. Add a folder from your Windows host and it will always be available inside the VM — useful for copying files back and forth.</p>
+        </div>
+    </div>
+
+    <!-- ========================= STEP 3 ========================= -->
+    <div class="section-heading">
+        <span class="step-badge">STEP 3</span>
+        <h2>Install Xubuntu</h2>
+    </div>
+
+    <div class="step-card">
+        <h3>Boot and Launch the Installer</h3>
+        <p>Start your VM. The boot menu will appear. Select <strong>Try or Install Xubuntu</strong> and press Enter. If you wait a few seconds, it will auto-select this option.</p>
+        <div class="box box-info">
+            <span class="box-icon">ℹ️</span>
+            <p>The installation process is identical to standard Ubuntu — the only difference is the XFCE desktop environment and the "X" in the name. Every wizard step is the same.</p>
+        </div>
+    </div>
+
+    <div class="step-card">
+        <h3>Walk Through the Installer Screens</h3>
+        <p>Follow each screen in order:</p>
+        <ol style="padding-left:1.4rem;">
+            <li><strong>Language</strong> — Select English, click Next.</li>
+            <li><strong>Keyboard Layout</strong> — English (US), click Next.</li>
+            <li><strong>Internet Connection</strong> — Select <em>Use wired connection</em>. Even though your Windows host may use Wi-Fi, VirtualBox presents a virtual wired NIC to the VM.</li>
+            <li><strong>Installation Type</strong> — Choose <em>Interactive installation</em>.</li>
+            <li><strong>Application Selection</strong> — Keep <em>Minimal</em>. Do not add NVIDIA drivers or media codecs.</li>
+            <li><strong>Disk Setup</strong> — Choose <em>Erase disk and install</em>. This only erases the virtual 25 GB disk — your host computer is not affected.</li>
+            <li><strong>Encryption</strong> — Leave encryption OFF and click Next.</li>
+            <li><strong>User Account</strong> — Enter your desired username and a password. Check <em>Require password to log in</em>.</li>
+            <li><strong>Time Zone</strong> — Select your region (e.g., America/Los_Angeles for Pacific Time).</li>
+            <li><strong>Review Summary</strong> — Confirm partitions (sda1 and sda2 will be created), then click <em>Install</em>.</li>
+        </ol>
+        <div class="box box-success" style="margin-top:1rem;">
+            <span class="box-icon">✅</span>
+            <p>Installation takes approximately <strong>6–10 minutes</strong> depending on your computer's speed. You can monitor progress by right-clicking the VM in VirtualBox Manager and opening <em>Resource Usage</em> — if the CPU/Disk graphs show activity, it's still working.</p>
+        </div>
+        <div class="box box-warn">
+            <span class="box-icon">⚠️</span>
+            <p>If the graphs are completely flat for more than 5 minutes and the installer hasn't progressed, the VM may be frozen. Try <em>Save State</em> → restart it. If that fails, power off and reinstall.</p>
+        </div>
+    </div>
+
+    <div class="step-card">
+        <h3>Shut Down After Installation</h3>
+        <p>When installation completes, instead of clicking Restart, use the XFCE menu to shut the VM down cleanly:</p>
+        <ol style="padding-left:1.4rem;">
+            <li>Click the small blue XFCE menu icon in the top-left corner of the desktop.</li>
+            <li>Select <strong>Shut Down</strong>.</li>
+            <li>Wait for the VM to fully power off.</li>
+        </ol>
+        <p style="margin-top:0.75rem;">The installer ISO will auto-eject itself. You can verify by going to <strong>Settings → Storage</strong> — the optical drive should show empty. If not, manually remove it before booting.</p>
+    </div>
+
+    <!-- ========================= STEP 4 ========================= -->
+    <div class="section-heading">
+        <span class="step-badge">STEP 4</span>
+        <h2>First Boot &amp; System Update</h2>
+    </div>
+
+    <div class="step-card">
+        <h3>Start the VM and Open a Terminal</h3>
+        <p>Power the VM back on and log in with your credentials. Once at the XFCE desktop, right-click anywhere on the desktop and select <strong>Open Terminal Here</strong>.</p>
+        <div class="box box-tip">
+            <span class="box-icon">💡</span>
+            <p>If the terminal font is too small: go to <strong>Edit → Preferences → Appearance</strong> and change the font size to <code>14</code>. Close and reopen the terminal if the change doesn't apply immediately.</p>
+        </div>
+    </div>
+
+    <div class="step-card">
+        <h3>Update the Package List</h3>
+        <p>Before installing anything, update the package database to ensure you get the latest versions:</p>
+        <div class="cmd-block">
+            <div class="cmd-label">Terminal</div>
+            <pre>sudo apt update</pre>
+            <button class="copy-btn" onclick="copyCmd(this, 'sudo apt update')">COPY</button>
+        </div>
+        <p>Enter your password when prompted. You will see a list of Ubuntu package repositories — this confirms Xubuntu is Ubuntu under the hood with XFCE on top.</p>
+    </div>
+
+    <!-- ========================= STEP 5 ========================= -->
+    <div class="section-heading">
+        <span class="step-badge">STEP 5</span>
+        <h2>Install VirtualBox Guest Additions</h2>
+    </div>
+
+    <div class="step-card">
+        <h3>What Are Guest Additions?</h3>
+        <p>VirtualBox Guest Additions are drivers and utilities installed inside the VM that enable:</p>
+        <ul>
+            <li>Dynamic screen resolution scaling</li>
+            <li>Smoother mouse integration (no more clicking to capture/release)</li>
+            <li>USB device passthrough (required for later labs)</li>
+            <li>Shared folders and clipboard between host and VM</li>
+        </ul>
+    </div>
+
+    <div class="step-card">
+        <h3>Step 5a — Install Required Build Tools</h3>
+        <p>Guest Additions compile kernel modules during installation. Install the build dependencies first:</p>
+        <div class="cmd-block">
+            <div class="cmd-label">Terminal</div>
+            <pre>sudo apt install build-essential dkms linux-headers-$(uname -r) -y</pre>
+            <button class="copy-btn" onclick="copyCmd(this, 'sudo apt install build-essential dkms linux-headers-$(uname -r) -y')">COPY</button>
+        </div>
+        <div class="box box-warn">
+            <span class="box-icon">⚠️</span>
+            <p>The package name is <code>build-essential</code> (no trailing "s"). Typing <code>build-essentials</code> will produce an "unable to locate package" error. The <code>-y</code> flag auto-confirms the installation prompt.</p>
+        </div>
+    </div>
+
+    <div class="step-card">
+        <h3>Step 5b — Insert the Guest Additions CD Image</h3>
+        <p>In the VirtualBox window menu bar, go to:</p>
+        <p style="margin:0.5rem 0 0.5rem 1rem;"><strong>Devices → Insert Guest Additions CD Image…</strong></p>
+        <p>Wait a moment for the virtual CD to mount. A file manager window may open automatically showing the disc contents.</p>
+    </div>
+
+    <div class="step-card">
+        <h3>Step 5c — Navigate to the CD and Run the Installer</h3>
+        <p>Use the terminal to navigate to the mounted Guest Additions disc and run the installer:</p>
+
+        <div class="cmd-block">
+            <div class="cmd-label">Step 1 — Go to /media</div>
+            <pre>cd /media</pre>
+            <button class="copy-btn" onclick="copyCmd(this, 'cd /media')">COPY</button>
+        </div>
+
+        <div class="cmd-block">
+            <div class="cmd-label">Step 2 — List contents (find your username directory)</div>
+            <pre>ls</pre>
+            <button class="copy-btn" onclick="copyCmd(this, 'ls')">COPY</button>
+        </div>
+
+        <div class="cmd-block">
+            <div class="cmd-label">Step 3 — Enter your username's directory (replace "yourusername")</div>
+            <pre>cd yourusername</pre>
+            <button class="copy-btn" onclick="copyCmd(this, 'cd yourusername')">COPY</button>
+        </div>
+
+        <div class="cmd-block">
+            <div class="cmd-label">Step 4 — List contents (find the VBox_GAs folder)</div>
+            <pre>ls</pre>
+            <button class="copy-btn" onclick="copyCmd(this, 'ls')">COPY</button>
+        </div>
+
+        <div class="cmd-block">
+            <div class="cmd-label">Step 5 — Enter the Guest Additions directory (version may differ)</div>
+            <pre>cd VBox_GAs_7.2.6</pre>
+            <button class="copy-btn" onclick="copyCmd(this, 'cd VBox_GAs_7.2.6')">COPY</button>
+        </div>
+
+        <div class="cmd-block">
+            <div class="cmd-label">Step 6 — List contents to confirm VBoxLinuxAdditions.run is present</div>
+            <pre>ls</pre>
+            <button class="copy-btn" onclick="copyCmd(this, 'ls')">COPY</button>
+        </div>
+
+        <div class="cmd-block">
+            <div class="cmd-label">Step 7 — Run the installer</div>
+            <pre>sudo ./VBoxLinuxAdditions.run</pre>
+            <button class="copy-btn" onclick="copyCmd(this, 'sudo ./VBoxLinuxAdditions.run')">COPY</button>
+        </div>
+
+        <div class="box box-info" style="margin-top:0.75rem;">
+            <span class="box-icon">ℹ️</span>
+            <p><strong>Linux is case-sensitive.</strong> The filename is <code>VBoxLinuxAdditions.run</code> with capital V, B, L, and A. The <code>./</code> prefix tells the shell to execute the file directly. You need <code>sudo</code> for the required system permissions.</p>
+        </div>
+        <div class="box box-success">
+            <span class="box-icon">✅</span>
+            <p>If it worked, you will see output like <em>"VirtualBox Guest Additions installer"</em> followed by module build messages. The installer exits automatically when complete.</p>
+        </div>
+    </div>
+
+    <div class="step-card">
+        <h3>Step 5d — Reboot the VM</h3>
+        <p>Reboot to fully load the new Guest Additions kernel modules:</p>
+        <div class="cmd-block">
+            <div class="cmd-label">Terminal</div>
+            <pre>sudo reboot</pre>
+            <button class="copy-btn" onclick="copyCmd(this, 'sudo reboot')">COPY</button>
+        </div>
+        <p style="margin-top:0.5rem;">After reboot, your VM should have improved mouse integration and the screen resolution options under <strong>View → Virtual Screen</strong> should be enabled (they were greyed out before).</p>
+    </div>
+
+    <!-- ========================= STEP 6 ========================= -->
+    <div class="section-heading">
+        <span class="step-badge">STEP 6</span>
+        <h2>Configure USB Passthrough</h2>
+    </div>
+
+    <div class="step-card">
+        <h3>Set Up a USB Device Filter</h3>
+        <p>USB passthrough allows your VM to directly access a USB drive plugged into your Windows host. This is required for later lab exercises.</p>
+        <ol style="padding-left:1.4rem;">
+            <li>Power off the VM completely.</li>
+            <li>In VirtualBox Manager, select your VM and open <strong>Settings → USB</strong>.</li>
+            <li>Ensure USB is <strong>enabled</strong> and the controller matches your drive: <code>USB 2.0</code> for older drives, <code>USB 3.0</code> for newer drives.</li>
+            <li>Click the <strong>Add Empty Filter</strong> icon (the plug with a "+" icon) on the right side. This creates a blank filter that will capture your USB drive when you plug it in later.</li>
+            <li>Click OK to save.</li>
+        </ol>
+        <div class="box box-tip">
+            <span class="box-icon">💡</span>
+            <p>You do not need to specify the drive right now. The empty filter allows you to assign a specific USB device later. When you plug in your USB drive and start the VM, you can attach it via <strong>Devices → USB</strong> in the menu bar.</p>
+        </div>
+    </div>
+
+    <div class="step-card">
+        <h3>Verify USB Access Inside the VM</h3>
+        <p>After starting the VM with a USB drive plugged in:</p>
+        <div class="cmd-block">
+            <div class="cmd-label">Navigate to /media and find your USB drive</div>
+            <pre>cd /media/yourusername
+ls</pre>
+            <button class="copy-btn" onclick="copyCmd(this, 'cd /media/yourusername\nls')">COPY</button>
+        </div>
+        <p style="margin-top:0.5rem;">You should see your USB drive listed (e.g., <code>NTFS</code> or the drive label). You can then apply Linux commands to the files on that drive.</p>
+        <div class="box box-success">
+            <span class="box-icon">✅</span>
+            <p>If the drive appears in the file manager and in <code>/media/yourusername/</code>, USB passthrough is working correctly.</p>
+        </div>
+    </div>
+
+    <!-- ========================= STEP 7 ========================= -->
+    <div class="section-heading">
+        <span class="step-badge">STEP 7</span>
+        <h2>VirtualBox Display Tips</h2>
+    </div>
+
+    <div class="step-card">
+        <h3>Scaling and Display Modes</h3>
+        <p>VirtualBox offers several modes for managing the VM window on your Windows desktop:</p>
+        <table class="spec-table">
+            <thead><tr><th>Mode</th><th>How to Activate</th><th>Description</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td>Normal Window</td>
+                    <td>Default</td>
+                    <td>VM in a standard window. Adjust window size manually.</td>
+                </tr>
+                <tr>
+                    <td>Scaled Mode</td>
+                    <td><code>View → Scaled Mode</code></td>
+                    <td>Stretches VM display to fill window. Doesn't change VM resolution but makes it larger/smaller visually.</td>
+                </tr>
+                <tr>
+                    <td>Full Screen</td>
+                    <td><code>Host + F</code></td>
+                    <td>VM takes over the entire screen. Exit with <code>Host + Home</code>.</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="box box-info" style="margin-top:0.75rem;">
+            <span class="box-icon">ℹ️</span>
+            <p>On Windows, the <strong>Host key</strong> is the <kbd>Right Ctrl</kbd> key by default. Use <code>Host + Home</code> to access the VirtualBox menu when in full screen or scaled mode.</p>
+        </div>
+    </div>
+
+    <div class="step-card">
+        <h3>Eject the Guest Additions CD</h3>
+        <p>After installation and reboot, eject the Guest Additions disc to keep things clean:</p>
+        <ol style="padding-left:1.4rem;">
+            <li>Open the <strong>File Manager</strong> from the XFCE menu.</li>
+            <li>Find the <em>VBox_GAs</em> disc in the left sidebar.</li>
+            <li>Click the eject icon next to it.</li>
+        </ol>
+        <p style="margin-top:0.5rem;">Alternatively, in <strong>Settings → Storage</strong>, select the optical drive and click the disc icon to remove the image.</p>
+    </div>
+
+    <!-- COMPLETION CHECKLIST -->
+    <div class="section-heading">
+        <span class="step-badge">CHECK</span>
+        <h2>Completion Checklist</h2>
+    </div>
+
+    <div class="step-card">
+        <h3>Verify all steps are complete before submitting your lab work:</h3>
+        <ul class="checklist">
+            <li>Xubuntu Minimal ISO downloaded (~3 GB)</li>
+            <li>VirtualBox VM created with correct RAM, CPU, and disk settings</li>
+            <li>Display settings configured (128 MB video memory, VMSVGA)</li>
+            <li>Xubuntu installed successfully — boots to XFCE desktop</li>
+            <li>Installer ISO automatically ejected (verified in Settings → Storage)</li>
+            <li><code>sudo apt update</code> completes without errors</li>
+            <li>Build tools installed: <code>build-essential</code>, <code>dkms</code>, <code>linux-headers</code></li>
+            <li>Guest Additions CD inserted and <code>VBoxLinuxAdditions.run</code> executed successfully</li>
+            <li>VM rebooted after Guest Additions installation</li>
+            <li>USB controller enabled and empty filter added in Settings → USB</li>
+            <li>USB drive visible inside VM at <code>/media/yourusername/</code></li>
+        </ul>
+    </div>
+
+    <!-- NEXT STEPS -->
+    <div class="next-steps">
+        <h2>Next Steps</h2>
+        <ul>
+            <li>Explore the XFCE desktop environment — right-click the desktop to see available options</li>
+            <li>Practice basic Linux terminal commands inside your new Xubuntu VM</li>
+            <li>Use your USB drive via the VM to complete the assigned lab exercise</li>
+            <li>Optionally configure Shared Folders for easier file transfer between your host and VM</li>
+        </ul>
+    </div>
+
+</div><!-- end page-body -->
+
+<footer>
+    CSC 156 · Xubuntu Minimal on VirtualBox Tutorial &nbsp;|&nbsp; For questions, contact your instructor
+</footer>
+
+<!-- ================================================================
+     JAVASCRIPT: Transcript sync + copy-to-clipboard
+================================================================ -->
+<script>
+    // ---- VTT CONTENT ----
+    const vttContent = `WEBVTT
+
+00:00.000 --> 00:06.560
+Aloha! So in this video what we're gonna do is show you how to first install
+
+00:06.560 --> 00:12.600
+Ubuntu with a minimal kind of configuration and to do that we're gonna
+
+00:12.600 --> 00:20.280
+use Xubuntu rather than regular Ubuntu and that's because Xubuntu uses a
+
+00:20.280 --> 00:28.800
+lighter weight graphical interface okay called XFCE. Alright and it works
+
+00:28.800 --> 00:36.440
+great it's beautiful but it isn't quite as elegant as the normal Ubuntu
+
+00:36.440 --> 00:43.460
+graphical interface but it's much faster it takes less space less resources so
+
+00:43.460 --> 00:47.680
+and so we're gonna go to download and what we want to do is download the
+
+00:47.680 --> 00:54.420
+minimal okay and so typically I don't use torrents just for whatever reason
+
+00:54.420 --> 01:07.940
+and I'll go here and I'll either select LeaseWeb or IU so I think IU is Indiana University
+
+01:07.940 --> 01:20.000
+I will post the one I downloaded. So if I go into my downloads folder I
+
+01:20.000 --> 01:44.600
+downloaded the Xubuntu minimal ISO, turns out to be 3 gigs. So this is what we want to use. I'll have it up there for you.
+
+01:44.600 --> 02:26.780
+So once we've downloaded and we have it, we want to go into our virtual box and we want to create a new VM. Give it a name, type xubuntu, ISO image — select the Xubuntu ISO you downloaded. Pick Linux Ubuntu 64. I'm not gonna use unattended install.
+
+02:26.780 --> 02:55.700
+Specify your virtual hardware — two gigs is probably fine, I'm gonna up mine to four — 4096. And then on my CPUs I'll put mine to two, that's fine. 25 gigs is fine for disk.
+
+02:56.780 --> 03:12.800
+Okay then we can finish. Now we can go into settings right now and look at system here's our four gigs, you can change it. These are some other items.
+
+03:12.800 --> 03:35.960
+Display — one thing I'm gonna do is I'm gonna make video memory 128. VM SVGA tends to be the best, so do this. If it doesn't work you can try VBoxSVGA. We'll add 3D acceleration, sometimes the graphics are better when we do that.
+
+03:44.000 --> 03:56.240
+Storage is here, you can see our drive. Audio — I'm going to turn it off because it doesn't matter.
+
+03:56.780 --> 04:32.500
+Networking we're just going to leave it enabled. USB — I'm going to enable it and put it at 2.0 because that's my USB drive that I created. We'll do device filters later — we need to create a USB device filter for it.
+
+04:32.500 --> 05:00.200
+Shared folders — you can add a folder from your hard disk on here and that way you can access it directly from inside your VM. It's a nice thing to do, so you can copy and drop stuff back and forth between your host machine and your VM that way.
+
+05:11.280 --> 05:22.880
+Now we are going to start our VM and do our installer. So here's starting up.
+
+05:22.880 --> 05:52.000
+Here's the options — try or install. That's what we want to do, we want to install. And whether you use the official Ubuntu installation or this one it's identical, except for the other one doesn't have the X, but every step is the same.
+
+05:54.360 --> 06:12.760
+If you wait long enough it'll automatically start. And so you just wait and see.
+
+06:23.380 --> 06:50.780
+So here's my graphic, here's my interface. So we want to do install Ubuntu, Xubuntu, minimal. We'll click on it. It takes a little bit — language: English, next. Keyboard: English. Connected to the internet: use wired.
+
+06:52.200 --> 07:10.580
+We use wired because what we're doing is we're sharing — it doesn't matter what your computer has. Computer will use wifi, it doesn't matter. We're sharing its connection. So internally within VirtualBox it's always a wired connection.
+
+07:11.200 --> 07:36.600
+Interactive so that we will have to walk through it. It doesn't have any, we don't want any extra things so we'll just keep it as minimal. NVIDIA drivers, we don't need them. Movies, video, sound, audio — we don't really need that either. We turned off audio actually. Erase disc — absolutely.
+
+07:39.780 --> 07:59.280
+This was that 25 gig disc that we created. Click next, no encryption. We're not going to encrypt anything. Go next. Now here you create your account — enter whatever username you want to have, you can change the name or leave it. And you've got to create your password.
+
+08:08.100 --> 08:26.400
+Require my password to log in — should leave that checked. Go next, select your time zone. It should use like Los Angeles for me. It's actually connected to the internet so it can do that right here.
+
+08:26.400 --> 08:52.380
+Here's your view of choices — partition SDA one and SDA two. Installation is going to be on SDA two. It's all okay, and then it's going to start installing.
+
+08:52.380 --> 09:14.880
+I'm gonna pause the recording and we'll come back when it's done. Okay so that took about six minutes on my computer to do the full install. It's installed and ready to use.
+
+09:14.880 --> 10:07.100
+Before we restart — a couple things. If you want to make sure the installation is actually doing something, right-click on the VM in VirtualBox Manager and open resource use. It shows you CPU, network, and disk activity. If everything is dead and it hasn't finished, it probably got hung up. Try save state, restart it.
+
+10:07.100 --> 10:56.180
+Okay before we restart a couple things — in settings it wants us to see if the Ubuntu ISO is still in here. We have to get rid of that. So instead of restart let's just close this — we're gonna go into the XFCE menu, the little blue thing. We're gonna shut it down.
+
+10:56.180 --> 11:40.600
+And see how it says please remove then press enter — but if I go back into settings and go to storage, it's gone, it ejected itself. So you don't have to worry about it, it ejected itself.
+
+11:41.040 --> 12:32.020
+Now once we hit enter and it's powered off, we want to go into settings. We're going to USB — it's enabled 2.0 for me because that's my USB drive. I want to add a filter, just add a filter — say okay. Now we're not done, there's some other stuff we're gonna have to do.
+
+12:32.020 --> 13:15.880
+So first we're gonna start it up again and it should hopefully boot. It boots up pretty fast. My password. There it is. I want to right-click to open a terminal.
+
+13:15.880 --> 13:58.040
+One of the things you might want to do if your terminal is too small, you can go into edit your preferences. In the appearance you can change the font size — maybe make it 14. And now it's bigger.
+
+13:58.040 --> 15:00.860
+So what we have to do is we want to install guest additions. So we're going to run sudo apt update — not just the update, sudo apt update — put in your password and it will go out and try to update it. Notice that all the updates are Ubuntu. So we're really running Ubuntu under the hood and the X is just the graphical interface.
+
+15:20.440 --> 16:02.000
+Now what we have to do in order to do guest additions, we want to run: sudo apt install build-essential dkms linux-headers-$(uname -r) -y. The -y just says automatically yes when it asks if we want to actually do this.
+
+16:21.760 --> 16:35.380
+Unable to locate package build-essentials. Oh I know why — it's not essentials it's essential. Sorry about that. build-essential not build-essentials.
+
+16:49.900 --> 17:06.380
+All right it's all done. And then what we want to do next is up in our menu — we need to go to Devices. Insert guest edition CD image.
+
+17:07.380 --> 18:00.380
+And then you wait a little bit, it loads itself. Here is — the thing is, what we want to do is we want to run VBoxLinuxAdditions.run. We can't just open with anything. So the easiest way to do it is to do it in the command line.
+
+18:00.380 --> 18:56.380
+So let's go to cd /media. And then we can ls. This is just where it's mounted — mounted in media. You can see inside media there's a directory. We'll go into that directory and do ls. There's a directory called VBox_GAs_7.2.6. Let's go into there — cd VBox_GAs_7.2.6. We'll do an ls. You'll find all these things in there.
+
+18:56.380 --> 19:52.380
+And we want to run this file: VBoxLinuxAdditions.run. So sudo ./VBoxLinuxAdditions.run. Remember in Linux capitalization matters — you have to match it exactly. The ./  says run this as an executable file. You need sudo to give yourself the privileges to run it.
+
+19:52.380 --> 20:25.380
+And if it's working right it'll do this — VirtualBox guest additions installer. It'll run all this stuff. It's done.
+
+20:25.380 --> 21:36.240
+So typically you're going to restart your system so that everything goes better — we should have better screen resizing. When we go into view, virtual screen, you can see all these things are now available.
+
+21:36.240 --> 22:03.100
+We're gonna do is reboot — sudo reboot — should reboot our system and hopefully now everything should work a little bit better. Our graphics should be cleaner, our mouse operation should be better.
+
+22:03.100 --> 23:37.940
+Okay we go to view virtual screen — these did not work, I don't know why, usually they work but for whatever reason not working so I'm not gonna worry about it. You can go to full screen mode, host plus home to get out. Scaled mode — you click on this and you drag and it will scale everything up, doesn't change your resolution at all but you can make some funky windows.
+
+23:37.940 --> 24:27.000
+All right now our USB drive — in our settings we had to set our USB drive to be active and we had a filter. Let's open up our file manager. Here's our guest additions — we can just click this to eject it. Okay so now it's gone, it's no longer connected.
+
+24:27.000 --> 25:48.320
+So what we want to do is take our USB drive. Since we should have set that up already, I'm going to take my USB drive and stick it in the computer. It takes a little bit to recognize it but it should pop up. Here it is — it showed up and if you wait a little bit it'll actually open a window to show what's inside.
+
+25:48.320 --> 26:22.700
+Okay so this is that drive. If you want to get to it — it's media, your username, and the drive name. Open a terminal, cd /media/yourusername, ls — here's the drive. So you can work on that thing. Apply your Linux commands from here. That's the tutorial on how to get it installed and how to have USB pass-through. Thanks for watching.
+`;
+
+    // ---- UTILITIES ----
+    function timeToSeconds(ts) {
+        if (!ts) return 0;
+        const p = ts.trim().split(':');
+        if (p.length === 2) return parseInt(p[0]) * 60 + parseFloat(p[1]);
+        if (p.length === 3) return parseInt(p[0]) * 3600 + parseInt(p[1]) * 60 + parseFloat(p[2]);
+        return 0;
+    }
+
+    function parseVtt(text) {
+        return text.trim().split(/\n\n+/).reduce((acc, block) => {
+            if (block.startsWith('WEBVTT') || !block.trim()) return acc;
+            const lines = block.trim().split('\n');
+            const tl = lines.find(l => l.includes('-->'));
+            if (!tl) return acc;
+            const [s, e] = tl.split(' --> ');
+            const textLines = lines.slice(lines.indexOf(tl) + 1);
+            acc.push({ start: timeToSeconds(s), end: timeToSeconds(e), text: textLines.join(' ').trim() });
+            return acc;
+        }, []);
+    }
+
+    // ---- TRANSCRIPT ----
+    let player, timeUpdater;
+    const parsed = parseVtt(vttContent);
+
+    function populateTranscript() {
+        const c = document.getElementById('transcript-container');
+        c.innerHTML = '<span class="transcript-label">Interactive Transcript — click any line to jump</span>';
+        parsed.forEach(cue => {
+            const d = document.createElement('div');
+            d.className = 'transcript-line';
+            d.dataset.start = cue.start;
+            d.dataset.end = cue.end;
+            d.textContent = cue.text;
+            d.setAttribute('role', 'button');
+            d.setAttribute('tabindex', '0');
+            const seek = () => { if (player && player.seekTo) { player.seekTo(cue.start, true); player.playVideo(); } };
+            d.addEventListener('click', seek);
+            d.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); seek(); } });
+            c.appendChild(d);
+        });
+    }
+
+    function syncHeight() {
+        const mq = window.matchMedia('(min-width: 1024px)');
+        const vc = document.querySelector('.video-wrapper');
+        const tc = document.getElementById('transcript-container');
+        if (!vc || !tc) return;
+        tc.style.height = mq.matches ? vc.offsetHeight + 'px' : '24rem';
+    }
+
+    function highlight() {
+        if (!player || !player.getCurrentTime) return;
+        const t = player.getCurrentTime();
+        document.querySelectorAll('#transcript-container .transcript-line').forEach(line => {
+            const s = parseFloat(line.dataset.start), e = parseFloat(line.dataset.end);
+            if (t >= s && t < e) {
+                if (!line.classList.contains('active-transcript-line')) {
+                    document.querySelector('.active-transcript-line')?.classList.remove('active-transcript-line');
+                    line.classList.add('active-transcript-line');
+                    line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            } else {
+                line.classList.remove('active-transcript-line');
+            }
+        });
+    }
+
+    window.onYouTubeIframeAPIReady = function () {
+        player = new YT.Player('youtube-player', {
+            videoId: 'q0LKtUJ4RgA',
+            events: {
+                onStateChange(e) {
+                    clearInterval(timeUpdater);
+                    if (e.data === YT.PlayerState.PLAYING) timeUpdater = setInterval(highlight, 300);
+                }
+            }
+        });
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        populateTranscript();
+        setTimeout(syncHeight, 150);
+        if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') {
+            const s = document.createElement('script');
+            s.src = 'https://www.youtube.com/iframe_api';
+            document.head.appendChild(s);
+        } else {
+            onYouTubeIframeAPIReady();
+        }
+    });
+
+    let rt;
+    window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(syncHeight, 250); });
+
+    // ---- COPY TO CLIPBOARD ----
+    function copyCmd(btn, text) {
+        navigator.clipboard.writeText(text).then(() => {
+            btn.textContent = 'COPIED!';
+            btn.classList.add('copied');
+            setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 2000);
+        }).catch(() => {
+            // fallback
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            btn.textContent = 'COPIED!';
+            btn.classList.add('copied');
+            setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 2000);
+        });
+    }
+</script>
+
+</body>
+</html>
