@@ -168,37 +168,85 @@
             display: block;
         }
 
-        /* ---- SECTION HEADINGS ---- */
-        .section-heading {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin: 2.5rem 0 1.2rem;
-        }
-        .step-badge {
-            background: #0f3460;
-            color: #fff;
-            font-family: 'Courier New', monospace;
-            font-size: 0.78rem;
-            font-weight: 700;
-            padding: 0.3rem 0.7rem;
-            border-radius: 3px;
-            white-space: nowrap;
-            letter-spacing: 0.05em;
-        }
-        .section-heading h2 {
-            font-size: 1.35rem;
-            color: #1a1a2e;
-            font-weight: 700;
+        /* ---- COLLAPSIBLE STEP SECTIONS ---- */
+        .step-section {
+            margin: 1.5rem 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            overflow: hidden;
         }
 
-        /* ---- STEP CARDS ---- */
+        .step-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            padding: 1.1rem 1.4rem;
+            background: #1a1a2e;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.2s;
+            position: relative;
+        }
+        .step-toggle:hover { background: #16213e; }
+        .step-toggle.open { background: #0f3460; }
+
+        .step-badge {
+            background: #e67e22;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.28rem 0.65rem;
+            border-radius: 3px;
+            white-space: nowrap;
+            letter-spacing: 0.07em;
+            flex-shrink: 0;
+        }
+        .step-badge.check-badge { background: #22c55e; }
+
+        .step-toggle h2 {
+            font-size: 1.15rem;
+            color: #fff;
+            font-weight: 700;
+            flex: 1;
+            margin: 0;
+        }
+
+        .step-chevron {
+            color: rgba(255,255,255,0.6);
+            font-size: 1rem;
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+        }
+        .step-toggle.open .step-chevron { transform: rotate(180deg); color: #e67e22; }
+
+        .step-status {
+            font-family: 'Courier New', monospace;
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.4);
+            letter-spacing: 0.06em;
+            flex-shrink: 0;
+        }
+        .step-toggle.open .step-status { color: rgba(255,255,255,0.6); }
+
+        .step-body {
+            background: #f4f1eb;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+        .step-body.open { max-height: 9999px; }
+        .step-body-inner { padding: 1.4rem 1.4rem 0.6rem; }
+
+        /* ---- STEP CARDS (inside collapsible) ---- */
         .step-card {
             background: #fff;
             border-radius: 6px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.07);
             padding: 1.4rem 1.6rem;
-            margin-bottom: 1.4rem;
+            margin-bottom: 1.2rem;
         }
         .step-card h3 {
             font-size: 1.05rem;
@@ -414,10 +462,15 @@
     </div>
 
     <!-- ========================= STEP 1 ========================= -->
-    <div class="section-heading">
-        <span class="step-badge">STEP 1</span>
-        <h2>Download the Xubuntu Minimal ISO</h2>
-    </div>
+    <div class="step-section">
+        <button class="step-toggle open" onclick="toggleStep(this)" aria-expanded="true">
+            <span class="step-badge">STEP 1</span>
+            <h2>Download the Xubuntu Minimal ISO</h2>
+            <span class="step-status">Click to collapse</span>
+            <span class="step-chevron">▼</span>
+        </button>
+        <div class="step-body open">
+        <div class="step-body-inner">
 
     <div class="step-card">
         <h3>Why Xubuntu Minimal?</h3>
@@ -429,27 +482,56 @@
                 <tr><td>Xubuntu 24.04 Minimal</td><td>~3 GB</td><td>XFCE (lightweight)</td></tr>
             </tbody>
         </table>
-        <div class="box box-info" style="margin-top:1rem;">
-            <span class="box-icon">ℹ️</span>
-            <p><strong>ISO File:</strong> Your instructor will provide a download link to the Xubuntu Minimal ISO on the course tutorial page. Download it to your <strong>Downloads</strong> folder before proceeding. You do not need to use BitTorrent — direct download mirrors (such as LeaseWeb or Indiana University) are available on the Xubuntu website.</p>
-        </div>
-        <p>The download URL for the Xubuntu minimal ISO is:</p>
+    </div>
+
+    <div class="step-card">
+        <h3>Download Option 1 — Class OneDrive Folder (Recommended)</h3>
+        <p>Your instructor has made the Xubuntu Minimal x64 ISO available directly from the class OneDrive folder. This is the fastest and most reliable option for students:</p>
         <div class="cmd-block">
-            <div class="cmd-label">URL</div>
+            <div class="cmd-label">Class OneDrive Download Link</div>
+            <pre>https://1drv.ms/f/c/447200bab10d3ac2/IgCIryhJjYgjRK1-jObONZrfAQg8RcWM3BzbHnf4QfzKXvk?e=a9Othg</pre>
+            <button class="copy-btn" onclick="copyCmd(this, 'https://1drv.ms/f/c/447200bab10d3ac2/IgCIryhJjYgjRK1-jObONZrfAQg8RcWM3BzbHnf4QfzKXvk?e=a9Othg')">COPY</button>
+        </div>
+        <p>Or click the button below to open the folder directly:</p>
+        <a href="https://1drv.ms/f/c/447200bab10d3ac2/IgCIryhJjYgjRK1-jObONZrfAQg8RcWM3BzbHnf4QfzKXvk?e=a9Othg"
+           target="_blank" rel="noopener"
+           style="display:inline-flex;align-items:center;gap:0.5rem;background:#0f3460;color:#fff;padding:0.6rem 1.2rem;border-radius:4px;text-decoration:none;font-size:0.9rem;font-family:'Courier New',monospace;margin:0.5rem 0;">
+            ☁️ Open Class OneDrive Folder
+        </a>
+        <div class="box box-info" style="margin-top:0.75rem;">
+            <span class="box-icon">ℹ️</span>
+            <p>Download the file named <strong>xubuntu-minimal-24.04-desktop-amd64.iso</strong> (or similar — look for the x64/amd64 version). Save it to your <strong>Downloads</strong> folder. The file is approximately <strong>2.9–3.1 GB</strong>.</p>
+        </div>
+    </div>
+
+    <div class="step-card">
+        <h3>Download Option 2 — Official Xubuntu Website</h3>
+        <p>If you prefer to download directly from the Xubuntu project, visit their official download page and select the <strong>Minimal</strong> ISO for x64 (amd64):</p>
+        <div class="cmd-block">
+            <div class="cmd-label">Official Xubuntu Download Page</div>
             <pre>https://xubuntu.org/download/</pre>
             <button class="copy-btn" onclick="copyCmd(this, 'https://xubuntu.org/download/')">COPY</button>
         </div>
         <div class="box box-warn">
             <span class="box-icon">⚠️</span>
-            <p>Make sure to select the <strong>Minimal</strong> ISO, not the standard desktop ISO. Verify the file size is approximately 2.9–3.1 GB after download.</p>
+            <p>On the official site, make sure to select the <strong>Minimal</strong> ISO (not the standard desktop ISO) and the <strong>amd64 (x64)</strong> architecture. Do not use the BitTorrent option unless you have a BitTorrent client. Direct download mirrors such as LeaseWeb or Indiana University (IU) are reliable choices.</p>
         </div>
     </div>
 
+        </div><!-- end step-body-inner -->
+        </div><!-- end step-body -->
+    </div><!-- end step-section -->
+
     <!-- ========================= STEP 2 ========================= -->
-    <div class="section-heading">
-        <span class="step-badge">STEP 2</span>
-        <h2>Create the Virtual Machine in VirtualBox</h2>
-    </div>
+    <div class="step-section">
+        <button class="step-toggle" onclick="toggleStep(this)" aria-expanded="false">
+            <span class="step-badge">STEP 2</span>
+            <h2>Create the Virtual Machine in VirtualBox</h2>
+            <span class="step-status">Click to expand</span>
+            <span class="step-chevron">▼</span>
+        </button>
+        <div class="step-body">
+        <div class="step-body-inner">
 
     <div class="step-card">
         <h3>Create a New VM</h3>
@@ -504,11 +586,19 @@
         </div>
     </div>
 
-    <!-- ========================= STEP 3 ========================= -->
-    <div class="section-heading">
-        <span class="step-badge">STEP 3</span>
-        <h2>Install Xubuntu</h2>
+        </div></div>
     </div>
+
+    <!-- ========================= STEP 3 ========================= -->
+    <div class="step-section">
+        <button class="step-toggle" onclick="toggleStep(this)" aria-expanded="false">
+            <span class="step-badge">STEP 3</span>
+            <h2>Install Xubuntu</h2>
+            <span class="step-status">Click to expand</span>
+            <span class="step-chevron">▼</span>
+        </button>
+        <div class="step-body">
+        <div class="step-body-inner">
 
     <div class="step-card">
         <h3>Boot and Launch the Installer</h3>
@@ -555,11 +645,19 @@
         <p style="margin-top:0.75rem;">The installer ISO will auto-eject itself. You can verify by going to <strong>Settings → Storage</strong> — the optical drive should show empty. If not, manually remove it before booting.</p>
     </div>
 
-    <!-- ========================= STEP 4 ========================= -->
-    <div class="section-heading">
-        <span class="step-badge">STEP 4</span>
-        <h2>First Boot &amp; System Update</h2>
+        </div></div>
     </div>
+
+    <!-- ========================= STEP 4 ========================= -->
+    <div class="step-section">
+        <button class="step-toggle" onclick="toggleStep(this)" aria-expanded="false">
+            <span class="step-badge">STEP 4</span>
+            <h2>First Boot &amp; System Update</h2>
+            <span class="step-status">Click to expand</span>
+            <span class="step-chevron">▼</span>
+        </button>
+        <div class="step-body">
+        <div class="step-body-inner">
 
     <div class="step-card">
         <h3>Start the VM and Open a Terminal</h3>
@@ -581,11 +679,19 @@
         <p>Enter your password when prompted. You will see a list of Ubuntu package repositories — this confirms Xubuntu is Ubuntu under the hood with XFCE on top.</p>
     </div>
 
-    <!-- ========================= STEP 5 ========================= -->
-    <div class="section-heading">
-        <span class="step-badge">STEP 5</span>
-        <h2>Install VirtualBox Guest Additions</h2>
+        </div></div>
     </div>
+
+    <!-- ========================= STEP 5 ========================= -->
+    <div class="step-section">
+        <button class="step-toggle" onclick="toggleStep(this)" aria-expanded="false">
+            <span class="step-badge">STEP 5</span>
+            <h2>Install VirtualBox Guest Additions</h2>
+            <span class="step-status">Click to expand</span>
+            <span class="step-chevron">▼</span>
+        </button>
+        <div class="step-body">
+        <div class="step-body-inner">
 
     <div class="step-card">
         <h3>What Are Guest Additions?</h3>
@@ -686,11 +792,19 @@
         <p style="margin-top:0.5rem;">After reboot, your VM should have improved mouse integration and the screen resolution options under <strong>View → Virtual Screen</strong> should be enabled (they were greyed out before).</p>
     </div>
 
-    <!-- ========================= STEP 6 ========================= -->
-    <div class="section-heading">
-        <span class="step-badge">STEP 6</span>
-        <h2>Configure USB Passthrough</h2>
+        </div></div>
     </div>
+
+    <!-- ========================= STEP 6 ========================= -->
+    <div class="step-section">
+        <button class="step-toggle" onclick="toggleStep(this)" aria-expanded="false">
+            <span class="step-badge">STEP 6</span>
+            <h2>Configure USB Passthrough</h2>
+            <span class="step-status">Click to expand</span>
+            <span class="step-chevron">▼</span>
+        </button>
+        <div class="step-body">
+        <div class="step-body-inner">
 
     <div class="step-card">
         <h3>Set Up a USB Device Filter</h3>
@@ -724,11 +838,19 @@ ls</pre>
         </div>
     </div>
 
-    <!-- ========================= STEP 7 ========================= -->
-    <div class="section-heading">
-        <span class="step-badge">STEP 7</span>
-        <h2>VirtualBox Display Tips</h2>
+        </div></div>
     </div>
+
+    <!-- ========================= STEP 7 ========================= -->
+    <div class="step-section">
+        <button class="step-toggle" onclick="toggleStep(this)" aria-expanded="false">
+            <span class="step-badge">STEP 7</span>
+            <h2>VirtualBox Display Tips</h2>
+            <span class="step-status">Click to expand</span>
+            <span class="step-chevron">▼</span>
+        </button>
+        <div class="step-body">
+        <div class="step-body-inner">
 
     <div class="step-card">
         <h3>Scaling and Display Modes</h3>
@@ -770,11 +892,19 @@ ls</pre>
         <p style="margin-top:0.5rem;">Alternatively, in <strong>Settings → Storage</strong>, select the optical drive and click the disc icon to remove the image.</p>
     </div>
 
-    <!-- COMPLETION CHECKLIST -->
-    <div class="section-heading">
-        <span class="step-badge">CHECK</span>
-        <h2>Completion Checklist</h2>
+        </div></div>
     </div>
+
+    <!-- COMPLETION CHECKLIST -->
+    <div class="step-section">
+        <button class="step-toggle" onclick="toggleStep(this)" aria-expanded="false">
+            <span class="step-badge check-badge">✓ CHECK</span>
+            <h2>Completion Checklist</h2>
+            <span class="step-status">Click to expand</span>
+            <span class="step-chevron">▼</span>
+        </button>
+        <div class="step-body">
+        <div class="step-body-inner">
 
     <div class="step-card">
         <h3>Verify all steps are complete before submitting your lab work:</h3>
@@ -791,6 +921,9 @@ ls</pre>
             <li>USB controller enabled and empty filter added in Settings → USB</li>
             <li>USB drive visible inside VM at <code>/media/yourusername/</code></li>
         </ul>
+    </div>
+
+        </div></div>
     </div>
 
     <!-- NEXT STEPS -->
@@ -1057,6 +1190,25 @@ Okay so this is that drive. If you want to get to it — it's media, your userna
 
     let rt;
     window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(syncHeight, 250); });
+
+    // ---- COLLAPSIBLE STEPS ----
+    function toggleStep(btn) {
+        const body = btn.nextElementSibling;
+        const isOpen = btn.classList.contains('open');
+        const statusEl = btn.querySelector('.step-status');
+
+        if (isOpen) {
+            btn.classList.remove('open');
+            btn.setAttribute('aria-expanded', 'false');
+            body.classList.remove('open');
+            if (statusEl) statusEl.textContent = 'Click to expand';
+        } else {
+            btn.classList.add('open');
+            btn.setAttribute('aria-expanded', 'true');
+            body.classList.add('open');
+            if (statusEl) statusEl.textContent = 'Click to collapse';
+        }
+    }
 
     // ---- COPY TO CLIPBOARD ----
     function copyCmd(btn, text) {
