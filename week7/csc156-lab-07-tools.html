@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 7 Tools Summary: Windows Registry &amp; Artifact Analysis Tools | CSC 156</title>
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        html{scroll-behavior:smooth;font-size:16px}
+        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;line-height:1.7;color:#1a1a2e;background:#f5f5fa;min-height:100vh}
+
+        .skip-link{position:absolute;top:-100px;left:0;background:#1a1a2e;color:#fff;padding:12px 24px;z-index:10000;font-size:1rem;transition:top .2s}
+        .skip-link:focus{top:0}
+
+        /* ===== HERO ===== */
+        .hero{background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#334155 100%);color:#fff;padding:52px 32px 44px;text-align:center;position:relative;overflow:hidden}
+        .hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:5px;background:linear-gradient(90deg,#38bdf8,#818cf8,#38bdf8)}
+        .hero .course-tag{display:inline-block;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);padding:4px 18px;border-radius:20px;font-size:.82rem;letter-spacing:.05em;margin-bottom:14px}
+        .hero h1{font-size:1.85rem;font-weight:700;margin-bottom:8px;line-height:1.3}
+        .hero .subtitle{font-size:1.05rem;color:#94a3b8;max-width:720px;margin:0 auto 24px}
+        .hero-badges{display:flex;justify-content:center;flex-wrap:wrap;gap:12px}
+        .hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);padding:6px 16px;border-radius:20px;font-size:.85rem;color:#e2e8f0}
+
+        /* ===== LAYOUT ===== */
+        .page-grid{max-width:1200px;margin:0 auto;padding:32px 20px 60px;display:grid;grid-template-columns:1fr;gap:28px}
+        @media(min-width:960px){
+            .page-grid{grid-template-columns:2fr 1fr}
+            .full-width{grid-column:1/-1}
+        }
+
+        /* ===== CARDS ===== */
+        .card{background:#fff;border:1px solid #d1d1e0;border-radius:12px;padding:28px 24px;box-shadow:0 1px 8px rgba(0,0,0,.04)}
+        .card h2{font-size:1.3rem;color:#1a1a2e;margin-bottom:6px;padding-bottom:10px;border-bottom:3px solid #2563eb;display:flex;align-items:center;gap:8px}
+        .card h3{font-size:1.1rem;color:#2d2d5e;margin:20px 0 10px}
+        .card h4{font-size:1rem;color:#3a3a6a;margin:16px 0 8px}
+        .card p{margin-bottom:12px;color:#2a2a4a}
+
+        .sidebar-card{background:#fff;border:1px solid #d1d1e0;border-radius:12px;padding:22px 20px;box-shadow:0 1px 8px rgba(0,0,0,.04)}
+        .sidebar-card h2{font-size:1.15rem;color:#1a1a2e;margin-bottom:6px;padding-bottom:8px;border-bottom:3px solid #7c3aed;display:flex;align-items:center;gap:8px}
+        .sidebar-card h3{font-size:1rem;color:#2d2d5e;margin:16px 0 8px}
+        .sidebar-card p{margin-bottom:10px;color:#2a2a4a;font-size:.93rem}
+
+        /* ===== SPECIAL BOXES ===== */
+        .info-box{background:#eff6ff;border:1px solid #bfdbfe;border-left:5px solid #2563eb;border-radius:8px;padding:14px 18px;margin:14px 0}
+        .info-box .box-title{font-weight:700;color:#1e40af;margin-bottom:4px;font-size:.92rem}
+        .info-box p,.info-box li{color:#1e3a5f;font-size:.92rem}
+        .info-box ul{margin:6px 0 4px 18px}
+
+        .warning-box{background:#fef2f2;border:1px solid #fecaca;border-left:5px solid #dc2626;border-radius:8px;padding:14px 18px;margin:14px 0}
+        .warning-box .box-title{font-weight:700;color:#991b1b;margin-bottom:4px;font-size:.92rem}
+        .warning-box p,.warning-box li{color:#7f1d1d;font-size:.92rem}
+        .warning-box ul{margin:6px 0 4px 18px}
+
+        .tip-box{background:#f0fdf4;border:1px solid #bbf7d0;border-left:5px solid #16a34a;border-radius:8px;padding:14px 18px;margin:14px 0}
+        .tip-box .box-title{font-weight:700;color:#15803d;margin-bottom:4px;font-size:.92rem}
+        .tip-box p,.tip-box li{color:#14532d;font-size:.92rem}
+        .tip-box ul{margin:6px 0 4px 18px}
+
+        /* ===== TOOL CARD ===== */
+        .tool-card{background:#fff;border:2px solid #e0e7ff;border-radius:12px;margin:20px 0;overflow:hidden;transition:border-color .2s}
+        .tool-card:hover{border-color:#818cf8}
+        .tool-card-header{background:linear-gradient(135deg,#1e293b,#334155);color:#fff;padding:18px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;cursor:pointer;border:none;width:100%;text-align:left;font-family:inherit;transition:background .2s}
+        .tool-card-header:hover,.tool-card-header:focus{background:linear-gradient(135deg,#1e3a5f,#3b5998);outline:2px solid #60a5fa;outline-offset:-2px}
+        .tool-icon{width:48px;height:48px;background:rgba(255,255,255,.12);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0}
+        .tool-card-header .tool-name{font-size:1.15rem;font-weight:700;color:#fff}
+        .tool-card-header .tool-author{font-size:.82rem;color:#94a3b8;margin-top:2px}
+        .tool-card-header .tool-type{margin-left:auto;display:inline-block;padding:3px 12px;border-radius:14px;font-size:.75rem;font-weight:600;white-space:nowrap}
+        .type-gui{background:rgba(96,165,250,.2);color:#93c5fd;border:1px solid rgba(96,165,250,.3)}
+        .type-cli{background:rgba(167,139,250,.2);color:#c4b5fd;border:1px solid rgba(167,139,250,.3)}
+        .tool-card-header .arrow{color:#94a3b8;font-size:.85rem;transition:transform .3s;margin-left:8px}
+        .tool-card-header[aria-expanded="true"] .arrow{transform:rotate(180deg)}
+
+        .tool-card-body{display:none;padding:24px;border-top:1px solid #e0e7ff}
+        .tool-card-body.open{display:block}
+
+        .tool-section{margin-bottom:18px}
+        .tool-section:last-child{margin-bottom:0}
+        .tool-section-title{font-size:.88rem;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+
+        .link-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:.88rem;font-weight:600;text-decoration:none;transition:all .2s;border:1px solid}
+        .link-btn:hover,.link-btn:focus{transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,.1);outline:2px solid #2563eb;outline-offset:2px}
+        .link-primary{background:#2563eb;color:#fff;border-color:#2563eb}
+        .link-primary:hover{background:#1d4ed8}
+        .link-secondary{background:#f8fafc;color:#2563eb;border-color:#bfdbfe}
+        .link-secondary:hover{background:#eff6ff}
+        .link-group{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+
+        .cmd-block{background:#0f172a;color:#e2e8f0;padding:14px 18px;border-radius:8px;font-family:'Consolas','Courier New',monospace;font-size:.85rem;line-height:1.6;overflow-x:auto;margin:10px 0;white-space:pre;border:1px solid #1e293b}
+        .cmd-block .cmd-comment{color:#64748b;font-style:italic}
+        .cmd-block .cmd-highlight{color:#38bdf8}
+        .cmd-block .cmd-flag{color:#a78bfa}
+
+        .plugin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;margin:8px 0}
+        .plugin-chip{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:5px 10px;font-size:.8rem;font-family:'Consolas',monospace;color:#334155;transition:all .15s}
+        .plugin-chip:hover{background:#e0e7ff;border-color:#a5b4fc}
+
+        .use-case-list{list-style:none;padding:0;margin:8px 0}
+        .use-case-list li{padding:6px 0 6px 22px;position:relative;font-size:.9rem;color:#2a2a4a;border-bottom:1px solid #f1f5f9}
+        .use-case-list li:last-child{border-bottom:none}
+        .use-case-list li::before{content:'✓';position:absolute;left:0;color:#16a34a;font-weight:700}
+
+        /* ===== TABLES ===== */
+        .table-wrap{overflow-x:auto;margin:14px 0;border-radius:8px;border:1px solid #d1d1e0}
+        table{width:100%;border-collapse:collapse;font-size:.88rem}
+        thead{background:#1a1a2e;color:#fff}
+        thead th{padding:10px 14px;text-align:left;font-weight:600}
+        tbody tr{border-bottom:1px solid #e5e5f0}
+        tbody tr:nth-child(even){background:#f8f8fc}
+        tbody tr:hover{background:#eef2ff}
+        tbody td{padding:9px 14px;color:#2a2a4a;vertical-align:top}
+
+        /* ===== CODE ===== */
+        code{font-family:'Consolas','Courier New',monospace;background:#f1f5f9;color:#1e293b;padding:2px 5px;border-radius:3px;font-size:.88em;border:1px solid #e2e8f0}
+
+        /* ===== COLLAPSIBLE ===== */
+        .collapsible{margin:12px 0;border:1px solid #d1d1e0;border-radius:8px;overflow:hidden}
+        .collapsible-toggle{width:100%;background:#f8f8fc;border:none;padding:12px 18px;font-size:.95rem;font-weight:600;color:#2d2d5e;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:background .2s;text-align:left}
+        .collapsible-toggle:hover,.collapsible-toggle:focus{background:#eef2ff;outline:2px solid #2563eb;outline-offset:-2px}
+        .collapsible-toggle .arrow{transition:transform .3s;font-size:.8rem}
+        .collapsible-toggle[aria-expanded="true"] .arrow{transform:rotate(180deg)}
+        .collapsible-content{display:none;padding:14px 18px;background:#fff;border-top:1px solid #d1d1e0}
+        .collapsible-content.open{display:block}
+
+        /* ===== INSTALL STEPS ===== */
+        .install-steps{counter-reset:step;list-style:none;padding:0;margin:10px 0}
+        .install-steps li{counter-increment:step;padding:8px 0 8px 36px;position:relative;font-size:.9rem;color:#2a2a4a;border-bottom:1px solid #f1f5f9}
+        .install-steps li:last-child{border-bottom:none}
+        .install-steps li::before{content:counter(step);position:absolute;left:0;top:8px;width:24px;height:24px;background:#2563eb;color:#fff;border-radius:50%;font-size:.75rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+
+        /* ===== LISTS ===== */
+        ul,ol{margin:8px 0 12px 22px}
+        li{margin-bottom:5px;color:#2a2a4a}
+
+        /* ===== FOOTER ===== */
+        .page-footer{text-align:center;padding:28px 16px;color:#6a6a8a;font-size:.82rem;border-top:1px solid #d1d1e0;margin-top:20px;max-width:1200px;margin-left:auto;margin-right:auto}
+        .page-footer a{color:#2563eb;text-decoration:none}
+        .page-footer a:hover{text-decoration:underline}
+
+        /* ===== RESPONSIVE ===== */
+        @media(max-width:600px){
+            .hero{padding:32px 18px 28px}
+            .hero h1{font-size:1.35rem}
+            .card,.sidebar-card{padding:20px 16px}
+            .tool-card-header{padding:14px 16px}
+            .tool-card-body{padding:16px}
+            .hero-badges{flex-direction:column;align-items:center;gap:8px}
+            .plugin-grid{grid-template-columns:1fr 1fr}
+        }
+
+        @media print{
+            .skip-link{display:none}
+            .card,.sidebar-card,.tool-card{break-inside:avoid;box-shadow:none;border:1px solid #ccc}
+            .tool-card-body{display:block!important}
+            .collapsible-content{display:block!important}
+            .hero{background:#1a1a2e!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+        }
+
+        *:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- ===== HERO ===== -->
+    <header class="hero">
+        <div class="course-tag">CSC 156 — Digital Forensics Fundamentals</div>
+        <h1>🔧 Week 7 Tools Summary</h1>
+        <p class="subtitle">Download, install, and learn to use the forensic tools required for Windows Registry and User Artifact Analysis.</p>
+        <div class="hero-badges">
+            <span class="hero-badge">🖥️ 5 Primary Tools</span>
+            <span class="hero-badge">📦 1 Optional Extension</span>
+            <span class="hero-badge">📄 References &amp; Cheat Sheets</span>
+        </div>
+    </header>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main id="main-content" class="page-grid">
+
+        <!-- ===== INTRODUCTION ===== -->
+        <section class="card full-width">
+            <h2>📋 Overview</h2>
+            <p>This page documents all forensic tools used in <strong>Week 7: Windows Forensics I</strong>. Each tool section includes download links, installation instructions, usage examples with command syntax, and references to documentation. These tools are used across the four learning modules and Lab Activity 7.</p>
+
+            <div class="info-box">
+                <div class="box-title">📌 Note on Autopsy and FTK Imager</div>
+                <p>Autopsy and FTK Imager are used this week for opening forensic images and extracting files. They were covered in previous weeks and are already installed on lab workstations. This page focuses on the <strong>new</strong> specialized tools introduced in Week 7.</p>
+            </div>
+
+            <h3>Tools at a Glance</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Tool</th><th>Author</th><th>Type</th><th>Primary Purpose</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Registry Explorer</strong></td><td>Eric Zimmerman</td><td>GUI</td><td>Interactive offline Registry hive analysis</td></tr>
+                        <tr><td><strong>RegRipper</strong></td><td>Harlan Carvey</td><td>CLI</td><td>Automated plugin-based Registry artifact extraction</td></tr>
+                        <tr><td><strong>JLECmd</strong></td><td>Eric Zimmerman</td><td>CLI</td><td>Jump List parsing and CSV export</td></tr>
+                        <tr><td><strong>RBCmd</strong></td><td>Eric Zimmerman</td><td>CLI</td><td>Recycle Bin $I file parsing and CSV export</td></tr>
+                        <tr><td><strong>AppCompatCacheParser</strong></td><td>Eric Zimmerman</td><td>CLI</td><td>ShimCache extraction from SYSTEM hive</td></tr>
+                        <tr><td><strong>RECmd</strong> <em>(optional)</em></td><td>Eric Zimmerman</td><td>CLI</td><td>Command-line Registry queries (companion to Registry Explorer)</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ===== TOOL 1: REGISTRY EXPLORER ===== -->
+        <section class="tool-card full-width" id="registry-explorer">
+            <button class="tool-card-header" aria-expanded="false" onclick="toggleTool(this)">
+                <div class="tool-icon">🔍</div>
+                <div>
+                    <div class="tool-name">Registry Explorer</div>
+                    <div class="tool-author">Eric Zimmerman</div>
+                </div>
+                <span class="tool-type type-gui">GUI</span>
+                <span class="arrow">▼</span>
+            </button>
+            <div class="tool-card-body">
+
+                <div class="tool-section">
+                    <div class="tool-section-title">📝 Description</div>
+                    <p>Registry Explorer is the <strong>gold standard</strong> for interactive, offline Registry hive analysis. It provides a graphical interface for browsing extracted hive files with features specifically designed for forensic examiners: key last-write timestamp display, automatic transaction log replay, data type decoding, bookmarking, and advanced search capabilities.</p>
+                    <p>This is the primary tool you will use for <strong>manual browsing and verification</strong> of Registry artifacts throughout Modules 7.1–7.4 and Lab Activity 7.</p>
+                </div>
+
+                <div class="tool-section">
+                    <div class="tool-section-title">📦 Download &amp; Install</div>
+                    <div class="link-group">
+                        <a href="https://ericzimmerman.github.io/#!index.md" target="_blank" rel="noopener" class="link-btn link-primary">⬇ Eric Zimmerman Tools Page</a>
+                        <a href="https://aboutdfir.com/toolsandartifacts/windows/registry-explorer-recmd/" target="_blank" rel="noopener" class="link-btn link-secondary">📄 AboutDFIR Tool Page</a>
+                    </div>
+                    <ol class="install-steps">
+                        <li>Navigate to <a href="https://ericzimmerman.github.io/#!index.md" target="_blank" rel="noopener">ericzimmerman.github.io</a> and locate <strong>Registry Explorer</strong> in the tool list</li>
+                        <li>Download the ZIP archive (the page provides direct download links)</li>
+                        <li>Extract the ZIP to a permanent location (e.g., <code>C:\Tools\RegistryExplorer\</code>)</li>
+                        <li>Run <code>RegistryExplorer.exe</code> — no installation required (portable application)</li>
+                        <li>On first run, you may need to install <strong>.NET 6 Desktop Runtime</strong> if prompted</li>
+                    </ol>
+                    <div class="tip-box">
+                        <div class="box-title">💡 Tip — Zimmerman Tool Bundle</div>
+                        <p>Eric Zimmerman provides a PowerShell script (<code>Get-ZimmermanTools.ps1</code>) that downloads <strong>all</strong> of his tools at once. This is the easiest way to get Registry Explorer, JLECmd, RBCmd, AppCompatCacheParser, and RECmd in a single step. The script is linked from his tools page.</p>
+                    </div>
+                </div>
+
+                <div class="tool-section">
+                    <div class="tool-section-title">🔧 Usage in This Course</div>
+                    <ul class="use-case-list">
+                        <li>Load offline hive files (SYSTEM, SAM, SOFTWARE, NTUSER.DAT) with automatic transaction log replay</li>
+                        <li>Browse the key tree and view values with decoded data types</li>
+                        <li>View key last-write timestamps for every key (critical for forensic analysis)</li>
+                        <li>Decode UserAssist entries (automatic ROT13 decoding and binary structure parsing)</li>
+                        <li>Bookmark important keys for reporting</li>
+                        <li>Export selected data for inclusion in forensic reports</li>
+                    </ul>
+
+                    <h4>Basic Workflow</h4>
+                    <div class="cmd-block"><span class="cmd-comment"># Loading a hive file</span>
+File → Load Hive → select extracted hive file
+<span class="cmd-comment"># Place .LOG1 and .LOG2 files in the same directory</span>
+<span class="cmd-comment"># Registry Explorer will offer to replay transaction logs automatically</span>
+
+<span class="cmd-comment"># Navigating to an artifact</span>
+Left panel: expand key tree → navigate to target path
+Right panel: view values, data types, and decoded content
+
+<span class="cmd-comment"># Bookmarking a finding</span>
+Right-click key → Add Bookmark → enter descriptive note</div>
+                </div>
+
+                <div class="tool-section">
+                    <div class="tool-section-title">📚 Documentation</div>
+                    <div class="link-group">
+                        <a href="https://www.oit.va.gov/Services/TRM/files/RegistryExplorerManual.pdf" target="_blank" rel="noopener" class="link-btn link-secondary">📄 Official PDF Manual</a>
+                        <a href="https://aboutdfir.com/toolsandartifacts/windows/registry-explorer-recmd/" target="_blank" rel="noopener" class="link-btn link-secondary">📄 AboutDFIR Reference</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== TOOL 2: REGRIPPER ===== -->
+        <section class="tool-card full-width" id="regripper">
+            <button class="tool-card-header" aria-expanded="false" onclick="toggleTool(this)">
+                <div class="tool-icon">⚡</div>
+                <div>
+                    <div class="tool-name">RegRipper (rip.exe)</div>
+                    <div class="tool-author">Harlan Carvey</div>
+                </div>
+                <span class="tool-type type-cli">CLI</span>
+                <span class="arrow">▼</span>
+            </button>
+            <div class="tool-card-body">
+
+                <div class="tool-section">
+                    <div class="tool-section-title">📝 Description</div>
+                    <p>RegRipper is an <strong>open-source, plugin-based</strong> command-line tool for automated extraction of specific forensic artifacts from Windows Registry hive files. Each plugin targets a known forensic artifact and outputs human-readable results. RegRipper is the workhorse tool for <strong>fast, automated artifact extraction</strong> — complementing Registry Explorer's interactive browsing.</p>
+                    <p>You will use RegRipper extensively in Modules 7.2–7.3 and Lab Activity 7 for extracting system identification data, user account information, program execution history, and more.</p>
+                </div>
+
+                <div class="tool-section">
+                    <div class="tool-section-title">📦 Download &amp; Install</div>
+                    <div class="link-group">
+                        <a href="https://github.com/keydet89/RegRipper3.0" target="_blank" rel="noopener" class="link-btn link-primary">⬇ GitHub: RegRipper 3.0</a>
+                        <a href="https://sourceforge.net/projects/windows-registry-forensics/" target="_blank" rel="noopener" class="link-btn link-secondary">📦 SourceForge Mirror</a>
+                    </div>
+                    <ol class="install-steps">
+                        <li>Navigate to the <a href="https://github.com/keydet89/RegRipper3.0" target="_blank" rel="noopener">RegRipper 3.0 GitHub repository</a></li>
+                        <li>Click <strong>Code → Download ZIP</strong> (or clone the repository)</li>
+                        <li>Extract to a permanent location (e.g., <code>C:\Tools\RegRipper\</code>)</li>
+                        <li>The main executable is <code>rip.exe</code> — run from the command prompt or PowerShell</li>
+                        <li>No additional installation is required; plugins are included in the <code>plugins\</code> directory</li>
+                    </ol>
+                    <div class="warning-box">
+                        <div class="box-title">⚠️ Note — Perl Dependency</div>
+                        <p>RegRipper is written in Perl. The standalone <code>rip.exe</code> includes a compiled Perl runtime and should work without installing Perl separately. If you encounter issues, ensure you are using the compiled executable from the official distribution, not the raw <code>.pl</code> scripts.</p>
+                    </div>
+                </div>
+
+                <div class="tool-section">
+                    <div class="tool-section-title">🔧 Usage in This Course</div>
+
+                    <h4>Command Syntax</h4>
+                    <div class="cmd-block"><span class="cmd-comment"># Run a single plugin against a hive file</span>
+<span class="cmd-highlight">rip.exe</span> <span class="cmd-flag">-r</span> &lt;hive_file&gt; <span class="cmd-flag">-p</span> &lt;plugin_name&gt;
+
+<span class="cmd-comment"># Run all applicable plugins for the hive type</span>
+<span class="cmd-highlight">rip.exe</span> <span class="cmd-flag">-r</span> &lt;hive_file&gt; <span class="cmd-flag">-a</span>
+
+<span class="cmd-comment"># Save output to a text file</span>
+<span class="cmd-highlight">rip.exe</span> <span class="cmd-flag">-r</span> &lt;hive_file&gt; <span class="cmd-flag">-a</span> &gt; output_report.txt</div>
+
+                    <h4>Key Plugins by Hive</h4>
+
+                    <p><strong>SYSTEM hive plugins:</strong></p>
+                    <div class="plugin-grid">
+                        <div class="plugin-chip">compname</div>
+                        <div class="plugin-chip">timezone</div>
+                        <div class="plugin-chip">shutdown</div>
+                        <div class="plugin-chip">usbstor</div>
+                        <div class="plugin-chip">mountdev</div>
+                        <div class="plugin-chip">nic2</div>
+                    </div>
+
+                    <p><strong>SOFTWARE hive plugins:</strong></p>
+                    <div class="plugin-grid">
+                        <div class="plugin-chip">winver</div>
+                        <div class="plugin-chip">uninstall</div>
+                        <div class="plugin-chip">networklist</div>
+                        <div class="plugin-chip">profilelist</div>
+                    </div>
+
+                    <p><strong>SAM hive plugins:</strong></p>
+                    <div class="plugin-grid">
+                        <div class="plugin-chip">samparse</div>
+                    </div>
+
+                    <p><strong>NTUSER.DAT plugins:</strong></p>
+                    <div class="plugin-grid">
+                        <div class="plugin-chip">userassist</div>
+                        <div class="plugin-chip">recentdocs</div>
+                        <div class="plugin-chip">typedpaths</div>
+                        <div class="plugin-chip">runmru</div>
+                        <div class="plugin-chip">wordwheelquery</div>
+                        <div class="plugin-chip">run</div>
+                        <div class="plugin-chip">mountpoints2</div>
+                    </div>
+
+                    <h4>Example Commands</h4>
+                    <div class="cmd-block"><span class="cmd-comment"># Extract computer name from SYSTEM hive</span>
+<span class="cmd-highlight">rip.exe</span> <span class="cmd-flag">-r</span> C:\Evidence\SYSTEM <span class="cmd-flag">-p</span> compname
+
+<span class="cmd-comment"># Parse all user accounts from SAM hive</span>
+<span class="cmd-highlight">rip.exe</span> <span class="cmd-flag">-r</span> C:\Evidence\SAM <span class="cmd-flag">-p</span> samparse
+
+<span class="cmd-comment"># Extract UserAssist (program execution) from NTUSER.DAT</span>
+<span class="cmd-highlight">rip.exe</span> <span class="cmd-flag">-r</span> C:\Evidence\jsmith_NTUSER.DAT <span class="cmd-flag">-p</span> userassist
+
+<span class="cmd-comment"># Run all plugins on NTUSER.DAT and save to file</span>
+<span class="cmd-highlight">rip.exe</span> <span class="cmd-flag">-r</span> C:\Evidence\jsmith_NTUSER.DAT <span class="cmd-flag">-a</span> &gt; jsmith_report.txt</div>
+                </div>
+
+                <div class="tool-section">
+                    <div class="tool-section-title">📚 Documentation</div>
+                    <div class="link-group">
+                        <a href="https://github.com/keydet89/RegRipper3.0" target="_blank" rel="noopener" class="link-btn link-secondary">📄 GitHub README</a>
+                        <a href="https://sourceforge.net/projects/windows-registry-forensics/" target="_blank" rel="noopener" class="link-btn link-secondary">📄 SourceForge Lab Package</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== TOOL 3: JLECMD ===== -->
+        <section class="tool-card full-width" id="jlecmd">
+            <button class="tool-card-header" aria-expanded="false" onclick="toggleTool(this)">
+                <div class="tool-icon">📌</div>
+                <div>
+                    <div class="tool-name">JLECmd</div>
+                    <div class="tool-author">Eric Zimmerman</div>
+                </div>
+                <span class="tool-type type-cli">CLI</span>
+                <span class="arrow">▼</span>
+            </button>
+            <div class="tool-card-body">
+
+                <div class="tool-section">
+                    <div class="tool-section-title">📝 Description</div>
+                    <p>JLECmd (Jump List Explorer Command Line) parses Windows Jump List files — both <strong>AutomaticDestinations</strong> and <strong>CustomDestinations</strong> — and exports the results to CSV for analysis. Jump Lists record which files were recently or frequently accessed by specific applications, providing the critical <strong>application-to-file relationship</strong> that other artifacts cannot.</p>
+                    <p>You will use JLECmd in Module 7.4 and Lab Activity 7 (Task 5) to extract application-file associations, identify files accessed from removable or network volumes, and build timeline data.</p>
+                </div>
+
+                <div class="tool-section">
+                    <div class="tool-section-title">📦 Download &amp; Install</div>
+                    <div class="link-group">
+                        <a href="https://ericzimmerman.github.io/#!index.md" target="_blank" rel="noopener" class="link-btn link-primary">⬇ Eric Zimmerman Tools Page</a>
+                    </div>
+                    <ol class="install-steps">
+                        <li>Download from the <a href="https://ericzimmerman.github.io/#!index.md" target="_blank" rel="noopener">Eric Zimmerman tools page</a> (or use the <code>Get-ZimmermanTools.ps1</code> bundle script)</li>
+                        <li>Extract to your tools directory (e.g., <code>C:\Tools\ZimmermanTools\</code>)</li>
+                        <li>The executable is <code>JLECmd.exe</code> — run from command prompt or PowerShell</li>
+                        <li>Requires <strong>.NET 6 Runtime</strong> (same as Registry Explorer)</li>
+                    </ol>
+                </div>
+
+                <div class="tool-section">
+                    <div class="tool-section-title">🔧 Usage in This Course</div>
+                    <ul class="use-case-list">
+                        <li>Parse AutomaticDestinations Jump List files from user profiles</li>
+                        <li>Identify which applications opened which files (via AppID mapping)</li>
+                        <li>Detect files accessed from removable drives (volume type = Removable)</li>
+                        <li>Detect files accessed from network shares (UNC paths)</li>
+                        <li>Extract entry timestamps for timeline correlation</li>
+                    </ul>
+
+                    <h4>Command Syntax</h4>
+                    <div class="cmd-block"><span class="cmd-comment"># Parse a directory of Jump List files and export to CSV</span>
+<span class="cmd-highlight">JLECmd.exe</span> <span class="cmd-flag">-d</span> "C:\Evidence\AutomaticDestinations" <span class="cmd-flag">--csv</span> "C:\Output" <span class="cmd-flag">--csvf</span> jumplists.csv
+
+<span class="cmd-comment"># Parse a single Jump List file</span>
+<span class="cmd-highlight">JLECmd.exe</span> <span class="cmd-flag">-f</span> "C:\Evidence\5f7b5f1e01b83767.automaticDestinations-ms" <span class="cmd-flag">--csv</span> "C:\Output"
+
+<span class="cmd-comment"># Quiet mode (suppress console output)</span>
+<span class="cmd-highlight">JLECmd.exe</span> <span class="cmd-flag">-d</span> "C:\Evidence\AutomaticDestinations" <span class="cmd-flag">--csv</span> "C:\Output" <span class="cmd-flag">-q</span></div>
+
+                    <h4>Key Flags</h4>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Flag</th><th>Purpose</th></tr></thead>
+                            <tbody>
+                                <tr><td><code>-d</code></td><td>Directory containing Jump List files</td></tr>
+                                <tr><td><code>-f</code></td><td>Single Jump List file to parse</td></tr>
+                                <tr><td><code>--csv</code></td><td>Output directory for CSV results</td></tr>
+                                <tr><td><code>--csvf</code></td><td>Output CSV filename</td></tr>
+                                <tr><td><code>-q</code></td><td>Quiet mode — suppress console output</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="box-title">💡 Jump List Source Location</div>
+                        <p>Extract Jump List files from the forensic image at:<br>
+                        <code>C:\Users\&lt;username&gt;\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations\</code></p>
+                    </div>
+                </div>
+
+                <div class="tool-section">
+                    <div class="tool-section-title">📚 Documentation</div>
+                    <p>JLECmd ships with a PDF manual in the Zimmerman tools bundle. AppID-to-application mappings are available in the tool's <code>AppIDs.txt</code> resource file or on <a href="https://github.com/EricZimmerman/JumpList/blob/master/JumpList/Resources/AppIDs.txt" target="_blank" rel="noopener">Eric Zimmerman's GitHub</a>.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== TOOL 4: RBCMD ===== -->
+        <section class="tool-card full-width" id="rbcmd">
+            <button class="tool-card-header" aria-expanded="false" onclick="toggleTool(this)">
+                <div class="tool-icon">🗑️</div>
+                <div>
+                    <div class="tool-name">RBCmd</div>
+                    <div class="tool-author">Eric Zimmerman</div>
+                </div>
+                <span class="tool-type type-cli">CLI</span>
+                <span class="arrow">▼</span>
+            </button>
+            <div class="tool-card-body">
+
+                <div class="tool-section">
+                    <div class="tool-section-title">📝 Description</div>
+                    <p>RBCmd (Recycle Bin Command Line) parses the <code>$I</code> metadata files found in the Windows Recycle Bin to extract information about deleted files: the <strong>original file path</strong>, <strong>file size</strong>, and <strong>deletion timestamp</strong>. Results are exported to CSV for analysis.</p>
+                    <p>You will use RBCmd in Module 7.4 and Lab Activity 7 (Task 6) to identify what files were deleted, when, and by whom (using the SID-based Recycle Bin directory structure).</p>
+                </div>
+
+                <div class="tool-section">
+                    <div class="tool-section-title">📦 Download &amp; Install</div>
+                    <div class="link-group">
+                        <a href="https://ericzimmerman.github.io/#!index.md" target="_blank" rel="noopener" class="link-btn link-primary">⬇ Eric Zimmerman Tools Page</a>
+                    </div>
+                    <ol class="install-steps">
+                        <li>Download from the <a href="https://ericzimmerman.github.io/#!index.md" target="_blank" rel="noopener">Eric Zimmerman tools page</a> (included in the tool bundle)</li>
+                        <li>Extract to your tools directory</li>
+                        <li>The executable is <code>RBCmd.exe</code></li>
+                        <li>Requires <strong>.NET 6 Runtime</strong></li>
+                    </ol>
+                </div>
+
+                <div class="tool-section">
+                    <div class="tool-section-title">🔧 Usage in This Course</div>
+                    <ul class="use-case-list">
+                        <li>Parse $I metadata files from a user's Recycle Bin SID folder</li>
+                        <li>Extract original file paths, sizes, and deletion timestamps</li>
+                        <li>Identify forensically significant deleted files (sensitive documents, tools, evidence)</li>
+                        <li>Correlate deletion timestamps with other activity in the timeline</li>
+                    </ul>
+
+                    <h4>Command Syntax</h4>
+                    <div class="cmd-block"><span class="cmd-comment"># Parse a user's Recycle Bin folder and export to CSV</span>
+<span class="cmd-highlight">RBCmd.exe</span> <span class="cmd-flag">-d</span> "C:\Evidence\$Recycle.Bin\S-1-5-21-...-1001" <span class="cmd-flag">--csv</span> "C:\Output" <span class="cmd-flag">--csvf</span> recyclebin.csv
+
+<span class="cmd-comment"># Parse a single $I file</span>
+<span class="cmd-highlight">RBCmd.exe</span> <span class="cmd-flag">-f</span> "C:\Evidence\$IXQF2A1.xlsx"</div>
+
+                    <h4>Key Flags</h4>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Flag</th><th>Purpose</th></tr></thead>
+                            <tbody>
+                                <tr><td><code>-d</code></td><td>Directory containing $I files (the user's Recycle Bin SID folder)</td></tr>
+                                <tr><td><code>-f</code></td><td>Single $I file to parse</td></tr>
+                                <tr><td><code>--csv</code></td><td>Output directory for CSV results</td></tr>
+                                <tr><td><code>--csvf</code></td><td>Output CSV filename</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="box-title">💡 Recycle Bin Source Location</div>
+                        <p>Extract the user's Recycle Bin folder from the forensic image at:<br>
+                        <code>C:\$Recycle.Bin\{User SID}\</code><br>
+                        Use the SID-to-username mapping from the SAM hive (Module 7.2) to identify which user's folder to examine.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== TOOL 5: APPCOMPATCACHEPARSER ===== -->
+        <section class="tool-card full-width" id="appcompat">
+            <button class="tool-card-header" aria-expanded="false" onclick="toggleTool(this)">
+                <div class="tool-icon">🔎</div>
+                <div>
+                    <div class="tool-name">AppCompatCacheParser</div>
+                    <div class="tool-author">Eric Zimmerman</div>
+                </div>
+                <span class="tool-type type-cli">CLI</span>
+                <span class="arrow">▼</span>
+            </button>
+            <div class="tool-card-body">
+
+                <div class="tool-section">
+                    <div class="tool-section-title">📝 Description</div>
+                    <p>AppCompatCacheParser extracts <strong>ShimCache (AppCompatCache)</strong> entries from the SYSTEM Registry hive. ShimCache records programs that the operating system checked for application compatibility. This provides evidence that the OS was <strong>aware</strong> of a program's existence on the system.</p>
+                </div>
+
+                <div class="tool-section">
+                    <div class="tool-section-title">📦 Download &amp; Install</div>
+                    <div class="link-group">
+                        <a href="https://ericzimmerman.github.io/#!index.md" target="_blank" rel="noopener" class="link-btn link-primary">⬇ Eric Zimmerman Tools Page</a>
+                    </div>
+                    <p>Included in the Eric Zimmerman tool bundle. Extract and run <code>AppCompatCacheParser.exe</code> from the command line. Requires .NET 6 Runtime.</p>
+                </div>
+
+                <div class="tool-section">
+                    <div class="tool-section-title">🔧 Usage in This Course</div>
+
+                    <h4>Command Syntax</h4>
+                    <div class="cmd-block"><span class="cmd-comment"># Parse ShimCache from the SYSTEM hive</span>
+<span class="cmd-highlight">AppCompatCacheParser.exe</span> <span class="cmd-flag">-f</span> "C:\Evidence\SYSTEM" <span class="cmd-flag">--csv</span> "C:\Output" <span class="cmd-flag">--csvf</span> shimcache.csv</div>
+
+                    <div class="warning-box">
+                        <div class="box-title">⚠️ Important Limitation</div>
+                        <p>ShimCache proves the OS was <strong>aware</strong> of a program — it does <strong>not</strong> definitively prove the program was <strong>executed</strong>. A program can appear in ShimCache simply by being browsed in Explorer. Use ShimCache as <strong>supporting evidence</strong> alongside UserAssist or Prefetch, not as standalone proof of execution.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== TOOL 6: RECMD (OPTIONAL) ===== -->
+        <section class="tool-card full-width" id="recmd">
+            <button class="tool-card-header" aria-expanded="false" onclick="toggleTool(this)">
+                <div class="tool-icon">💻</div>
+                <div>
+                    <div class="tool-name">RECmd <span style="font-size:.8rem;color:#94a3b8;font-weight:400">(Optional Extension)</span></div>
+                    <div class="tool-author">Eric Zimmerman</div>
+                </div>
+                <span class="tool-type type-cli">CLI</span>
+                <span class="arrow">▼</span>
+            </button>
+            <div class="tool-card-body">
+
+                <div class="tool-section">
+                    <div class="tool-section-title">📝 Description</div>
+                    <p>RECmd is the <strong>command-line companion</strong> to Registry Explorer. It allows you to run scripted queries against offline Registry hive files, which is useful for batch processing or when you want to extract specific values without opening the GUI. RECmd uses "batch files" (not Windows batch scripts — RECmd-specific YAML/text files) that define which keys and values to extract.</p>
+                    <p>This tool is <strong>optional</strong> for this course. RegRipper covers the automated extraction needs for Lab Activity 7. RECmd is included here for students who want additional command-line options.</p>
+                </div>
+
+                <div class="tool-section">
+                    <div class="tool-section-title">📦 Download &amp; Install</div>
+                    <div class="link-group">
+                        <a href="https://ericzimmerman.github.io/#!index.md" target="_blank" rel="noopener" class="link-btn link-primary">⬇ Eric Zimmerman Tools Page</a>
+                        <a href="https://aboutdfir.com/toolsandartifacts/windows/registry-explorer-recmd/" target="_blank" rel="noopener" class="link-btn link-secondary">📄 AboutDFIR Reference</a>
+                    </div>
+                    <p>Distributed with the Eric Zimmerman Registry toolkit (same download as Registry Explorer). The executable is <code>RECmd.exe</code>. Documentation is included in the same PDF manual bundle as Registry Explorer.</p>
+                </div>
+
+                <div class="tool-section">
+                    <div class="tool-section-title">🔧 Example Usage</div>
+                    <div class="cmd-block"><span class="cmd-comment"># Run a batch file against a hive</span>
+<span class="cmd-highlight">RECmd.exe</span> <span class="cmd-flag">-f</span> "C:\Evidence\NTUSER.DAT" <span class="cmd-flag">--bn</span> BatchExamples\BatchExample.reb <span class="cmd-flag">--csv</span> "C:\Output"
+
+<span class="cmd-comment"># Query a specific key</span>
+<span class="cmd-highlight">RECmd.exe</span> <span class="cmd-flag">-f</span> "C:\Evidence\SYSTEM" <span class="cmd-flag">--kn</span> "Select"</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== SIDEBAR: QUICK INSTALL GUIDE ===== -->
+        <section class="card full-width">
+            <h2>⚡ Quick-Start Installation Guide</h2>
+            <p>The fastest way to get all Week 7 tools installed is to use Eric Zimmerman's bundle script for his tools, then download RegRipper separately.</p>
+
+            <h3>Step 1: Install .NET 6 Desktop Runtime</h3>
+            <p>Most Zimmerman tools require .NET 6. Download from <a href="https://dotnet.microsoft.com/en-us/download/dotnet/6.0" target="_blank" rel="noopener">Microsoft's .NET download page</a> if not already installed.</p>
+
+            <h3>Step 2: Download All Zimmerman Tools</h3>
+            <div class="cmd-block"><span class="cmd-comment"># Option A: Use the PowerShell download script</span>
+<span class="cmd-comment"># Download Get-ZimmermanTools.ps1 from ericzimmerman.github.io</span>
+<span class="cmd-highlight">.\Get-ZimmermanTools.ps1</span> <span class="cmd-flag">-Dest</span> C:\Tools\ZimmermanTools
+
+<span class="cmd-comment"># Option B: Download individual ZIPs from ericzimmerman.github.io</span>
+<span class="cmd-comment"># Extract each to C:\Tools\ZimmermanTools\</span></div>
+            <p>This gives you: <strong>Registry Explorer</strong>, <strong>RECmd</strong>, <strong>JLECmd</strong>, <strong>RBCmd</strong>, <strong>AppCompatCacheParser</strong>, and many other useful forensic tools.</p>
+
+            <h3>Step 3: Download RegRipper</h3>
+            <div class="cmd-block"><span class="cmd-comment"># Download from GitHub</span>
+https://github.com/keydet89/RegRipper3.0
+<span class="cmd-comment"># Click Code → Download ZIP → Extract to C:\Tools\RegRipper\</span></div>
+
+            <h3>Step 4: Verify Installation</h3>
+            <div class="cmd-block"><span class="cmd-comment"># Open a command prompt and test each tool</span>
+C:\Tools\ZimmermanTools\<span class="cmd-highlight">RegistryExplorer.exe</span>
+C:\Tools\RegRipper\<span class="cmd-highlight">rip.exe</span> <span class="cmd-flag">-h</span>
+C:\Tools\ZimmermanTools\<span class="cmd-highlight">JLECmd.exe</span> <span class="cmd-flag">-h</span>
+C:\Tools\ZimmermanTools\<span class="cmd-highlight">RBCmd.exe</span> <span class="cmd-flag">-h</span>
+C:\Tools\ZimmermanTools\<span class="cmd-highlight">AppCompatCacheParser.exe</span> <span class="cmd-flag">-h</span></div>
+
+            <div class="tip-box">
+                <div class="box-title">💡 Tip — Add to PATH</div>
+                <p>For convenience, add your tools directories to the system PATH environment variable. This allows you to run tools from any directory without typing the full path.</p>
+            </div>
+        </section>
+
+        <!-- ===== TOOL-TO-TASK MAPPING ===== -->
+        <section class="card full-width">
+            <h2>🗺️ Tool-to-Task Mapping for Lab Activity 7</h2>
+            <p>This table shows which tools are used for each lab task:</p>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Lab Task</th><th>Primary Tool</th><th>Supporting Tool</th><th>Command / Action</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Task 1:</strong> Extract hive files</td>
+                            <td>Autopsy / FTK Imager</td>
+                            <td>—</td>
+                            <td>Browse image → export files</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Task 2:</strong> System identification</td>
+                            <td>Registry Explorer</td>
+                            <td>RegRipper</td>
+                            <td><code>rip.exe -r SYSTEM -p compname</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Task 3:</strong> User account enumeration</td>
+                            <td>RegRipper</td>
+                            <td>Registry Explorer</td>
+                            <td><code>rip.exe -r SAM -p samparse</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Task 4:</strong> UserAssist / RecentDocs / etc.</td>
+                            <td>RegRipper</td>
+                            <td>Registry Explorer</td>
+                            <td><code>rip.exe -r NTUSER.DAT -p userassist</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Task 5:</strong> Jump List analysis</td>
+                            <td>JLECmd</td>
+                            <td>—</td>
+                            <td><code>JLECmd.exe -d &lt;folder&gt; --csv &lt;out&gt;</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Task 6:</strong> Recycle Bin analysis</td>
+                            <td>RBCmd</td>
+                            <td>—</td>
+                            <td><code>RBCmd.exe -d &lt;folder&gt; --csv &lt;out&gt;</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Task 7:</strong> Timeline compilation</td>
+                            <td>Spreadsheet (Excel/Sheets)</td>
+                            <td>All above tools</td>
+                            <td>Merge all timestamped findings</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ===== REFERENCES & RESOURCES ===== -->
+        <section class="card full-width">
+            <h2>📚 References &amp; Additional Resources</h2>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>SANS Posters &amp; Cheat Sheets</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <ul>
+                        <li><a href="https://www.sans.org/posters/windows-forensic-analysis" target="_blank" rel="noopener"><strong>SANS "Windows Forensic Analysis" Poster</strong></a> — Comprehensive visual cheat sheet covering key artifact locations (Registry, Jump Lists, Recycle Bin, Shellbags, Prefetch, and more). <strong>Highly recommended</strong> as a desk reference.</li>
+                        <li><a href="https://www.sans.org/blog/computer-forensic-artifacts-windows-7-shellbags" target="_blank" rel="noopener"><strong>SANS Blog: Windows 7 Shellbags</strong></a> — Deeper dive into Shellbag artifacts for enrichment reading.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>Tool Documentation Links</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <ul>
+                        <li><a href="https://ericzimmerman.github.io/#!index.md" target="_blank" rel="noopener"><strong>Eric Zimmerman's Tools Page</strong></a> — Central download location for all Zimmerman tools</li>
+                        <li><a href="https://aboutdfir.com/toolsandartifacts/windows/registry-explorer-recmd/" target="_blank" rel="noopener"><strong>AboutDFIR: Registry Explorer / RECmd</strong></a> — Tool descriptions and links</li>
+                        <li><a href="https://www.oit.va.gov/Services/TRM/files/RegistryExplorerManual.pdf" target="_blank" rel="noopener"><strong>Registry Explorer Official Manual (PDF)</strong></a> — Complete user guide</li>
+                        <li><a href="https://github.com/keydet89/RegRipper3.0" target="_blank" rel="noopener"><strong>RegRipper 3.0 GitHub</strong></a> — Source code, plugins, and documentation</li>
+                        <li><a href="https://sourceforge.net/projects/windows-registry-forensics/" target="_blank" rel="noopener"><strong>SourceForge: Windows Registry Forensics</strong></a> — Lab package with documentation</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>Practice Resources</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <ul>
+                        <li><strong>Digital Corpora</strong> — Windows forensic images for practice</li>
+                        <li><strong>CFReDS (NIST)</strong> — Windows Registry test images</li>
+                        <li><strong>Eric Zimmerman's blog posts</strong> — Tool usage examples and walkthroughs</li>
+                        <li><strong>13Cubed YouTube Channel</strong> — Video tutorials on Windows Registry Forensics, UserAssist, and Jump Lists</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="page-footer">
+        <p>CSC 156 — Digital Forensics Fundamentals | Spring 2026</p>
+        <p>Week 7 Tools Summary: Windows Registry &amp; Artifact Analysis Tools</p>
+        <p>© 2026 CSC 156. For educational use only.</p>
+    </footer>
+
+    <!-- ===== JAVASCRIPT ===== -->
+    <script>
+        function toggleTool(btn) {
+            var body = btn.nextElementSibling;
+            var isOpen = body.classList.contains('open');
+            body.classList.toggle('open');
+            btn.setAttribute('aria-expanded', !isOpen);
+        }
+
+        function toggleCollapsible(btn) {
+            var content = btn.nextElementSibling;
+            var isOpen = content.classList.contains('open');
+            content.classList.toggle('open');
+            btn.setAttribute('aria-expanded', !isOpen);
+        }
+    </script>
+</body>
+</html>
