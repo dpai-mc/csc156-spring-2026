@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 07: Forensic Image | CSC 156 – Digital Forensics Fundamentals</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1a4d2e;
+            --primary-light: #2d6943;
+            --accent: #d4a574;
+            --accent-dark: #b8885a;
+            --background: #fdfbf7;
+            --surface: #ffffff;
+            --surface-alt: #f5f1eb;
+            --text-primary: #2c2416;
+            --text-secondary: #5c5444;
+            --border: #e8e3d9;
+            --success: #2d6943;
+            --info: #3a5f7d;
+            --warning: #c77d3d;
+            --shadow: rgba(28, 41, 23, 0.08);
+            --code-bg: #f0ece4;
+        }
+
+        body {
+            font-family: 'Work Sans', sans-serif;
+            line-height: 1.7;
+            color: var(--text-primary);
+            background: linear-gradient(135deg, var(--background) 0%, #f9f5ef 100%);
+            background-attachment: fixed;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        /* ── Skip link ── */
+        .skip-link {
+            position: absolute;
+            top: -50px;
+            left: 10px;
+            background: var(--primary);
+            color: #ffffff;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+            z-index: 1000;
+        }
+        .skip-link:focus { top: 10px; }
+
+        /* ── Container ── */
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        /* ── Header ── */
+        header {
+            background: var(--primary);
+            color: #ffffff;
+            padding: 50px 40px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 24px var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent) 0%, var(--accent-dark) 100%);
+        }
+
+        header::after {
+            content: '🔍';
+            position: absolute;
+            right: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 5rem;
+            opacity: 0.12;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .header-eyebrow {
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        header h1 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+
+        header .subtitle {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.88);
+        }
+
+        /* ── Info banner ── */
+        .info-banner {
+            background: #ffffff;
+            border-left: 6px solid var(--info);
+            border-radius: 10px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px var(--shadow);
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+
+        .info-banner .banner-icon {
+            font-size: 1.6rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .info-banner p {
+            color: var(--text-secondary);
+            font-size: 1.02rem;
+            line-height: 1.7;
+        }
+
+        .info-banner strong {
+            color: var(--text-primary);
+        }
+
+        /* ── Content section ── */
+        .content-section {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px var(--shadow);
+            border: 2px solid var(--border);
+        }
+
+        .content-section h2 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.9rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .content-section h3 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.45rem;
+            color: var(--primary-light);
+            margin: 30px 0 14px 0;
+        }
+
+        .content-section p {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+
+        /* ── Icon badge ── */
+        .icon-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background: var(--primary);
+            color: #ffffff;
+            border-radius: 12px;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        /* ── Download card ── */
+        .download-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: #ffffff;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0 10px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 6px 20px rgba(26, 77, 46, 0.25);
+        }
+
+        .download-card .dl-icon {
+            font-size: 2.5rem;
+            flex-shrink: 0;
+        }
+
+        .download-card .dl-info { flex: 1; }
+
+        .download-card .dl-title {
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .download-card .dl-meta {
+            font-size: 0.9rem;
+            color: #d4eedd;
+            margin-bottom: 14px;
+        }
+
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent);
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding: 10px 22px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background 0.2s ease, transform 0.15s ease;
+        }
+
+        .btn-download:hover,
+        .btn-download:focus-visible {
+            background: var(--accent-dark);
+            transform: translateY(-2px);
+            outline: 3px solid #ffffff;
+            outline-offset: 2px;
+        }
+
+        /* ── File spec table ── */
+        .file-specs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin: 20px 0;
+        }
+
+        .spec-item {
+            background: var(--surface-alt);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 16px 20px;
+        }
+
+        .spec-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .spec-value {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* ── Numbered install steps ── */
+        .method-list {
+            list-style: none;
+            counter-reset: method-counter;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .method-item {
+            counter-increment: method-counter;
+            background: var(--surface-alt);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 22px 22px 22px 70px;
+            position: relative;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .method-item:hover {
+            border-color: var(--primary-light);
+            box-shadow: 0 4px 14px var(--shadow);
+        }
+
+        .method-item::before {
+            content: counter(method-counter);
+            position: absolute;
+            left: 18px;
+            top: 22px;
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 1rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .method-title {
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .method-steps {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .method-steps li {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            padding-left: 18px;
+            position: relative;
+            line-height: 1.6;
+        }
+
+        .method-steps li::before {
+            content: '›';
+            position: absolute;
+            left: 0;
+            color: var(--accent-dark);
+            font-weight: 700;
+        }
+
+        /* ── Code block ── */
+        .code-block {
+            background: var(--code-bg);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .code-block .lang-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            background: var(--border);
+            padding: 3px 8px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .code-block code {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.92rem;
+            color: var(--primary);
+            font-weight: 600;
+            flex: 1;
+            word-break: break-all;
+        }
+
+        /* ── Warning note ── */
+        .note-box {
+            background: #fff8f0;
+            border: 2px solid #f0c88a;
+            border-radius: 10px;
+            padding: 18px 22px;
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .note-box .note-icon {
+            font-size: 1.3rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .note-box p {
+            font-size: 0.98rem;
+            color: #7a4f1a;
+            margin: 0;
+            line-height: 1.7;
+        }
+
+        .note-box strong {
+            color: #5a3a0e;
+        }
+
+        /* ── Footer ── */
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 640px) {
+            body { padding: 12px; }
+
+            header { padding: 36px 24px; }
+            header h1 { font-size: 1.9rem; }
+            header::after { display: none; }
+
+            .content-section { padding: 28px 20px; }
+
+            .file-specs { grid-template-columns: 1fr; }
+
+            .download-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 14px;
+            }
+
+            .method-item {
+                padding: 18px 18px 18px 62px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<div class="container">
+
+    <!-- ── Header ── -->
+    <header>
+        <p class="header-eyebrow">CSC 156 · Digital Forensics Fundamentals</p>
+        <h1>Lab 07: Forensic Disk Image</h1>
+        <p class="subtitle">Downloading, extracting, and preparing the 4orensics evidence image</p>
+    </header>
+
+    <!-- ── Overview banner ── -->
+    <div class="info-banner" role="note" aria-label="Lab overview">
+        <span class="banner-icon" aria-hidden="true">💾</span>
+        <p>
+            This week's lab uses a <strong>raw forensic disk image</strong> named
+            <strong>4orensics.001</strong>. The <code>.001</code> extension indicates a standard
+            raw (dd-style) image format, which is natively supported by Autopsy, FTK Imager, and
+            most other forensic analysis tools used in this course.
+        </p>
+    </div>
+
+    <!-- ── Main content ── -->
+    <main id="main-content">
+
+        <!-- Download section -->
+        <section class="content-section" aria-labelledby="download-heading">
+            <h2 id="download-heading">
+                <span class="icon-badge" aria-hidden="true">⬇</span>
+                Download the Image
+            </h2>
+
+            <p>
+                The image is distributed as a <strong>.7z compressed archive</strong> to keep the
+                download manageable. You will need to extract the archive before you can open it in
+                your forensic tools.
+            </p>
+
+            <div class="download-card">
+                <span class="dl-icon" aria-hidden="true">🗜️</span>
+                <div class="dl-info">
+                    <p class="dl-title">4orensics.001.7z</p>
+                    <p class="dl-meta">Compressed archive · 6.2 GB download → 24 GB extracted raw image</p>
+                    <a class="btn-download"
+                       href="https://1drv.ms/f/c/447200bab10d3ac2/IgCIryhJjYgjRK1-jObONZrfAQg8RcWM3BzbHnf4QfzKXvk?e=s0mVjr"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       aria-label="Download the 4orensics image archive from OneDrive (opens in new tab)">
+                        ⬇ Download from OneDrive
+                    </a>
+                </div>
+            </div>
+
+            <div class="file-specs" role="list" aria-label="File specifications">
+                <div class="spec-item" role="listitem">
+                    <p class="spec-label">Image filename</p>
+                    <p class="spec-value">4orensics.001</p>
+                </div>
+                <div class="spec-item" role="listitem">
+                    <p class="spec-label">Image format</p>
+                    <p class="spec-value">Raw / DD (standard)</p>
+                </div>
+                <div class="spec-item" role="listitem">
+                    <p class="spec-label">Compressed size</p>
+                    <p class="spec-value">6.2 GB (.7z)</p>
+                </div>
+                <div class="spec-item" role="listitem">
+                    <p class="spec-label">Extracted size</p>
+                    <p class="spec-value">24 GB</p>
+                </div>
+            </div>
+
+            <div class="note-box" role="note">
+                <span class="note-icon" aria-hidden="true">⚠️</span>
+                <p>
+                    <strong>Disk space:</strong> Ensure you have at least <strong>35 GB of free
+                    space</strong> before extracting — you need room for the archive and the
+                    extracted image simultaneously. A fast external drive (USB 3.0 or better)
+                    works well if your internal storage is limited.
+                </p>
+            </div>
+        </section>
+
+        <!-- Extraction / NanaZip section -->
+        <section class="content-section" aria-labelledby="nanazip-heading">
+            <h2 id="nanazip-heading">
+                <span class="icon-badge" aria-hidden="true">📦</span>
+                Extracting the Archive with NanaZip
+            </h2>
+
+            <p>
+                To extract the <code>.7z</code> archive you need a tool that supports the 7-Zip
+                format. The recommended tool for this course is <strong>NanaZip</strong> — a modern,
+                open-source file archiver that handles .7z, .zip, .tar, and dozens of other formats.
+            </p>
+            <p>
+                NanaZip can be installed from three official or reputable sources. Choose whichever
+                method suits your setup:
+            </p>
+
+            <h3>Install NanaZip</h3>
+            <ol class="method-list" aria-label="NanaZip installation methods">
+
+                <li class="method-item">
+                    <p class="method-title">Microsoft Store <span style="font-weight:400;font-size:0.95rem;color:var(--text-secondary)">(recommended on Windows 10/11)</span></p>
+                    <ul class="method-steps">
+                        <li>Open the <strong>Microsoft Store</strong> app.</li>
+                        <li>Search for <strong>NanaZip</strong>.</li>
+                        <li>Install the one published by <strong>M2Team / Kenji Mouri</strong>.</li>
+                    </ul>
+                </li>
+
+                <li class="method-item">
+                    <p class="method-title">Official GitHub Releases <span style="font-weight:400;font-size:0.95rem;color:var(--text-secondary)">(MSIX packages &amp; previews)</span></p>
+                    <ul class="method-steps">
+                        <li>Go to the <a href="https://github.com/M2Team/NanaZip/releases" target="_blank" rel="noopener noreferrer" style="color:var(--info);font-weight:600;">NanaZip GitHub releases page</a>.</li>
+                        <li>Download the latest stable <code>.msixbundle</code> (or preview if you want the bleeding edge).</li>
+                        <li>Double-click the downloaded file to install via <strong>App Installer</strong>.</li>
+                    </ul>
+                </li>
+
+                <li class="method-item">
+                    <p class="method-title">Windows Package Manager <span style="font-weight:400;font-size:0.95rem;color:var(--text-secondary)">(winget)</span></p>
+                    <ul class="method-steps">
+                        <li>Open an elevated <strong>PowerShell</strong> or <strong>Terminal</strong> window.</li>
+                        <li>Run the following command:</li>
+                    </ul>
+                    <div class="code-block" role="region" aria-label="winget install command">
+                        <span class="lang-badge" aria-label="PowerShell">PowerShell</span>
+                        <code>winget install -e --id M2Team.NanaZip</code>
+                    </div>
+                </li>
+
+            </ol>
+
+            <div class="note-box" role="note" style="margin-top:28px;">
+                <span class="note-icon" aria-hidden="true">💡</span>
+                <p>
+                    <strong>Already have 7-Zip?</strong> Standard 7-Zip also handles <code>.7z</code>
+                    archives and works fine for this lab. NanaZip is simply the instructor's current
+                    preference for its cleaner Windows integration and active development.
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>CSC 156 · Digital Forensics Fundamentals · Mendocino College</p>
+    </footer>
+
+</div>
+
+</body>
+</html>
