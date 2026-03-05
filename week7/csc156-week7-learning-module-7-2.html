@@ -116,45 +116,45 @@
 
         /* ===== LAYOUT ===== */
         .content-wrapper {
-            max-width: 900px;
+            width: 96%;
             margin: 0 auto;
-            padding: 32px 20px 80px;
+            padding: 32px 0 80px;
         }
 
-        /* ===== NAVIGATION ===== */
+        /* ===== NAVIGATION TABS ===== */
         .section-nav {
-            background: #ffffff;
+            background: rgba(255, 255, 255, 0.97);
             border: 1px solid #d1d1e0;
-            border-radius: 12px;
-            padding: 20px 24px;
+            border-radius: 8px;
+            padding: 8px 16px;
             margin-bottom: 32px;
             position: sticky;
-            top: 10px;
+            top: 16px;
             z-index: 100;
             box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-        }
-        .section-nav h2 {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #6a6a8a;
-            margin-bottom: 12px;
         }
         .section-nav ol {
             list-style: none;
             display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
+            flex-wrap: nowrap;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 2px;
+            scrollbar-width: none;
+        }
+        .section-nav ol::-webkit-scrollbar {
+            display: none;
         }
         .section-nav ol li a {
             display: inline-block;
-            padding: 6px 14px;
+            padding: 4px 10px;
             background: #f0f0fa;
             color: #2d2d5e;
-            border-radius: 8px;
+            border-radius: 6px;
             text-decoration: none;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 500;
+            white-space: nowrap;
             border: 1px solid transparent;
             transition: all 0.2s;
         }
@@ -166,10 +166,70 @@
             outline: 2px solid #2563eb;
             outline-offset: 2px;
         }
+        .section-nav ol li a[aria-current="true"] {
+            background: #1a1a2e;
+            color: #ffffff;
+            border-color: #1a1a2e;
+        }
         .section-nav ol li a.completed {
             background: #d1fae5;
             color: #065f46;
             border-color: #6ee7b7;
+        }
+        .section-nav ol li a.nav-top-link {
+            background: transparent;
+            color: #6a6a8a;
+            border-color: #d1d1e0;
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            margin-right: 4px;
+        }
+        .section-nav ol li a.nav-top-link:hover,
+        .section-nav ol li a.nav-top-link:focus {
+            background: #3730a3;
+            color: #ffffff;
+            border-color: #3730a3;
+            outline-color: #3730a3;
+        }
+
+        /* ===== TABLE OF CONTENTS BOX ===== */
+        .toc-box {
+            background: #ffffff;
+            border: 1px solid #d1d1e0;
+            border-radius: 12px;
+            padding: 24px 28px;
+            margin-bottom: 28px;
+            box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+            scroll-margin-top: var(--sticky-nav-offset, 90px);
+        }
+        .toc-box h2 {
+            font-size: 1.1rem;
+            color: #1a1a2e;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #2563eb;
+        }
+        .toc-box ol {
+            columns: 2;
+            column-gap: 32px;
+            margin: 0;
+            padding-left: 20px;
+        }
+        .toc-box ol li {
+            margin-bottom: 8px;
+            break-inside: avoid;
+        }
+        .toc-box ol li a {
+            color: #2563eb;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .toc-box ol li a:hover,
+        .toc-box ol li a:focus {
+            text-decoration: underline;
+            outline: 2px solid #2563eb;
+            outline-offset: 2px;
         }
 
         /* ===== SECTIONS ===== */
@@ -180,6 +240,7 @@
             padding: 32px 28px;
             margin-bottom: 28px;
             box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+            scroll-margin-top: var(--sticky-nav-offset, 90px);
         }
         .module-section h2 {
             font-size: 1.5rem;
@@ -781,10 +842,10 @@
         @media (max-width: 768px) {
             .module-header h1 { font-size: 1.5rem; }
             .module-section { padding: 20px 16px; }
-            .section-nav ol { flex-direction: column; }
             .module-meta { flex-direction: column; align-items: center; gap: 8px; }
             .tab-buttons { flex-direction: column; }
             .tab-btn { min-width: auto; }
+            .toc-box ol { columns: 1; }
         }
 
         /* ===== PRINT ===== */
@@ -827,22 +888,39 @@
     <!-- MAIN CONTENT -->
     <main id="main-content" class="content-wrapper">
 
-        <!-- TABLE OF CONTENTS -->
-        <nav class="section-nav" aria-label="Module sections">
-            <h2>Module Sections</h2>
+        <!-- STICKY NAV BAR (numbers + Top link) -->
+        <nav id="sticky-nav" class="section-nav" aria-label="Module sections">
             <ol>
-                <li><a href="#section1" id="nav-s1">1. Introduction</a></li>
-                <li><a href="#section2" id="nav-s2">2. SYSTEM Hive Artifacts</a></li>
-                <li><a href="#section3" id="nav-s3">3. SOFTWARE Hive Artifacts</a></li>
-                <li><a href="#section4" id="nav-s4">4. SAM Hive Artifacts</a></li>
-                <li><a href="#section5" id="nav-s5">5. CurrentControlSet</a></li>
-                <li><a href="#section6" id="nav-s6">6. USB Device History</a></li>
-                <li><a href="#section7" id="nav-s7">7. Network Artifacts</a></li>
-                <li><a href="#section8" id="nav-s8">8. Tool Walkthroughs</a></li>
-                <li><a href="#section9" id="nav-s9">9. Activities</a></li>
-                <li><a href="#section10" id="nav-s10">10. Knowledge Check</a></li>
+                <li><a href="#toc" class="nav-top-link" aria-label="Back to section listing">▲ Top</a></li>
+                <li><a href="#section1" id="nav-s1" aria-label="Section 1: Introduction">1</a></li>
+                <li><a href="#section2" id="nav-s2" aria-label="Section 2: SYSTEM Hive Artifacts">2</a></li>
+                <li><a href="#section3" id="nav-s3" aria-label="Section 3: SOFTWARE Hive Artifacts">3</a></li>
+                <li><a href="#section4" id="nav-s4" aria-label="Section 4: SAM Hive Artifacts">4</a></li>
+                <li><a href="#section5" id="nav-s5" aria-label="Section 5: CurrentControlSet">5</a></li>
+                <li><a href="#section6" id="nav-s6" aria-label="Section 6: USB Device History">6</a></li>
+                <li><a href="#section7" id="nav-s7" aria-label="Section 7: Network Artifacts">7</a></li>
+                <li><a href="#section8" id="nav-s8" aria-label="Section 8: Tool Walkthroughs">8</a></li>
+                <li><a href="#section9" id="nav-s9" aria-label="Section 9: Activities">9</a></li>
+                <li><a href="#section10" id="nav-s10" aria-label="Section 10: Knowledge Check">10</a></li>
             </ol>
         </nav>
+
+        <!-- SECTION LISTING (TOC) -->
+        <div id="toc" class="toc-box">
+            <h2>Module Sections</h2>
+            <ol>
+                <li><a href="#section1">1. Introduction</a></li>
+                <li><a href="#section2">2. SYSTEM Hive Artifacts</a></li>
+                <li><a href="#section3">3. SOFTWARE Hive Artifacts</a></li>
+                <li><a href="#section4">4. SAM Hive Artifacts</a></li>
+                <li><a href="#section5">5. CurrentControlSet</a></li>
+                <li><a href="#section6">6. USB Device History</a></li>
+                <li><a href="#section7">7. Network Artifacts</a></li>
+                <li><a href="#section8">8. Tool Walkthroughs</a></li>
+                <li><a href="#section9">9. Activities</a></li>
+                <li><a href="#section10">10. Knowledge Check</a></li>
+            </ol>
+        </div>
 
         <!-- LEARNING OBJECTIVES -->
         <div class="objectives-box">
@@ -2332,9 +2410,47 @@ RegisteredOwner: <span class="value-hl">Accounting Dept</span></div>
             if (answer) answer.classList.toggle('visible');
         }
 
-        // ===== INITIALIZE =====
+        // ===== STICKY NAV OFFSET =====
+        function updateNavOffset() {
+            var nav = document.getElementById('sticky-nav');
+            if (!nav) return;
+            var navTop = parseInt(getComputedStyle(nav).top, 10) || 16;
+            var offset = nav.offsetHeight + navTop + 8;
+            document.documentElement.style.setProperty('--sticky-nav-offset', offset + 'px');
+        }
+
+        // ===== CURRENT SECTION TRACKING =====
+        function trackCurrentSection() {
+            var nav = document.getElementById('sticky-nav');
+            var navBottom = nav ? nav.getBoundingClientRect().bottom : 70;
+            var sections = document.querySelectorAll('.module-section');
+            var current = null;
+            sections.forEach(function(sec) {
+                if (sec.getBoundingClientRect().top <= navBottom + 10) {
+                    current = sec.id;
+                }
+            });
+            document.querySelectorAll('#sticky-nav a').forEach(function(link) {
+                if (link.getAttribute('href') === '#' + current) {
+                    link.setAttribute('aria-current', 'true');
+                } else {
+                    link.removeAttribute('aria-current');
+                }
+            });
+        }
+
+        // ===== SCROLL HANDLER =====
+        window.addEventListener('scroll', function() {
+            trackCurrentSection();
+        });
+
+        window.addEventListener('resize', updateNavOffset);
+
+        // ===== INITIALIZE ON LOAD =====
         window.addEventListener('DOMContentLoaded', function() {
             restoreProgress();
+            updateNavOffset();
+            trackCurrentSection();
         });
     </script>
 </body>
