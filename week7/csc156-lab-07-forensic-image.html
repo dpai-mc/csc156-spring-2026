@@ -420,6 +420,84 @@
             color: #5a3a0e;
         }
 
+        /* ── Hash validation table ── */
+        .hash-table {
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0 28px;
+            font-size: 1rem;
+        }
+
+        .hash-row {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .hash-row:last-child { border-bottom: none; }
+
+        .hash-header {
+            background: var(--primary);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.82rem;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+        }
+
+        .hash-header div {
+            padding: 12px 18px;
+        }
+
+        .hash-algo {
+            padding: 14px 18px;
+            font-weight: 700;
+            color: var(--primary);
+            background: var(--surface-alt);
+            border-right: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+        }
+
+        .hash-value {
+            padding: 14px 18px;
+            background: var(--surface);
+            display: flex;
+            align-items: center;
+        }
+
+        .hash-value code {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.88rem;
+            color: var(--primary);
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        /* ── Hash commands ── */
+        .hash-commands {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 16px 0 0;
+        }
+
+        .hash-cmd-label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 8px !important;
+        }
+
+        @media (max-width: 640px) {
+            .hash-row { grid-template-columns: 80px 1fr; }
+            .hash-commands { grid-template-columns: 1fr; }
+            .hash-value code { font-size: 0.75rem; }
+        }
+
         /* ── Footer ── */
         footer {
             text-align: center;
@@ -495,7 +573,7 @@
             <div class="download-card">
                 <span class="dl-icon" aria-hidden="true">🗜️</span>
                 <div class="dl-info">
-                    <p class="dl-title">4orensics.001.7z</p>
+                    <p class="dl-title">4orensics.case2.7z</p>
                     <p class="dl-meta">Compressed archive · 6.2 GB download → 24 GB extracted raw image</p>
                     <a class="btn-download"
                        href="https://1drv.ms/f/c/447200bab10d3ac2/IgCIryhJjYgjRK1-jObONZrfAQg8RcWM3BzbHnf4QfzKXvk?e=s0mVjr"
@@ -595,6 +673,74 @@
                     <strong>Already have 7-Zip?</strong> Standard 7-Zip also handles <code>.7z</code>
                     archives and works fine for this lab. NanaZip is simply the instructor's current
                     preference for its cleaner Windows integration and active development.
+                </p>
+            </div>
+        </section>
+
+        <!-- Hash validation section -->
+        <section class="content-section" aria-labelledby="hash-heading">
+            <h2 id="hash-heading">
+                <span class="icon-badge" aria-hidden="true">🔐</span>
+                Validating the Image
+            </h2>
+
+            <p>
+                Before opening the image in any forensic tool, verify its integrity by comparing
+                your computed hash values against the reference values below. A mismatch means the
+                file was corrupted or altered during download and must be re-downloaded before use.
+            </p>
+
+            <div class="hash-table" role="table" aria-label="Reference hash values for 4orensics.001">
+                <div class="hash-row hash-header" role="row">
+                    <div role="columnheader">Algorithm</div>
+                    <div role="columnheader">Reference Hash Value</div>
+                </div>
+                <div class="hash-row" role="row">
+                    <div class="hash-algo" role="cell">SHA-256</div>
+                    <div class="hash-value" role="cell">
+                        <code>44D7E017FC023490C19729A63E25CE79AD2FDC0C69B31A765FB1A737CC5E1EEA</code>
+                    </div>
+                </div>
+                <div class="hash-row" role="row">
+                    <div class="hash-algo" role="cell">MD5</div>
+                    <div class="hash-value" role="cell">
+                        <code>688CF22A83C290BA55FA08FBCE69027D</code>
+                    </div>
+                </div>
+            </div>
+
+            <h3>How to compute and verify hashes</h3>
+            <p>Windows includes built-in hash tools via PowerShell — no additional software needed:</p>
+
+            <div class="hash-commands">
+                <div class="hash-cmd-item">
+                    <p class="hash-cmd-label">Compute SHA-256</p>
+                    <div class="code-block" role="region" aria-label="PowerShell SHA-256 command">
+                        <span class="lang-badge">PowerShell</span>
+                        <code>Get-FileHash .\4orensics.001 -Algorithm SHA256</code>
+                    </div>
+                </div>
+                <div class="hash-cmd-item">
+                    <p class="hash-cmd-label">Compute MD5</p>
+                    <div class="code-block" role="region" aria-label="PowerShell MD5 command">
+                        <span class="lang-badge">PowerShell</span>
+                        <code>Get-FileHash .\4orensics.001 -Algorithm MD5</code>
+                    </div>
+                </div>
+            </div>
+
+            <p style="margin-top: 18px;">
+                Run each command in a PowerShell window opened in the folder containing the image.
+                Compare the output hash string character-for-character with the values in the table above.
+            </p>
+
+            <div class="note-box" role="note" style="margin-top: 20px;">
+                <span class="note-icon" aria-hidden="true">⚠️</span>
+                <p>
+                    <strong>Chain of custody requirement:</strong> Record your computed hash values
+                    in your lab report. Documenting that your working copy matches the reference
+                    hashes is a foundational step in maintaining forensic integrity — it demonstrates
+                    you are analyzing an unaltered copy of the original evidence.
                 </p>
             </div>
         </section>
