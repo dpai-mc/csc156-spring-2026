@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 7.4: Advanced User Artifacts &amp; Timeline Correlation — CSC 156 Digital Forensics Fundamentals</title>
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        html{scroll-behavior:smooth;font-size:16px}
+        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;line-height:1.7;color:#1a1a2e;background:#f5f5fa;min-height:100vh}
+
+        .skip-link{position:absolute;top:-100px;left:0;background:#1a1a2e;color:#fff;padding:12px 24px;z-index:10000;font-size:1rem;transition:top .2s}
+        .skip-link:focus{top:0}
+
+        .progress-container{position:fixed;top:0;left:0;width:100%;height:6px;background:#d1d1e0;z-index:9999}
+        .progress-bar{height:100%;width:0%;background:linear-gradient(90deg,#2563eb,#7c3aed);transition:width .3s ease}
+        .progress-text{position:fixed;top:8px;right:16px;font-size:.75rem;font-weight:600;color:#4a4a6a;background:rgba(245,245,250,.92);padding:2px 10px;border-radius:10px;z-index:10000;border:1px solid #d1d1e0}
+
+        .module-header{background:linear-gradient(135deg,#1a1a2e 0%,#2d2d5e 50%,#3a3a7e 100%);color:#fff;padding:48px 24px 40px;text-align:center;margin-top:6px}
+        .module-header .course-tag{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);padding:4px 16px;border-radius:20px;font-size:.85rem;letter-spacing:.05em;margin-bottom:12px}
+        .module-header h1{font-size:2rem;font-weight:700;margin-bottom:8px;line-height:1.3}
+        .module-header .subtitle{font-size:1.15rem;color:#c8c8f0;margin-bottom:20px}
+        .module-meta{display:flex;justify-content:center;flex-wrap:wrap;gap:24px;font-size:.9rem;color:#d0d0f0}
+        .module-meta span{display:flex;align-items:center;gap:6px}
+
+        .content-wrapper{max-width:920px;margin:0 auto;padding:32px 20px 80px}
+
+        .section-nav{background:#fff;border:1px solid #d1d1e0;border-radius:12px;padding:20px 24px;margin-bottom:32px;position:sticky;top:10px;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+        .section-nav h2{font-size:.85rem;text-transform:uppercase;letter-spacing:.08em;color:#6a6a8a;margin-bottom:12px}
+        .section-nav ol{list-style:none;display:flex;flex-wrap:wrap;gap:8px}
+        .section-nav ol li a{display:inline-block;padding:6px 14px;background:#f0f0fa;color:#2d2d5e;border-radius:8px;text-decoration:none;font-size:.83rem;font-weight:500;border:1px solid transparent;transition:all .2s}
+        .section-nav ol li a:hover,.section-nav ol li a:focus{background:#2563eb;color:#fff;border-color:#2563eb;outline:2px solid #2563eb;outline-offset:2px}
+        .section-nav ol li a.completed{background:#d1fae5;color:#065f46;border-color:#6ee7b7}
+
+        .module-section{background:#fff;border:1px solid #d1d1e0;border-radius:12px;padding:32px 28px;margin-bottom:28px;box-shadow:0 1px 8px rgba(0,0,0,.04)}
+        .module-section h2{font-size:1.5rem;color:#1a1a2e;margin-bottom:8px;padding-bottom:12px;border-bottom:3px solid #2563eb}
+        .module-section h3{font-size:1.2rem;color:#2d2d5e;margin:24px 0 12px}
+        .module-section h4{font-size:1.05rem;color:#3a3a6a;margin:20px 0 10px}
+        .module-section p{margin-bottom:14px;color:#2a2a4a}
+
+        .objectives-box{background:#eef2ff;border:1px solid #c7d2fe;border-left:5px solid #2563eb;border-radius:8px;padding:20px 24px;margin:20px 0}
+        .objectives-box h3{color:#1e40af;margin:0 0 12px;font-size:1.1rem}
+        .objectives-box ul{margin:0;padding-left:20px}
+        .objectives-box ul li{margin-bottom:8px;color:#1e3a5f;line-height:1.6}
+
+        .definition-box{background:#f0fdf4;border:1px solid #bbf7d0;border-left:5px solid #16a34a;border-radius:8px;padding:16px 20px;margin:16px 0}
+        .definition-box .term{font-weight:700;color:#15803d;font-size:1rem;margin-bottom:4px}
+        .definition-box .meaning{color:#14532d;line-height:1.6}
+
+        .forensic-note{background:#fef3c7;border:1px solid #fcd34d;border-left:5px solid #d97706;border-radius:8px;padding:16px 20px;margin:16px 0}
+        .forensic-note .note-title{font-weight:700;color:#92400e;margin-bottom:6px}
+        .forensic-note p,.forensic-note li{color:#78350f}
+        .forensic-note ul,.forensic-note ol{margin:8px 0 8px 20px}
+
+        .important-box{background:#fef2f2;border:1px solid #fecaca;border-left:5px solid #dc2626;border-radius:8px;padding:16px 20px;margin:16px 0}
+        .important-box .box-title{font-weight:700;color:#991b1b;margin-bottom:6px}
+        .important-box p,.important-box li{color:#7f1d1d}
+        .important-box ul,.important-box ol{margin:8px 0 8px 20px}
+
+        .info-box{background:#eff6ff;border:1px solid #bfdbfe;border-left:5px solid #2563eb;border-radius:8px;padding:16px 20px;margin:16px 0}
+        .info-box .box-title{font-weight:700;color:#1e40af;margin-bottom:6px}
+        .info-box p,.info-box li{color:#1e3a5f}
+        .info-box ul,.info-box ol{margin:8px 0 8px 20px}
+
+        .table-container{overflow-x:auto;margin:16px 0;border-radius:8px;border:1px solid #d1d1e0}
+        table{width:100%;border-collapse:collapse;font-size:.92rem}
+        thead{background:#1a1a2e;color:#fff}
+        thead th{padding:12px 16px;text-align:left;font-weight:600}
+        tbody tr{border-bottom:1px solid #e5e5f0}
+        tbody tr:nth-child(even){background:#f8f8fc}
+        tbody tr:hover{background:#eef2ff}
+        tbody td{padding:10px 16px;color:#2a2a4a;vertical-align:top}
+
+        code{font-family:'Consolas','Courier New',monospace;background:#f1f5f9;color:#1e293b;padding:2px 6px;border-radius:4px;font-size:.9em;border:1px solid #e2e8f0}
+        pre{background:#1e293b;color:#e2e8f0;padding:20px 24px;border-radius:8px;overflow-x:auto;margin:16px 0;font-family:'Consolas','Courier New',monospace;font-size:.88rem;line-height:1.6;white-space:pre;border:1px solid #334155}
+        pre code{background:none;color:inherit;padding:0;border:none;font-size:inherit;white-space:pre}
+
+        .tool-output{background:#0f172a;color:#94a3b8;padding:20px 24px;border-radius:8px;font-family:'Consolas','Courier New',monospace;font-size:.85rem;line-height:1.7;overflow-x:auto;margin:16px 0;border:1px solid #1e293b;white-space:pre}
+        .tool-output .hl{color:#38bdf8;font-weight:700}
+        .tool-output .val{color:#4ade80}
+        .tool-output .cmt{color:#64748b;font-style:italic}
+        .tool-output .warn{color:#fbbf24}
+
+        .collapsible{margin:16px 0;border:1px solid #d1d1e0;border-radius:8px;overflow:hidden}
+        .collapsible-toggle{width:100%;background:#f8f8fc;border:none;padding:14px 20px;font-size:1rem;font-weight:600;color:#2d2d5e;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:background .2s;text-align:left}
+        .collapsible-toggle:hover,.collapsible-toggle:focus{background:#eef2ff;outline:2px solid #2563eb;outline-offset:-2px}
+        .collapsible-toggle .arrow{transition:transform .3s;font-size:.85rem}
+        .collapsible-toggle[aria-expanded="true"] .arrow{transform:rotate(180deg)}
+        .collapsible-content{display:none;padding:16px 20px;background:#fff;border-top:1px solid #d1d1e0}
+        .collapsible-content.open{display:block}
+
+        .artifact-card{background:#fff;border:2px solid #c7d2fe;border-radius:10px;padding:20px 24px;margin:18px 0;transition:border-color .2s}
+        .artifact-card:hover{border-color:#818cf8}
+        .artifact-card .artifact-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+        .artifact-card .artifact-header h4{margin:0;color:#1e40af;font-size:1.1rem}
+        .artifact-card .badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:600;border:1px solid}
+        .badge-high{background:#fef2f2;color:#991b1b;border-color:#fecaca}
+        .badge-medium{background:#fef3c7;color:#92400e;border-color:#fcd34d}
+        .badge-ntuser{background:#eef2ff;color:#3730a3;border-color:#c7d2fe}
+        .badge-profile{background:#f0fdf4;color:#166534;border-color:#bbf7d0}
+        .artifact-card .registry-path{background:#1e293b;color:#a5f3fc;padding:10px 16px;border-radius:6px;font-family:'Consolas','Courier New',monospace;font-size:.85rem;margin:10px 0;overflow-x:auto;white-space:pre}
+        .artifact-card p{color:#2a2a4a;margin-bottom:10px}
+
+        /* Timeline Builder */
+        .timeline-builder{background:#f8f8fc;border:2px solid #c7d2fe;border-radius:12px;padding:24px;margin:20px 0}
+        .timeline-builder h4{color:#2d2d5e;margin:0 0 16px}
+        .tl-event{background:#fff;border:1px solid #d1d1e0;border-radius:8px;padding:12px 16px;margin:8px 0;display:flex;gap:16px;align-items:flex-start;transition:border-color .2s}
+        .tl-event:hover{border-color:#818cf8}
+        .tl-time{font-family:'Consolas',monospace;font-size:.85rem;color:#2563eb;font-weight:700;white-space:nowrap;min-width:160px}
+        .tl-source{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.72rem;font-weight:600;margin-bottom:4px}
+        .tl-source-reg{background:#eef2ff;color:#3730a3}
+        .tl-source-fs{background:#f0fdf4;color:#166534}
+        .tl-source-bin{background:#fef2f2;color:#991b1b}
+        .tl-source-jl{background:#fef3c7;color:#92400e}
+        .tl-desc{font-size:.92rem;color:#2a2a4a}
+        .tl-connector{width:2px;background:#c7d2fe;margin:0 0 0 80px;height:12px}
+
+        .activity-container{background:#f5f3ff;border:2px solid #c4b5fd;border-radius:12px;padding:24px;margin:24px 0}
+        .activity-container h3{color:#5b21b6;margin:0 0 16px}
+        .activity-question{background:#fff;border:1px solid #ddd6fe;border-radius:8px;padding:16px;margin-bottom:12px}
+        .activity-question p{font-weight:600;color:#3b0764;margin-bottom:10px}
+        .activity-question label{display:block;padding:8px 12px;margin:4px 0;border-radius:6px;cursor:pointer;transition:background .2s;color:#2a2a4a;border:1px solid transparent}
+        .activity-question label:hover{background:#ede9fe}
+        .activity-question input[type="radio"]{margin-right:8px;accent-color:#7c3aed}
+        .check-btn{display:inline-block;background:#7c3aed;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;margin-top:8px;transition:background .2s}
+        .check-btn:hover,.check-btn:focus{background:#6d28d9;outline:2px solid #6d28d9;outline-offset:2px}
+        .feedback{margin-top:12px;padding:12px 16px;border-radius:8px;font-weight:600;display:none}
+        .feedback.correct{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;display:block}
+        .feedback.incorrect{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;display:block}
+
+        .knowledge-check{background:#fefce8;border:2px solid #fde047;border-radius:12px;padding:24px;margin:24px 0}
+        .knowledge-check h3{color:#854d0e;margin:0 0 8px}
+        .knowledge-check p.instructions{color:#713f12;margin-bottom:16px}
+        .kc-question{background:#fff;border:1px solid #fde68a;border-radius:8px;padding:16px;margin-bottom:16px}
+        .kc-question .q-text{font-weight:600;color:#1a1a2e;margin-bottom:10px}
+        .kc-question textarea{width:100%;min-height:80px;border:1px solid #d1d1e0;border-radius:6px;padding:10px;font-family:inherit;font-size:.92rem;resize:vertical;color:#1a1a2e}
+        .kc-question textarea:focus{outline:2px solid #2563eb;border-color:#2563eb}
+        .reveal-btn{display:inline-block;background:#d97706;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:.88rem;font-weight:600;cursor:pointer;margin-top:8px;transition:background .2s}
+        .reveal-btn:hover,.reveal-btn:focus{background:#b45309;outline:2px solid #b45309;outline-offset:2px}
+        .model-answer{display:none;background:#fef9c3;border:1px solid #fde68a;border-radius:6px;padding:12px 16px;margin-top:10px;color:#713f12;font-size:.92rem;line-height:1.6}
+        .model-answer.visible{display:block}
+
+        .section-complete-btn{display:block;width:100%;padding:14px;background:#f0fdf4;border:2px solid #86efac;border-radius:8px;font-size:1rem;font-weight:600;color:#166534;cursor:pointer;margin-top:20px;transition:all .2s}
+        .section-complete-btn:hover,.section-complete-btn:focus{background:#d1fae5;border-color:#16a34a;outline:2px solid #16a34a;outline-offset:2px}
+        .section-complete-btn.completed{background:#16a34a;color:#fff;border-color:#16a34a}
+
+        ul,ol{margin:10px 0 14px 24px}
+        li{margin-bottom:6px;color:#2a2a4a}
+
+        .module-footer{text-align:center;padding:32px 20px;color:#6a6a8a;font-size:.85rem;border-top:1px solid #d1d1e0;margin-top:40px}
+
+        .next-module{display:block;text-align:center;padding:18px;background:linear-gradient(135deg,#16a34a,#0d9488);color:#fff;border-radius:12px;text-decoration:none;font-weight:700;font-size:1.1rem;margin-top:24px;transition:opacity .2s}
+        .next-module:hover,.next-module:focus{opacity:.9;outline:3px solid #16a34a;outline-offset:2px}
+
+        @media(max-width:768px){
+            .module-header h1{font-size:1.5rem}
+            .module-section{padding:20px 16px}
+            .section-nav ol{flex-direction:column}
+            .module-meta{flex-direction:column;align-items:center;gap:8px}
+            .tl-event{flex-direction:column;gap:6px}
+            .tl-time{min-width:auto}
+        }
+        @media print{
+            .progress-container,.progress-text,.section-nav,.skip-link,.section-complete-btn,.check-btn,.reveal-btn{display:none}
+            .module-section{break-inside:avoid;box-shadow:none;border:1px solid #ccc}
+            .collapsible-content{display:block!important}
+        }
+        *:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div class="progress-container" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Module reading progress">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div class="progress-text" id="progressText" aria-live="polite">0% complete</div>
+
+    <header class="module-header">
+        <div class="course-tag">CSC 156 — Digital Forensics Fundamentals</div>
+        <h1>Module 7.4: Advanced User Artifacts &amp; Timeline Correlation</h1>
+        <p class="subtitle">Week 7 — Windows Forensics I: Registry and User Artifacts</p>
+        <div class="module-meta">
+            <span>⏱ Estimated Time: 1.5 hours</span>
+            <span>📘 Difficulty: Advanced</span>
+            <span>🎯 CSLO 2</span>
+        </div>
+    </header>
+
+    <main id="main-content" class="content-wrapper">
+
+        <nav class="section-nav" aria-label="Module sections">
+            <h2>Module Sections</h2>
+            <ol>
+                <li><a href="#section1" id="nav-s1">1. Introduction</a></li>
+                <li><a href="#section2" id="nav-s2">2. Jump Lists</a></li>
+                <li><a href="#section3" id="nav-s3">3. Recycle Bin</a></li>
+                <li><a href="#section4" id="nav-s4">4. Thumbcache</a></li>
+                <li><a href="#section5" id="nav-s5">5. Windows Search Index</a></li>
+                <li><a href="#section6" id="nav-s6">6. Artifact Correlation</a></li>
+                <li><a href="#section7" id="nav-s7">7. Timeline Methodology</a></li>
+                <li><a href="#section8" id="nav-s8">8. Documentation</a></li>
+                <li><a href="#section9" id="nav-s9">9. Tool Walkthroughs</a></li>
+                <li><a href="#section10" id="nav-s10">10. Activities</a></li>
+                <li><a href="#section11" id="nav-s11">11. Knowledge Check</a></li>
+            </ol>
+        </nav>
+
+        <div class="objectives-box">
+            <h3>🎯 Learning Objectives</h3>
+            <p>By the end of this module, you will be able to:</p>
+            <ul>
+                <li>Parse Jump Lists to identify application-file relationships with timestamps</li>
+                <li>Analyze Recycle Bin artifacts to recover deletion evidence</li>
+                <li>Examine Thumbcache databases for visual evidence of file existence</li>
+                <li>Describe the forensic value of the Windows Search Index</li>
+                <li>Correlate multiple artifact sources to answer investigative questions</li>
+                <li>Construct a preliminary user activity timeline from all Week 7 artifacts</li>
+                <li>Document findings with proper forensic standards for legal defensibility</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <div class="box-title">📋 Course Student Learning Outcome Alignment</div>
+            <p><strong>Primary CSLO:</strong> CSLO 2 — <em>Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data.</em></p>
+            <p>This module is the capstone of Week 7. Individual artifacts are useful, but their real power emerges when you <strong>correlate</strong> them into a coherent investigative narrative. This is where examination (extracting data) transforms into <strong>analysis</strong> (interpreting what it means).</p>
+        </div>
+
+        <!-- ========== SECTION 1 ========== -->
+        <section class="module-section" id="section1">
+            <h2>📖 1. Introduction &amp; Context</h2>
+            <p>Modules 7.1–7.3 taught you to extract artifacts from individual Registry hive files. You now know how to identify the machine (SYSTEM, SOFTWARE), enumerate users (SAM), and trace user activity (NTUSER.DAT). But real forensic investigations require something more: <strong>correlation</strong>.</p>
+            <p>No single artifact tells the complete story. A UserAssist entry proves a program was launched but not what files it accessed. A RecentDocs entry shows a file was opened but not what program opened it. A USB device entry shows a drive was connected but not what files were copied to it. Only by <strong>correlating multiple artifact sources</strong> can you build the comprehensive narrative that answers investigative questions.</p>
+            <p>This module introduces four additional artifact types that exist <strong>outside</strong> the Registry hive files but within the user profile and system directories. Then it teaches you the methodology for bringing <em>everything</em> together into a unified timeline.</p>
+
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Module</th><th>Focus</th><th>Key Artifacts</th></tr></thead>
+                    <tbody>
+                        <tr><td>7.1</td><td>Registry structure</td><td>Root keys, hive files, timestamps, transaction logs</td></tr>
+                        <tr><td>7.2</td><td>System-level artifacts</td><td>Computer name, time zone, SAM accounts, USBSTOR, installed software</td></tr>
+                        <tr><td>7.3</td><td>User-level artifacts</td><td>UserAssist, RecentDocs, TypedPaths, RunMRU, WordWheelQuery</td></tr>
+                        <tr><td><strong>7.4</strong></td><td><strong>Advanced artifacts &amp; correlation</strong></td><td><strong>Jump Lists, Recycle Bin, Thumbcache, Search Index, Timeline</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <button class="section-complete-btn" data-section="1" onclick="markComplete(1)">✓ Mark Section 1 as Complete</button>
+        </section>
+
+        <!-- ========== SECTION 2: JUMP LISTS ========== -->
+        <section class="module-section" id="section2">
+            <h2>📌 2. Jump Lists</h2>
+
+            <div class="artifact-card">
+                <div class="artifact-header">
+                    <h4>Jump Lists</h4>
+                    <span class="badge badge-high">High Forensic Value</span>
+                    <span class="badge badge-profile">User Profile</span>
+                </div>
+                <div class="registry-path">AutomaticDestinations:
+C:\Users\&lt;username&gt;\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations\
+
+CustomDestinations:
+C:\Users\&lt;username&gt;\AppData\Roaming\Microsoft\Windows\Recent\CustomDestinations\</div>
+            </div>
+
+            <div class="definition-box">
+                <div class="term">Jump List</div>
+                <div class="meaning">A Windows feature (introduced in Windows 7) that tracks files, folders, and URLs recently or frequently accessed by specific applications. Jump Lists appear when you right-click an application icon on the taskbar or Start Menu. Forensically, they are stored as structured files in the user's profile and contain detailed records of application-file relationships with timestamps.</div>
+            </div>
+
+            <h3>2.1 Types of Jump Lists</h3>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Type</th><th>Location</th><th>Content</th><th>Forensic Value</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>AutomaticDestinations</strong></td>
+                            <td><code>...\AutomaticDestinations\</code></td>
+                            <td>Files automatically tracked by the OS when opened by an application</td>
+                            <td>Very High — system-generated, difficult for user to manipulate</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CustomDestinations</strong></td>
+                            <td><code>...\CustomDestinations\</code></td>
+                            <td>Items pinned by the user or custom entries created by applications</td>
+                            <td>Moderate — shows user-initiated pinning actions</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>2.2 Jump List File Naming</h3>
+            <p>Each Jump List file is named with a <strong>16-character hexadecimal Application ID (AppID)</strong> that identifies the application. The file extension is <code>.automaticDestinations-ms</code> or <code>.customDestinations-ms</code>.</p>
+            <pre><code>5f7b5f1e01b83767.automaticDestinations-ms  → Microsoft Word
+9b9cdc69c1c24e2b.automaticDestinations-ms  → Notepad
+1b4dd67f29cb1962.automaticDestinations-ms  → Windows Explorer (pinned)
+12dc1ea8e34b5a6.automaticDestinations-ms   → Microsoft Paint</code></pre>
+
+            <h3>2.3 Data Within Jump Lists</h3>
+            <p>Each Jump List entry (internally stored as an embedded .lnk structure) contains:</p>
+            <ul>
+                <li><strong>Target file path:</strong> Full path to the file that was opened</li>
+                <li><strong>Target file MAC timestamps:</strong> Modified, Accessed, Created times of the target file at the time of access</li>
+                <li><strong>Target file size:</strong> Size of the file when it was opened</li>
+                <li><strong>Volume information:</strong> Volume name, serial number, and type (local, network, removable)</li>
+                <li><strong>Machine ID / NetBIOS name:</strong> The computer where the target file resides</li>
+                <li><strong>Entry timestamp:</strong> When the file was accessed by the application</li>
+            </ul>
+
+            <div class="forensic-note">
+                <div class="note-title">🔍 Forensic Significance</div>
+                <ul>
+                    <li><strong>Application-file pairing:</strong> Jump Lists uniquely link <em>which application</em> opened <em>which file</em> — something neither UserAssist nor RecentDocs can do alone</li>
+                    <li><strong>Full file paths:</strong> Unlike RecentDocs (which stores only filenames), Jump Lists record the complete path including drive letter and directory</li>
+                    <li><strong>Volume serial numbers:</strong> Can be correlated with MountedDevices and USBSTOR to prove a file was accessed from a specific USB device</li>
+                    <li><strong>Deleted file evidence:</strong> Jump List entries persist even after the target file is deleted — proving the file once existed</li>
+                    <li><strong>Network file access:</strong> UNC paths in Jump Lists prove the user accessed files on network shares via specific applications</li>
+                </ul>
+            </div>
+
+            <h3>2.4 Example Jump List Output</h3>
+            <div class="tool-output"><span class="cmt">--- JLECmd output: Microsoft Excel (AppID: b8ab77100df80ab2) ---</span>
+
+Entry #1:
+  <span class="hl">Target Path:</span>  <span class="val">E:\Exfil\Customer_Database_Export.xlsx</span>
+  Target Created:  2026-02-28 02:30:15 UTC
+  Target Modified: 2026-02-28 02:30:15 UTC
+  Target Size:     4,521,984 bytes
+  <span class="hl">Volume Type:</span>   <span class="warn">Removable</span>
+  Volume Serial:   <span class="warn">A4F2-8B31</span>
+  <span class="hl">Entry Time:</span>    <span class="val">2026-02-28 02:45:22 UTC</span>
+
+Entry #2:
+  <span class="hl">Target Path:</span>  <span class="val">\\fileserver\hr\Salary_Schedule_2026.xlsx</span>
+  Target Modified: 2026-01-15 09:12:00 UTC
+  <span class="hl">Volume Type:</span>   Network
+  <span class="hl">Entry Time:</span>    <span class="val">2026-02-27 14:30:55 UTC</span>
+
+<span class="cmt">← Entry #1 shows Excel opened a file on a REMOVABLE drive (E:\Exfil\)</span>
+<span class="cmt">   at 2:45 AM. The volume serial can be matched to USBSTOR data.</span>
+<span class="cmt">← Entry #2 shows Excel opened a salary file from a network share</span>
+<span class="cmt">   the previous afternoon.</span></div>
+            <button class="section-complete-btn" data-section="2" onclick="markComplete(2)">✓ Mark Section 2 as Complete</button>
+        </section>
+
+        <!-- ========== SECTION 3: RECYCLE BIN ========== -->
+        <section class="module-section" id="section3">
+            <h2>🗑️ 3. Recycle Bin Artifacts</h2>
+
+            <div class="artifact-card">
+                <div class="artifact-header">
+                    <h4>Recycle Bin</h4>
+                    <span class="badge badge-high">High Forensic Value</span>
+                    <span class="badge badge-profile">System / User</span>
+                </div>
+                <div class="registry-path">C:\$Recycle.Bin\{User SID}\
+  $I{random}.{ext}  — Metadata file (original path, deletion time, file size)
+  $R{random}.{ext}  — Actual file content (the deleted file itself)</div>
+            </div>
+
+            <div class="definition-box">
+                <div class="term">Recycle Bin</div>
+                <div class="meaning">A special system folder that temporarily stores files deleted by users through Windows Explorer. Rather than immediately removing data, Windows moves deleted files to the Recycle Bin, renaming them with <code>$R</code> prefixes and creating companion <code>$I</code> metadata files. Files remain recoverable until the user empties the Recycle Bin or the system reclaims the space.</div>
+            </div>
+
+            <h3>3.1 Recycle Bin File Structure (Windows 10/11)</h3>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>File</th><th>Contents</th><th>Forensic Value</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><code>$I{id}.{ext}</code></td>
+                            <td><strong>Metadata:</strong> Original file path, deletion timestamp (Windows FILETIME), original file size</td>
+                            <td>Very High — proves where the file was located and when it was deleted</td>
+                        </tr>
+                        <tr>
+                            <td><code>$R{id}.{ext}</code></td>
+                            <td><strong>File content:</strong> The actual deleted file data, preserved intact</td>
+                            <td>Very High — allows recovery and examination of the deleted file itself</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p>The <code>{id}</code> portion is a random identifier that matches between the <code>$I</code> and <code>$R</code> pair. The <code>{ext}</code> preserves the original file extension.</p>
+
+            <h3>3.2 $I File Structure</h3>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Offset</th><th>Size</th><th>Field</th></tr></thead>
+                    <tbody>
+                        <tr><td>0x00</td><td>8 bytes</td><td>Header/Version (2 = Win10+)</td></tr>
+                        <tr><td>0x08</td><td>8 bytes</td><td>Original file size in bytes</td></tr>
+                        <tr><td>0x10</td><td>8 bytes</td><td>Deletion timestamp (Windows FILETIME, UTC)</td></tr>
+                        <tr><td>0x18</td><td>4 bytes</td><td>Length of file path string</td></tr>
+                        <tr><td>0x1C</td><td>Variable</td><td>Original file path (Unicode string)</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>3.3 User Attribution</h3>
+            <p>Recycle Bin contents are organized by <strong>user SID</strong>:</p>
+            <pre><code>C:\$Recycle.Bin\S-1-5-21-...-1001\  → Files deleted by user with RID 1001
+C:\$Recycle.Bin\S-1-5-21-...-1002\  → Files deleted by user with RID 1002</code></pre>
+            <p>By matching the SID to the SAM account enumeration from Module 7.2, you can determine <strong>which user</strong> deleted each file.</p>
+
+            <h3>3.4 Example Recycle Bin Output</h3>
+            <div class="tool-output"><span class="cmt">--- RBCmd output: C:\$Recycle.Bin\S-1-5-21-...-1001\ ---</span>
+
+<span class="hl">$IXQF2A1.xlsx</span>
+  Original Path: <span class="val">C:\Users\jsmith\Documents\Customer_Database_Full.xlsx</span>
+  File Size:     <span class="val">4,521,984 bytes (4.3 MB)</span>
+  Deleted:       <span class="warn">2026-02-28 15:35:42 UTC</span>
+  $R File:       <span class="val">$RXQF2A1.xlsx (content recoverable)</span>
+
+<span class="hl">$IA8B3C2.pdf</span>
+  Original Path: <span class="val">C:\Users\jsmith\Downloads\Employee_SSN_List.pdf</span>
+  File Size:     <span class="val">1,245,184 bytes (1.2 MB)</span>
+  Deleted:       <span class="warn">2026-02-28 15:36:01 UTC</span>
+  $R File:       <span class="val">$RA8B3C2.pdf (content recoverable)</span>
+
+<span class="cmt">← Both files deleted within 19 seconds of each other at 3:35-3:36 PM</span>
+<span class="cmt">   Filenames suggest sensitive corporate data</span>
+<span class="cmt">   Files are still recoverable from $R files</span></div>
+
+            <div class="forensic-note">
+                <div class="note-title">🔍 Forensic Significance</div>
+                <ul>
+                    <li><strong>Deletion evidence:</strong> Proves what files were deleted and exactly when</li>
+                    <li><strong>File recovery:</strong> The actual file content can be recovered from the <code>$R</code> file</li>
+                    <li><strong>Original path:</strong> The <code>$I</code> file records where the file was located before deletion</li>
+                    <li><strong>User attribution:</strong> The SID-based directory structure identifies who deleted the file</li>
+                    <li><strong>Anti-forensics awareness:</strong> If the Recycle Bin has been emptied, the <code>$I</code>/<code>$R</code> files are deleted — but may still be recoverable through file carving (Week 5 techniques)</li>
+                </ul>
+            </div>
+
+            <div class="important-box">
+                <div class="box-title">⚠️ Important — Shift+Delete Bypasses the Recycle Bin</div>
+                <p>Files deleted using <strong>Shift+Delete</strong> bypass the Recycle Bin entirely — no <code>$I</code>/<code>$R</code> files are created. Similarly, files deleted from the command line (<code>del</code> command) or by programs typically bypass the Recycle Bin. In these cases, you must rely on file system artifacts (MFT entries, file carving from unallocated space) to recover evidence of the deleted files.</p>
+            </div>
+            <button class="section-complete-btn" data-section="3" onclick="markComplete(3)">✓ Mark Section 3 as Complete</button>
+        </section>
+
+        <!-- ========== SECTION 4: THUMBCACHE ========== -->
+        <section class="module-section" id="section4">
+            <h2>🖼️ 4. Thumbcache — Thumbnail Evidence</h2>
+
+            <div class="artifact-card">
+                <div class="artifact-header">
+                    <h4>Thumbcache</h4>
+                    <span class="badge badge-medium">Medium Forensic Value</span>
+                    <span class="badge badge-profile">User Profile</span>
+                </div>
+                <div class="registry-path">C:\Users\&lt;username&gt;\AppData\Local\Microsoft\Windows\Explorer\
+  thumbcache_32.db
+  thumbcache_96.db
+  thumbcache_256.db
+  thumbcache_1024.db
+  thumbcache_sr.db
+  thumbcache_idx.db  (index file)</div>
+            </div>
+
+            <div class="definition-box">
+                <div class="term">Thumbcache</div>
+                <div class="meaning">A set of database files that store thumbnail images (small preview images) generated by Windows Explorer when a user browses folders containing images, videos, documents, or other files that support preview generation. Thumbnails are cached to improve performance when revisiting folders.</div>
+            </div>
+
+            <h3>4.1 Forensic Significance</h3>
+            <div class="forensic-note">
+                <div class="note-title">🔍 Why Thumbnails Matter</div>
+                <ul>
+                    <li><strong>Visual proof of file existence:</strong> Even if a file has been deleted, its thumbnail may persist in the Thumbcache — providing visual evidence that the file existed on the system</li>
+                    <li><strong>Content preview:</strong> Thumbnails show a small version of the file content, which can be sufficient to identify the nature of an image or document without recovering the original file</li>
+                    <li><strong>Browsing evidence:</strong> Thumbnails are only generated when a user browses a folder in a view mode that displays previews — their existence proves the user navigated to that folder</li>
+                    <li><strong>Persistence:</strong> Thumbcache entries are not automatically removed when the source file is deleted, making them resistant to simple deletion-based anti-forensics</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <div class="box-title">💡 Practical Application</div>
+                <p>In investigations involving image-based evidence (intellectual property theft involving design files, inappropriate content, etc.), Thumbcache analysis can prove that specific images existed on the system even if the original files have been securely deleted. The thumbnail provides a visual "fingerprint" of the file's content.</p>
+            </div>
+            <button class="section-complete-btn" data-section="4" onclick="markComplete(4)">✓ Mark Section 4 as Complete</button>
+        </section>
+
+        <!-- ========== SECTION 5: WINDOWS SEARCH INDEX ========== -->
+        <section class="module-section" id="section5">
+            <h2>🔎 5. Windows Search Index</h2>
+
+            <div class="artifact-card">
+                <div class="artifact-header">
+                    <h4>Windows Search Index (Windows.edb)</h4>
+                    <span class="badge badge-medium">Medium Forensic Value</span>
+                    <span class="badge badge-profile">System</span>
+                </div>
+                <div class="registry-path">C:\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.edb</div>
+            </div>
+
+            <div class="definition-box">
+                <div class="term">Windows Search Index</div>
+                <div class="meaning">An Extensible Storage Engine (ESE) database maintained by the Windows Search service that indexes file metadata and content across the system to enable fast searching. The index contains file paths, sizes, dates, authors, and — for supported file types — the actual text content of documents. This database can be a rich source of metadata about files that have existed on the system.</div>
+            </div>
+
+            <h3>5.1 What the Search Index Contains</h3>
+            <ul>
+                <li><strong>File paths:</strong> Full paths to every indexed file</li>
+                <li><strong>File metadata:</strong> Size, dates (created, modified, accessed), attributes, author</li>
+                <li><strong>File content:</strong> Extracted text from documents (.docx, .pdf, .txt, .xlsx, etc.)</li>
+                <li><strong>Email metadata:</strong> Sender, recipient, subject, dates for indexed email</li>
+                <li><strong>Deleted file remnants:</strong> Files that were indexed before deletion may retain entries</li>
+            </ul>
+
+            <div class="forensic-note">
+                <div class="note-title">🔍 Forensic Significance</div>
+                <ul>
+                    <li><strong>Content without the file:</strong> If a document has been deleted but was previously indexed, the Search Index may still contain the document's text content — allowing you to read a "deleted" document</li>
+                    <li><strong>Metadata for deleted files:</strong> File paths and properties for deleted files may persist in the index</li>
+                    <li><strong>Corroboration:</strong> Search Index entries can corroborate findings from RecentDocs, Jump Lists, and other artifacts</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <div class="box-title">💡 Note — Analysis Complexity</div>
+                <p>The Windows.edb file is an ESE database that requires specialized tools to parse (e.g., <strong>ESEDatabaseView</strong> by NirSoft, or Python libraries like <code>libesedb</code>). The database can be very large (multiple gigabytes) and contains many tables. Full Search Index analysis is typically performed in complex investigations; for routine cases, the artifacts covered in Modules 7.2–7.3 and earlier in this module are usually sufficient.</p>
+            </div>
+            <button class="section-complete-btn" data-section="5" onclick="markComplete(5)">✓ Mark Section 5 as Complete</button>
+        </section>
+
+        <!-- ========== SECTION 6: ARTIFACT CORRELATION ========== -->
+        <section class="module-section" id="section6">
+            <h2>🔗 6. Artifact Correlation Matrix</h2>
+
+            <p>The true power of forensic analysis lies in <strong>correlating</strong> multiple artifact sources. No single artifact tells the complete story. The following matrix shows which artifacts answer which investigative questions:</p>
+
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Investigative Question</th><th>Primary Artifacts</th><th>Supporting Artifacts</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>What programs did the user execute?</strong></td>
+                            <td>UserAssist, BAM/DAM</td>
+                            <td>AppCompatCache, Prefetch (Week 8)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>What files did the user access?</strong></td>
+                            <td>RecentDocs, Jump Lists</td>
+                            <td>Windows Search Index, Thumbcache</td>
+                        </tr>
+                        <tr>
+                            <td><strong>What did the user search for?</strong></td>
+                            <td>WordWheelQuery</td>
+                            <td>Windows Search Index</td>
+                        </tr>
+                        <tr>
+                            <td><strong>What devices were connected?</strong></td>
+                            <td>USBSTOR, MountedDevices</td>
+                            <td>Jump Lists (volume serial numbers)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>What networks were joined?</strong></td>
+                            <td>NetworkList</td>
+                            <td>Tcpip\Parameters\Interfaces</td>
+                        </tr>
+                        <tr>
+                            <td><strong>When did the user log in?</strong></td>
+                            <td>SAM (last login)</td>
+                            <td>Event Logs (Week 8)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>What did the user delete?</strong></td>
+                            <td>Recycle Bin ($I/$R files)</td>
+                            <td>Thumbcache, MFT (Week 5)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>What programs auto-start?</strong></td>
+                            <td>Run/RunOnce keys</td>
+                            <td>Services, Scheduled Tasks (Week 8)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>6.1 Correlation Example: Data Exfiltration</h3>
+            <p>Consider an investigation where an employee is suspected of stealing customer data before resigning. Here is how multiple artifacts combine to build the case:</p>
+
+            <div class="timeline-builder" role="region" aria-label="Correlation example timeline">
+                <h4>📋 Correlated Evidence Timeline</h4>
+
+                <div class="tl-event">
+                    <div class="tl-time">Feb 27, 2:30 PM</div>
+                    <div><span class="tl-source tl-source-reg">NTUSER.DAT</span><br><span class="tl-desc"><strong>WordWheelQuery:</strong> User searched for "customer database" in Explorer</span></div>
+                </div>
+                <div class="tl-connector" aria-hidden="true"></div>
+                <div class="tl-event">
+                    <div class="tl-time">Feb 27, 2:35 PM</div>
+                    <div><span class="tl-source tl-source-reg">NTUSER.DAT</span><br><span class="tl-desc"><strong>RecentDocs (.xlsx):</strong> User opened "Customer_Database_Full.xlsx"</span></div>
+                </div>
+                <div class="tl-connector" aria-hidden="true"></div>
+                <div class="tl-event">
+                    <div class="tl-time">Feb 28, 2:15 AM</div>
+                    <div><span class="tl-source tl-source-reg">SYSTEM Hive</span><br><span class="tl-desc"><strong>USBSTOR:</strong> SanDisk Ultra USB 3.0 (serial: 4C530001...) connected</span></div>
+                </div>
+                <div class="tl-connector" aria-hidden="true"></div>
+                <div class="tl-event">
+                    <div class="tl-time">Feb 28, 2:18 AM</div>
+                    <div><span class="tl-source tl-source-reg">SYSTEM Hive</span><br><span class="tl-desc"><strong>MountedDevices:</strong> USB device assigned drive letter E:</span></div>
+                </div>
+                <div class="tl-connector" aria-hidden="true"></div>
+                <div class="tl-event">
+                    <div class="tl-time">Feb 28, 2:20 AM</div>
+                    <div><span class="tl-source tl-source-reg">NTUSER.DAT</span><br><span class="tl-desc"><strong>TypedPaths:</strong> User typed "E:\Exfil" in Explorer address bar</span></div>
+                </div>
+                <div class="tl-connector" aria-hidden="true"></div>
+                <div class="tl-event">
+                    <div class="tl-time">Feb 28, 2:45 AM</div>
+                    <div><span class="tl-source tl-source-jl">Jump List</span><br><span class="tl-desc"><strong>Excel Jump List:</strong> Opened "E:\Exfil\Customer_Database_Export.xlsx" from removable volume (serial A4F2-8B31)</span></div>
+                </div>
+                <div class="tl-connector" aria-hidden="true"></div>
+                <div class="tl-event">
+                    <div class="tl-time">Feb 28, 3:30 PM</div>
+                    <div><span class="tl-source tl-source-reg">NTUSER.DAT</span><br><span class="tl-desc"><strong>UserAssist:</strong> CCleaner64.exe executed (run count: 5, last run: 3:30 PM)</span></div>
+                </div>
+                <div class="tl-connector" aria-hidden="true"></div>
+                <div class="tl-event">
+                    <div class="tl-time">Feb 28, 3:35 PM</div>
+                    <div><span class="tl-source tl-source-bin">Recycle Bin</span><br><span class="tl-desc"><strong>$I file:</strong> "Customer_Database_Full.xlsx" deleted from C:\Users\jsmith\Documents\</span></div>
+                </div>
+            </div>
+
+            <div class="forensic-note">
+                <div class="note-title">🔍 Narrative from Correlated Evidence</div>
+                <p>By combining artifacts from <strong>five different sources</strong> (NTUSER.DAT, SYSTEM hive, Jump Lists, Recycle Bin), we can reconstruct the following narrative:</p>
+                <ol>
+                    <li>The user <strong>searched for</strong> the customer database on Feb 27 afternoon (WordWheelQuery)</li>
+                    <li>The user <strong>opened</strong> the customer database file (RecentDocs)</li>
+                    <li>That night at 2:15 AM, a <strong>USB drive was connected</strong> (USBSTOR) and assigned drive E: (MountedDevices)</li>
+                    <li>The user <strong>navigated to E:\Exfil</strong> — a directory on the USB drive (TypedPaths)</li>
+                    <li>Excel was used to <strong>open a file on the USB drive</strong> with the customer database name (Jump List)</li>
+                    <li>The next afternoon, the user <strong>ran CCleaner</strong> — a privacy/anti-forensics tool (UserAssist)</li>
+                    <li>The original customer database file was <strong>deleted</strong> to the Recycle Bin (Recycle Bin $I file)</li>
+                </ol>
+                <p>No single artifact proves data theft. Together, they build a compelling, corroborated narrative of deliberate data exfiltration followed by evidence destruction attempts.</p>
+            </div>
+            <button class="section-complete-btn" data-section="6" onclick="markComplete(6)">✓ Mark Section 6 as Complete</button>
+        </section>
+
+        <!-- ========== SECTION 7: TIMELINE METHODOLOGY ========== -->
+        <section class="module-section" id="section7">
+            <h2>⏱️ 7. Timeline Analysis Methodology</h2>
+
+            <p>Timeline analysis is the process of collecting, normalizing, and analyzing timestamped events from multiple sources to reconstruct a chronological narrative of activity. This is the <strong>core analytical technique</strong> in digital forensics.</p>
+
+            <h3>7.1 Four-Step Timeline Process</h3>
+
+            <h4>Step 1: Collect Timestamps from All Artifact Sources</h4>
+            <p>Gather every timestamped data point from all artifacts analyzed in Modules 7.1–7.4:</p>
+            <ul>
+                <li>Registry key last-write timestamps (all hives)</li>
+                <li>UserAssist last execution timestamps</li>
+                <li>SAM account timestamps (creation, last login, password change)</li>
+                <li>Jump List entry timestamps</li>
+                <li>Recycle Bin deletion timestamps ($I files)</li>
+                <li>File system timestamps (NTFS MAC times from Week 5)</li>
+                <li>USBSTOR connection timestamps</li>
+                <li>Network connection timestamps (NetworkList)</li>
+            </ul>
+
+            <h4>Step 2: Normalize All Timestamps to a Common Time Zone</h4>
+            <div class="important-box">
+                <div class="box-title">⚠️ Critical — Time Zone Normalization</div>
+                <p>All Registry timestamps are stored in <strong>UTC</strong>. Your forensic report should present times in the <strong>system's local time zone</strong> (determined from the SYSTEM hive's TimeZoneInformation key in Module 7.2). Every timestamp must be converted consistently. Document which time zone you are using and the UTC offset applied.</p>
+                <p><strong>Example:</strong> If the system time zone is Pacific Standard Time (UTC-8), a Registry timestamp of <code>2026-02-28 03:15:00 UTC</code> becomes <code>2026-02-27 19:15:00 PST</code> (7:15 PM the previous evening).</p>
+            </div>
+
+            <h4>Step 3: Combine Into a Single Sorted Timeline</h4>
+            <p>Merge all normalized timestamps into a single chronological timeline. For this course, use a <strong>spreadsheet format</strong>:</p>
+
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Timestamp (Local)</th><th>Source</th><th>Artifact</th><th>Description</th><th>Significance</th></tr></thead>
+                    <tbody>
+                        <tr><td>Feb 27, 2:30 PM PST</td><td>NTUSER.DAT</td><td>WordWheelQuery</td><td>Search: "customer database"</td><td>User seeking sensitive data</td></tr>
+                        <tr><td>Feb 27, 2:35 PM PST</td><td>NTUSER.DAT</td><td>RecentDocs</td><td>Opened: Customer_Database_Full.xlsx</td><td>Accessed target file</td></tr>
+                        <tr><td>Feb 27, 6:15 PM PST</td><td>SYSTEM</td><td>USBSTOR</td><td>SanDisk Ultra USB connected</td><td>External storage attached</td></tr>
+                        <tr><td>Feb 27, 6:20 PM PST</td><td>NTUSER.DAT</td><td>TypedPaths</td><td>Typed: E:\Exfil</td><td>Navigated to USB directory</td></tr>
+                        <tr><td>Feb 27, 6:45 PM PST</td><td>Jump List</td><td>Excel AppID</td><td>E:\Exfil\Customer_Database_Export.xlsx</td><td>File created on USB</td></tr>
+                        <tr><td>Feb 28, 7:30 AM PST</td><td>NTUSER.DAT</td><td>UserAssist</td><td>CCleaner64.exe (count: 5)</td><td>Anti-forensics tool</td></tr>
+                        <tr><td>Feb 28, 7:35 AM PST</td><td>Recycle Bin</td><td>$I file</td><td>Deleted: Customer_Database_Full.xlsx</td><td>Evidence destruction</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4>Step 4: Analyze the Timeline</h4>
+            <ul>
+                <li><strong>Look for patterns:</strong> Clusters of activity, regular schedules, unusual hours</li>
+                <li><strong>Identify gaps:</strong> Periods of no activity may indicate the system was off or logs were cleared</li>
+                <li><strong>Detect anomalies:</strong> Activity outside normal patterns, rapid sequences of file access/deletion</li>
+                <li><strong>Correlate with known events:</strong> Incident reports, access requests, employee schedules, badge access logs</li>
+            </ul>
+            <button class="section-complete-btn" data-section="7" onclick="markComplete(7)">✓ Mark Section 7 as Complete</button>
+        </section>
+
+        <!-- ========== SECTION 8: DOCUMENTATION ========== -->
+        <section class="module-section" id="section8">
+            <h2>📝 8. Forensic Documentation Standards</h2>
+
+            <p>All artifact analysis must be documented with sufficient detail to be <strong>reproducible</strong> and <strong>legally defensible</strong>. Every finding in your report must include:</p>
+
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Documentation Element</th><th>Description</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Source image hash</strong></td><td>Verified hash from Week 6 acquisition</td><td>SHA-256: a3f2b8c9...</td></tr>
+                        <tr><td><strong>Hive file path</strong></td><td>Location within the forensic image</td><td>C:\Users\jsmith\NTUSER.DAT</td></tr>
+                        <tr><td><strong>Registry key path</strong></td><td>Full path to the specific key</td><td>HKCU\...\Explorer\UserAssist\{GUID}\Count</td></tr>
+                        <tr><td><strong>Tool used</strong></td><td>Name and version of forensic tool</td><td>Registry Explorer v2.0.0.0</td></tr>
+                        <tr><td><strong>Raw data</strong></td><td>Original hex/binary values</td><td>ROT13: P:\Cebtenz Svyrf\...</td></tr>
+                        <tr><td><strong>Interpreted data</strong></td><td>Human-readable interpretation</td><td>C:\Program Files\Mozilla Firefox\firefox.exe</td></tr>
+                        <tr><td><strong>Timestamp</strong></td><td>With time zone notation</td><td>2026-02-28 14:22:08 UTC (6:22:08 AM PST)</td></tr>
+                        <tr><td><strong>Screenshots</strong></td><td>Visual evidence of tool output</td><td>Screenshot of Registry Explorer showing the artifact</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="important-box">
+                <div class="box-title">⚠️ Document Limitations</div>
+                <p>Always note the limitations of your findings:</p>
+                <ul>
+                    <li>Registry timestamps reflect <strong>key modification</strong>, not necessarily the exact moment of user action</li>
+                    <li>AppCompatCache/ShimCache does not definitively prove program <strong>execution</strong> — only that the OS was aware of the program</li>
+                    <li>Artifacts may be manipulated by sophisticated adversaries (anti-forensics, covered in Week 16)</li>
+                    <li>UserAssist only records <strong>GUI</strong> program launches — absence from UserAssist does not mean a program was never executed</li>
+                    <li>Timestamps can be <strong>manipulated</strong> (timestomping) — always corroborate with multiple sources</li>
+                </ul>
+            </div>
+            <button class="section-complete-btn" data-section="8" onclick="markComplete(8)">✓ Mark Section 8 as Complete</button>
+        </section>
+
+        <!-- ========== SECTION 9: TOOL WALKTHROUGHS ========== -->
+        <section class="module-section" id="section9">
+            <h2>🔧 9. Tool Walkthroughs</h2>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>JLECmd — Jump List Parsing</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <p><strong>JLECmd</strong> (by Eric Zimmerman) parses both AutomaticDestinations and CustomDestinations Jump List files.</p>
+                    <pre><code>JLECmd.exe -d "C:\Evidence\jsmith_AutomaticDestinations" --csv "C:\Output" --csvf jsmith_jumplists.csv</code></pre>
+                    <p><strong>Key flags:</strong></p>
+                    <ul>
+                        <li><code>-d</code> — Directory containing Jump List files</li>
+                        <li><code>--csv</code> — Output directory for CSV results</li>
+                        <li><code>--csvf</code> — Output filename</li>
+                        <li><code>-q</code> — Quiet mode (suppress console output)</li>
+                    </ul>
+                    <p>The CSV output includes columns for AppID, target path, target timestamps, volume serial number, volume type (local/network/removable), and entry creation time.</p>
+                    <p><strong>AppID lookup:</strong> Use Eric Zimmerman's <a href="https://github.com/EricZimmerman/JumpList/blob/master/JumpList/Resources/AppIDs.txt" target="_blank" rel="noopener">AppID list</a> to map hexadecimal AppIDs to application names.</p>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>RBCmd — Recycle Bin Parsing</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <p><strong>RBCmd</strong> (by Eric Zimmerman) parses Recycle Bin <code>$I</code> files to extract deletion metadata.</p>
+                    <pre><code>RBCmd.exe -d "C:\Evidence\$Recycle.Bin\S-1-5-21-...-1001" --csv "C:\Output" --csvf jsmith_recyclebin.csv</code></pre>
+                    <p><strong>Key flags:</strong></p>
+                    <ul>
+                        <li><code>-d</code> — Directory containing $I files (the user's Recycle Bin SID folder)</li>
+                        <li><code>--csv</code> — Output directory for CSV results</li>
+                        <li><code>--csvf</code> — Output filename</li>
+                    </ul>
+                    <p>The CSV output includes: original file path, file size, deletion timestamp, and the source ($I) file name. To recover the actual deleted file, locate the matching <code>$R</code> file with the same identifier.</p>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>AppCompatCacheParser — ShimCache Analysis</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <p><strong>AppCompatCacheParser</strong> (by Eric Zimmerman) extracts ShimCache / AppCompatCache entries from the SYSTEM hive.</p>
+                    <pre><code>AppCompatCacheParser.exe -f "C:\Evidence\SYSTEM" --csv "C:\Output" --csvf shimcache.csv</code></pre>
+                    <p><strong>Key flags:</strong></p>
+                    <ul>
+                        <li><code>-f</code> — Path to the SYSTEM hive file</li>
+                        <li><code>--csv</code> — Output directory</li>
+                        <li><code>--csvf</code> — Output filename</li>
+                    </ul>
+                    <div class="important-box">
+                        <div class="box-title">⚠️ ShimCache Limitation</div>
+                        <p>ShimCache (AppCompatCache) records that the operating system <strong>checked</strong> a program for compatibility — it does <strong>not</strong> definitively prove the program was <strong>executed</strong>. A program can appear in ShimCache simply by being browsed in Explorer. Use ShimCache as supporting evidence alongside UserAssist, BAM/DAM, or Prefetch data, not as standalone proof of execution.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>9.1 Tools Quick Reference</h3>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Tool</th><th>Primary Use</th><th>Command Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Registry Explorer</strong></td><td>GUI Registry hive browsing</td><td>File → Load Hive → browse keys → bookmark artifacts</td></tr>
+                        <tr><td><strong>RegRipper</strong></td><td>Automated plugin-based extraction</td><td><code>rip.exe -r NTUSER.DAT -p userassist</code></td></tr>
+                        <tr><td><strong>JLECmd</strong></td><td>Jump List parsing</td><td><code>JLECmd.exe -d &lt;folder&gt; --csv &lt;output&gt;</code></td></tr>
+                        <tr><td><strong>AppCompatCacheParser</strong></td><td>ShimCache parsing</td><td><code>AppCompatCacheParser.exe -f SYSTEM --csv &lt;output&gt;</code></td></tr>
+                        <tr><td><strong>RBCmd</strong></td><td>Recycle Bin parsing</td><td><code>RBCmd.exe -d &lt;$Recycle.Bin folder&gt; --csv &lt;output&gt;</code></td></tr>
+                        <tr><td><strong>Autopsy</strong></td><td>Integrated forensic suite</td><td>Ingest modules for Registry, Recent Activity, etc.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <button class="section-complete-btn" data-section="9" onclick="markComplete(9)">✓ Mark Section 9 as Complete</button>
+        </section>
+
+        <!-- ========== SECTION 10: ACTIVITIES ========== -->
+        <section class="module-section" id="section10">
+            <h2>🧩 10. Interactive Activities</h2>
+
+            <div class="activity-container">
+                <h3>🎮 Activity 1: Artifact Source Identification</h3>
+
+                <div class="activity-question" id="q1">
+                    <p>1. You need to determine which application opened a specific file AND the drive letter it was on. Which artifact provides this combined information?</p>
+                    <label><input type="radio" name="q1" value="a"> UserAssist</label>
+                    <label><input type="radio" name="q1" value="b"> RecentDocs</label>
+                    <label><input type="radio" name="q1" value="c"> Jump Lists</label>
+                    <label><input type="radio" name="q1" value="d"> WordWheelQuery</label>
+                    <div class="feedback" id="fb-q1"></div>
+                </div>
+
+                <div class="activity-question" id="q2">
+                    <p>2. A file named "Secret_Plans.docx" has been deleted. Where would you look for the original file path and deletion timestamp?</p>
+                    <label><input type="radio" name="q2" value="a"> NTUSER.DAT RecentDocs key</label>
+                    <label><input type="radio" name="q2" value="b"> Recycle Bin $I metadata file</label>
+                    <label><input type="radio" name="q2" value="c"> Windows Search Index</label>
+                    <label><input type="radio" name="q2" value="d"> Thumbcache database</label>
+                    <div class="feedback" id="fb-q2"></div>
+                </div>
+
+                <div class="activity-question" id="q3">
+                    <p>3. An image file has been securely deleted, but you find a small preview version in the user's AppData\Local\Microsoft\Windows\Explorer\ directory. What artifact is this?</p>
+                    <label><input type="radio" name="q3" value="a"> Jump List entry</label>
+                    <label><input type="radio" name="q3" value="b"> Windows Search Index entry</label>
+                    <label><input type="radio" name="q3" value="c"> Thumbcache thumbnail</label>
+                    <label><input type="radio" name="q3" value="d"> Recycle Bin $R file</label>
+                    <div class="feedback" id="fb-q3"></div>
+                </div>
+
+                <div class="activity-question" id="q4">
+                    <p>4. ShimCache (AppCompatCache) shows an entry for "hacking_tool.exe". What can you conclude?</p>
+                    <label><input type="radio" name="q4" value="a"> The program was definitely executed by the user</label>
+                    <label><input type="radio" name="q4" value="b"> The operating system was aware of the program (checked it for compatibility), but this alone does not prove execution</label>
+                    <label><input type="radio" name="q4" value="c"> The program was installed through the official installer</label>
+                    <label><input type="radio" name="q4" value="d"> The program was downloaded from the internet</label>
+                    <div class="feedback" id="fb-q4"></div>
+                </div>
+
+                <div class="activity-question" id="q5">
+                    <p>5. Why is time zone normalization critical when building a forensic timeline?</p>
+                    <label><input type="radio" name="q5" value="a"> It makes the timeline look more professional</label>
+                    <label><input type="radio" name="q5" value="b"> Without it, events from different sources may appear in the wrong chronological order, and reported times may be incorrect by hours</label>
+                    <label><input type="radio" name="q5" value="c"> It is only needed for international investigations</label>
+                    <label><input type="radio" name="q5" value="d"> Windows stores all timestamps in local time anyway</label>
+                    <div class="feedback" id="fb-q5"></div>
+                </div>
+
+                <div class="activity-question" id="q6">
+                    <p>6. Which artifact would provide evidence that a file existed on the system even if the file, its Recycle Bin entry, and its Registry references have all been deleted?</p>
+                    <label><input type="radio" name="q6" value="a"> UserAssist</label>
+                    <label><input type="radio" name="q6" value="b"> Thumbcache (if the file type generates thumbnails)</label>
+                    <label><input type="radio" name="q6" value="c"> RunMRU</label>
+                    <label><input type="radio" name="q6" value="d"> MountedDevices</label>
+                    <div class="feedback" id="fb-q6"></div>
+                </div>
+
+                <button class="check-btn" onclick="checkActivity1()">Check Answers</button>
+                <div class="feedback" id="fb-activity1"></div>
+            </div>
+
+            <!-- ACTIVITY 2: CORRELATION MATCHING -->
+            <div class="activity-container">
+                <h3>🎮 Activity 2: Investigative Question Matching</h3>
+                <p>For each investigative question, select the <strong>primary</strong> artifact source.</p>
+
+                <div class="activity-question">
+                    <div style="margin-bottom:12px">
+                        <label for="c1" style="display:inline;padding:0"><strong>"What files did the user open with Excel?":</strong></label>
+                        <select id="c1" style="padding:6px 10px;border-radius:6px;border:1px solid #d1d1e0;font-size:.9rem;margin-left:8px">
+                            <option value="">— Select —</option>
+                            <option value="jumplists">Jump Lists</option>
+                            <option value="userassist">UserAssist</option>
+                            <option value="recyclebin">Recycle Bin</option>
+                            <option value="thumbcache">Thumbcache</option>
+                            <option value="wordwheel">WordWheelQuery</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom:12px">
+                        <label for="c2" style="display:inline;padding:0"><strong>"When was this file deleted?":</strong></label>
+                        <select id="c2" style="padding:6px 10px;border-radius:6px;border:1px solid #d1d1e0;font-size:.9rem;margin-left:8px">
+                            <option value="">— Select —</option>
+                            <option value="jumplists">Jump Lists</option>
+                            <option value="userassist">UserAssist</option>
+                            <option value="recyclebin">Recycle Bin</option>
+                            <option value="thumbcache">Thumbcache</option>
+                            <option value="wordwheel">WordWheelQuery</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom:12px">
+                        <label for="c3" style="display:inline;padding:0"><strong>"What terms did the user search for in Explorer?":</strong></label>
+                        <select id="c3" style="padding:6px 10px;border-radius:6px;border:1px solid #d1d1e0;font-size:.9rem;margin-left:8px">
+                            <option value="">— Select —</option>
+                            <option value="jumplists">Jump Lists</option>
+                            <option value="userassist">UserAssist</option>
+                            <option value="recyclebin">Recycle Bin</option>
+                            <option value="thumbcache">Thumbcache</option>
+                            <option value="wordwheel">WordWheelQuery</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom:12px">
+                        <label for="c4" style="display:inline;padding:0"><strong>"Did a specific image ever exist on this system?":</strong></label>
+                        <select id="c4" style="padding:6px 10px;border-radius:6px;border:1px solid #d1d1e0;font-size:.9rem;margin-left:8px">
+                            <option value="">— Select —</option>
+                            <option value="jumplists">Jump Lists</option>
+                            <option value="userassist">UserAssist</option>
+                            <option value="recyclebin">Recycle Bin</option>
+                            <option value="thumbcache">Thumbcache</option>
+                            <option value="wordwheel">WordWheelQuery</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom:12px">
+                        <label for="c5" style="display:inline;padding:0"><strong>"How many times did the user launch this program?":</strong></label>
+                        <select id="c5" style="padding:6px 10px;border-radius:6px;border:1px solid #d1d1e0;font-size:.9rem;margin-left:8px">
+                            <option value="">— Select —</option>
+                            <option value="jumplists">Jump Lists</option>
+                            <option value="userassist">UserAssist</option>
+                            <option value="recyclebin">Recycle Bin</option>
+                            <option value="thumbcache">Thumbcache</option>
+                            <option value="wordwheel">WordWheelQuery</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="check-btn" onclick="checkCorrelation()">Check Matches</button>
+                <div class="feedback" id="fb-correlation"></div>
+            </div>
+
+            <button class="section-complete-btn" data-section="10" onclick="markComplete(10)">✓ Mark Section 10 as Complete</button>
+        </section>
+
+        <!-- ========== SECTION 11: KNOWLEDGE CHECK ========== -->
+        <section class="module-section" id="section11">
+            <h2>✅ 11. Knowledge Check — Module 7.4</h2>
+
+            <div class="knowledge-check">
+                <h3>📝 Test Your Understanding</h3>
+                <p class="instructions">Answer each question in your own words before revealing the model answer. These questions directly support Lab Activity 7.</p>
+
+                <div class="kc-question">
+                    <div class="q-text">1. What information do Jump Lists provide that RecentDocs and UserAssist cannot provide individually? Why are Jump Lists considered one of the most valuable user artifacts?</div>
+                    <textarea aria-label="Your answer to question 1" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc1')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc1">
+                        <p>Jump Lists uniquely provide the <strong>application-to-file relationship</strong> — they record which specific application opened which specific file. UserAssist tells you a program was launched but not what files it accessed. RecentDocs tells you a file was opened but not which program opened it. Jump Lists connect both pieces.</p>
+                        <p>Additionally, Jump Lists contain: (1) <strong>full file paths</strong> (RecentDocs only stores filenames), (2) <strong>volume serial numbers</strong> that can be correlated with USB devices, (3) <strong>volume type</strong> (local/network/removable), and (4) <strong>target file timestamps</strong>. They persist even after files are deleted, and they are system-generated (difficult for users to manipulate).</p>
+                    </div>
+                </div>
+
+                <div class="kc-question">
+                    <div class="q-text">2. Describe the $I and $R file pair in the Recycle Bin. What does each contain, and how do you match them?</div>
+                    <textarea aria-label="Your answer to question 2" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc2')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc2">
+                        <p><strong>$I file:</strong> Contains metadata about the deleted file — the original file path, the file size, and the deletion timestamp (Windows FILETIME in UTC). This is the "information" file.</p>
+                        <p><strong>$R file:</strong> Contains the actual deleted file content — the complete file data, preserved intact. This is the "recovery" file.</p>
+                        <p><strong>Matching:</strong> The $I and $R files share the same random identifier. For example, <code>$IXQF2A1.xlsx</code> and <code>$RXQF2A1.xlsx</code> are a pair — the identifier "XQF2A1" matches, and both preserve the original file extension (.xlsx).</p>
+                        <p><strong>User attribution:</strong> Recycle Bin contents are organized by user SID under <code>C:\$Recycle.Bin\{SID}\</code>, allowing you to determine which user deleted each file.</p>
+                    </div>
+                </div>
+
+                <div class="kc-question">
+                    <div class="q-text">3. Explain why no single artifact can tell the complete story of a forensic investigation. Give an example using at least three different artifact types to answer one investigative question.</div>
+                    <textarea aria-label="Your answer to question 3" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc3')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc3">
+                        <p>Each artifact captures only one dimension of activity. A complete picture requires <strong>correlating multiple sources</strong>.</p>
+                        <p><strong>Example question:</strong> "Did user jsmith copy company data to a USB drive?"</p>
+                        <ul>
+                            <li><strong>USBSTOR</strong> (SYSTEM hive): Proves a specific USB device was connected to the computer and when</li>
+                            <li><strong>MountedDevices</strong> (SYSTEM hive): Shows the USB device was assigned drive letter E:</li>
+                            <li><strong>TypedPaths</strong> (NTUSER.DAT): Shows the user typed "E:\Backup" in Explorer — proving they navigated to the USB drive</li>
+                            <li><strong>Jump List</strong> (user profile): Shows Excel opened "E:\Backup\Customer_Data.xlsx" from a removable volume — proving a file was accessed on the USB drive via a specific application</li>
+                            <li><strong>MountPoints2</strong> (NTUSER.DAT): Confirms this specific user account interacted with the volume</li>
+                        </ul>
+                        <p>No single artifact proves data theft. USBSTOR alone proves a device was connected but not that files were copied. TypedPaths proves navigation but not file access. Only the <strong>combination</strong> builds a compelling narrative.</p>
+                    </div>
+                </div>
+
+                <div class="kc-question">
+                    <div class="q-text">4. What are the four steps of timeline analysis methodology? Why is Step 2 (time zone normalization) especially critical?</div>
+                    <textarea aria-label="Your answer to question 4" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc4')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc4">
+                        <p><strong>Four steps:</strong></p>
+                        <ol>
+                            <li><strong>Collect</strong> timestamps from all artifact sources</li>
+                            <li><strong>Normalize</strong> all timestamps to a common time zone</li>
+                            <li><strong>Combine</strong> into a single chronologically sorted timeline</li>
+                            <li><strong>Analyze</strong> the timeline for patterns, gaps, and anomalies</li>
+                        </ol>
+                        <p><strong>Why normalization is critical:</strong> Different artifact sources may store timestamps in different formats (UTC, local time, Unix epoch, Windows FILETIME). Without normalizing to a single reference (typically the system's local time zone, determined from the SYSTEM hive), events may appear in the wrong chronological order. An event at 3:00 AM UTC and an event at 7:00 PM PST the previous day are actually only 4 hours apart — but without normalization, they might appear 8 hours apart in the wrong direction. Incorrect time placement could misrepresent the sequence of events and undermine the entire analysis.</p>
+                    </div>
+                </div>
+
+                <div class="kc-question">
+                    <div class="q-text">5. What is the key difference between ShimCache (AppCompatCache) and UserAssist in terms of what they prove about program execution?</div>
+                    <textarea aria-label="Your answer to question 5" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc5')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc5">
+                        <p><strong>UserAssist</strong> records programs that were <strong>actually launched</strong> by the user through the GUI. It proves execution occurred and provides run count, focus time, and last execution timestamp.</p>
+                        <p><strong>ShimCache (AppCompatCache)</strong> records programs that the operating system <strong>checked for compatibility</strong>. A program can appear in ShimCache simply because the user browsed a folder containing it in Explorer — without ever executing it. ShimCache proves the OS was <strong>aware</strong> of the program, not that it was executed.</p>
+                        <p><strong>Practical implication:</strong> If a program appears in both UserAssist AND ShimCache, you have strong evidence of execution. If it appears only in ShimCache, you can say the program existed on the system but cannot conclusively prove it was run based on ShimCache alone.</p>
+                    </div>
+                </div>
+
+                <div class="kc-question">
+                    <div class="q-text">6. List all the documentation elements required for each artifact finding to ensure legal defensibility. Why is it important to show both raw data and interpreted data?</div>
+                    <textarea aria-label="Your answer to question 6" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc6')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc6">
+                        <p><strong>Required elements:</strong> (1) Source image hash, (2) Hive file path within the image, (3) Specific Registry key path, (4) Tool used with version number, (5) Raw data (hex/binary values), (6) Interpreted data (human-readable), (7) Timestamps with time zone notation, (8) Screenshots of tool output.</p>
+                        <p><strong>Why both raw and interpreted data:</strong> Showing raw data allows another examiner to independently verify your interpretation. If you only show "firefox.exe was run 142 times," there is no way to verify this claim. By also showing the ROT13-encoded value name and the hex bytes of the binary data structure, any qualified examiner can confirm your interpretation is correct. This reproducibility is essential for legal defensibility — opposing counsel may hire their own forensic expert to verify your findings.</p>
+                    </div>
+                </div>
+            </div>
+            <button class="section-complete-btn" data-section="11" onclick="markComplete(11)">✓ Mark Section 11 as Complete</button>
+        </section>
+
+        <!-- MODULE SUMMARY -->
+        <section class="module-section">
+            <h2>📋 Module 7.4 Summary</h2>
+            <ul>
+                <li><strong>Jump Lists</strong> link applications to specific files with full paths, timestamps, and volume information — uniquely connecting "which program" to "which file"</li>
+                <li><strong>Recycle Bin</strong> artifacts ($I/$R file pairs) preserve deletion evidence including the original path, deletion timestamp, and the actual file content</li>
+                <li><strong>Thumbcache</strong> databases retain thumbnail images that prove files existed even after deletion</li>
+                <li><strong>Windows Search Index</strong> may contain metadata and text content of files that have been deleted</li>
+                <li><strong>Artifact correlation</strong> is the key to building compelling forensic narratives — no single artifact tells the complete story</li>
+                <li><strong>Timeline methodology</strong> follows four steps: Collect → Normalize → Combine → Analyze</li>
+                <li><strong>Documentation</strong> must include source hashes, paths, tools, raw data, interpreted data, timestamps, and screenshots for legal defensibility</li>
+            </ul>
+
+            <div class="info-box">
+                <div class="box-title">🎓 Week 7 Complete</div>
+                <p>You have now completed all four modules of Week 7. You understand the Windows Registry structure (7.1), can extract system-level artifacts (7.2), can analyze user-level artifacts (7.3), and can correlate advanced artifacts into investigative timelines (7.4). These skills form the foundation for <strong>Lab Activity 7</strong>, where you will apply everything to a real forensic image.</p>
+                <p><strong>Week 8 Preview:</strong> Windows Forensics II will expand on this week's foundation with Prefetch files, Event Logs, browser artifacts, email forensics, and advanced timeline analysis using automated tools (log2timeline/plaso).</p>
+            </div>
+        </section>
+
+        <!-- KEY TERMS -->
+        <section class="module-section">
+            <h2>📖 Key Terms — Module 7.4</h2>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Jump List</strong></td><td>Windows artifact tracking files recently or frequently accessed by specific applications; stored in AutomaticDestinations and CustomDestinations folders</td></tr>
+                        <tr><td><strong>AppID</strong></td><td>A 16-character hexadecimal identifier in Jump List filenames that maps to a specific application</td></tr>
+                        <tr><td><strong>Recycle Bin</strong></td><td>System folder storing files deleted through Explorer; uses $I (metadata) and $R (content) file pairs organized by user SID</td></tr>
+                        <tr><td><strong>$I File</strong></td><td>Recycle Bin metadata file containing the original path, file size, and deletion timestamp of a deleted file</td></tr>
+                        <tr><td><strong>$R File</strong></td><td>Recycle Bin content file containing the actual data of the deleted file</td></tr>
+                        <tr><td><strong>Thumbcache</strong></td><td>Database files storing thumbnail preview images generated by Windows Explorer; can prove file existence after deletion</td></tr>
+                        <tr><td><strong>Windows Search Index</strong></td><td>ESE database (Windows.edb) containing indexed file metadata and content; may retain data about deleted files</td></tr>
+                        <tr><td><strong>ShimCache / AppCompatCache</strong></td><td>SYSTEM hive artifact recording programs the OS checked for compatibility; proves awareness but not necessarily execution</td></tr>
+                        <tr><td><strong>Artifact Correlation</strong></td><td>The process of combining evidence from multiple artifact sources to build a comprehensive investigative narrative</td></tr>
+                        <tr><td><strong>Timeline Analysis</strong></td><td>Forensic methodology of collecting, normalizing, combining, and analyzing timestamped events to reconstruct activity chronologically</td></tr>
+                        <tr><td><strong>Time Zone Normalization</strong></td><td>Converting all timestamps to a common time zone reference to ensure accurate chronological ordering</td></tr>
+                        <tr><td><strong>Forensic Defensibility</strong></td><td>The quality of documentation and methodology that enables findings to withstand legal scrutiny and independent verification</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <a href="#" class="next-module" aria-label="Week 7 modules complete — proceed to Lab Activity 7">
+            ✅ Week 7 Modules Complete — Proceed to Lab Activity 7 →
+        </a>
+
+    </main>
+
+    <footer class="module-footer">
+        <p>CSC 156 — Digital Forensics Fundamentals | Week 7: Windows Forensics I</p>
+        <p>Module 7.4: Advanced User Artifacts &amp; Timeline Correlation</p>
+        <p>© 2026 CSC 156. For educational use only.</p>
+    </footer>
+
+    <script>
+        var TOTAL_SECTIONS=11,STORAGE_KEY='csc156_mod74_progress';
+        function getProgress(){try{var d=sessionStorage.getItem(STORAGE_KEY);return d?JSON.parse(d):{}}catch(e){return{}}}
+        function saveProgress(d){try{sessionStorage.setItem(STORAGE_KEY,JSON.stringify(d))}catch(e){}}
+        function markComplete(n){var p=getProgress();p['section'+n]=true;saveProgress(p);var b=document.querySelector('[data-section="'+n+'"]');if(b){b.classList.add('completed');b.textContent='\u2713 Section '+n+' Completed';b.setAttribute('aria-label','Section '+n+' marked as complete')}var l=document.getElementById('nav-s'+n);if(l)l.classList.add('completed');updateProgressBar()}
+        function updateProgressBar(){var p=getProgress(),c=0;for(var i=1;i<=TOTAL_SECTIONS;i++)if(p['section'+i])c++;var pct=Math.round(c/TOTAL_SECTIONS*100);var bar=document.getElementById('progressBar'),txt=document.getElementById('progressText');if(bar)bar.style.width=pct+'%';if(txt)txt.textContent=pct+'% complete';var con=document.querySelector('.progress-container');if(con)con.setAttribute('aria-valuenow',pct)}
+        function restoreProgress(){var p=getProgress();for(var i=1;i<=TOTAL_SECTIONS;i++)if(p['section'+i]){var b=document.querySelector('[data-section="'+i+'"]');if(b){b.classList.add('completed');b.textContent='\u2713 Section '+i+' Completed'}var l=document.getElementById('nav-s'+i);if(l)l.classList.add('completed')}updateProgressBar()}
+        function toggleCollapsible(btn){var c=btn.nextElementSibling,o=c.classList.contains('open');c.classList.toggle('open');btn.setAttribute('aria-expanded',!o)}
+        function revealAnswer(id){var a=document.getElementById(id);if(a)a.classList.toggle('visible')}
+
+        function checkActivity1(){
+            var ans={q1:{c:'c',e:'Jump Lists uniquely link specific applications to specific files with full paths and volume information.'},q2:{c:'b',e:'The Recycle Bin $I file contains the original path and deletion timestamp.'},q3:{c:'c',e:'Thumbcache databases store thumbnail preview images in the user\'s Explorer directory.'},q4:{c:'b',e:'ShimCache proves OS awareness (compatibility check), not definitive execution. Use UserAssist or Prefetch for execution evidence.'},q5:{c:'b',e:'Without normalization, events from UTC-stored timestamps may appear in wrong order when mixed with other time formats.'},q6:{c:'b',e:'Thumbcache thumbnails persist after file deletion, providing visual evidence the file existed.'}};
+            var tc=0,tot=6;
+            for(var q in ans){var s=document.querySelector('input[name="'+q+'"]:checked'),fb=document.getElementById('fb-'+q);
+                if(!s){fb.className='feedback incorrect';fb.textContent='Please select an answer. '+ans[q].e;fb.style.display='block'}
+                else if(s.value===ans[q].c){fb.className='feedback correct';fb.textContent='\u2713 Correct! '+ans[q].e;fb.style.display='block';tc++}
+                else{fb.className='feedback incorrect';fb.textContent='\u2717 Incorrect. '+ans[q].e;fb.style.display='block'}}
+            var of=document.getElementById('fb-activity1');
+            if(tc===tot){of.className='feedback correct';of.textContent='Excellent! All '+tot+' correct!'}
+            else{of.className='feedback incorrect';of.textContent=tc+' out of '+tot+' correct. Review the sections above.'}
+            of.style.display='block'}
+
+        function checkCorrelation(){
+            var ca={c1:'jumplists',c2:'recyclebin',c3:'wordwheel',c4:'thumbcache',c5:'userassist'};
+            var correct=0,total=5;
+            for(var id in ca){var sel=document.getElementById(id);
+                if(sel.value===ca[id]){sel.style.borderColor='#16a34a';sel.style.backgroundColor='#d1fae5';correct++}
+                else if(sel.value===''){sel.style.borderColor='#d97706';sel.style.backgroundColor='#fef3c7'}
+                else{sel.style.borderColor='#dc2626';sel.style.backgroundColor='#fef2f2'}}
+            var fb=document.getElementById('fb-correlation');
+            if(correct===total){fb.className='feedback correct';fb.textContent='Excellent! All '+total+' matches correct!'}
+            else{fb.className='feedback incorrect';fb.textContent=correct+' out of '+total+' correct.'}
+            fb.style.display='block'}
+
+        window.addEventListener('DOMContentLoaded',function(){restoreProgress()});
+    </script>
+</body>
+</html>

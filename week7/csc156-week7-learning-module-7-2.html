@@ -1,0 +1,2341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 7.2: System-Level Registry Artifacts — CSC 156 Digital Forensics Fundamentals</title>
+    <style>
+        /* ===== CSS RESET & BASE ===== */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            color: #1a1a2e;
+            background-color: #f5f5fa;
+            min-height: 100vh;
+        }
+
+        /* ===== SKIP LINK (ADA) ===== */
+        .skip-link {
+            position: absolute;
+            top: -100px;
+            left: 0;
+            background: #1a1a2e;
+            color: #ffffff;
+            padding: 12px 24px;
+            z-index: 10000;
+            font-size: 1rem;
+            transition: top 0.2s;
+        }
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* ===== PROGRESS BAR ===== */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: #d1d1e0;
+            z-index: 9999;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #2563eb, #7c3aed);
+            transition: width 0.3s ease;
+        }
+        .progress-text {
+            position: fixed;
+            top: 8px;
+            right: 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #4a4a6a;
+            background: rgba(245, 245, 250, 0.92);
+            padding: 2px 10px;
+            border-radius: 10px;
+            z-index: 10000;
+            border: 1px solid #d1d1e0;
+        }
+
+        /* ===== HEADER ===== */
+        .module-header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d5e 50%, #3a3a7e 100%);
+            color: #ffffff;
+            padding: 48px 24px 40px;
+            text-align: center;
+            margin-top: 6px;
+        }
+        .module-header .course-tag {
+            display: inline-block;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+        .module-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+        .module-header .subtitle {
+            font-size: 1.15rem;
+            color: #c8c8f0;
+            margin-bottom: 20px;
+        }
+        .module-meta {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 24px;
+            font-size: 0.9rem;
+            color: #d0d0f0;
+        }
+        .module-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ===== LAYOUT ===== */
+        .content-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 32px 20px 80px;
+        }
+
+        /* ===== NAVIGATION ===== */
+        .section-nav {
+            background: #ffffff;
+            border: 1px solid #d1d1e0;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 32px;
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        .section-nav h2 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6a6a8a;
+            margin-bottom: 12px;
+        }
+        .section-nav ol {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .section-nav ol li a {
+            display: inline-block;
+            padding: 6px 14px;
+            background: #f0f0fa;
+            color: #2d2d5e;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        .section-nav ol li a:hover,
+        .section-nav ol li a:focus {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+            outline: 2px solid #2563eb;
+            outline-offset: 2px;
+        }
+        .section-nav ol li a.completed {
+            background: #d1fae5;
+            color: #065f46;
+            border-color: #6ee7b7;
+        }
+
+        /* ===== SECTIONS ===== */
+        .module-section {
+            background: #ffffff;
+            border: 1px solid #d1d1e0;
+            border-radius: 12px;
+            padding: 32px 28px;
+            margin-bottom: 28px;
+            box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+        }
+        .module-section h2 {
+            font-size: 1.5rem;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #2563eb;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .module-section h3 {
+            font-size: 1.2rem;
+            color: #2d2d5e;
+            margin: 24px 0 12px;
+        }
+        .module-section h4 {
+            font-size: 1.05rem;
+            color: #3a3a6a;
+            margin: 20px 0 10px;
+        }
+        .module-section p {
+            margin-bottom: 14px;
+            color: #2a2a4a;
+        }
+
+        /* ===== LEARNING OBJECTIVES ===== */
+        .objectives-box {
+            background: #eef2ff;
+            border: 1px solid #c7d2fe;
+            border-left: 5px solid #2563eb;
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin: 20px 0;
+        }
+        .objectives-box h3 {
+            color: #1e40af;
+            margin: 0 0 12px;
+            font-size: 1.1rem;
+        }
+        .objectives-box ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .objectives-box ul li {
+            margin-bottom: 8px;
+            color: #1e3a5f;
+            line-height: 1.6;
+        }
+
+        /* ===== DEFINITION BOXES ===== */
+        .definition-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-left: 5px solid #16a34a;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+        .definition-box .term {
+            font-weight: 700;
+            color: #15803d;
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+        .definition-box .meaning {
+            color: #1a3a2a;
+            line-height: 1.6;
+        }
+
+        /* ===== FORENSIC SIGNIFICANCE BOXES ===== */
+        .forensic-note {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-left: 5px solid #d97706;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+        .forensic-note .note-title {
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .forensic-note p, .forensic-note li {
+            color: #78350f;
+        }
+        .forensic-note ul, .forensic-note ol {
+            margin: 8px 0 8px 20px;
+        }
+
+        /* ===== IMPORTANT / WARNING BOXES ===== */
+        .important-box {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-left: 5px solid #dc2626;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+        .important-box .box-title {
+            font-weight: 700;
+            color: #991b1b;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .important-box p, .important-box li {
+            color: #7f1d1d;
+        }
+        .important-box ul, .important-box ol {
+            margin: 8px 0 8px 20px;
+        }
+
+        /* ===== INFO BOXES ===== */
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-left: 5px solid #2563eb;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+        .info-box .box-title {
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 6px;
+        }
+        .info-box p, .info-box li {
+            color: #1e3a5f;
+        }
+        .info-box ul, .info-box ol {
+            margin: 8px 0 8px 20px;
+        }
+
+        /* ===== TABLES ===== */
+        .table-container {
+            overflow-x: auto;
+            margin: 16px 0;
+            border-radius: 8px;
+            border: 1px solid #d1d1e0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.92rem;
+        }
+        thead {
+            background: #1a1a2e;
+            color: #ffffff;
+        }
+        thead th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+        tbody tr {
+            border-bottom: 1px solid #e5e5f0;
+        }
+        tbody tr:nth-child(even) {
+            background: #f8f8fc;
+        }
+        tbody tr:hover {
+            background: #eef2ff;
+        }
+        tbody td {
+            padding: 10px 16px;
+            color: #2a2a4a;
+            vertical-align: top;
+        }
+
+        /* ===== CODE BLOCKS ===== */
+        code {
+            font-family: 'Consolas', 'Courier New', monospace;
+            background: #f1f5f9;
+            color: #1e293b;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            border: 1px solid #e2e8f0;
+        }
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px 24px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 16px 0;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.88rem;
+            line-height: 1.6;
+            white-space: pre;
+            border: 1px solid #334155;
+        }
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+            border: none;
+            font-size: inherit;
+            white-space: pre;
+        }
+
+        /* ===== COLLAPSIBLE / ACCORDION ===== */
+        .collapsible {
+            margin: 16px 0;
+            border: 1px solid #d1d1e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .collapsible-toggle {
+            width: 100%;
+            background: #f8f8fc;
+            border: none;
+            padding: 14px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2d2d5e;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+            text-align: left;
+        }
+        .collapsible-toggle:hover,
+        .collapsible-toggle:focus {
+            background: #eef2ff;
+            outline: 2px solid #2563eb;
+            outline-offset: -2px;
+        }
+        .collapsible-toggle .arrow {
+            transition: transform 0.3s;
+            font-size: 0.85rem;
+        }
+        .collapsible-toggle[aria-expanded="true"] .arrow {
+            transform: rotate(180deg);
+        }
+        .collapsible-content {
+            display: none;
+            padding: 16px 20px;
+            background: #ffffff;
+            border-top: 1px solid #d1d1e0;
+        }
+        .collapsible-content.open {
+            display: block;
+        }
+
+        /* ===== ARTIFACT CARD ===== */
+        .artifact-card {
+            background: #ffffff;
+            border: 2px solid #c7d2fe;
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin: 18px 0;
+            transition: border-color 0.2s;
+        }
+        .artifact-card:hover {
+            border-color: #818cf8;
+        }
+        .artifact-card .artifact-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .artifact-card .artifact-header h4 {
+            margin: 0;
+            color: #1e40af;
+            font-size: 1.1rem;
+        }
+        .artifact-card .artifact-header .badge {
+            display: inline-block;
+            background: #eef2ff;
+            color: #3730a3;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid #c7d2fe;
+        }
+        .artifact-card .registry-path {
+            background: #1e293b;
+            color: #a5f3fc;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.85rem;
+            margin: 10px 0;
+            overflow-x: auto;
+            white-space: pre;
+        }
+        .artifact-card p {
+            color: #2a2a4a;
+            margin-bottom: 10px;
+        }
+
+        /* ===== INTERACTIVE ACTIVITIES ===== */
+        .activity-container {
+            background: #f5f3ff;
+            border: 2px solid #c4b5fd;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+        .activity-container h3 {
+            color: #5b21b6;
+            margin: 0 0 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .activity-question {
+            background: #ffffff;
+            border: 1px solid #ddd6fe;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .activity-question p {
+            font-weight: 600;
+            color: #3b0764;
+            margin-bottom: 10px;
+        }
+        .activity-question label {
+            display: block;
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: #2a2a4a;
+            border: 1px solid transparent;
+        }
+        .activity-question label:hover {
+            background: #ede9fe;
+        }
+        .activity-question input[type="radio"] {
+            margin-right: 8px;
+            accent-color: #7c3aed;
+        }
+        .check-btn {
+            display: inline-block;
+            background: #7c3aed;
+            color: #ffffff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.2s;
+        }
+        .check-btn:hover, .check-btn:focus {
+            background: #6d28d9;
+            outline: 2px solid #6d28d9;
+            outline-offset: 2px;
+        }
+        .feedback {
+            margin-top: 12px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            display: none;
+        }
+        .feedback.correct {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+            display: block;
+        }
+        .feedback.incorrect {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            display: block;
+        }
+
+        /* ===== KNOWLEDGE CHECK ===== */
+        .knowledge-check {
+            background: #fefce8;
+            border: 2px solid #fde047;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+        .knowledge-check h3 {
+            color: #854d0e;
+            margin: 0 0 8px;
+        }
+        .knowledge-check p.instructions {
+            color: #713f12;
+            margin-bottom: 16px;
+        }
+        .kc-question {
+            background: #ffffff;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .kc-question .q-text {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+        .kc-question textarea {
+            width: 100%;
+            min-height: 80px;
+            border: 1px solid #d1d1e0;
+            border-radius: 6px;
+            padding: 10px;
+            font-family: inherit;
+            font-size: 0.92rem;
+            resize: vertical;
+            color: #1a1a2e;
+        }
+        .kc-question textarea:focus {
+            outline: 2px solid #2563eb;
+            border-color: #2563eb;
+        }
+        .reveal-btn {
+            display: inline-block;
+            background: #d97706;
+            color: #ffffff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.2s;
+        }
+        .reveal-btn:hover, .reveal-btn:focus {
+            background: #b45309;
+            outline: 2px solid #b45309;
+            outline-offset: 2px;
+        }
+        .model-answer {
+            display: none;
+            background: #fef9c3;
+            border: 1px solid #fde68a;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-top: 10px;
+            color: #713f12;
+            font-size: 0.92rem;
+            line-height: 1.6;
+        }
+        .model-answer.visible {
+            display: block;
+        }
+
+        /* ===== SECTION COMPLETE BUTTON ===== */
+        .section-complete-btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: #f0fdf4;
+            border: 2px solid #86efac;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #166534;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.2s;
+        }
+        .section-complete-btn:hover, .section-complete-btn:focus {
+            background: #d1fae5;
+            border-color: #16a34a;
+            outline: 2px solid #16a34a;
+            outline-offset: 2px;
+        }
+        .section-complete-btn.completed {
+            background: #16a34a;
+            color: #ffffff;
+            border-color: #16a34a;
+        }
+
+        /* ===== LISTS ===== */
+        ul, ol {
+            margin: 10px 0 14px 24px;
+        }
+        li {
+            margin-bottom: 6px;
+            color: #2a2a4a;
+        }
+
+        /* ===== TOOL OUTPUT BLOCK ===== */
+        .tool-output {
+            background: #0f172a;
+            color: #94a3b8;
+            padding: 20px 24px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.7;
+            overflow-x: auto;
+            margin: 16px 0;
+            border: 1px solid #1e293b;
+            white-space: pre;
+        }
+        .tool-output .highlight {
+            color: #38bdf8;
+            font-weight: 700;
+        }
+        .tool-output .value-hl {
+            color: #4ade80;
+        }
+        .tool-output .comment {
+            color: #64748b;
+            font-style: italic;
+        }
+
+        /* ===== TABS ===== */
+        .tabs-container {
+            margin: 20px 0;
+            border: 1px solid #d1d1e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .tab-buttons {
+            display: flex;
+            background: #f0f0fa;
+            border-bottom: 1px solid #d1d1e0;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 16px;
+            border: none;
+            background: transparent;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #6a6a8a;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover, .tab-btn:focus {
+            background: #eef2ff;
+            color: #2563eb;
+            outline: 2px solid #2563eb;
+            outline-offset: -2px;
+        }
+        .tab-btn.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+            background: #ffffff;
+        }
+        .tab-panel {
+            display: none;
+            padding: 20px 24px;
+            background: #ffffff;
+        }
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* ===== FOOTER ===== */
+        .module-footer {
+            text-align: center;
+            padding: 32px 20px;
+            color: #6a6a8a;
+            font-size: 0.85rem;
+            border-top: 1px solid #d1d1e0;
+            margin-top: 40px;
+        }
+
+        /* ===== NEXT MODULE LINK ===== */
+        .next-module {
+            display: block;
+            text-align: center;
+            padding: 18px;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: #ffffff;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-top: 24px;
+            transition: opacity 0.2s;
+        }
+        .next-module:hover, .next-module:focus {
+            opacity: 0.9;
+            outline: 3px solid #7c3aed;
+            outline-offset: 2px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .module-header h1 { font-size: 1.5rem; }
+            .module-section { padding: 20px 16px; }
+            .section-nav ol { flex-direction: column; }
+            .module-meta { flex-direction: column; align-items: center; gap: 8px; }
+            .tab-buttons { flex-direction: column; }
+            .tab-btn { min-width: auto; }
+        }
+
+        /* ===== PRINT ===== */
+        @media print {
+            .progress-container, .progress-text, .section-nav, .skip-link,
+            .section-complete-btn, .check-btn, .reveal-btn { display: none; }
+            .module-section { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
+            .collapsible-content { display: block !important; }
+            .tab-panel { display: block !important; }
+        }
+
+        /* ===== FOCUS VISIBLE ===== */
+        *:focus-visible {
+            outline: 3px solid #2563eb;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Module reading progress">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div class="progress-text" id="progressText" aria-live="polite">0% complete</div>
+
+    <!-- HEADER -->
+    <header class="module-header">
+        <div class="course-tag">CSC 156 — Digital Forensics Fundamentals</div>
+        <h1>Module 7.2: System-Level Registry Artifacts</h1>
+        <p class="subtitle">Week 7 — Windows Forensics I: Registry and User Artifacts</p>
+        <div class="module-meta">
+            <span>⏱ Estimated Time: 2.0 hours</span>
+            <span>📘 Difficulty: Intermediate</span>
+            <span>🎯 CSLO 2</span>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main id="main-content" class="content-wrapper">
+
+        <!-- TABLE OF CONTENTS -->
+        <nav class="section-nav" aria-label="Module sections">
+            <h2>Module Sections</h2>
+            <ol>
+                <li><a href="#section1" id="nav-s1">1. Introduction</a></li>
+                <li><a href="#section2" id="nav-s2">2. SYSTEM Hive Artifacts</a></li>
+                <li><a href="#section3" id="nav-s3">3. SOFTWARE Hive Artifacts</a></li>
+                <li><a href="#section4" id="nav-s4">4. SAM Hive Artifacts</a></li>
+                <li><a href="#section5" id="nav-s5">5. CurrentControlSet</a></li>
+                <li><a href="#section6" id="nav-s6">6. USB Device History</a></li>
+                <li><a href="#section7" id="nav-s7">7. Network Artifacts</a></li>
+                <li><a href="#section8" id="nav-s8">8. Tool Walkthroughs</a></li>
+                <li><a href="#section9" id="nav-s9">9. Activities</a></li>
+                <li><a href="#section10" id="nav-s10">10. Knowledge Check</a></li>
+            </ol>
+        </nav>
+
+        <!-- LEARNING OBJECTIVES -->
+        <div class="objectives-box">
+            <h3>🎯 Learning Objectives</h3>
+            <p>By the end of this module, you will be able to:</p>
+            <ul>
+                <li>Extract and interpret the computer name, time zone, and operating system version from system hive files</li>
+                <li>Explain the purpose and forensic significance of the CurrentControlSet in the SYSTEM hive</li>
+                <li>Enumerate user accounts from the SAM hive and identify account metadata (creation date, last login, login count, account status)</li>
+                <li>Trace USB device connection history using USBSTOR and related Registry keys</li>
+                <li>Identify installed software and network connection history from the SOFTWARE hive</li>
+                <li>Use Registry Explorer and RegRipper to extract system-level artifacts from offline hive files</li>
+                <li>Document system-level findings in a forensically defensible manner</li>
+            </ul>
+        </div>
+
+        <!-- CSLO ALIGNMENT -->
+        <div class="info-box">
+            <div class="box-title">📋 Course Student Learning Outcome Alignment</div>
+            <p><strong>Primary CSLO:</strong> CSLO 2 — <em>Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data.</em></p>
+            <p>System-level Registry artifacts provide the foundational context for any Windows forensic examination: identifying the machine, establishing the time reference, enumerating users, and documenting connected devices. These artifacts are typically the <strong>first</strong> data points an examiner extracts when beginning a Windows forensic case.</p>
+        </div>
+
+        <!-- ========== SECTION 1: INTRODUCTION ========== -->
+        <section class="module-section" id="section1">
+            <h2>📖 1. Introduction &amp; Context</h2>
+
+            <p>In Module 7.1, you learned the structure of the Windows Registry — its five root keys, keys, subkeys, values, data types, hive files, and transaction logs. Now you will apply that foundational knowledge to extract specific <strong>system-level forensic artifacts</strong> from three critical hive files:</p>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Hive File</th>
+                            <th>Location on Disk</th>
+                            <th>What It Contains</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>SYSTEM</strong></td>
+                            <td><code>C:\Windows\System32\config\SYSTEM</code></td>
+                            <td>Hardware configuration, services, drivers, boot settings, USB history, time zone, computer name</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SOFTWARE</strong></td>
+                            <td><code>C:\Windows\System32\config\SOFTWARE</code></td>
+                            <td>Installed software, OS version, network profiles, application settings, autorun programs</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SAM</strong></td>
+                            <td><code>C:\Windows\System32\config\SAM</code></td>
+                            <td>Local user accounts, password hashes, account policies, login history, account status</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Why System-Level Artifacts Come First</h3>
+            <p>When beginning a Windows forensic examination, system-level artifacts are <strong>always analyzed first</strong> because they provide the essential context needed to correctly interpret all other evidence:</p>
+
+            <ol>
+                <li><strong>Machine identification:</strong> Computer name confirms you are examining the correct system</li>
+                <li><strong>Time zone:</strong> Required to convert UTC timestamps to local time — without this, all timestamps in your report could be wrong</li>
+                <li><strong>User account enumeration:</strong> Identifies all accounts on the system, their SIDs, and their status — this determines which NTUSER.DAT files to examine in Module 7.3</li>
+                <li><strong>OS version:</strong> Different Windows versions store artifacts in different locations; knowing the version ensures you look in the right places</li>
+                <li><strong>Device history:</strong> USB and storage device connections establish what external media was connected to the system</li>
+            </ol>
+
+            <div class="forensic-note">
+                <div class="note-title">🔍 Forensic Workflow</div>
+                <p>Think of system-level artifacts as the <strong>"case setup"</strong> phase. Just as you would not begin reading a book in the middle, you should not begin analyzing user activity (Module 7.3) without first establishing the system context. Every forensic report begins with system identification data before presenting user activity findings.</p>
+            </div>
+
+            <button class="section-complete-btn" data-section="1" onclick="markComplete(1)">
+                ✓ Mark Section 1 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 2: SYSTEM HIVE ARTIFACTS ========== -->
+        <section class="module-section" id="section2">
+            <h2>🖥️ 2. SYSTEM Hive Artifacts</h2>
+
+            <p>The SYSTEM hive (<code>HKLM\SYSTEM</code>) is one of the most forensically valuable hive files. It contains hardware configuration, service settings, and critical system identification data. All paths in this section are relative to <code>HKLM\SYSTEM</code>.</p>
+
+            <!-- ARTIFACT: Computer Name -->
+            <div class="artifact-card">
+                <div class="artifact-header">
+                    <h4>Artifact: Computer Name</h4>
+                    <span class="badge">SYSTEM Hive</span>
+                </div>
+                <div class="registry-path">HKLM\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName
+Value: ComputerName (REG_SZ)</div>
+                <p><strong>What it tells you:</strong> The NetBIOS name assigned to the computer. This is the human-readable name used to identify the machine on a network and in forensic reports.</p>
+                <p><strong>Example value:</strong> <code>DESKTOP-A1B2C3D</code></p>
+
+                <div class="forensic-note">
+                    <div class="note-title">🔍 Forensic Significance</div>
+                    <p>The computer name is the <strong>first artifact</strong> extracted in most forensic examinations. It confirms you are analyzing the correct machine and is used throughout the forensic report to identify the evidence system. It also appears in network logs, event logs, and authentication records on other systems — enabling correlation across multiple evidence sources.</p>
+                </div>
+            </div>
+
+            <!-- ARTIFACT: Time Zone -->
+            <div class="artifact-card">
+                <div class="artifact-header">
+                    <h4>Artifact: Time Zone Configuration</h4>
+                    <span class="badge">SYSTEM Hive</span>
+                </div>
+                <div class="registry-path">HKLM\SYSTEM\CurrentControlSet\Control\TimeZoneInformation
+Key Values:
+  TimeZoneKeyName (REG_SZ) — e.g., "Pacific Standard Time"
+  Bias (REG_DWORD) — Offset from UTC in minutes
+  ActiveTimeBias (REG_DWORD) — Current active offset including DST
+  DaylightBias (REG_DWORD) — DST adjustment in minutes
+  StandardBias (REG_DWORD) — Standard time adjustment</div>
+                <p><strong>What it tells you:</strong> The time zone configured on the system and whether Daylight Saving Time (DST) adjustments apply.</p>
+
+                <div class="important-box">
+                    <div class="box-title">⚠️ Critical — Time Zone Is Essential</div>
+                    <p>The time zone setting is <strong>arguably the most important system artifact</strong> for forensic accuracy. All Registry key timestamps and most Windows file system timestamps are stored in <strong>UTC</strong>. To present timestamps in your forensic report as local times (which courts and investigators expect), you must know the system's time zone. An incorrect time zone conversion could place events at the wrong time of day — potentially undermining your entire analysis.</p>
+                </div>
+
+                <h4>Understanding the Bias Value</h4>
+                <p>The <code>Bias</code> value represents the number of minutes to <strong>subtract</strong> from UTC to get the local standard time. This is stored as a <code>REG_DWORD</code>:</p>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Time Zone</th>
+                                <th>Bias Value (decimal)</th>
+                                <th>UTC Offset</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Eastern Standard Time (EST)</td>
+                                <td>300</td>
+                                <td>UTC−5:00</td>
+                            </tr>
+                            <tr>
+                                <td>Central Standard Time (CST)</td>
+                                <td>360</td>
+                                <td>UTC−6:00</td>
+                            </tr>
+                            <tr>
+                                <td>Mountain Standard Time (MST)</td>
+                                <td>420</td>
+                                <td>UTC−7:00</td>
+                            </tr>
+                            <tr>
+                                <td>Pacific Standard Time (PST)</td>
+                                <td>480</td>
+                                <td>UTC−8:00</td>
+                            </tr>
+                            <tr>
+                                <td>Greenwich Mean Time (GMT)</td>
+                                <td>0</td>
+                                <td>UTC±0:00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p>The <code>ActiveTimeBias</code> value reflects the <strong>current</strong> offset, including any DST adjustment. During Pacific Daylight Time (PDT), the ActiveTimeBias would be 420 (UTC−7:00) instead of the standard 480 (UTC−8:00).</p>
+            </div>
+
+            <!-- ARTIFACT: Shutdown Time -->
+            <div class="artifact-card">
+                <div class="artifact-header">
+                    <h4>Artifact: Last Shutdown Time</h4>
+                    <span class="badge">SYSTEM Hive</span>
+                </div>
+                <div class="registry-path">HKLM\SYSTEM\CurrentControlSet\Control\Windows
+Value: ShutdownTime (REG_BINARY) — 8-byte Windows FILETIME in UTC</div>
+                <p><strong>What it tells you:</strong> The date and time the system was last cleanly shut down. This is stored as a 64-bit Windows FILETIME value.</p>
+
+                <div class="forensic-note">
+                    <div class="note-title">🔍 Forensic Significance</div>
+                    <p>The last shutdown time helps establish when the computer was last used. If the shutdown time is significantly earlier than when the evidence was seized, it may indicate the system was turned off before the seizure. If the shutdown time is very recent (close to seizure time), it may indicate someone attempted to shut down the system — potentially to prevent live forensic capture or to trigger anti-forensics mechanisms. Compare this timestamp with file system activity and event logs for corroboration.</p>
+                </div>
+            </div>
+
+            <!-- ARTIFACT: System Boot Info -->
+            <div class="artifact-card">
+                <div class="artifact-header">
+                    <h4>Artifact: Last Known Good Configuration</h4>
+                    <span class="badge">SYSTEM Hive</span>
+                </div>
+                <div class="registry-path">HKLM\SYSTEM\Select
+Values:
+  Current (REG_DWORD) — Currently active ControlSet number
+  Default (REG_DWORD) — Default ControlSet to use at boot
+  LastKnownGood (REG_DWORD) — Last ControlSet that booted successfully
+  Failed (REG_DWORD) — ControlSet that failed (if any)</div>
+                <p><strong>What it tells you:</strong> Which ControlSet is currently active and which was last known to work. This is essential for knowing which <code>ControlSet00X</code> to examine (covered in detail in Section 5).</p>
+            </div>
+
+            <button class="section-complete-btn" data-section="2" onclick="markComplete(2)">
+                ✓ Mark Section 2 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 3: SOFTWARE HIVE ARTIFACTS ========== -->
+        <section class="module-section" id="section3">
+            <h2>📦 3. SOFTWARE Hive Artifacts</h2>
+
+            <p>The SOFTWARE hive (<code>HKLM\SOFTWARE</code>) contains system-wide application and operating system configuration data. It is typically the <strong>largest</strong> hive file on a Windows system, often exceeding 100 MB.</p>
+
+            <!-- ARTIFACT: OS Version -->
+            <div class="artifact-card">
+                <div class="artifact-header">
+                    <h4>Artifact: Operating System Version</h4>
+                    <span class="badge">SOFTWARE Hive</span>
+                </div>
+                <div class="registry-path">HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion
+Key Values:
+  ProductName (REG_SZ) — e.g., "Windows 10 Pro"
+  DisplayVersion (REG_SZ) — e.g., "22H2"
+  CurrentBuild (REG_SZ) — e.g., "19045"
+  CurrentBuildNumber (REG_SZ) — e.g., "19045"
+  EditionID (REG_SZ) — e.g., "Professional"
+  InstallDate (REG_DWORD) — Unix epoch timestamp of OS installation
+  RegisteredOwner (REG_SZ) — Registered owner name
+  RegisteredOrganization (REG_SZ) — Registered organization</div>
+                <p><strong>What it tells you:</strong> The exact version, edition, and build number of the Windows installation, along with when it was installed and who it is registered to.</p>
+
+                <div class="forensic-note">
+                    <div class="note-title">🔍 Forensic Significance</div>
+                    <p>The OS version is critical because different versions of Windows store artifacts in different locations and formats. For example, Windows 10 version 1803+ stores timeline activity data that earlier versions do not. The <code>InstallDate</code> value (stored as a <strong>Unix epoch timestamp</strong> — seconds since January 1, 1970 UTC) tells you when the OS was installed, which helps establish the system's history. The <code>RegisteredOwner</code> may identify who set up the computer.</p>
+                </div>
+
+                <div class="info-box">
+                    <div class="box-title">💡 Note — Unix Epoch vs. Windows FILETIME</div>
+                    <p>The <code>InstallDate</code> value uses a <strong>Unix epoch timestamp</strong> (seconds since January 1, 1970), which is different from the Windows FILETIME format (100-nanosecond intervals since January 1, 1601) used by Registry key timestamps. Forensic tools handle both formats, but understanding the difference prevents misinterpretation. A Unix epoch value of <code>1709568000</code> converts to March 4, 2024.</p>
+                </div>
+            </div>
+
+            <!-- ARTIFACT: Installed Software -->
+            <div class="artifact-card">
+                <div class="artifact-header">
+                    <h4>Artifact: Installed Software</h4>
+                    <span class="badge">SOFTWARE Hive</span>
+                </div>
+                <div class="registry-path">HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{GUID or Name}
+Per-application values:
+  DisplayName (REG_SZ) — Application name
+  DisplayVersion (REG_SZ) — Version number
+  Publisher (REG_SZ) — Software publisher
+  InstallDate (REG_SZ) — Date installed (YYYYMMDD format)
+  InstallLocation (REG_SZ) — Installation directory
+  UninstallString (REG_SZ) — Uninstall command
+
+Also check for 32-bit applications on 64-bit systems:
+HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\</div>
+                <p><strong>What it tells you:</strong> A comprehensive list of software installed on the system, including application names, versions, publishers, and installation dates.</p>
+
+                <div class="forensic-note">
+                    <div class="note-title">🔍 Forensic Significance</div>
+                    <p>Installed software analysis can reveal:</p>
+                    <ul>
+                        <li><strong>Anti-forensics tools:</strong> Disk wiping software (e.g., Eraser, BleachBit), encryption tools (e.g., VeraCrypt), privacy cleaners (e.g., CCleaner)</li>
+                        <li><strong>Hacking tools:</strong> Network scanners, password crackers, exploitation frameworks</li>
+                        <li><strong>Relevant applications:</strong> Peer-to-peer file sharing, cloud storage clients, messaging applications, remote access tools</li>
+                        <li><strong>Timeline data:</strong> Installation dates help establish when applications were added to the system</li>
+                    </ul>
+                    <p>Remember to check <strong>both</strong> the standard and WOW6432Node Uninstall paths on 64-bit systems to capture all installed software.</p>
+                </div>
+            </div>
+
+            <!-- ARTIFACT: Autorun Programs -->
+            <div class="artifact-card">
+                <div class="artifact-header">
+                    <h4>Artifact: Autorun / Startup Programs</h4>
+                    <span class="badge">SOFTWARE Hive</span>
+                </div>
+                <div class="registry-path">System-wide autoruns:
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce
+
+Per-user autoruns (in NTUSER.DAT — covered in Module 7.3):
+HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce</div>
+                <p><strong>What it tells you:</strong> Programs configured to run automatically when any user logs in (system-wide) or when a specific user logs in (per-user).</p>
+
+                <div class="forensic-note">
+                    <div class="note-title">🔍 Forensic Significance</div>
+                    <p>Autorun entries are a <strong>primary persistence mechanism</strong> for malware. If a system is suspected of being compromised, examining autorun locations can reveal malicious programs that execute automatically at startup. Legitimate software also uses these keys (antivirus, cloud sync clients, etc.), so the examiner must distinguish between normal and suspicious entries by researching each program found.</p>
+                </div>
+            </div>
+
+            <button class="section-complete-btn" data-section="3" onclick="markComplete(3)">
+                ✓ Mark Section 3 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 4: SAM HIVE ARTIFACTS ========== -->
+        <section class="module-section" id="section4">
+            <h2>👤 4. SAM Hive Artifacts</h2>
+
+            <p>The SAM (Security Account Manager) hive stores information about every <strong>local user account</strong> on the system. This is one of the first hives examined in any investigation because it tells you <em>who</em> has accounts on the machine.</p>
+
+            <div class="definition-box">
+                <div class="term">Security Account Manager (SAM)</div>
+                <div class="meaning">A database file in Windows that stores local user account information including usernames, relative identifiers (RIDs), password hashes, account creation dates, last login times, login counts, and account flags (enabled/disabled/locked). The SAM is stored at <code>C:\Windows\System32\config\SAM</code> and maps to <code>HKLM\SAM</code>.</div>
+            </div>
+
+            <!-- ARTIFACT: User Account Enumeration -->
+            <div class="artifact-card">
+                <div class="artifact-header">
+                    <h4>Artifact: User Account Enumeration</h4>
+                    <span class="badge">SAM Hive</span>
+                </div>
+                <div class="registry-path">HKLM\SAM\SAM\Domains\Account\Users\Names\
+  (Each subkey = one local user account name)
+
+HKLM\SAM\SAM\Domains\Account\Users\{RID}\
+  Value: F (REG_BINARY) — Account metadata
+  Value: V (REG_BINARY) — Username, full name, comment, password hashes</div>
+
+                <p><strong>What it tells you:</strong> Every local user account that exists (or has existed) on the system. The <code>F</code> value contains structured binary data encoding critical account metadata.</p>
+
+                <h4>Account Metadata in the F Value</h4>
+                <p>The <code>F</code> binary value contains the following forensically relevant data (decoded by forensic tools):</p>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Offset</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Last Login Time</td>
+                                <td>0x08</td>
+                                <td>Windows FILETIME — last successful interactive login</td>
+                            </tr>
+                            <tr>
+                                <td>Password Last Set</td>
+                                <td>0x18</td>
+                                <td>Windows FILETIME — when the password was last changed</td>
+                            </tr>
+                            <tr>
+                                <td>Account Expiration</td>
+                                <td>0x20</td>
+                                <td>Windows FILETIME — when the account expires (0 = never)</td>
+                            </tr>
+                            <tr>
+                                <td>Last Failed Login</td>
+                                <td>0x28</td>
+                                <td>Windows FILETIME — last unsuccessful login attempt</td>
+                            </tr>
+                            <tr>
+                                <td>RID</td>
+                                <td>0x30</td>
+                                <td>Relative Identifier — unique numeric ID for the account</td>
+                            </tr>
+                            <tr>
+                                <td>Account Flags</td>
+                                <td>0x38</td>
+                                <td>Bit flags indicating account status (enabled, disabled, locked, password required, etc.)</td>
+                            </tr>
+                            <tr>
+                                <td>Login Count</td>
+                                <td>0x42</td>
+                                <td>Number of successful logins</td>
+                            </tr>
+                            <tr>
+                                <td>Failed Login Count</td>
+                                <td>0x44</td>
+                                <td>Number of failed login attempts since last successful login</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="forensic-note">
+                    <div class="note-title">🔍 Forensic Significance</div>
+                    <p>SAM account enumeration reveals:</p>
+                    <ul>
+                        <li><strong>All user accounts:</strong> Including accounts that may have been created by an attacker or unauthorized user</li>
+                        <li><strong>Account activity:</strong> Last login time and login count show which accounts are actively used</li>
+                        <li><strong>Suspicious accounts:</strong> Newly created accounts (recent password-set time with low login count) may indicate unauthorized access</li>
+                        <li><strong>Account status:</strong> Disabled or locked accounts may indicate administrative action or brute-force attempts</li>
+                        <li><strong>Password age:</strong> When the password was last changed can correlate with security incidents</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>4.1 Well-Known RIDs</h3>
+            <p>Certain account RIDs are predefined by Windows and always have the same values:</p>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>RID (Hex)</th>
+                            <th>RID (Decimal)</th>
+                            <th>Account</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>0x1F4</code></td>
+                            <td>500</td>
+                            <td>Administrator</td>
+                            <td>Built-in admin account; often disabled by default on Windows 10/11 but still present</td>
+                        </tr>
+                        <tr>
+                            <td><code>0x1F5</code></td>
+                            <td>501</td>
+                            <td>Guest</td>
+                            <td>Built-in guest account; disabled by default</td>
+                        </tr>
+                        <tr>
+                            <td><code>0x1F7</code></td>
+                            <td>503</td>
+                            <td>DefaultAccount</td>
+                            <td>System-managed default account</td>
+                        </tr>
+                        <tr>
+                            <td><code>0x1F8</code></td>
+                            <td>504</td>
+                            <td>WDAGUtilityAccount</td>
+                            <td>Windows Defender Application Guard account</td>
+                        </tr>
+                        <tr>
+                            <td><code>0x3E9+</code></td>
+                            <td>1001+</td>
+                            <td>User-created accounts</td>
+                            <td>The first user-created account typically gets RID 1001</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>4.2 Mapping RIDs to SIDs</h3>
+
+            <div class="definition-box">
+                <div class="term">Security Identifier (SID)</div>
+                <div class="meaning">A unique, variable-length identifier assigned to each security principal (user, group, or computer) in Windows. A local user SID follows the format: <code>S-1-5-21-{machine-specific-values}-{RID}</code>. For example, <code>S-1-5-21-3456789012-1234567890-9876543210-1001</code> identifies the first user-created account on a specific machine. The SID is used as the subkey name under <code>HKEY_USERS</code> and in the path to the user's <code>NTUSER.DAT</code> profile.</div>
+            </div>
+
+            <div class="info-box">
+                <div class="box-title">💡 Connecting SAM to NTUSER.DAT</div>
+                <p>The SAM hive gives you the <strong>username → RID → SID</strong> mapping. Once you have the SID, you can identify which <code>NTUSER.DAT</code> file belongs to which user account. The profile path is stored at:</p>
+                <pre><code>HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\{SID}
+Value: ProfileImagePath (REG_EXPAND_SZ)
+Example: C:\Users\jsmith</code></pre>
+                <p>This connection between the SAM hive and the SOFTWARE hive's ProfileList is essential for Module 7.3, where you will examine per-user artifacts in NTUSER.DAT.</p>
+            </div>
+
+            <button class="section-complete-btn" data-section="4" onclick="markComplete(4)">
+                ✓ Mark Section 4 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 5: CURRENTCONTROLSET ========== -->
+        <section class="module-section" id="section5">
+            <h2>⚙️ 5. Understanding CurrentControlSet</h2>
+
+            <p>Many of the most important SYSTEM hive artifacts are located under <code>CurrentControlSet</code>. Understanding what this key represents and how to identify the correct one is essential.</p>
+
+            <div class="definition-box">
+                <div class="term">ControlSet</div>
+                <div class="meaning">A complete set of system configuration data including device drivers, services, and hardware settings. Windows maintains <strong>multiple ControlSets</strong> (typically <code>ControlSet001</code> and <code>ControlSet002</code>) as a recovery mechanism. If a configuration change causes a boot failure, Windows can revert to the previous ControlSet. <code>CurrentControlSet</code> is a <strong>volatile symbolic link</strong> that points to whichever ControlSet is currently active — it exists only while Windows is running and does <strong>not</strong> exist in offline hive files.</div>
+            </div>
+
+            <div class="important-box">
+                <div class="box-title">⚠️ Critical — CurrentControlSet Does Not Exist Offline</div>
+                <p>When you open a SYSTEM hive file in a forensic tool, you will see <code>ControlSet001</code>, <code>ControlSet002</code>, etc. — but you will <strong>not</strong> see <code>CurrentControlSet</code>. That key is created dynamically by Windows at boot time. To determine which ControlSet was active when the system was last running, you must check:</p>
+                <pre><code>HKLM\SYSTEM\Select
+Value: Current (REG_DWORD)</code></pre>
+                <p>If <code>Current</code> = 1, then <code>ControlSet001</code> was the active ControlSet. If <code>Current</code> = 2, then <code>ControlSet002</code> was active. <strong>Always verify this before examining ControlSet data.</strong></p>
+            </div>
+
+            <h3>5.1 Example: Determining the Active ControlSet</h3>
+            <div class="tool-output"><span class="comment">--- Registry Explorer: HKLM\SYSTEM\Select ---</span>
+
+Key: HKLM\SYSTEM\Select
+Last Write: 2026-02-28 09:15:32 UTC
+
+Values:
+  <span class="highlight">Current</span>     REG_DWORD    <span class="value-hl">0x00000001 (1)</span>     <span class="comment">← ControlSet001 is active</span>
+  Default     REG_DWORD    0x00000001 (1)
+  LastKnownGood  REG_DWORD    0x00000002 (2)
+  Failed      REG_DWORD    0x00000000 (0)     <span class="comment">← No failed ControlSet</span></div>
+
+            <p>In this example, <code>Current = 1</code> tells us that <code>ControlSet001</code> was the active configuration. Therefore, when looking for artifacts like the computer name, time zone, or USB history, we should examine paths under <code>ControlSet001</code>.</p>
+
+            <h3>5.2 Quick Reference: Common ControlSet Paths</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Artifact</th>
+                            <th>Path (under active ControlSet)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Computer Name</td>
+                            <td><code>ControlSet001\Control\ComputerName\ComputerName</code></td>
+                        </tr>
+                        <tr>
+                            <td>Time Zone</td>
+                            <td><code>ControlSet001\Control\TimeZoneInformation</code></td>
+                        </tr>
+                        <tr>
+                            <td>Last Shutdown</td>
+                            <td><code>ControlSet001\Control\Windows</code></td>
+                        </tr>
+                        <tr>
+                            <td>USB Device History</td>
+                            <td><code>ControlSet001\Enum\USBSTOR</code></td>
+                        </tr>
+                        <tr>
+                            <td>Mounted Devices</td>
+                            <td><code>MountedDevices</code> (root of SYSTEM, not under ControlSet)</td>
+                        </tr>
+                        <tr>
+                            <td>Network Interfaces</td>
+                            <td><code>ControlSet001\Services\Tcpip\Parameters\Interfaces</code></td>
+                        </tr>
+                        <tr>
+                            <td>Services</td>
+                            <td><code>ControlSet001\Services\</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <button class="section-complete-btn" data-section="5" onclick="markComplete(5)">
+                ✓ Mark Section 5 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 6: USB DEVICE HISTORY ========== -->
+        <section class="module-section" id="section6">
+            <h2>🔌 6. USB Device History</h2>
+
+            <p>USB device tracking is one of the most powerful forensic capabilities of the Windows Registry. When a USB storage device is connected to a Windows system, the operating system records detailed information in <strong>multiple Registry locations</strong>. By correlating data from these locations, an examiner can determine:</p>
+
+            <ul>
+                <li><strong>What</strong> device was connected (vendor, product, serial number)</li>
+                <li><strong>When</strong> it was first and last connected</li>
+                <li><strong>Which drive letter</strong> it was assigned</li>
+                <li><strong>Which user</strong> was logged in when it was connected</li>
+            </ul>
+
+            <h3>6.1 Primary USB Artifact Locations</h3>
+
+            <!-- TABS for USB locations -->
+            <div class="tabs-container">
+                <div class="tab-buttons" role="tablist">
+                    <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="tab-usbstor" id="btn-usbstor" onclick="switchTab('usbstor')">USBSTOR</button>
+                    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-usb" id="btn-usb" onclick="switchTab('usb')">USB</button>
+                    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-mounted" id="btn-mounted" onclick="switchTab('mounted')">MountedDevices</button>
+                    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-mountpoints" id="btn-mountpoints" onclick="switchTab('mountpoints')">MountPoints2</button>
+                </div>
+
+                <div class="tab-panel active" role="tabpanel" id="tab-usbstor" aria-labelledby="btn-usbstor">
+                    <h4>USBSTOR — USB Storage Device Entries</h4>
+                    <div class="registry-path">HKLM\SYSTEM\CurrentControlSet\Enum\USBSTOR</div>
+                    <p><strong>Hive:</strong> SYSTEM</p>
+                    <p><strong>What it contains:</strong> An entry for every USB mass storage device ever connected to the system. Each device is identified by a subkey in the format:</p>
+                    <pre><code>Disk&amp;Ven_{Vendor}&amp;Prod_{Product}&amp;Rev_{Revision}
+  └── {Serial Number or Unique ID}
+        Values:
+          FriendlyName — Human-readable device name
+          HardwareID — Device identification strings
+          ContainerID — Links to other device entries</code></pre>
+                    <p><strong>Example:</strong></p>
+                    <div class="tool-output"><span class="highlight">USBSTOR\Disk&amp;Ven_SanDisk&amp;Prod_Ultra_USB_3.0&amp;Rev_1.00</span>
+  └── <span class="value-hl">4C530001140818109484</span>
+        FriendlyName: "SanDisk Ultra USB 3.0 USB Device"
+        <span class="comment">Key Last Write: 2026-02-20 16:42:18 UTC</span></div>
+                    <p>The key last-write timestamp on the serial number subkey indicates the <strong>last time</strong> the device was connected to the system.</p>
+                </div>
+
+                <div class="tab-panel" role="tabpanel" id="tab-usb" aria-labelledby="btn-usb">
+                    <h4>USB — USB Controller Entries</h4>
+                    <div class="registry-path">HKLM\SYSTEM\CurrentControlSet\Enum\USB</div>
+                    <p><strong>Hive:</strong> SYSTEM</p>
+                    <p><strong>What it contains:</strong> Lower-level USB device entries organized by Vendor ID (VID) and Product ID (PID). This key records <strong>all</strong> USB devices, not just storage devices (keyboards, mice, printers, etc.).</p>
+                    <pre><code>USB\VID_{VendorID}&amp;PID_{ProductID}
+  └── {Serial Number}
+        Values:
+          DeviceDesc — Device description
+          LocationInformation — USB port information</code></pre>
+                    <p><strong>Forensic use:</strong> Cross-reference VID/PID with the <a href="https://devicehunt.com/" target="_blank" rel="noopener">USB ID Database</a> to identify the exact device manufacturer and model. The VID/PID values are assigned by the USB Implementers Forum and uniquely identify device types.</p>
+                </div>
+
+                <div class="tab-panel" role="tabpanel" id="tab-mounted" aria-labelledby="btn-mounted">
+                    <h4>MountedDevices — Drive Letter Assignments</h4>
+                    <div class="registry-path">HKLM\SYSTEM\MountedDevices</div>
+                    <p><strong>Hive:</strong> SYSTEM (at the root level, <strong>not</strong> under a ControlSet)</p>
+                    <p><strong>What it contains:</strong> A mapping between drive letters (and volume GUIDs) and the physical devices they were assigned to. Each value name represents a mount point, and the data contains the device identifier.</p>
+                    <pre><code>Values:
+  \DosDevices\C: — (REG_BINARY) Internal hard drive
+  \DosDevices\D: — (REG_BINARY) Optical drive
+  \DosDevices\E: — (REG_BINARY) USB device signature
+  \??\Volume{GUID} — Volume GUID mount points</code></pre>
+                    <p><strong>Forensic use:</strong> Determines which <strong>drive letter</strong> was assigned to a USB device. The binary data for removable devices contains a device signature that can be correlated with USBSTOR entries to establish: "SanDisk Ultra USB 3.0 was mounted as drive E:."</p>
+                </div>
+
+                <div class="tab-panel" role="tabpanel" id="tab-mountpoints" aria-labelledby="btn-mountpoints">
+                    <h4>MountPoints2 — Per-User Device Connections</h4>
+                    <div class="registry-path">HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2</div>
+                    <p><strong>Hive:</strong> NTUSER.DAT (per-user — covered fully in Module 7.3)</p>
+                    <p><strong>What it contains:</strong> A record of every volume mounted during a specific user's session. Each subkey represents a volume GUID, and the key's last-write timestamp indicates when the user last accessed that volume.</p>
+                    <p><strong>Forensic use:</strong> This is the <strong>per-user link</strong> in the USB device chain. While USBSTOR and MountedDevices tell you a device was connected to the <em>machine</em>, MountPoints2 tells you which <em>user</em> was logged in and interacting with the device. This is critical for attributing device usage to a specific person.</p>
+                    <div class="forensic-note">
+                        <div class="note-title">🔍 Key Connection</div>
+                        <p>To build a complete USB device timeline, you need data from <strong>all four locations</strong>: USBSTOR (device identity), USB (VID/PID), MountedDevices (drive letter), and MountPoints2 (user attribution). No single location tells the complete story.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>6.2 USB Device Forensic Timeline</h3>
+            <p>The following table summarizes how to determine <strong>when</strong> a USB device was connected:</p>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Source</th>
+                            <th>Meaning</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>First connection</td>
+                            <td>USBSTOR device subkey — key last-write timestamp (first install) and <code>0064</code> property value</td>
+                            <td>When the device was first connected to this computer</td>
+                        </tr>
+                        <tr>
+                            <td>Last connection</td>
+                            <td>USBSTOR serial number subkey — key last-write timestamp</td>
+                            <td>When the device was most recently connected</td>
+                        </tr>
+                        <tr>
+                            <td>Last removal</td>
+                            <td><code>0067</code> property value under the device's Properties key</td>
+                            <td>When the device was last safely removed or disconnected</td>
+                        </tr>
+                        <tr>
+                            <td>User interaction</td>
+                            <td>MountPoints2 subkey — key last-write timestamp</td>
+                            <td>When a specific user last accessed the device's volume</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="forensic-note">
+                <div class="note-title">🔍 Forensic Scenario — USB Evidence</div>
+                <p><strong>Scenario:</strong> An employee is suspected of copying proprietary files to a personal USB drive before resigning. By examining the SYSTEM hive's USBSTOR entries, you identify a SanDisk USB drive with serial number <code>4C530001140818109484</code> that was last connected on the employee's final day. MountedDevices shows it was assigned drive letter <code>E:</code>. The employee's NTUSER.DAT MountPoints2 key confirms they interacted with the volume. File system artifacts on the forensic image show files were accessed in the proprietary data directory during the same timeframe. This multi-source correlation builds a compelling evidence chain.</p>
+            </div>
+
+            <button class="section-complete-btn" data-section="6" onclick="markComplete(6)">
+                ✓ Mark Section 6 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 7: NETWORK ARTIFACTS ========== -->
+        <section class="module-section" id="section7">
+            <h2>🌐 7. Network Artifacts</h2>
+
+            <p>The Registry records information about network connections, providing evidence of what networks the system has connected to and when.</p>
+
+            <!-- ARTIFACT: Network Profiles -->
+            <div class="artifact-card">
+                <div class="artifact-header">
+                    <h4>Artifact: Network Connection History</h4>
+                    <span class="badge">SOFTWARE Hive</span>
+                </div>
+                <div class="registry-path">HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Signatures\Unmanaged\{GUID}
+HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Signatures\Managed\{GUID}
+
+Key Values:
+  FirstNetwork (REG_SZ) — Network name (SSID for Wi-Fi)
+  DefaultGatewayMac (REG_BINARY) — MAC address of the default gateway/router
+  ProfileGuid (REG_SZ) — Links to the Profiles subkey for more details
+
+HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Profiles\{GUID}
+Key Values:
+  ProfileName (REG_SZ) — Network name
+  DateCreated (REG_BINARY) — SYSTEMTIME structure: when first connected
+  DateLastConnected (REG_BINARY) — SYSTEMTIME structure: when last connected
+  Category (REG_DWORD) — 0=Public, 1=Private, 2=Domain</div>
+
+                <p><strong>What it tells you:</strong> Every network the system has connected to, including the network name, the MAC address of the gateway/router, and timestamps for first and last connection.</p>
+
+                <div class="forensic-note">
+                    <div class="note-title">🔍 Forensic Significance</div>
+                    <p>Network connection history can:</p>
+                    <ul>
+                        <li><strong>Place the computer at a location:</strong> Wi-Fi network names (SSIDs) can be correlated with known locations (e.g., "Starbucks_WiFi", "HiltonGuest", a company's internal SSID)</li>
+                        <li><strong>Establish timelines:</strong> First and last connection dates show when the system was at a particular network location</li>
+                        <li><strong>Identify gateway devices:</strong> The gateway MAC address can be used to identify specific routers, further pinpointing location</li>
+                        <li><strong>Detect suspicious connections:</strong> Connections to unusual or unexpected networks may indicate unauthorized activity</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- ARTIFACT: Network Interfaces -->
+            <div class="artifact-card">
+                <div class="artifact-header">
+                    <h4>Artifact: Network Interface Configuration</h4>
+                    <span class="badge">SYSTEM Hive</span>
+                </div>
+                <div class="registry-path">HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\{GUID}
+Key Values:
+  DhcpIPAddress (REG_SZ) — IP address assigned by DHCP
+  DhcpSubnetMask (REG_SZ) — Subnet mask
+  DhcpDefaultGateway (REG_MULTI_SZ) — Default gateway
+  DhcpServer (REG_SZ) — DHCP server address
+  DhcpNameServer (REG_SZ) — DNS servers
+  LeaseObtainedTime (REG_DWORD) — Unix epoch: when the DHCP lease was obtained
+  LeaseTerminatesTime (REG_DWORD) — Unix epoch: when the lease expires</div>
+
+                <p><strong>What it tells you:</strong> The IP address configuration for each network interface, including DHCP-assigned addresses and lease times.</p>
+
+                <div class="forensic-note">
+                    <div class="note-title">🔍 Forensic Significance</div>
+                    <p>IP address and DHCP lease data can correlate the system with network activity logs from routers, firewalls, and servers. If a network intrusion was traced to IP address <code>192.168.1.105</code> at a specific time, and the DHCP lease data shows the suspect's machine held that address during that timeframe, it provides strong evidence linking the machine to the network activity.</p>
+                </div>
+            </div>
+
+            <button class="section-complete-btn" data-section="7" onclick="markComplete(7)">
+                ✓ Mark Section 7 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 8: TOOL WALKTHROUGHS ========== -->
+        <section class="module-section" id="section8">
+            <h2>🔧 8. Tool Walkthroughs</h2>
+
+            <p>This section demonstrates how to extract the system-level artifacts covered in this module using forensic tools. All examples assume you have already extracted the hive files from a forensic image (as described in Module 7.1, Section 9).</p>
+
+            <h3>8.1 Registry Explorer — Extracting System Identification</h3>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>Step-by-Step: Computer Name &amp; Time Zone in Registry Explorer</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <ol>
+                        <li><strong>Load the SYSTEM hive:</strong> File → Load Hive → select the extracted <code>SYSTEM</code> file (include <code>.LOG1</code>/<code>.LOG2</code> in the same directory for automatic transaction log replay)</li>
+                        <li><strong>Determine the active ControlSet:</strong> Navigate to <code>Select</code> key → note the <code>Current</code> value (e.g., 1 = ControlSet001)</li>
+                        <li><strong>Find the computer name:</strong> Navigate to <code>ControlSet001\Control\ComputerName\ComputerName</code> → the <code>ComputerName</code> value contains the machine name</li>
+                        <li><strong>Find the time zone:</strong> Navigate to <code>ControlSet001\Control\TimeZoneInformation</code> → note <code>TimeZoneKeyName</code> and <code>Bias</code> values</li>
+                        <li><strong>Find the shutdown time:</strong> Navigate to <code>ControlSet001\Control\Windows</code> → the <code>ShutdownTime</code> value contains a FILETIME timestamp (Registry Explorer decodes this automatically)</li>
+                        <li><strong>Bookmark each finding:</strong> Right-click each key → Add Bookmark → add a note describing the artifact</li>
+                    </ol>
+                    <p><strong>Example output:</strong></p>
+                    <div class="tool-output"><span class="comment">--- Computer Identification Summary ---</span>
+
+Computer Name:     <span class="value-hl">DESKTOP-A1B2C3D</span>
+Time Zone:         <span class="value-hl">Pacific Standard Time (UTC-8:00)</span>
+Active Bias:       <span class="value-hl">480 minutes</span>
+Last Shutdown:     <span class="value-hl">2026-02-28 17:45:23 UTC</span>
+                   <span class="comment">(= 2026-02-28 09:45:23 PST)</span></div>
+                </div>
+            </div>
+
+            <h3>8.2 RegRipper — Automated System Artifact Extraction</h3>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>Step-by-Step: RegRipper with SYSTEM and SOFTWARE Hives</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <p>RegRipper uses plugins to automatically extract known artifacts. Key plugins for system-level analysis:</p>
+
+                    <h4>SYSTEM Hive Plugins</h4>
+                    <pre><code>rip.exe -r C:\Evidence\SYSTEM -p compname
+rip.exe -r C:\Evidence\SYSTEM -p timezone
+rip.exe -r C:\Evidence\SYSTEM -p shutdown
+rip.exe -r C:\Evidence\SYSTEM -p usbstor
+rip.exe -r C:\Evidence\SYSTEM -p mountdev
+rip.exe -r C:\Evidence\SYSTEM -p nic2</code></pre>
+
+                    <h4>SOFTWARE Hive Plugins</h4>
+                    <pre><code>rip.exe -r C:\Evidence\SOFTWARE -p winver
+rip.exe -r C:\Evidence\SOFTWARE -p uninstall
+rip.exe -r C:\Evidence\SOFTWARE -p networklist
+rip.exe -r C:\Evidence\SOFTWARE -p profilelist</code></pre>
+
+                    <h4>SAM Hive Plugins</h4>
+                    <pre><code>rip.exe -r C:\Evidence\SAM -p samparse</code></pre>
+
+                    <p><strong>Example <code>samparse</code> output:</strong></p>
+                    <div class="tool-output"><span class="comment">--- RegRipper: samparse plugin ---</span>
+
+User: <span class="highlight">Administrator</span> [500]
+  Account Created:     2025-09-15 10:23:45 UTC
+  Last Login:          &lt;Never&gt;
+  Login Count:         0
+  Password Last Set:   2025-09-15 10:23:45 UTC
+  Account Flags:       Disabled, Password Not Required
+
+User: <span class="highlight">jsmith</span> [1001]
+  Account Created:     2025-09-15 10:30:12 UTC
+  Last Login:          <span class="value-hl">2026-02-28 09:12:33 UTC</span>
+  Login Count:         <span class="value-hl">247</span>
+  Password Last Set:   2025-12-01 14:55:08 UTC
+  Account Flags:       Normal Account
+
+User: <span class="highlight">temp_user</span> [1002]
+  Account Created:     <span class="value-hl">2026-02-25 22:14:07 UTC</span>
+  Last Login:          <span class="value-hl">2026-02-27 03:41:55 UTC</span>
+  Login Count:         <span class="value-hl">3</span>
+  Password Last Set:   2026-02-25 22:14:07 UTC
+  Account Flags:       Normal Account</div>
+
+                    <div class="forensic-note">
+                        <div class="note-title">🔍 Analysis of Sample Output</div>
+                        <p>The <code>temp_user</code> account is suspicious: it was created very recently (February 25), has only 3 logins, and was accessed at unusual hours (3:41 AM). This pattern could indicate an unauthorized account created by an attacker or insider. This finding would warrant further investigation in the user's NTUSER.DAT (Module 7.3) and correlation with event logs.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>8.3 Autopsy — Integrated Registry Analysis</h3>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>Using Autopsy's Built-in Registry Modules</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <p>Autopsy automatically parses Registry hive files when you run the <strong>Recent Activity</strong> ingest module. System-level artifacts appear under:</p>
+                    <ul>
+                        <li><strong>Data Artifacts → Operating System Information:</strong> Computer name, OS version, install date</li>
+                        <li><strong>Data Artifacts → Operating System User Account:</strong> User accounts from SAM</li>
+                        <li><strong>Data Artifacts → USB Device Attached:</strong> USB device connection history</li>
+                        <li><strong>Data Artifacts → Installed Programs:</strong> Software from the Uninstall key</li>
+                    </ul>
+                    <p><strong>Advantages of using Autopsy:</strong></p>
+                    <ul>
+                        <li>Automatic hive detection — no manual extraction required</li>
+                        <li>Results integrated with timeline analysis</li>
+                        <li>Keyword search works across Registry data and all other data sources</li>
+                        <li>Built-in reporting generates formatted output</li>
+                    </ul>
+                    <p><strong>Limitation:</strong> Autopsy's Registry parsing may not extract every artifact that specialized tools (Registry Explorer, RegRipper) can find. For thorough analysis, use Autopsy for initial triage and then supplement with specialized tools for deep-dive analysis.</p>
+                </div>
+            </div>
+
+            <button class="section-complete-btn" data-section="8" onclick="markComplete(8)">
+                ✓ Mark Section 8 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 9: INTERACTIVE ACTIVITIES ========== -->
+        <section class="module-section" id="section9">
+            <h2>🧩 9. Interactive Activities</h2>
+
+            <!-- ACTIVITY 1: MULTIPLE CHOICE -->
+            <div class="activity-container">
+                <h3>🎮 Activity 1: System Artifact Identification</h3>
+
+                <div class="activity-question" id="q1">
+                    <p>1. You need to determine the time zone of a suspect's computer from a forensic image. Which hive file and Registry path do you examine?</p>
+                    <label><input type="radio" name="q1" value="a"> SOFTWARE hive → HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion</label>
+                    <label><input type="radio" name="q1" value="b"> SYSTEM hive → HKLM\SYSTEM\CurrentControlSet\Control\TimeZoneInformation</label>
+                    <label><input type="radio" name="q1" value="c"> SAM hive → HKLM\SAM\SAM\Domains\Account</label>
+                    <label><input type="radio" name="q1" value="d"> NTUSER.DAT → HKCU\Control Panel\International</label>
+                    <div class="feedback" id="fb-q1"></div>
+                </div>
+
+                <div class="activity-question" id="q2">
+                    <p>2. When examining an offline SYSTEM hive file, you do not see a "CurrentControlSet" key. What should you do?</p>
+                    <label><input type="radio" name="q2" value="a"> The hive file is corrupted — re-extract it from the forensic image</label>
+                    <label><input type="radio" name="q2" value="b"> Check the Select key's "Current" value to determine which ControlSet00X was active</label>
+                    <label><input type="radio" name="q2" value="c"> Use regedit.exe to load the hive and it will create CurrentControlSet automatically</label>
+                    <label><input type="radio" name="q2" value="d"> Examine ControlSet002 because it is always the active one</label>
+                    <div class="feedback" id="fb-q2"></div>
+                </div>
+
+                <div class="activity-question" id="q3">
+                    <p>3. A RegRipper samparse output shows an account created 3 days before evidence seizure with only 2 logins at 2:00 AM and 3:00 AM. What is the most reasonable forensic interpretation?</p>
+                    <label><input type="radio" name="q3" value="a"> This is a normal user account — no further investigation needed</label>
+                    <label><input type="radio" name="q3" value="b"> This is a suspicious account that warrants further investigation — recently created, low usage, unusual hours</label>
+                    <label><input type="radio" name="q3" value="c"> This account was created by Windows automatically during an update</label>
+                    <label><input type="radio" name="q3" value="d"> The SAM data is unreliable and should be disregarded</label>
+                    <div class="feedback" id="fb-q3"></div>
+                </div>
+
+                <div class="activity-question" id="q4">
+                    <p>4. Which Registry location maps USB storage devices to the drive letters they were assigned?</p>
+                    <label><input type="radio" name="q4" value="a"> HKLM\SYSTEM\CurrentControlSet\Enum\USBSTOR</label>
+                    <label><input type="radio" name="q4" value="b"> HKLM\SYSTEM\MountedDevices</label>
+                    <label><input type="radio" name="q4" value="c"> HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall</label>
+                    <label><input type="radio" name="q4" value="d"> HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2</label>
+                    <div class="feedback" id="fb-q4"></div>
+                </div>
+
+                <div class="activity-question" id="q5">
+                    <p>5. The InstallDate value under HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion stores a timestamp in which format?</p>
+                    <label><input type="radio" name="q5" value="a"> Windows FILETIME (100-nanosecond intervals since January 1, 1601)</label>
+                    <label><input type="radio" name="q5" value="b"> Unix epoch (seconds since January 1, 1970)</label>
+                    <label><input type="radio" name="q5" value="c"> Human-readable string (e.g., "2026-03-04")</label>
+                    <label><input type="radio" name="q5" value="d"> SYSTEMTIME structure (16-byte binary)</label>
+                    <div class="feedback" id="fb-q5"></div>
+                </div>
+
+                <div class="activity-question" id="q6">
+                    <p>6. To determine which user was logged in when a USB device was connected, which Registry location provides per-user device attribution?</p>
+                    <label><input type="radio" name="q6" value="a"> HKLM\SYSTEM\CurrentControlSet\Enum\USBSTOR</label>
+                    <label><input type="radio" name="q6" value="b"> HKLM\SYSTEM\MountedDevices</label>
+                    <label><input type="radio" name="q6" value="c"> HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2</label>
+                    <label><input type="radio" name="q6" value="d"> HKLM\SAM\SAM\Domains\Account\Users</label>
+                    <div class="feedback" id="fb-q6"></div>
+                </div>
+
+                <button class="check-btn" onclick="checkActivity1()">Check Answers</button>
+                <div class="feedback" id="fb-activity1"></div>
+            </div>
+
+            <!-- ACTIVITY 2: ARTIFACT MAPPING -->
+            <div class="activity-container">
+                <h3>🎮 Activity 2: Artifact → Hive Mapping</h3>
+                <p>For each artifact, select the correct hive file where it is primarily found.</p>
+
+                <div class="activity-question">
+                    <div style="margin-bottom: 12px;">
+                        <label for="map1" style="display: inline; padding: 0;"><strong>Computer Name:</strong></label>
+                        <select id="map1" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d1e0; font-size: 0.9rem; margin-left: 8px;">
+                            <option value="">— Select hive —</option>
+                            <option value="system">SYSTEM</option>
+                            <option value="software">SOFTWARE</option>
+                            <option value="sam">SAM</option>
+                            <option value="ntuser">NTUSER.DAT</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label for="map2" style="display: inline; padding: 0;"><strong>Installed Software List:</strong></label>
+                        <select id="map2" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d1e0; font-size: 0.9rem; margin-left: 8px;">
+                            <option value="">— Select hive —</option>
+                            <option value="system">SYSTEM</option>
+                            <option value="software">SOFTWARE</option>
+                            <option value="sam">SAM</option>
+                            <option value="ntuser">NTUSER.DAT</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label for="map3" style="display: inline; padding: 0;"><strong>User Account Enumeration:</strong></label>
+                        <select id="map3" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d1e0; font-size: 0.9rem; margin-left: 8px;">
+                            <option value="">— Select hive —</option>
+                            <option value="system">SYSTEM</option>
+                            <option value="software">SOFTWARE</option>
+                            <option value="sam">SAM</option>
+                            <option value="ntuser">NTUSER.DAT</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label for="map4" style="display: inline; padding: 0;"><strong>USB Device History (USBSTOR):</strong></label>
+                        <select id="map4" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d1e0; font-size: 0.9rem; margin-left: 8px;">
+                            <option value="">— Select hive —</option>
+                            <option value="system">SYSTEM</option>
+                            <option value="software">SOFTWARE</option>
+                            <option value="sam">SAM</option>
+                            <option value="ntuser">NTUSER.DAT</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label for="map5" style="display: inline; padding: 0;"><strong>Network Connection History:</strong></label>
+                        <select id="map5" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d1e0; font-size: 0.9rem; margin-left: 8px;">
+                            <option value="">— Select hive —</option>
+                            <option value="system">SYSTEM</option>
+                            <option value="software">SOFTWARE</option>
+                            <option value="sam">SAM</option>
+                            <option value="ntuser">NTUSER.DAT</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label for="map6" style="display: inline; padding: 0;"><strong>OS Version &amp; Install Date:</strong></label>
+                        <select id="map6" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d1e0; font-size: 0.9rem; margin-left: 8px;">
+                            <option value="">— Select hive —</option>
+                            <option value="system">SYSTEM</option>
+                            <option value="software">SOFTWARE</option>
+                            <option value="sam">SAM</option>
+                            <option value="ntuser">NTUSER.DAT</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label for="map7" style="display: inline; padding: 0;"><strong>Time Zone Configuration:</strong></label>
+                        <select id="map7" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d1e0; font-size: 0.9rem; margin-left: 8px;">
+                            <option value="">— Select hive —</option>
+                            <option value="system">SYSTEM</option>
+                            <option value="software">SOFTWARE</option>
+                            <option value="sam">SAM</option>
+                            <option value="ntuser">NTUSER.DAT</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label for="map8" style="display: inline; padding: 0;"><strong>User Profile Paths (ProfileList):</strong></label>
+                        <select id="map8" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d1e0; font-size: 0.9rem; margin-left: 8px;">
+                            <option value="">— Select hive —</option>
+                            <option value="system">SYSTEM</option>
+                            <option value="software">SOFTWARE</option>
+                            <option value="sam">SAM</option>
+                            <option value="ntuser">NTUSER.DAT</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="check-btn" onclick="checkMapping()">Check Matches</button>
+                <div class="feedback" id="fb-mapping"></div>
+            </div>
+
+            <!-- ACTIVITY 3: SCENARIO ANALYSIS -->
+            <div class="activity-container">
+                <h3>🎮 Activity 3: Forensic Scenario Analysis</h3>
+                <p>Read the following RegRipper output and answer the questions below.</p>
+
+                <div class="tool-output"><span class="comment">--- RegRipper: compname plugin (SYSTEM hive) ---</span>
+ComputerName: <span class="value-hl">ACCT-PC-042</span>
+
+<span class="comment">--- RegRipper: timezone plugin (SYSTEM hive) ---</span>
+TimeZoneKeyName: <span class="value-hl">Eastern Standard Time</span>
+Bias: <span class="value-hl">300</span>
+ActiveTimeBias: <span class="value-hl">300</span>
+
+<span class="comment">--- RegRipper: shutdown plugin (SYSTEM hive) ---</span>
+ShutdownTime: <span class="value-hl">2026-03-01 23:15:42 UTC</span>
+
+<span class="comment">--- RegRipper: winver plugin (SOFTWARE hive) ---</span>
+ProductName: <span class="value-hl">Windows 10 Pro</span>
+CurrentBuild: <span class="value-hl">19045</span>
+InstallDate: <span class="value-hl">2024-06-15 09:30:00 UTC</span>
+RegisteredOwner: <span class="value-hl">Accounting Dept</span></div>
+
+                <div class="activity-question" id="q-sc1">
+                    <p>Based on the output above, what is the local time of the last shutdown? (Remember: EST = UTC−5:00)</p>
+                    <label><input type="radio" name="q-sc1" value="a"> March 1, 2026 at 11:15:42 PM EST</label>
+                    <label><input type="radio" name="q-sc1" value="b"> March 2, 2026 at 4:15:42 AM EST</label>
+                    <label><input type="radio" name="q-sc1" value="c"> March 1, 2026 at 6:15:42 PM EST</label>
+                    <label><input type="radio" name="q-sc1" value="d"> March 1, 2026 at 5:15:42 PM EST</label>
+                    <div class="feedback" id="fb-sc1"></div>
+                </div>
+
+                <div class="activity-question" id="q-sc2">
+                    <p>The ActiveTimeBias equals the standard Bias (both 300). What does this tell you about DST?</p>
+                    <label><input type="radio" name="q-sc2" value="a"> Daylight Saving Time was active when the system was last running</label>
+                    <label><input type="radio" name="q-sc2" value="b"> Daylight Saving Time was NOT active — the system was on standard time</label>
+                    <label><input type="radio" name="q-sc2" value="c"> The system does not support Daylight Saving Time</label>
+                    <label><input type="radio" name="q-sc2" value="d"> The time zone data is corrupted</label>
+                    <div class="feedback" id="fb-sc2"></div>
+                </div>
+
+                <button class="check-btn" onclick="checkScenario()">Check Answers</button>
+            </div>
+
+            <button class="section-complete-btn" data-section="9" onclick="markComplete(9)">
+                ✓ Mark Section 9 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 10: KNOWLEDGE CHECK ========== -->
+        <section class="module-section" id="section10">
+            <h2>✅ 10. Knowledge Check — Module 7.2</h2>
+
+            <div class="knowledge-check">
+                <h3>📝 Test Your Understanding</h3>
+                <p class="instructions">Answer the following questions in your own words before revealing the model answers. These questions align with the Lab Activity 7 requirements for system-level artifact analysis.</p>
+
+                <div class="kc-question">
+                    <div class="q-text">1. Describe the step-by-step process to determine the computer name from an offline SYSTEM hive file. Include how you identify the correct ControlSet.</div>
+                    <textarea aria-label="Your answer to question 1" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc1')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc1">
+                        <p><strong>Step 1:</strong> Open the extracted SYSTEM hive file in Registry Explorer (with .LOG1/.LOG2 files in the same directory for transaction log replay).</p>
+                        <p><strong>Step 2:</strong> Navigate to the <code>Select</code> key and check the <code>Current</code> value to determine the active ControlSet number (e.g., if Current = 1, use ControlSet001).</p>
+                        <p><strong>Step 3:</strong> Navigate to <code>ControlSet001\Control\ComputerName\ComputerName</code>.</p>
+                        <p><strong>Step 4:</strong> Read the <code>ComputerName</code> value (REG_SZ) — this is the NetBIOS computer name.</p>
+                        <p><strong>Step 5:</strong> Document the finding including the full Registry path, value, key last-write timestamp, and the tool used.</p>
+                    </div>
+                </div>
+
+                <div class="kc-question">
+                    <div class="q-text">2. Why is the time zone setting considered one of the most critical system-level artifacts? What could go wrong if an examiner fails to account for it?</div>
+                    <textarea aria-label="Your answer to question 2" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc2')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc2">
+                        <p>The time zone is critical because nearly all Windows timestamps (Registry key last-write times, NTFS file timestamps) are stored in <strong>UTC</strong>. To present accurate local times in a forensic report, the examiner must convert UTC to the system's local time zone. Without this conversion — or with an incorrect conversion — all timestamps in the report could be wrong.</p>
+                        <p><strong>Consequences of error:</strong> An incorrect time zone could shift events by hours, potentially placing activity at the wrong time of day. This could undermine alibis, misrepresent the sequence of events, or cause the examiner's findings to be challenged in court. For example, if the system is in Pacific Time (UTC-8) but the examiner reports in Eastern Time (UTC-5), all events would appear to have occurred 3 hours later than they actually did.</p>
+                    </div>
+                </div>
+
+                <div class="kc-question">
+                    <div class="q-text">3. You are examining the SAM hive and find an account named "svc_backup" with RID 1003, created 2 days before the evidence was seized, with 5 logins all occurring between midnight and 4:00 AM. What questions should this raise for the investigator?</div>
+                    <textarea aria-label="Your answer to question 3" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc3')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc3">
+                        <p>This account raises several red flags that warrant further investigation:</p>
+                        <ul>
+                            <li><strong>Recent creation:</strong> Created only 2 days before seizure — was this account authorized? Who created it?</li>
+                            <li><strong>Naming convention:</strong> "svc_backup" mimics a service account naming convention, which could be an attempt to make the account appear legitimate</li>
+                            <li><strong>Unusual login times:</strong> All logins between midnight and 4 AM suggest activity outside normal business hours — was someone accessing the system covertly?</li>
+                            <li><strong>Low login count:</strong> Only 5 logins on a recently created account — consistent with a purpose-built account for a specific task</li>
+                        </ul>
+                        <p><strong>Next steps:</strong> Examine the account's NTUSER.DAT for activity artifacts (Module 7.3), check Windows Event Logs for account creation events (Event ID 4720) and logon events (Event ID 4624), and investigate what programs were executed during those login sessions.</p>
+                    </div>
+                </div>
+
+                <div class="kc-question">
+                    <div class="q-text">4. Explain how you would build a complete picture of a USB device connection by correlating data from at least three different Registry locations.</div>
+                    <textarea aria-label="Your answer to question 4" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc4')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc4">
+                        <p>A complete USB device picture requires correlating data from multiple Registry locations:</p>
+                        <p><strong>1. USBSTOR</strong> (<code>HKLM\SYSTEM\CurrentControlSet\Enum\USBSTOR</code>) — Identifies the device: vendor name, product name, revision, and serial number. The key last-write timestamp indicates the last connection time.</p>
+                        <p><strong>2. USB</strong> (<code>HKLM\SYSTEM\CurrentControlSet\Enum\USB</code>) — Provides the Vendor ID (VID) and Product ID (PID), which can be cross-referenced with USB ID databases to identify the exact manufacturer and model.</p>
+                        <p><strong>3. MountedDevices</strong> (<code>HKLM\SYSTEM\MountedDevices</code>) — Maps the device to the drive letter it was assigned (e.g., E:), connecting the physical device to a logical access point.</p>
+                        <p><strong>4. MountPoints2</strong> (<code>HKCU\...\Explorer\MountPoints2</code> in NTUSER.DAT) — Attributes the device connection to a specific user account, with a timestamp showing when that user last accessed the volume.</p>
+                        <p><strong>Combined narrative:</strong> "A SanDisk Ultra USB 3.0 (serial: 4C530001...) was connected to DESKTOP-A1B2C3D, assigned drive letter E:, and accessed by user jsmith on February 20, 2026 at 4:42 PM."</p>
+                    </div>
+                </div>
+
+                <div class="kc-question">
+                    <div class="q-text">5. What is the difference between the Bias and ActiveTimeBias values in the TimeZoneInformation key, and why does this distinction matter forensically?</div>
+                    <textarea aria-label="Your answer to question 5" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc5')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc5">
+                        <p><strong>Bias</strong> represents the <em>standard</em> time offset from UTC in minutes. For Pacific Standard Time, the Bias is 480 (UTC-8:00).</p>
+                        <p><strong>ActiveTimeBias</strong> represents the <em>current</em> offset including any Daylight Saving Time adjustment. During Pacific Daylight Time, the ActiveTimeBias would be 420 (UTC-7:00) instead of 480.</p>
+                        <p><strong>Forensic importance:</strong> If Bias and ActiveTimeBias are <em>different</em>, DST was active when the system was last running. If they are the <em>same</em>, the system was on standard time. This distinction affects timestamp conversion accuracy. Using the wrong offset (standard vs. daylight) would shift all reported times by one hour — which could be significant in establishing when events occurred.</p>
+                    </div>
+                </div>
+
+                <div class="kc-question">
+                    <div class="q-text">6. You need to determine what software is installed on a suspect's system. Describe the complete process, including which hive to extract, the specific Registry paths to examine, and what information you would document for each installed application.</div>
+                    <textarea aria-label="Your answer to question 6" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc6')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc6">
+                        <p><strong>Hive:</strong> Extract the SOFTWARE hive from <code>C:\Windows\System32\config\SOFTWARE</code> (plus .LOG1/.LOG2 files).</p>
+                        <p><strong>Primary path:</strong> <code>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\</code> — each subkey represents an installed application.</p>
+                        <p><strong>Secondary path (64-bit systems):</strong> <code>HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\</code> — contains 32-bit applications installed on a 64-bit OS.</p>
+                        <p><strong>For each application, document:</strong></p>
+                        <ul>
+                            <li>DisplayName — application name</li>
+                            <li>DisplayVersion — version number</li>
+                            <li>Publisher — software publisher</li>
+                            <li>InstallDate — date installed (YYYYMMDD format)</li>
+                            <li>InstallLocation — where it was installed</li>
+                            <li>Key last-write timestamp — when the Registry entry was last modified</li>
+                        </ul>
+                        <p><strong>Tools:</strong> Use RegRipper's <code>uninstall</code> plugin for automated extraction, or browse manually in Registry Explorer. Flag any anti-forensics tools, hacking tools, encryption software, or applications relevant to the investigation.</p>
+                    </div>
+                </div>
+            </div>
+
+            <button class="section-complete-btn" data-section="10" onclick="markComplete(10)">
+                ✓ Mark Section 10 as Complete
+            </button>
+        </section>
+
+        <!-- MODULE SUMMARY -->
+        <section class="module-section">
+            <h2>📋 Module 7.2 Summary</h2>
+
+            <p>In this module, you learned to extract and interpret system-level forensic artifacts from three critical hive files:</p>
+
+            <ul>
+                <li><strong>SYSTEM hive:</strong> Computer name, time zone (Bias/ActiveTimeBias), last shutdown time, active ControlSet identification, USB device history (USBSTOR), mounted devices, and network interface configuration</li>
+                <li><strong>SOFTWARE hive:</strong> Operating system version and install date, installed software enumeration (including WOW6432Node), autorun/startup programs, network connection history (NetworkList), and user profile paths (ProfileList)</li>
+                <li><strong>SAM hive:</strong> User account enumeration including usernames, RIDs, SIDs, creation dates, last login times, login counts, failed login counts, password change dates, and account status flags</li>
+            </ul>
+
+            <p>You also learned:</p>
+            <ul>
+                <li>How to determine the active <strong>ControlSet</strong> from an offline SYSTEM hive using the <code>Select</code> key</li>
+                <li>How to correlate USB device evidence across <strong>four Registry locations</strong> (USBSTOR, USB, MountedDevices, MountPoints2)</li>
+                <li>How to use <strong>Registry Explorer</strong>, <strong>RegRipper</strong>, and <strong>Autopsy</strong> for system-level artifact extraction</li>
+                <li>The importance of <strong>documenting</strong> all findings with full Registry paths, timestamps, and tool information</li>
+            </ul>
+
+            <div class="info-box">
+                <div class="box-title">⏭️ What's Next</div>
+                <p>In <strong>Module 7.3: User-Level Registry Artifacts (NTUSER.DAT)</strong>, you will shift from system-wide artifacts to per-user evidence. Using the user accounts identified in this module's SAM analysis, you will examine each user's NTUSER.DAT file to extract program execution history (UserAssist), recently accessed files (RecentDocs), typed URLs, search history, and other user activity artifacts.</p>
+            </div>
+        </section>
+
+        <!-- KEY TERMS -->
+        <section class="module-section">
+            <h2>📖 Key Terms — Module 7.2</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Term</th>
+                            <th>Definition</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>ControlSet</strong></td>
+                            <td>A complete set of system configuration data in the SYSTEM hive; Windows maintains multiple ControlSets for recovery purposes</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CurrentControlSet</strong></td>
+                            <td>A volatile symbolic link that exists only on a running system, pointing to the active ControlSet; does not exist in offline hive files</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SAM (Security Account Manager)</strong></td>
+                            <td>The hive file storing local user account information including usernames, RIDs, password hashes, and account metadata</td>
+                        </tr>
+                        <tr>
+                            <td><strong>RID (Relative Identifier)</strong></td>
+                            <td>A numeric identifier unique to each account within a Windows system; built-in accounts have well-known RIDs (500 = Administrator, 501 = Guest)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SID (Security Identifier)</strong></td>
+                            <td>A unique identifier for a security principal in Windows, combining machine-specific values with the account's RID</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Bias</strong></td>
+                            <td>The standard time zone offset from UTC in minutes, stored in the TimeZoneInformation key</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ActiveTimeBias</strong></td>
+                            <td>The current time zone offset including DST adjustment; differs from Bias when Daylight Saving Time is active</td>
+                        </tr>
+                        <tr>
+                            <td><strong>USBSTOR</strong></td>
+                            <td>The Registry key under HKLM\SYSTEM that records USB mass storage device connection history</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MountedDevices</strong></td>
+                            <td>A SYSTEM hive key that maps drive letters and volume GUIDs to physical device identifiers</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MountPoints2</strong></td>
+                            <td>A per-user key in NTUSER.DAT recording which volumes a user has accessed, providing user attribution for device connections</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ProfileList</strong></td>
+                            <td>A SOFTWARE hive key mapping user SIDs to their profile directory paths (e.g., C:\Users\jsmith)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Unix Epoch Timestamp</strong></td>
+                            <td>A timestamp format representing seconds elapsed since January 1, 1970 00:00:00 UTC; used by some Registry values (e.g., InstallDate)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>WOW6432Node</strong></td>
+                            <td>A Registry redirection node on 64-bit Windows that stores Registry entries for 32-bit applications</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- NEXT MODULE -->
+        <a href="#" class="next-module" aria-label="Proceed to Module 7.3: User-Level Registry Artifacts">
+            Proceed to Module 7.3: User-Level Registry Artifacts (NTUSER.DAT) →
+        </a>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="module-footer">
+        <p>CSC 156 — Digital Forensics Fundamentals | Week 7: Windows Forensics I</p>
+        <p>Module 7.2: System-Level Registry Artifacts</p>
+        <p>© 2026 CSC 156. For educational use only.</p>
+    </footer>
+
+    <!-- ===== JAVASCRIPT ===== -->
+    <script>
+        // ===== PROGRESS TRACKING (Session Storage) =====
+        const TOTAL_SECTIONS = 10;
+        const STORAGE_KEY = 'csc156_mod72_progress';
+
+        function getProgress() {
+            try {
+                const data = sessionStorage.getItem(STORAGE_KEY);
+                return data ? JSON.parse(data) : {};
+            } catch (e) { return {}; }
+        }
+
+        function saveProgress(data) {
+            try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+            catch (e) { /* unavailable */ }
+        }
+
+        function markComplete(sectionNum) {
+            const progress = getProgress();
+            progress['section' + sectionNum] = true;
+            saveProgress(progress);
+            const btn = document.querySelector('[data-section="' + sectionNum + '"]');
+            if (btn) {
+                btn.classList.add('completed');
+                btn.textContent = '\u2713 Section ' + sectionNum + ' Completed';
+                btn.setAttribute('aria-label', 'Section ' + sectionNum + ' marked as complete');
+            }
+            const navLink = document.getElementById('nav-s' + sectionNum);
+            if (navLink) navLink.classList.add('completed');
+            updateProgressBar();
+        }
+
+        function updateProgressBar() {
+            const progress = getProgress();
+            let completed = 0;
+            for (let i = 1; i <= TOTAL_SECTIONS; i++) {
+                if (progress['section' + i]) completed++;
+            }
+            const pct = Math.round((completed / TOTAL_SECTIONS) * 100);
+            const bar = document.getElementById('progressBar');
+            const text = document.getElementById('progressText');
+            if (bar) bar.style.width = pct + '%';
+            if (text) text.textContent = pct + '% complete';
+            const container = document.querySelector('.progress-container');
+            if (container) container.setAttribute('aria-valuenow', pct);
+        }
+
+        function restoreProgress() {
+            const progress = getProgress();
+            for (let i = 1; i <= TOTAL_SECTIONS; i++) {
+                if (progress['section' + i]) {
+                    const btn = document.querySelector('[data-section="' + i + '"]');
+                    if (btn) {
+                        btn.classList.add('completed');
+                        btn.textContent = '\u2713 Section ' + i + ' Completed';
+                    }
+                    const navLink = document.getElementById('nav-s' + i);
+                    if (navLink) navLink.classList.add('completed');
+                }
+            }
+            updateProgressBar();
+        }
+
+        // ===== COLLAPSIBLE SECTIONS =====
+        function toggleCollapsible(button) {
+            const content = button.nextElementSibling;
+            const isOpen = content.classList.contains('open');
+            content.classList.toggle('open');
+            button.setAttribute('aria-expanded', !isOpen);
+        }
+
+        // ===== TABS =====
+        function switchTab(tabId) {
+            // Deactivate all tabs
+            document.querySelectorAll('.tab-btn').forEach(function(btn) {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-selected', 'false');
+            });
+            document.querySelectorAll('.tab-panel').forEach(function(panel) {
+                panel.classList.remove('active');
+            });
+            // Activate selected
+            var btn = document.getElementById('btn-' + tabId);
+            var panel = document.getElementById('tab-' + tabId);
+            if (btn) { btn.classList.add('active'); btn.setAttribute('aria-selected', 'true'); }
+            if (panel) { panel.classList.add('active'); }
+        }
+
+        // ===== ACTIVITY 1: MULTIPLE CHOICE =====
+        function checkActivity1() {
+            const answers = {
+                q1: { correct: 'b', explanation: 'Time zone data is in the SYSTEM hive under CurrentControlSet\\Control\\TimeZoneInformation.' },
+                q2: { correct: 'b', explanation: 'CurrentControlSet is a volatile link that only exists on running systems. Check the Select key\'s Current value to identify the active ControlSet.' },
+                q3: { correct: 'b', explanation: 'A recently created account with low usage at unusual hours is suspicious and warrants further investigation for possible unauthorized access.' },
+                q4: { correct: 'b', explanation: 'MountedDevices maps drive letters to physical device identifiers. USBSTOR identifies the device; MountedDevices shows which drive letter it received.' },
+                q5: { correct: 'b', explanation: 'The InstallDate value uses Unix epoch format (seconds since January 1, 1970), not Windows FILETIME format.' },
+                q6: { correct: 'c', explanation: 'MountPoints2 in NTUSER.DAT is per-user, providing attribution of device access to a specific user account.' }
+            };
+
+            let totalCorrect = 0;
+            const totalQuestions = Object.keys(answers).length;
+
+            for (const qId in answers) {
+                const selected = document.querySelector('input[name="' + qId + '"]:checked');
+                const fb = document.getElementById('fb-' + qId);
+                if (!selected) {
+                    fb.className = 'feedback incorrect';
+                    fb.textContent = 'Please select an answer. ' + answers[qId].explanation;
+                    fb.style.display = 'block';
+                } else if (selected.value === answers[qId].correct) {
+                    fb.className = 'feedback correct';
+                    fb.textContent = '\u2713 Correct! ' + answers[qId].explanation;
+                    fb.style.display = 'block';
+                    totalCorrect++;
+                } else {
+                    fb.className = 'feedback incorrect';
+                    fb.textContent = '\u2717 Incorrect. ' + answers[qId].explanation;
+                    fb.style.display = 'block';
+                }
+            }
+
+            const overallFb = document.getElementById('fb-activity1');
+            if (totalCorrect === totalQuestions) {
+                overallFb.className = 'feedback correct';
+                overallFb.textContent = 'Excellent! You got all ' + totalQuestions + ' questions correct!';
+            } else {
+                overallFb.className = 'feedback incorrect';
+                overallFb.textContent = 'You got ' + totalCorrect + ' out of ' + totalQuestions + ' correct. Review the sections above and try again.';
+            }
+            overallFb.style.display = 'block';
+        }
+
+        // ===== ACTIVITY 2: ARTIFACT MAPPING =====
+        function checkMapping() {
+            const correctAnswers = {
+                map1: 'system',    // Computer Name
+                map2: 'software',  // Installed Software
+                map3: 'sam',       // User Account Enumeration
+                map4: 'system',    // USB Device History
+                map5: 'software',  // Network Connection History
+                map6: 'software',  // OS Version
+                map7: 'system',    // Time Zone
+                map8: 'software'   // ProfileList
+            };
+
+            let correct = 0;
+            const total = Object.keys(correctAnswers).length;
+
+            for (const id in correctAnswers) {
+                const select = document.getElementById(id);
+                if (select.value === correctAnswers[id]) {
+                    select.style.borderColor = '#16a34a';
+                    select.style.backgroundColor = '#d1fae5';
+                    correct++;
+                } else if (select.value === '') {
+                    select.style.borderColor = '#d97706';
+                    select.style.backgroundColor = '#fef3c7';
+                } else {
+                    select.style.borderColor = '#dc2626';
+                    select.style.backgroundColor = '#fef2f2';
+                }
+            }
+
+            const fb = document.getElementById('fb-mapping');
+            if (correct === total) {
+                fb.className = 'feedback correct';
+                fb.textContent = 'Excellent! All ' + total + ' artifact mappings are correct!';
+            } else {
+                fb.className = 'feedback incorrect';
+                fb.textContent = 'You got ' + correct + ' out of ' + total + ' correct. Green = correct, Red = incorrect, Yellow = unanswered. Review the artifact cards in Sections 2-4 and 7.';
+            }
+            fb.style.display = 'block';
+        }
+
+        // ===== ACTIVITY 3: SCENARIO =====
+        function checkScenario() {
+            // Question SC1
+            const sc1 = document.querySelector('input[name="q-sc1"]:checked');
+            const fb1 = document.getElementById('fb-sc1');
+            if (!sc1) {
+                fb1.className = 'feedback incorrect';
+                fb1.textContent = 'Please select an answer.';
+            } else if (sc1.value === 'c') {
+                fb1.className = 'feedback correct';
+                fb1.textContent = '\u2713 Correct! 23:15:42 UTC minus 5 hours (EST, Bias=300 minutes) = 18:15:42 EST, which is 6:15:42 PM on March 1, 2026.';
+            } else {
+                fb1.className = 'feedback incorrect';
+                fb1.textContent = '\u2717 Incorrect. To convert from UTC to EST: subtract 5 hours. 23:15:42 UTC - 5:00 = 18:15:42 EST (6:15:42 PM) on March 1, 2026.';
+            }
+            fb1.style.display = 'block';
+
+            // Question SC2
+            const sc2 = document.querySelector('input[name="q-sc2"]:checked');
+            const fb2 = document.getElementById('fb-sc2');
+            if (!sc2) {
+                fb2.className = 'feedback incorrect';
+                fb2.textContent = 'Please select an answer.';
+            } else if (sc2.value === 'b') {
+                fb2.className = 'feedback correct';
+                fb2.textContent = '\u2713 Correct! When ActiveTimeBias equals Bias (both 300), the system was on standard time — DST was not active. During EDT, ActiveTimeBias would be 240 (UTC-4).';
+            } else {
+                fb2.className = 'feedback incorrect';
+                fb2.textContent = '\u2717 Incorrect. When ActiveTimeBias equals Bias, DST is NOT active. If DST were active for Eastern time, ActiveTimeBias would be 240 (UTC-4) instead of 300 (UTC-5).';
+            }
+            fb2.style.display = 'block';
+        }
+
+        // ===== KNOWLEDGE CHECK REVEAL =====
+        function revealAnswer(id) {
+            const answer = document.getElementById(id);
+            if (answer) answer.classList.toggle('visible');
+        }
+
+        // ===== INITIALIZE =====
+        window.addEventListener('DOMContentLoaded', function() {
+            restoreProgress();
+        });
+    </script>
+</body>
+</html>

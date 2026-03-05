@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Activity 7: Windows Registry and User Artifact Analysis — CSC 156</title>
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        html{scroll-behavior:smooth;font-size:16px}
+        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;line-height:1.7;color:#1a1a2e;background:#f5f5fa;min-height:100vh}
+
+        .skip-link{position:absolute;top:-100px;left:0;background:#1a1a2e;color:#fff;padding:12px 24px;z-index:10000;font-size:1rem;transition:top .2s}
+        .skip-link:focus{top:0}
+
+        .progress-container{position:fixed;top:0;left:0;width:100%;height:5px;background:#d1d1e0;z-index:9999}
+        .progress-bar{height:100%;width:0%;background:linear-gradient(90deg,#2563eb,#7c3aed);transition:width .3s}
+        .progress-text{position:fixed;top:7px;right:16px;font-size:.72rem;font-weight:600;color:#4a4a6a;background:rgba(245,245,250,.92);padding:2px 10px;border-radius:10px;z-index:10000;border:1px solid #d1d1e0}
+
+        .page-wrapper{max-width:800px;margin:0 auto;padding:0 16px}
+
+        /* ===== HEADER ===== */
+        .lab-header{background:linear-gradient(135deg,#1a1a2e 0%,#2d2d5e 60%,#3a3a7e 100%);color:#fff;padding:40px 28px 32px;margin-top:5px;border-radius:0 0 16px 16px}
+        .lab-header .course-tag{display:inline-block;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);padding:3px 14px;border-radius:16px;font-size:.8rem;letter-spacing:.04em;margin-bottom:10px}
+        .lab-header h1{font-size:1.6rem;font-weight:700;line-height:1.35;margin-bottom:6px}
+        .lab-header .subtitle{font-size:1rem;color:#c8c8f0;margin-bottom:16px}
+        .lab-meta{display:flex;flex-wrap:wrap;gap:16px;font-size:.85rem;color:#d0d0f0}
+        .lab-meta span{display:flex;align-items:center;gap:5px}
+
+        /* ===== CONTENT CARDS ===== */
+        .card{background:#fff;border:1px solid #d1d1e0;border-radius:12px;padding:28px 24px;margin:24px 0;box-shadow:0 1px 6px rgba(0,0,0,.04)}
+        .card h2{font-size:1.35rem;color:#1a1a2e;margin-bottom:6px;padding-bottom:10px;border-bottom:3px solid #2563eb}
+        .card h3{font-size:1.1rem;color:#2d2d5e;margin:20px 0 10px}
+        .card h4{font-size:1rem;color:#3a3a6a;margin:16px 0 8px}
+        .card p{margin-bottom:12px;color:#2a2a4a}
+
+        /* ===== SPECIAL BOXES ===== */
+        .objective-box{background:#eef2ff;border:1px solid #c7d2fe;border-left:5px solid #2563eb;border-radius:8px;padding:18px 20px;margin:16px 0}
+        .objective-box h3{color:#1e40af;margin:0 0 10px;font-size:1.05rem}
+        .objective-box ul{margin:0;padding-left:20px}
+        .objective-box li{margin-bottom:6px;color:#1e3a5f;line-height:1.55}
+
+        .warning-box{background:#fef2f2;border:1px solid #fecaca;border-left:5px solid #dc2626;border-radius:8px;padding:16px 20px;margin:16px 0}
+        .warning-box .box-title{font-weight:700;color:#991b1b;margin-bottom:4px}
+        .warning-box p,.warning-box li{color:#7f1d1d}
+        .warning-box ul{margin:8px 0 4px 20px}
+
+        .info-box{background:#eff6ff;border:1px solid #bfdbfe;border-left:5px solid #2563eb;border-radius:8px;padding:16px 20px;margin:16px 0}
+        .info-box .box-title{font-weight:700;color:#1e40af;margin-bottom:4px}
+        .info-box p,.info-box li{color:#1e3a5f}
+        .info-box ul{margin:8px 0 4px 20px}
+
+        .tip-box{background:#f0fdf4;border:1px solid #bbf7d0;border-left:5px solid #16a34a;border-radius:8px;padding:16px 20px;margin:16px 0}
+        .tip-box .box-title{font-weight:700;color:#15803d;margin-bottom:4px}
+        .tip-box p,.tip-box li{color:#14532d}
+        .tip-box ul{margin:8px 0 4px 20px}
+
+        .forensic-box{background:#fef3c7;border:1px solid #fcd34d;border-left:5px solid #d97706;border-radius:8px;padding:16px 20px;margin:16px 0}
+        .forensic-box .box-title{font-weight:700;color:#92400e;margin-bottom:4px}
+        .forensic-box p,.forensic-box li{color:#78350f}
+        .forensic-box ul{margin:8px 0 4px 20px}
+
+        /* ===== TABLES ===== */
+        .table-wrap{overflow-x:auto;margin:14px 0;border-radius:8px;border:1px solid #d1d1e0}
+        table{width:100%;border-collapse:collapse;font-size:.88rem}
+        thead{background:#1a1a2e;color:#fff}
+        thead th{padding:10px 14px;text-align:left;font-weight:600}
+        tbody tr{border-bottom:1px solid #e5e5f0}
+        tbody tr:nth-child(even){background:#f8f8fc}
+        tbody tr:hover{background:#eef2ff}
+        tbody td{padding:9px 14px;color:#2a2a4a;vertical-align:top}
+
+        /* ===== CODE ===== */
+        code{font-family:'Consolas','Courier New',monospace;background:#f1f5f9;color:#1e293b;padding:2px 5px;border-radius:3px;font-size:.88em;border:1px solid #e2e8f0}
+        pre{background:#1e293b;color:#e2e8f0;padding:18px 20px;border-radius:8px;overflow-x:auto;margin:14px 0;font-family:'Consolas','Courier New',monospace;font-size:.85rem;line-height:1.6;white-space:pre;border:1px solid #334155}
+        pre code{background:none;color:inherit;padding:0;border:none;font-size:inherit;white-space:pre}
+
+        /* ===== TASK STEPS ===== */
+        .task-step{background:#fff;border:2px solid #c7d2fe;border-radius:10px;padding:20px;margin:16px 0;transition:border-color .2s}
+        .task-step:hover{border-color:#818cf8}
+        .task-step .step-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+        .step-number{display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:#2563eb;color:#fff;border-radius:50%;font-weight:700;font-size:.95rem;flex-shrink:0}
+        .step-title{font-weight:700;color:#1e40af;font-size:1.05rem}
+        .step-points{margin-left:auto;background:#eef2ff;color:#3730a3;padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:600;border:1px solid #c7d2fe;white-space:nowrap}
+
+        /* ===== COLLAPSIBLE ===== */
+        .collapsible{margin:14px 0;border:1px solid #d1d1e0;border-radius:8px;overflow:hidden}
+        .collapsible-toggle{width:100%;background:#f8f8fc;border:none;padding:12px 18px;font-size:.95rem;font-weight:600;color:#2d2d5e;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:background .2s;text-align:left}
+        .collapsible-toggle:hover,.collapsible-toggle:focus{background:#eef2ff;outline:2px solid #2563eb;outline-offset:-2px}
+        .collapsible-toggle .arrow{transition:transform .3s;font-size:.8rem}
+        .collapsible-toggle[aria-expanded="true"] .arrow{transform:rotate(180deg)}
+        .collapsible-content{display:none;padding:14px 18px;background:#fff;border-top:1px solid #d1d1e0}
+        .collapsible-content.open{display:block}
+
+        /* ===== CHECKLIST ===== */
+        .checklist{list-style:none;padding:0;margin:12px 0}
+        .checklist li{padding:8px 12px;margin:4px 0;border-radius:6px;display:flex;align-items:flex-start;gap:10px;transition:background .2s}
+        .checklist li:hover{background:#f8f8fc}
+        .checklist input[type="checkbox"]{margin-top:4px;accent-color:#2563eb;width:18px;height:18px;flex-shrink:0;cursor:pointer}
+        .checklist label{cursor:pointer;color:#2a2a4a;flex:1}
+        .checklist li.checked label{text-decoration:line-through;color:#9ca3af}
+
+        /* ===== GRADING RUBRIC ===== */
+        .rubric-item{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #e5e5f0}
+        .rubric-item:last-child{border-bottom:none}
+        .rubric-item .desc{color:#2a2a4a;flex:1}
+        .rubric-pts{background:#eef2ff;color:#3730a3;padding:2px 12px;border-radius:12px;font-size:.82rem;font-weight:700;white-space:nowrap;border:1px solid #c7d2fe}
+        .rubric-total{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#1a1a2e;color:#fff;border-radius:0 0 8px 8px;font-weight:700}
+
+        /* ===== TOOL REFERENCE ===== */
+        .tool-ref{background:#f8f8fc;border:1px solid #d1d1e0;border-radius:8px;padding:14px 18px;margin:10px 0}
+        .tool-ref .tool-name{font-weight:700;color:#2563eb;margin-bottom:4px}
+        .tool-ref .tool-desc{font-size:.88rem;color:#4a4a6a;margin-bottom:6px}
+
+        /* ===== SECTION COMPLETE ===== */
+        .section-complete-btn{display:block;width:100%;padding:12px;background:#f0fdf4;border:2px solid #86efac;border-radius:8px;font-size:.95rem;font-weight:600;color:#166534;cursor:pointer;margin-top:18px;transition:all .2s}
+        .section-complete-btn:hover,.section-complete-btn:focus{background:#d1fae5;border-color:#16a34a;outline:2px solid #16a34a;outline-offset:2px}
+        .section-complete-btn.completed{background:#16a34a;color:#fff;border-color:#16a34a}
+
+        /* ===== LISTS ===== */
+        ul,ol{margin:8px 0 12px 22px}
+        li{margin-bottom:5px;color:#2a2a4a}
+
+        /* ===== FOOTER ===== */
+        .lab-footer{text-align:center;padding:28px 16px;color:#6a6a8a;font-size:.82rem;border-top:1px solid #d1d1e0;margin-top:36px}
+
+        /* ===== RESPONSIVE ===== */
+        @media(max-width:600px){
+            .lab-header{padding:28px 18px 24px}
+            .lab-header h1{font-size:1.3rem}
+            .card{padding:20px 16px}
+            .lab-meta{flex-direction:column;gap:6px}
+            .step-header{flex-wrap:wrap}
+            .step-points{margin-left:0}
+        }
+
+        @media print{
+            .progress-container,.progress-text,.skip-link,.section-complete-btn{display:none}
+            .card{break-inside:avoid;box-shadow:none;border:1px solid #ccc}
+            .collapsible-content{display:block!important}
+        }
+
+        *:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div class="progress-container" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Lab progress">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div class="progress-text" id="progressText" aria-live="polite">0% complete</div>
+
+    <div class="page-wrapper">
+
+        <!-- HEADER -->
+        <header class="lab-header">
+            <div class="course-tag">CSC 156 — Digital Forensics Fundamentals</div>
+            <h1>Lab Activity 7: Windows Registry and User Artifact Analysis</h1>
+            <p class="subtitle">Week 7 — Windows Forensics I: Registry and User Artifacts</p>
+            <div class="lab-meta">
+                <span>📝 Type: Hands-on Lab with Written Deliverable</span>
+                <span>💯 Points: 20</span>
+                <span>⏱ Estimated Time: 3 hours</span>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT -->
+        <main id="main-content">
+
+            <!-- ===== OVERVIEW ===== -->
+            <section class="card" id="overview">
+                <h2>📋 Lab Overview</h2>
+                <p>In this lab, you will perform a <strong>forensic examination</strong> of a provided Windows forensic image. Using the skills and knowledge from Modules 7.1–7.4, you will extract Registry hive files, analyze system-level and user-level artifacts, and compile your findings into a preliminary user activity timeline.</p>
+                <p>This lab bridges the gap between <strong>examination</strong> (extracting artifacts) and <strong>analysis</strong> (interpreting what they mean). You will not only identify artifacts but also explain their forensic significance and correlate them into a coherent investigative narrative.</p>
+
+                <div class="objective-box">
+                    <h3>🎯 Lab Objectives</h3>
+                    <ul>
+                        <li>Extract Registry hive files (SAM, SYSTEM, SOFTWARE, NTUSER.DAT) from a forensic image</li>
+                        <li>Determine the computer name, time zone, and OS version from system hives</li>
+                        <li>Enumerate user accounts from the SAM hive and identify account metadata</li>
+                        <li>Extract UserAssist entries to determine program execution history</li>
+                        <li>Analyze RecentDocs for recently accessed files</li>
+                        <li>Parse Jump Lists to identify application-file associations</li>
+                        <li>Examine Recycle Bin artifacts for deleted file evidence</li>
+                        <li>Compile a preliminary user activity timeline from all extracted artifacts</li>
+                    </ul>
+                </div>
+
+                <div class="info-box">
+                    <div class="box-title">📋 CSLO Alignment</div>
+                    <p><strong>Primary CSLO:</strong> CSLO 2 — <em>Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data.</em></p>
+                </div>
+
+                <button class="section-complete-btn" data-section="overview" onclick="markComplete('overview')">✓ Mark Overview as Reviewed</button>
+            </section>
+
+            <!-- ===== PREREQUISITES ===== -->
+            <section class="card" id="prereqs">
+                <h2>📚 Prerequisites &amp; Setup</h2>
+
+                <h3>Required Knowledge</h3>
+                <p>Before starting this lab, you should have completed:</p>
+                <ul>
+                    <li><strong>Module 7.1:</strong> Understanding the Windows Registry (structure, root keys, hive files, timestamps)</li>
+                    <li><strong>Module 7.2:</strong> System-Level Registry Artifacts (SYSTEM, SOFTWARE, SAM hives)</li>
+                    <li><strong>Module 7.3:</strong> User-Level Registry Artifacts (NTUSER.DAT — UserAssist, RecentDocs, TypedPaths, RunMRU, WordWheelQuery)</li>
+                    <li><strong>Module 7.4:</strong> Advanced Artifacts &amp; Timeline Correlation (Jump Lists, Recycle Bin, Thumbcache, timeline methodology)</li>
+                </ul>
+
+                <h3>Required Tools</h3>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr><th>Tool</th><th>Purpose</th><th>Where to Get It</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Autopsy</strong> or <strong>FTK Imager</strong></td><td>Open forensic image, browse file system, extract hive files</td><td>Installed on lab workstations</td></tr>
+                            <tr><td><strong>Registry Explorer</strong></td><td>Browse offline Registry hive files with timestamp display</td><td>Eric Zimmerman's tools</td></tr>
+                            <tr><td><strong>RegRipper</strong></td><td>Automated plugin-based artifact extraction</td><td>Installed on lab workstations</td></tr>
+                            <tr><td><strong>JLECmd</strong></td><td>Jump List parsing</td><td>Eric Zimmerman's tools</td></tr>
+                            <tr><td><strong>RBCmd</strong></td><td>Recycle Bin parsing</td><td>Eric Zimmerman's tools</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Required Materials</h3>
+                <ul>
+                    <li><strong>Forensic image file:</strong> Provided via the course LMS (Canvas). Download before lab begins.</li>
+                    <li><strong>Lab worksheet template:</strong> Provided via the course LMS. Use this template for your deliverable.</li>
+                    <li><strong>Screenshot tool:</strong> Snipping Tool, Greenshot, or equivalent for capturing evidence screenshots.</li>
+                </ul>
+
+                <div class="warning-box">
+                    <div class="box-title">⚠️ Important — Before You Begin</div>
+                    <ul>
+                        <li>Verify the forensic image hash <strong>before</strong> beginning analysis (compare to the hash posted on Canvas)</li>
+                        <li>Work from a <strong>copy</strong> of the forensic image — never modify the original</li>
+                        <li>Create a dedicated <strong>working folder</strong> for extracted artifacts (e.g., <code>C:\Lab7_Evidence\</code>)</li>
+                        <li>Take <strong>screenshots</strong> as you work — you will need them for your deliverable</li>
+                        <li>Record all findings in the <strong>lab worksheet template</strong> provided</li>
+                    </ul>
+                </div>
+
+                <button class="section-complete-btn" data-section="prereqs" onclick="markComplete('prereqs')">✓ Mark Prerequisites as Reviewed</button>
+            </section>
+
+            <!-- ===== TASK 1 ===== -->
+            <section class="card" id="task1">
+                <h2>🔬 Lab Tasks</h2>
+
+                <div class="task-step" id="step1">
+                    <div class="step-header">
+                        <span class="step-number">1</span>
+                        <span class="step-title">Extract Registry Hive Files</span>
+                        <span class="step-points">3 points</span>
+                    </div>
+
+                    <p>Open the provided forensic image in <strong>Autopsy</strong> or <strong>FTK Imager</strong> and extract the following Registry hive files to your working folder. For each file, also extract the associated transaction log files (<code>.LOG1</code>, <code>.LOG2</code>).</p>
+
+                    <h4>System Hive Files</h4>
+                    <pre><code>C:\Windows\System32\config\SAM
+C:\Windows\System32\config\SAM.LOG1
+C:\Windows\System32\config\SAM.LOG2
+C:\Windows\System32\config\SYSTEM
+C:\Windows\System32\config\SYSTEM.LOG1
+C:\Windows\System32\config\SYSTEM.LOG2
+C:\Windows\System32\config\SOFTWARE
+C:\Windows\System32\config\SOFTWARE.LOG1
+C:\Windows\System32\config\SOFTWARE.LOG2</code></pre>
+
+                    <h4>User Hive Files</h4>
+                    <pre><code>C:\Users\&lt;username&gt;\NTUSER.DAT
+C:\Users\&lt;username&gt;\NTUSER.DAT.LOG1
+C:\Users\&lt;username&gt;\NTUSER.DAT.LOG2</code></pre>
+
+                    <div class="tip-box">
+                        <div class="box-title">💡 Tip — Identifying User Profiles</div>
+                        <p>Browse the <code>C:\Users\</code> directory in the forensic image to identify all user profile folders. Extract NTUSER.DAT from <strong>every</strong> user profile — not just the suspected user. Rename extracted files to avoid confusion (e.g., <code>jsmith_NTUSER.DAT</code>).</p>
+                    </div>
+
+                    <h4>Deliverable for Task 1</h4>
+                    <ul class="checklist" id="checklist-t1">
+                        <li><input type="checkbox" id="t1c1" onchange="updateChecklist(this)"><label for="t1c1">Screenshot showing the forensic image opened in your tool</label></li>
+                        <li><input type="checkbox" id="t1c2" onchange="updateChecklist(this)"><label for="t1c2">List of all extracted hive files with their source paths</label></li>
+                        <li><input type="checkbox" id="t1c3" onchange="updateChecklist(this)"><label for="t1c3">Verification that transaction log files were included</label></li>
+                        <li><input type="checkbox" id="t1c4" onchange="updateChecklist(this)"><label for="t1c4">MD5 or SHA-256 hash of each extracted hive file</label></li>
+                    </ul>
+
+                    <button class="section-complete-btn" data-section="task1" onclick="markComplete('task1')">✓ Mark Task 1 as Complete</button>
+                </div>
+            </section>
+
+            <!-- ===== TASK 2 ===== -->
+            <section class="card" id="task2">
+                <div class="task-step" id="step2">
+                    <div class="step-header">
+                        <span class="step-number">2</span>
+                        <span class="step-title">System-Level Artifact Analysis</span>
+                        <span class="step-points">4 points</span>
+                    </div>
+
+                    <p>Using <strong>Registry Explorer</strong> and/or <strong>RegRipper</strong>, analyze the SYSTEM and SOFTWARE hive files to extract the following system identification data.</p>
+
+                    <h4>2a. Determine the Active ControlSet</h4>
+                    <pre><code>HKLM\SYSTEM\Select
+Value: Current (REG_DWORD) → identifies the active ControlSet number</code></pre>
+                    <p>Record which ControlSet is active (e.g., ControlSet001). All subsequent SYSTEM hive paths should reference this ControlSet.</p>
+
+                    <h4>2b. Extract Computer Name</h4>
+                    <pre><code>HKLM\SYSTEM\ControlSet00X\Control\ComputerName\ComputerName
+Value: ComputerName (REG_SZ)</code></pre>
+
+                    <h4>2c. Extract Time Zone</h4>
+                    <pre><code>HKLM\SYSTEM\ControlSet00X\Control\TimeZoneInformation
+Values: TimeZoneKeyName (REG_SZ)
+        Bias (REG_DWORD)
+        ActiveTimeBias (REG_DWORD)</code></pre>
+
+                    <div class="warning-box">
+                        <div class="box-title">⚠️ Critical — Time Zone First</div>
+                        <p>Record the time zone <strong>before</strong> analyzing any other timestamps. You will need it to convert all UTC timestamps to local time throughout the rest of this lab. Note whether Bias and ActiveTimeBias differ (indicating DST was active).</p>
+                    </div>
+
+                    <h4>2d. Extract OS Version and Install Date</h4>
+                    <pre><code>HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion
+Values: ProductName, DisplayVersion, CurrentBuild,
+        InstallDate (Unix epoch), RegisteredOwner</code></pre>
+
+                    <h4>2e. Extract Last Shutdown Time</h4>
+                    <pre><code>HKLM\SYSTEM\ControlSet00X\Control\Windows
+Value: ShutdownTime (REG_BINARY → 8-byte FILETIME, UTC)</code></pre>
+
+                    <div class="collapsible">
+                        <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                            <span>RegRipper Commands for Task 2</span>
+                            <span class="arrow">▼</span>
+                        </button>
+                        <div class="collapsible-content">
+<pre><code>rip.exe -r SYSTEM -p compname
+rip.exe -r SYSTEM -p timezone
+rip.exe -r SYSTEM -p shutdown
+rip.exe -r SOFTWARE -p winver</code></pre>
+                        </div>
+                    </div>
+
+                    <h4>Deliverable for Task 2</h4>
+                    <ul class="checklist" id="checklist-t2">
+                        <li><input type="checkbox" id="t2c1" onchange="updateChecklist(this)"><label for="t2c1">Active ControlSet number with screenshot</label></li>
+                        <li><input type="checkbox" id="t2c2" onchange="updateChecklist(this)"><label for="t2c2">Computer name with full Registry path</label></li>
+                        <li><input type="checkbox" id="t2c3" onchange="updateChecklist(this)"><label for="t2c3">Time zone name, Bias, and ActiveTimeBias values</label></li>
+                        <li><input type="checkbox" id="t2c4" onchange="updateChecklist(this)"><label for="t2c4">OS version, build number, install date (converted from Unix epoch), and registered owner</label></li>
+                        <li><input type="checkbox" id="t2c5" onchange="updateChecklist(this)"><label for="t2c5">Last shutdown time in both UTC and local time</label></li>
+                        <li><input type="checkbox" id="t2c6" onchange="updateChecklist(this)"><label for="t2c6">Screenshots of Registry Explorer or RegRipper output for each artifact</label></li>
+                    </ul>
+
+                    <button class="section-complete-btn" data-section="task2" onclick="markComplete('task2')">✓ Mark Task 2 as Complete</button>
+                </div>
+            </section>
+
+            <!-- ===== TASK 3 ===== -->
+            <section class="card" id="task3">
+                <div class="task-step" id="step3">
+                    <div class="step-header">
+                        <span class="step-number">3</span>
+                        <span class="step-title">User Account Enumeration (SAM)</span>
+                        <span class="step-points">3 points</span>
+                    </div>
+
+                    <p>Analyze the SAM hive to enumerate all local user accounts and extract account metadata.</p>
+
+                    <h4>3a. Parse the SAM Hive</h4>
+                    <pre><code>rip.exe -r SAM -p samparse</code></pre>
+
+                    <h4>3b. For Each Account, Record</h4>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Field</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td>Username</td><td>Account name</td></tr>
+                                <tr><td>RID</td><td>Relative Identifier (500 = Admin, 501 = Guest, 1001+ = user-created)</td></tr>
+                                <tr><td>Account Created</td><td>When the account was created</td></tr>
+                                <tr><td>Last Login</td><td>Most recent successful login</td></tr>
+                                <tr><td>Login Count</td><td>Number of successful logins</td></tr>
+                                <tr><td>Password Last Set</td><td>When the password was last changed</td></tr>
+                                <tr><td>Account Flags</td><td>Enabled/Disabled/Locked status</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h4>3c. Map SIDs to Profile Paths</h4>
+                    <pre><code>HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\{SID}
+Value: ProfileImagePath (REG_EXPAND_SZ)</code></pre>
+                    <p>This mapping connects each account to its NTUSER.DAT file location.</p>
+
+                    <div class="forensic-box">
+                        <div class="box-title">🔍 Analysis Prompt</div>
+                        <p>As you enumerate accounts, look for anything unusual:</p>
+                        <ul>
+                            <li>Recently created accounts with low login counts</li>
+                            <li>Accounts with logins at unusual hours</li>
+                            <li>Multiple active accounts where only one is expected</li>
+                            <li>Accounts with Administrator privileges that seem unnecessary</li>
+                        </ul>
+                        <p>Note any suspicious findings in your deliverable.</p>
+                    </div>
+
+                    <h4>Deliverable for Task 3</h4>
+                    <ul class="checklist" id="checklist-t3">
+                        <li><input type="checkbox" id="t3c1" onchange="updateChecklist(this)"><label for="t3c1">Complete table of all user accounts with metadata fields</label></li>
+                        <li><input type="checkbox" id="t3c2" onchange="updateChecklist(this)"><label for="t3c2">SID-to-profile path mapping for each account</label></li>
+                        <li><input type="checkbox" id="t3c3" onchange="updateChecklist(this)"><label for="t3c3">Identification of any suspicious account patterns</label></li>
+                        <li><input type="checkbox" id="t3c4" onchange="updateChecklist(this)"><label for="t3c4">Screenshot of samparse output</label></li>
+                    </ul>
+
+                    <button class="section-complete-btn" data-section="task3" onclick="markComplete('task3')">✓ Mark Task 3 as Complete</button>
+                </div>
+            </section>
+
+            <!-- ===== TASK 4 ===== -->
+            <section class="card" id="task4">
+                <div class="task-step" id="step4">
+                    <div class="step-header">
+                        <span class="step-number">4</span>
+                        <span class="step-title">User Activity Artifact Extraction</span>
+                        <span class="step-points">5 points</span>
+                    </div>
+
+                    <p>This is the most substantial task. Using the NTUSER.DAT file(s) identified in Task 3, extract the following user activity artifacts.</p>
+
+                    <h4>4a. UserAssist — Program Execution History</h4>
+                    <pre><code>HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist\{GUID}\Count
+
+RegRipper: rip.exe -r NTUSER.DAT -p userassist</code></pre>
+                    <p>For each entry, record: <strong>decoded program path</strong> (ROT13 decoded), <strong>run count</strong>, <strong>last execution time</strong> (UTC and local), and <strong>focus time</strong>.</p>
+
+                    <div class="info-box">
+                        <div class="box-title">💡 Reminder — ROT13</div>
+                        <p>UserAssist value names are ROT13-encoded. Registry Explorer and RegRipper decode them automatically. If you see paths starting with <code>P:\</code> instead of <code>C:\</code>, the data has not been decoded yet.</p>
+                    </div>
+
+                    <h4>4b. RecentDocs — Recently Accessed Files</h4>
+                    <pre><code>HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs
+
+RegRipper: rip.exe -r NTUSER.DAT -p recentdocs</code></pre>
+                    <p>Document the most recently accessed files, organized by file extension. Note the key last-write timestamp for each extension subkey.</p>
+
+                    <h4>4c. Additional User Artifacts</h4>
+                    <p>Extract and document any relevant findings from the following artifacts (if present in the image):</p>
+
+                    <div class="collapsible">
+                        <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                            <span>TypedPaths — Explorer Address Bar History</span>
+                            <span class="arrow">▼</span>
+                        </button>
+                        <div class="collapsible-content">
+<pre><code>HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\TypedPaths
+
+RegRipper: rip.exe -r NTUSER.DAT -p typedpaths</code></pre>
+                            <p>Record all typed paths. Note any UNC network paths (<code>\\server\share</code>) or removable drive paths (<code>E:\</code>, <code>D:\</code>) that indicate access to external resources.</p>
+                        </div>
+                    </div>
+
+                    <div class="collapsible">
+                        <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                            <span>WordWheelQuery — Explorer Search History</span>
+                            <span class="arrow">▼</span>
+                        </button>
+                        <div class="collapsible-content">
+<pre><code>HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\WordWheelQuery
+
+RegRipper: rip.exe -r NTUSER.DAT -p wordwheelquery</code></pre>
+                            <p>Record all search terms in MRU order (most recent first). Note any searches that suggest intent (e.g., searching for sensitive data, deletion methods, or tools).</p>
+                        </div>
+                    </div>
+
+                    <div class="collapsible">
+                        <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                            <span>RunMRU — Run Dialog History</span>
+                            <span class="arrow">▼</span>
+                        </button>
+                        <div class="collapsible-content">
+<pre><code>HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU
+
+RegRipper: rip.exe -r NTUSER.DAT -p runmru</code></pre>
+                            <p>Record all commands in MRU order. Note any administrative tools, network paths, or suspicious commands.</p>
+                        </div>
+                    </div>
+
+                    <div class="collapsible">
+                        <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                            <span>Per-User Autorun Keys — Persistence</span>
+                            <span class="arrow">▼</span>
+                        </button>
+                        <div class="collapsible-content">
+<pre><code>HKCU\Software\Microsoft\Windows\CurrentVersion\Run
+HKCU\Software\Microsoft\Windows\CurrentVersion\RunOnce
+
+RegRipper: rip.exe -r NTUSER.DAT -p run</code></pre>
+                            <p>Record all autorun entries. Flag any programs running from unusual locations (Temp folders, Downloads, AppData) or with suspicious names mimicking system processes.</p>
+                        </div>
+                    </div>
+
+                    <h4>Deliverable for Task 4</h4>
+                    <ul class="checklist" id="checklist-t4">
+                        <li><input type="checkbox" id="t4c1" onchange="updateChecklist(this)"><label for="t4c1">UserAssist table: program path, run count, last execution (UTC + local), focus time</label></li>
+                        <li><input type="checkbox" id="t4c2" onchange="updateChecklist(this)"><label for="t4c2">RecentDocs summary organized by file extension with timestamps</label></li>
+                        <li><input type="checkbox" id="t4c3" onchange="updateChecklist(this)"><label for="t4c3">TypedPaths listing (if present)</label></li>
+                        <li><input type="checkbox" id="t4c4" onchange="updateChecklist(this)"><label for="t4c4">WordWheelQuery listing (if present)</label></li>
+                        <li><input type="checkbox" id="t4c5" onchange="updateChecklist(this)"><label for="t4c5">RunMRU listing (if present)</label></li>
+                        <li><input type="checkbox" id="t4c6" onchange="updateChecklist(this)"><label for="t4c6">Per-user autorun entries (if present)</label></li>
+                        <li><input type="checkbox" id="t4c7" onchange="updateChecklist(this)"><label for="t4c7">Forensic analysis notes identifying significant or suspicious findings</label></li>
+                        <li><input type="checkbox" id="t4c8" onchange="updateChecklist(this)"><label for="t4c8">Screenshots of tool output for each artifact type</label></li>
+                    </ul>
+
+                    <button class="section-complete-btn" data-section="task4" onclick="markComplete('task4')">✓ Mark Task 4 as Complete</button>
+                </div>
+            </section>
+
+            <!-- ===== TASK 5 ===== -->
+            <section class="card" id="task5">
+                <div class="task-step" id="step5">
+                    <div class="step-header">
+                        <span class="step-number">5</span>
+                        <span class="step-title">Jump List Analysis</span>
+                        <span class="step-points">Included in Task 4 (5 pts)</span>
+                    </div>
+
+                    <p>Extract the AutomaticDestinations Jump List files from the user profile and parse them using <strong>JLECmd</strong>.</p>
+
+                    <h4>5a. Locate Jump List Files</h4>
+                    <pre><code>C:\Users\&lt;username&gt;\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations\</code></pre>
+                    <p>Export this entire directory from the forensic image to your working folder.</p>
+
+                    <h4>5b. Parse with JLECmd</h4>
+                    <pre><code>JLECmd.exe -d "C:\Lab7_Evidence\AutomaticDestinations" --csv "C:\Lab7_Evidence\Output" --csvf jumplists.csv</code></pre>
+
+                    <h4>5c. Analyze Results</h4>
+                    <p>Open the CSV output and identify:</p>
+                    <ul>
+                        <li>Which applications accessed which files (AppID → application name)</li>
+                        <li>Files accessed from <strong>removable</strong> volumes (volume type = Removable)</li>
+                        <li>Files accessed from <strong>network</strong> shares (UNC paths)</li>
+                        <li>Entry timestamps showing when files were accessed</li>
+                    </ul>
+
+                    <h4>Deliverable for Task 5</h4>
+                    <ul class="checklist" id="checklist-t5">
+                        <li><input type="checkbox" id="t5c1" onchange="updateChecklist(this)"><label for="t5c1">Summary of key Jump List findings (application → file → timestamp)</label></li>
+                        <li><input type="checkbox" id="t5c2" onchange="updateChecklist(this)"><label for="t5c2">Identification of any files accessed from removable or network volumes</label></li>
+                        <li><input type="checkbox" id="t5c3" onchange="updateChecklist(this)"><label for="t5c3">Screenshot of JLECmd output or CSV data</label></li>
+                    </ul>
+
+                    <button class="section-complete-btn" data-section="task5" onclick="markComplete('task5')">✓ Mark Task 5 as Complete</button>
+                </div>
+            </section>
+
+            <!-- ===== TASK 6 ===== -->
+            <section class="card" id="task6">
+                <div class="task-step" id="step6">
+                    <div class="step-header">
+                        <span class="step-number">6</span>
+                        <span class="step-title">Recycle Bin Analysis</span>
+                        <span class="step-points">Included in Task 4 (5 pts)</span>
+                    </div>
+
+                    <p>Examine the Recycle Bin for deleted file evidence.</p>
+
+                    <h4>6a. Locate Recycle Bin Files</h4>
+                    <pre><code>C:\$Recycle.Bin\{User SID}\</code></pre>
+                    <p>Use the SID-to-username mapping from Task 3 to identify which user's Recycle Bin to examine. Export the user's Recycle Bin folder from the forensic image.</p>
+
+                    <h4>6b. Parse with RBCmd</h4>
+                    <pre><code>RBCmd.exe -d "C:\Lab7_Evidence\Recycle_Bin_SID" --csv "C:\Lab7_Evidence\Output" --csvf recyclebin.csv</code></pre>
+
+                    <h4>6c. Analyze Results</h4>
+                    <p>For each deleted file, record:</p>
+                    <ul>
+                        <li><strong>Original file path</strong> — Where was the file located before deletion?</li>
+                        <li><strong>File size</strong> — How large was the file?</li>
+                        <li><strong>Deletion timestamp</strong> — When was it deleted? (Convert to local time)</li>
+                        <li><strong>Forensic significance</strong> — Is the filename or location relevant to the investigation?</li>
+                    </ul>
+
+                    <h4>Deliverable for Task 6</h4>
+                    <ul class="checklist" id="checklist-t6">
+                        <li><input type="checkbox" id="t6c1" onchange="updateChecklist(this)"><label for="t6c1">Table of deleted files: original path, size, deletion time (UTC + local)</label></li>
+                        <li><input type="checkbox" id="t6c2" onchange="updateChecklist(this)"><label for="t6c2">Analysis of forensic significance for each deleted file</label></li>
+                        <li><input type="checkbox" id="t6c3" onchange="updateChecklist(this)"><label for="t6c3">Screenshot of RBCmd output or CSV data</label></li>
+                    </ul>
+
+                    <button class="section-complete-btn" data-section="task6" onclick="markComplete('task6')">✓ Mark Task 6 as Complete</button>
+                </div>
+            </section>
+
+            <!-- ===== TASK 7 ===== -->
+            <section class="card" id="task7">
+                <div class="task-step" id="step7">
+                    <div class="step-header">
+                        <span class="step-number">7</span>
+                        <span class="step-title">Preliminary User Activity Timeline</span>
+                        <span class="step-points">3 points</span>
+                    </div>
+
+                    <p>Compile all timestamped findings from Tasks 2–6 into a single chronological timeline. This is where individual artifacts become a <strong>coherent forensic narrative</strong>.</p>
+
+                    <h4>7a. Timeline Format</h4>
+                    <p>Create a spreadsheet (or table in your worksheet) with the following columns:</p>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Column</th><th>Description</th><th>Example</th></tr></thead>
+                            <tbody>
+                                <tr><td><strong>Timestamp (Local)</strong></td><td>Event time converted to system's local time zone</td><td>Feb 28, 2026 7:15:22 AM PST</td></tr>
+                                <tr><td><strong>Timestamp (UTC)</strong></td><td>Original UTC timestamp</td><td>2026-02-28 15:15:22 UTC</td></tr>
+                                <tr><td><strong>Source</strong></td><td>Which hive or artifact file</td><td>NTUSER.DAT (jsmith)</td></tr>
+                                <tr><td><strong>Artifact Type</strong></td><td>Which specific artifact</td><td>UserAssist</td></tr>
+                                <tr><td><strong>Description</strong></td><td>What happened</td><td>Executed CCleaner64.exe (count: 5)</td></tr>
+                                <tr><td><strong>Significance</strong></td><td>Why it matters</td><td>Anti-forensics tool execution</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h4>7b. Timeline Requirements</h4>
+                    <ul>
+                        <li>Include <strong>all</strong> timestamped artifacts from Tasks 2–6</li>
+                        <li>Sort in <strong>chronological order</strong> (earliest to latest)</li>
+                        <li>All timestamps must be <strong>normalized</strong> to the system's local time zone (identified in Task 2c)</li>
+                        <li>Include the <strong>UTC timestamp</strong> alongside each local time for verification</li>
+                        <li>Add a <strong>brief analysis paragraph</strong> (3–5 sentences) summarizing the overall narrative that emerges from the timeline</li>
+                    </ul>
+
+                    <div class="forensic-box">
+                        <div class="box-title">🔍 Analysis Guidance</div>
+                        <p>As you build the timeline, look for:</p>
+                        <ul>
+                            <li><strong>Patterns:</strong> Clusters of activity at specific times</li>
+                            <li><strong>Sequences:</strong> Events that logically follow each other (search → access → delete)</li>
+                            <li><strong>Anomalies:</strong> Activity at unusual hours, rapid file access/deletion sequences</li>
+                            <li><strong>Correlations:</strong> Multiple artifacts supporting the same conclusion</li>
+                            <li><strong>Gaps:</strong> Periods of no activity that may be significant</li>
+                        </ul>
+                    </div>
+
+                    <h4>Deliverable for Task 7</h4>
+                    <ul class="checklist" id="checklist-t7">
+                        <li><input type="checkbox" id="t7c1" onchange="updateChecklist(this)"><label for="t7c1">Complete chronological timeline with all required columns</label></li>
+                        <li><input type="checkbox" id="t7c2" onchange="updateChecklist(this)"><label for="t7c2">All timestamps converted to local time with UTC shown</label></li>
+                        <li><input type="checkbox" id="t7c3" onchange="updateChecklist(this)"><label for="t7c3">Brief analysis paragraph summarizing the timeline narrative</label></li>
+                    </ul>
+
+                    <button class="section-complete-btn" data-section="task7" onclick="markComplete('task7')">✓ Mark Task 7 as Complete</button>
+                </div>
+            </section>
+
+            <!-- ===== DOCUMENTATION ===== -->
+            <section class="card" id="documentation">
+                <h2>📝 Documentation &amp; Quality</h2>
+                <p>This section covers the documentation requirements that apply across <strong>all tasks</strong>.</p>
+
+                <div class="task-step">
+                    <div class="step-header">
+                        <span class="step-number">✓</span>
+                        <span class="step-title">Documentation Quality</span>
+                        <span class="step-points">2 points</span>
+                    </div>
+
+                    <h4>For Every Artifact Finding, Document</h4>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Element</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td><strong>Source image</strong></td><td>Forensic image filename and verified hash</td></tr>
+                                <tr><td><strong>Hive file path</strong></td><td>Location within the forensic image (e.g., <code>C:\Windows\System32\config\SYSTEM</code>)</td></tr>
+                                <tr><td><strong>Registry key path</strong></td><td>Full path to the specific key or artifact location</td></tr>
+                                <tr><td><strong>Tool used</strong></td><td>Name and version (e.g., Registry Explorer v2.0.0.0)</td></tr>
+                                <tr><td><strong>Timestamps</strong></td><td>Both UTC and local time with time zone notation</td></tr>
+                                <tr><td><strong>Screenshots</strong></td><td>Visual evidence of tool output showing the artifact</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="warning-box">
+                        <div class="box-title">⚠️ Common Documentation Mistakes</div>
+                        <ul>
+                            <li>Reporting timestamps without specifying the time zone</li>
+                            <li>Not including the full Registry path (just saying "found in SYSTEM hive")</li>
+                            <li>Missing screenshots — screenshots are <strong>required</strong> evidence</li>
+                            <li>Not noting which ControlSet was used for SYSTEM hive paths</li>
+                            <li>Failing to hash extracted hive files</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <button class="section-complete-btn" data-section="documentation" onclick="markComplete('documentation')">✓ Mark Documentation Section as Reviewed</button>
+            </section>
+
+            <!-- ===== GRADING RUBRIC ===== -->
+            <section class="card" id="rubric">
+                <h2>📊 Grading Rubric</h2>
+                <p>This lab is worth <strong>20 points</strong> total. Points are allocated as follows:</p>
+
+                <div class="table-wrap" style="border-radius:8px;overflow:hidden">
+                    <div class="rubric-item" style="background:#eef2ff">
+                        <span class="desc"><strong>Task 1:</strong> Correct extraction and identification of Registry hive files</span>
+                        <span class="rubric-pts">3 pts</span>
+                    </div>
+                    <div class="rubric-item">
+                        <span class="desc"><strong>Task 2:</strong> Accurate system-level artifact analysis (computer name, time zone, OS version, shutdown time)</span>
+                        <span class="rubric-pts">4 pts</span>
+                    </div>
+                    <div class="rubric-item" style="background:#eef2ff">
+                        <span class="desc"><strong>Task 3:</strong> Complete user account enumeration with metadata and SID mapping</span>
+                        <span class="rubric-pts">3 pts</span>
+                    </div>
+                    <div class="rubric-item">
+                        <span class="desc"><strong>Tasks 4–6:</strong> Thorough user activity artifact extraction (UserAssist, RecentDocs, Jump Lists, Recycle Bin, and additional artifacts)</span>
+                        <span class="rubric-pts">5 pts</span>
+                    </div>
+                    <div class="rubric-item" style="background:#eef2ff">
+                        <span class="desc"><strong>Task 7:</strong> Timeline compilation with proper timestamp normalization and analysis narrative</span>
+                        <span class="rubric-pts">3 pts</span>
+                    </div>
+                    <div class="rubric-item">
+                        <span class="desc"><strong>Documentation:</strong> Quality, completeness, screenshot evidence, and proper forensic documentation standards</span>
+                        <span class="rubric-pts">2 pts</span>
+                    </div>
+                    <div class="rubric-total">
+                        <span>Total</span>
+                        <span>20 pts</span>
+                    </div>
+                </div>
+
+                <button class="section-complete-btn" data-section="rubric" onclick="markComplete('rubric')">✓ Mark Rubric as Reviewed</button>
+            </section>
+
+            <!-- ===== TOOLS REFERENCE ===== -->
+            <section class="card" id="tools">
+                <h2>🔧 Tools Quick Reference</h2>
+
+                <div class="tool-ref">
+                    <div class="tool-name">Registry Explorer (Eric Zimmerman)</div>
+                    <div class="tool-desc">GUI tool for browsing offline Registry hive files. Displays key timestamps, decodes data types, supports transaction log replay and bookmarking.</div>
+                    <pre><code>Usage: File → Load Hive → select hive file
+       (Place .LOG1/.LOG2 in same directory for automatic replay)</code></pre>
+                </div>
+
+                <div class="tool-ref">
+                    <div class="tool-name">RegRipper (Harlan Carvey)</div>
+                    <div class="tool-desc">Plugin-based command-line tool for automated extraction of specific forensic artifacts from Registry hive files.</div>
+                    <pre><code>Single plugin:  rip.exe -r &lt;hivefile&gt; -p &lt;plugin&gt;
+All plugins:    rip.exe -r &lt;hivefile&gt; -a
+Save to file:   rip.exe -r &lt;hivefile&gt; -a &gt; output.txt</code></pre>
+                </div>
+
+                <div class="tool-ref">
+                    <div class="tool-name">JLECmd (Eric Zimmerman)</div>
+                    <div class="tool-desc">Parses AutomaticDestinations and CustomDestinations Jump List files to extract application-file relationships.</div>
+                    <pre><code>JLECmd.exe -d &lt;jumplist_folder&gt; --csv &lt;output_dir&gt; --csvf &lt;filename&gt;.csv</code></pre>
+                </div>
+
+                <div class="tool-ref">
+                    <div class="tool-name">RBCmd (Eric Zimmerman)</div>
+                    <div class="tool-desc">Parses Recycle Bin $I metadata files to extract original file paths, sizes, and deletion timestamps.</div>
+                    <pre><code>RBCmd.exe -d &lt;$Recycle.Bin_SID_folder&gt; --csv &lt;output_dir&gt; --csvf &lt;filename&gt;.csv</code></pre>
+                </div>
+
+                <div class="tool-ref">
+                    <div class="tool-name">Autopsy / FTK Imager</div>
+                    <div class="tool-desc">Forensic suites for opening forensic images, browsing file systems, and extracting individual files. Autopsy includes built-in Registry and Recent Activity ingest modules.</div>
+                    <pre><code>Autopsy: Create case → Add data source → Run ingest modules
+FTK Imager: File → Add Evidence Item → Image File</code></pre>
+                </div>
+
+                <button class="section-complete-btn" data-section="tools" onclick="markComplete('tools')">✓ Mark Tools Reference as Reviewed</button>
+            </section>
+
+            <!-- ===== SUBMISSION ===== -->
+            <section class="card" id="submission">
+                <h2>📤 Submission Instructions</h2>
+
+                <h3>Deliverable</h3>
+                <p>Submit a completed <strong>lab worksheet</strong> (using the provided template) that includes all findings, screenshots, Registry paths, timestamps, and your timeline analysis.</p>
+
+                <h3>File Format</h3>
+                <ul>
+                    <li>Submit as a <strong>PDF</strong> or <strong>Word document (.docx)</strong></li>
+                    <li>Ensure all screenshots are <strong>legible</strong> (high enough resolution to read text)</li>
+                    <li>If your timeline is in a separate spreadsheet, submit it as an additional file</li>
+                </ul>
+
+                <h3>Submission Location</h3>
+                <p>Upload to <strong>Canvas → Week 7 → Lab Activity 7</strong></p>
+
+                <h3>Due Date</h3>
+                <p>Check the Canvas assignment page for the specific due date and time.</p>
+
+                <div class="warning-box">
+                    <div class="box-title">⚠️ Before Submitting — Final Checklist</div>
+                    <p>Verify your submission includes:</p>
+                </div>
+
+                <ul class="checklist" id="checklist-final">
+                    <li><input type="checkbox" id="fc1" onchange="updateChecklist(this)"><label for="fc1">Forensic image hash verification documented</label></li>
+                    <li><input type="checkbox" id="fc2" onchange="updateChecklist(this)"><label for="fc2">All hive files extracted and listed with hashes (Task 1)</label></li>
+                    <li><input type="checkbox" id="fc3" onchange="updateChecklist(this)"><label for="fc3">System identification complete: computer name, time zone, OS version, shutdown time (Task 2)</label></li>
+                    <li><input type="checkbox" id="fc4" onchange="updateChecklist(this)"><label for="fc4">User accounts enumerated with all metadata fields (Task 3)</label></li>
+                    <li><input type="checkbox" id="fc5" onchange="updateChecklist(this)"><label for="fc5">UserAssist entries documented with decoded paths and timestamps (Task 4a)</label></li>
+                    <li><input type="checkbox" id="fc6" onchange="updateChecklist(this)"><label for="fc6">RecentDocs findings documented by extension (Task 4b)</label></li>
+                    <li><input type="checkbox" id="fc7" onchange="updateChecklist(this)"><label for="fc7">Jump List analysis with application-file associations (Task 5)</label></li>
+                    <li><input type="checkbox" id="fc8" onchange="updateChecklist(this)"><label for="fc8">Recycle Bin analysis with deletion timestamps (Task 6)</label></li>
+                    <li><input type="checkbox" id="fc9" onchange="updateChecklist(this)"><label for="fc9">Chronological timeline with normalized timestamps (Task 7)</label></li>
+                    <li><input type="checkbox" id="fc10" onchange="updateChecklist(this)"><label for="fc10">Analysis narrative paragraph included (Task 7)</label></li>
+                    <li><input type="checkbox" id="fc11" onchange="updateChecklist(this)"><label for="fc11">All screenshots included and legible</label></li>
+                    <li><input type="checkbox" id="fc12" onchange="updateChecklist(this)"><label for="fc12">All timestamps show both UTC and local time</label></li>
+                    <li><input type="checkbox" id="fc13" onchange="updateChecklist(this)"><label for="fc13">Tool names and versions documented</label></li>
+                </ul>
+
+                <button class="section-complete-btn" data-section="submission" onclick="markComplete('submission')">✓ Mark Submission Instructions as Reviewed</button>
+            </section>
+
+            <!-- ===== HELP ===== -->
+            <section class="card" id="help">
+                <h2>❓ Getting Help</h2>
+
+                <h3>Office Hours</h3>
+                <p>Instructor office hours are available for questions about the lab. Check Canvas for the current schedule.</p>
+
+                <h3>Lab Assistance</h3>
+                <ul>
+                    <li>Lab assistants are available during scheduled lab times</li>
+                    <li>Technical questions can be submitted via email or Canvas messaging</li>
+                </ul>
+
+                <h3>Common Issues</h3>
+                <div class="collapsible">
+                    <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                        <span>"I can't find NTUSER.DAT in the user profile"</span>
+                        <span class="arrow">▼</span>
+                    </button>
+                    <div class="collapsible-content">
+                        <p>NTUSER.DAT is marked with <strong>Hidden</strong> and <strong>System</strong> attributes. In Autopsy, it should be visible by default. In FTK Imager, ensure you are browsing the file system view (not just the directory listing). The file is located directly in <code>C:\Users\&lt;username&gt;\</code>.</p>
+                    </div>
+                </div>
+                <div class="collapsible">
+                    <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                        <span>"Registry Explorer says the hive is dirty"</span>
+                        <span class="arrow">▼</span>
+                    </button>
+                    <div class="collapsible-content">
+                        <p>This means the hive has uncommitted transactions. Place the <code>.LOG1</code> and <code>.LOG2</code> files in the <strong>same directory</strong> as the hive file. Registry Explorer will offer to replay the transaction logs when loading the hive. Click <strong>Yes</strong> to apply them.</p>
+                    </div>
+                </div>
+                <div class="collapsible">
+                    <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                        <span>"I don't see CurrentControlSet in the SYSTEM hive"</span>
+                        <span class="arrow">▼</span>
+                    </button>
+                    <div class="collapsible-content">
+                        <p><code>CurrentControlSet</code> is a volatile key that only exists on a <strong>running</strong> system. In offline analysis, navigate to the <code>Select</code> key and check the <code>Current</code> value to determine which <code>ControlSet00X</code> was active (e.g., if Current = 1, use <code>ControlSet001</code>).</p>
+                    </div>
+                </div>
+                <div class="collapsible">
+                    <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                        <span>"How do I convert a Unix epoch timestamp?"</span>
+                        <span class="arrow">▼</span>
+                    </button>
+                    <div class="collapsible-content">
+                        <p>The <code>InstallDate</code> value in the SOFTWARE hive is a Unix epoch timestamp (seconds since January 1, 1970 UTC). You can convert it using:</p>
+                        <ul>
+                            <li><strong>Online:</strong> <a href="https://www.epochconverter.com/" target="_blank" rel="noopener">epochconverter.com</a></li>
+                            <li><strong>Python:</strong> <code>datetime.utcfromtimestamp(value)</code></li>
+                            <li><strong>PowerShell:</strong> <code>[DateTimeOffset]::FromUnixTimeSeconds(value)</code></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>Peer Collaboration</h3>
+                <p>You may discuss general approaches and tool usage with classmates, but your <strong>submitted work must be your own</strong>. Do not share screenshots, extracted data, or completed worksheets.</p>
+            </section>
+
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="lab-footer">
+            <p>CSC 156 — Digital Forensics Fundamentals | Week 7: Windows Forensics I</p>
+            <p>Lab Activity 7: Windows Registry and User Artifact Analysis | 20 Points</p>
+            <p>© 2026 CSC 156. For educational use only.</p>
+        </footer>
+
+    </div>
+
+    <!-- ===== JAVASCRIPT ===== -->
+    <script>
+        var STORAGE_KEY = 'csc156_lab7_progress';
+        var SECTIONS = ['overview','prereqs','task1','task2','task3','task4','task5','task6','task7','documentation','rubric','tools','submission'];
+
+        function getProgress() {
+            try { var d = sessionStorage.getItem(STORAGE_KEY); return d ? JSON.parse(d) : {}; }
+            catch(e) { return {}; }
+        }
+        function saveProgress(d) {
+            try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
+            catch(e) {}
+        }
+
+        function markComplete(sectionId) {
+            var p = getProgress();
+            p[sectionId] = true;
+            saveProgress(p);
+            var btn = document.querySelector('[data-section="' + sectionId + '"]');
+            if (btn) {
+                btn.classList.add('completed');
+                btn.textContent = '\u2713 Completed';
+                btn.setAttribute('aria-label', sectionId + ' marked as complete');
+            }
+            updateProgressBar();
+        }
+
+        function updateProgressBar() {
+            var p = getProgress();
+            var completed = 0;
+            for (var i = 0; i < SECTIONS.length; i++) {
+                if (p[SECTIONS[i]]) completed++;
+            }
+            var pct = Math.round((completed / SECTIONS.length) * 100);
+            var bar = document.getElementById('progressBar');
+            var txt = document.getElementById('progressText');
+            if (bar) bar.style.width = pct + '%';
+            if (txt) txt.textContent = pct + '% complete';
+            var con = document.querySelector('.progress-container');
+            if (con) con.setAttribute('aria-valuenow', pct);
+        }
+
+        function restoreProgress() {
+            var p = getProgress();
+            for (var i = 0; i < SECTIONS.length; i++) {
+                if (p[SECTIONS[i]]) {
+                    var btn = document.querySelector('[data-section="' + SECTIONS[i] + '"]');
+                    if (btn) {
+                        btn.classList.add('completed');
+                        btn.textContent = '\u2713 Completed';
+                    }
+                }
+            }
+            // Restore checkboxes
+            var checks = document.querySelectorAll('.checklist input[type="checkbox"]');
+            for (var j = 0; j < checks.length; j++) {
+                if (p['cb_' + checks[j].id]) {
+                    checks[j].checked = true;
+                    checks[j].parentElement.classList.add('checked');
+                }
+            }
+            updateProgressBar();
+        }
+
+        function toggleCollapsible(btn) {
+            var content = btn.nextElementSibling;
+            var isOpen = content.classList.contains('open');
+            content.classList.toggle('open');
+            btn.setAttribute('aria-expanded', !isOpen);
+        }
+
+        function updateChecklist(checkbox) {
+            var p = getProgress();
+            p['cb_' + checkbox.id] = checkbox.checked;
+            saveProgress(p);
+            if (checkbox.checked) {
+                checkbox.parentElement.classList.add('checked');
+            } else {
+                checkbox.parentElement.classList.remove('checked');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            restoreProgress();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,2258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 7.3: User-Level Registry Artifacts (NTUSER.DAT) — CSC 156 Digital Forensics Fundamentals</title>
+    <style>
+        /* ===== CSS RESET & BASE ===== */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            color: #1a1a2e;
+            background-color: #f5f5fa;
+            min-height: 100vh;
+        }
+
+        /* ===== SKIP LINK (ADA) ===== */
+        .skip-link {
+            position: absolute;
+            top: -100px;
+            left: 0;
+            background: #1a1a2e;
+            color: #ffffff;
+            padding: 12px 24px;
+            z-index: 10000;
+            font-size: 1rem;
+            transition: top 0.2s;
+        }
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* ===== PROGRESS BAR ===== */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: #d1d1e0;
+            z-index: 9999;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #2563eb, #7c3aed);
+            transition: width 0.3s ease;
+        }
+        .progress-text {
+            position: fixed;
+            top: 8px;
+            right: 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #4a4a6a;
+            background: rgba(245, 245, 250, 0.92);
+            padding: 2px 10px;
+            border-radius: 10px;
+            z-index: 10000;
+            border: 1px solid #d1d1e0;
+        }
+
+        /* ===== HEADER ===== */
+        .module-header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d5e 50%, #3a3a7e 100%);
+            color: #ffffff;
+            padding: 48px 24px 40px;
+            text-align: center;
+            margin-top: 6px;
+        }
+        .module-header .course-tag {
+            display: inline-block;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+        .module-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+        .module-header .subtitle {
+            font-size: 1.15rem;
+            color: #c8c8f0;
+            margin-bottom: 20px;
+        }
+        .module-meta {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 24px;
+            font-size: 0.9rem;
+            color: #d0d0f0;
+        }
+        .module-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ===== LAYOUT ===== */
+        .content-wrapper {
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 32px 20px 80px;
+        }
+
+        /* ===== NAVIGATION ===== */
+        .section-nav {
+            background: #ffffff;
+            border: 1px solid #d1d1e0;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 32px;
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        .section-nav h2 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6a6a8a;
+            margin-bottom: 12px;
+        }
+        .section-nav ol {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .section-nav ol li a {
+            display: inline-block;
+            padding: 6px 14px;
+            background: #f0f0fa;
+            color: #2d2d5e;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.83rem;
+            font-weight: 500;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        .section-nav ol li a:hover,
+        .section-nav ol li a:focus {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+            outline: 2px solid #2563eb;
+            outline-offset: 2px;
+        }
+        .section-nav ol li a.completed {
+            background: #d1fae5;
+            color: #065f46;
+            border-color: #6ee7b7;
+        }
+
+        /* ===== SECTIONS ===== */
+        .module-section {
+            background: #ffffff;
+            border: 1px solid #d1d1e0;
+            border-radius: 12px;
+            padding: 32px 28px;
+            margin-bottom: 28px;
+            box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+        }
+        .module-section h2 {
+            font-size: 1.5rem;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #2563eb;
+        }
+        .module-section h3 {
+            font-size: 1.2rem;
+            color: #2d2d5e;
+            margin: 24px 0 12px;
+        }
+        .module-section h4 {
+            font-size: 1.05rem;
+            color: #3a3a6a;
+            margin: 20px 0 10px;
+        }
+        .module-section p {
+            margin-bottom: 14px;
+            color: #2a2a4a;
+        }
+
+        /* ===== LEARNING OBJECTIVES ===== */
+        .objectives-box {
+            background: #eef2ff;
+            border: 1px solid #c7d2fe;
+            border-left: 5px solid #2563eb;
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin: 20px 0;
+        }
+        .objectives-box h3 {
+            color: #1e40af;
+            margin: 0 0 12px;
+            font-size: 1.1rem;
+        }
+        .objectives-box ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .objectives-box ul li {
+            margin-bottom: 8px;
+            color: #1e3a5f;
+            line-height: 1.6;
+        }
+
+        /* ===== DEFINITION BOXES ===== */
+        .definition-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-left: 5px solid #16a34a;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+        .definition-box .term {
+            font-weight: 700;
+            color: #15803d;
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+        .definition-box .meaning {
+            color: #14532d;
+            line-height: 1.6;
+        }
+
+        /* ===== FORENSIC SIGNIFICANCE BOXES ===== */
+        .forensic-note {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-left: 5px solid #d97706;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+        .forensic-note .note-title {
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 6px;
+        }
+        .forensic-note p, .forensic-note li {
+            color: #78350f;
+        }
+        .forensic-note ul, .forensic-note ol {
+            margin: 8px 0 8px 20px;
+        }
+
+        /* ===== IMPORTANT / WARNING BOXES ===== */
+        .important-box {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-left: 5px solid #dc2626;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+        .important-box .box-title {
+            font-weight: 700;
+            color: #991b1b;
+            margin-bottom: 6px;
+        }
+        .important-box p, .important-box li {
+            color: #7f1d1d;
+        }
+        .important-box ul, .important-box ol {
+            margin: 8px 0 8px 20px;
+        }
+
+        /* ===== INFO BOXES ===== */
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-left: 5px solid #2563eb;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+        .info-box .box-title {
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 6px;
+        }
+        .info-box p, .info-box li {
+            color: #1e3a5f;
+        }
+        .info-box ul, .info-box ol {
+            margin: 8px 0 8px 20px;
+        }
+
+        /* ===== TABLES ===== */
+        .table-container {
+            overflow-x: auto;
+            margin: 16px 0;
+            border-radius: 8px;
+            border: 1px solid #d1d1e0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.92rem;
+        }
+        thead {
+            background: #1a1a2e;
+            color: #ffffff;
+        }
+        thead th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+        tbody tr {
+            border-bottom: 1px solid #e5e5f0;
+        }
+        tbody tr:nth-child(even) {
+            background: #f8f8fc;
+        }
+        tbody tr:hover {
+            background: #eef2ff;
+        }
+        tbody td {
+            padding: 10px 16px;
+            color: #2a2a4a;
+            vertical-align: top;
+        }
+
+        /* ===== CODE BLOCKS ===== */
+        code {
+            font-family: 'Consolas', 'Courier New', monospace;
+            background: #f1f5f9;
+            color: #1e293b;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            border: 1px solid #e2e8f0;
+        }
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px 24px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 16px 0;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.88rem;
+            line-height: 1.6;
+            white-space: pre;
+            border: 1px solid #334155;
+        }
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+            border: none;
+            font-size: inherit;
+            white-space: pre;
+        }
+
+        /* ===== COLLAPSIBLE ===== */
+        .collapsible {
+            margin: 16px 0;
+            border: 1px solid #d1d1e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .collapsible-toggle {
+            width: 100%;
+            background: #f8f8fc;
+            border: none;
+            padding: 14px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2d2d5e;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+            text-align: left;
+        }
+        .collapsible-toggle:hover,
+        .collapsible-toggle:focus {
+            background: #eef2ff;
+            outline: 2px solid #2563eb;
+            outline-offset: -2px;
+        }
+        .collapsible-toggle .arrow {
+            transition: transform 0.3s;
+            font-size: 0.85rem;
+        }
+        .collapsible-toggle[aria-expanded="true"] .arrow {
+            transform: rotate(180deg);
+        }
+        .collapsible-content {
+            display: none;
+            padding: 16px 20px;
+            background: #ffffff;
+            border-top: 1px solid #d1d1e0;
+        }
+        .collapsible-content.open {
+            display: block;
+        }
+
+        /* ===== ARTIFACT CARD ===== */
+        .artifact-card {
+            background: #ffffff;
+            border: 2px solid #c7d2fe;
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin: 18px 0;
+            transition: border-color 0.2s;
+        }
+        .artifact-card:hover {
+            border-color: #818cf8;
+        }
+        .artifact-card .artifact-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .artifact-card .artifact-header h4 {
+            margin: 0;
+            color: #1e40af;
+            font-size: 1.1rem;
+        }
+        .artifact-card .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid;
+        }
+        .badge-high {
+            background: #fef2f2;
+            color: #991b1b;
+            border-color: #fecaca;
+        }
+        .badge-medium {
+            background: #fef3c7;
+            color: #92400e;
+            border-color: #fcd34d;
+        }
+        .badge-ntuser {
+            background: #eef2ff;
+            color: #3730a3;
+            border-color: #c7d2fe;
+        }
+        .artifact-card .registry-path {
+            background: #1e293b;
+            color: #a5f3fc;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.85rem;
+            margin: 10px 0;
+            overflow-x: auto;
+            white-space: pre;
+        }
+        .artifact-card p {
+            color: #2a2a4a;
+            margin-bottom: 10px;
+        }
+
+        /* ===== TOOL OUTPUT ===== */
+        .tool-output {
+            background: #0f172a;
+            color: #94a3b8;
+            padding: 20px 24px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.7;
+            overflow-x: auto;
+            margin: 16px 0;
+            border: 1px solid #1e293b;
+            white-space: pre;
+        }
+        .tool-output .hl { color: #38bdf8; font-weight: 700; }
+        .tool-output .val { color: #4ade80; }
+        .tool-output .cmt { color: #64748b; font-style: italic; }
+        .tool-output .warn { color: #fbbf24; }
+
+        /* ===== ROT13 INTERACTIVE ===== */
+        .rot13-demo {
+            background: #f8f8fc;
+            border: 2px solid #c7d2fe;
+            border-radius: 10px;
+            padding: 24px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .rot13-demo label {
+            display: block;
+            font-weight: 600;
+            color: #2d2d5e;
+            margin-bottom: 8px;
+            text-align: left;
+        }
+        .rot13-demo input[type="text"] {
+            width: 100%;
+            max-width: 600px;
+            padding: 10px 14px;
+            border: 1px solid #d1d1e0;
+            border-radius: 6px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.95rem;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+        }
+        .rot13-demo input[type="text"]:focus {
+            outline: 2px solid #2563eb;
+            border-color: #2563eb;
+        }
+        .rot13-demo .result-box {
+            background: #1e293b;
+            color: #4ade80;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.95rem;
+            min-height: 44px;
+            text-align: left;
+            word-break: break-all;
+        }
+        .rot13-btn {
+            display: inline-block;
+            background: #2563eb;
+            color: #ffffff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: background 0.2s;
+        }
+        .rot13-btn:hover, .rot13-btn:focus {
+            background: #1d4ed8;
+            outline: 2px solid #1d4ed8;
+            outline-offset: 2px;
+        }
+
+        /* ===== INTERACTIVE ACTIVITIES ===== */
+        .activity-container {
+            background: #f5f3ff;
+            border: 2px solid #c4b5fd;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+        .activity-container h3 {
+            color: #5b21b6;
+            margin: 0 0 16px;
+        }
+        .activity-question {
+            background: #ffffff;
+            border: 1px solid #ddd6fe;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .activity-question p {
+            font-weight: 600;
+            color: #3b0764;
+            margin-bottom: 10px;
+        }
+        .activity-question label {
+            display: block;
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: #2a2a4a;
+            border: 1px solid transparent;
+        }
+        .activity-question label:hover {
+            background: #ede9fe;
+        }
+        .activity-question input[type="radio"] {
+            margin-right: 8px;
+            accent-color: #7c3aed;
+        }
+        .check-btn {
+            display: inline-block;
+            background: #7c3aed;
+            color: #ffffff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.2s;
+        }
+        .check-btn:hover, .check-btn:focus {
+            background: #6d28d9;
+            outline: 2px solid #6d28d9;
+            outline-offset: 2px;
+        }
+        .feedback {
+            margin-top: 12px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            display: none;
+        }
+        .feedback.correct {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+            display: block;
+        }
+        .feedback.incorrect {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            display: block;
+        }
+
+        /* ===== KNOWLEDGE CHECK ===== */
+        .knowledge-check {
+            background: #fefce8;
+            border: 2px solid #fde047;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+        .knowledge-check h3 {
+            color: #854d0e;
+            margin: 0 0 8px;
+        }
+        .knowledge-check p.instructions {
+            color: #713f12;
+            margin-bottom: 16px;
+        }
+        .kc-question {
+            background: #ffffff;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .kc-question .q-text {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+        .kc-question textarea {
+            width: 100%;
+            min-height: 80px;
+            border: 1px solid #d1d1e0;
+            border-radius: 6px;
+            padding: 10px;
+            font-family: inherit;
+            font-size: 0.92rem;
+            resize: vertical;
+            color: #1a1a2e;
+        }
+        .kc-question textarea:focus {
+            outline: 2px solid #2563eb;
+            border-color: #2563eb;
+        }
+        .reveal-btn {
+            display: inline-block;
+            background: #d97706;
+            color: #ffffff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.2s;
+        }
+        .reveal-btn:hover, .reveal-btn:focus {
+            background: #b45309;
+            outline: 2px solid #b45309;
+            outline-offset: 2px;
+        }
+        .model-answer {
+            display: none;
+            background: #fef9c3;
+            border: 1px solid #fde68a;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-top: 10px;
+            color: #713f12;
+            font-size: 0.92rem;
+            line-height: 1.6;
+        }
+        .model-answer.visible {
+            display: block;
+        }
+
+        /* ===== SECTION COMPLETE BUTTON ===== */
+        .section-complete-btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: #f0fdf4;
+            border: 2px solid #86efac;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #166534;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.2s;
+        }
+        .section-complete-btn:hover, .section-complete-btn:focus {
+            background: #d1fae5;
+            border-color: #16a34a;
+            outline: 2px solid #16a34a;
+            outline-offset: 2px;
+        }
+        .section-complete-btn.completed {
+            background: #16a34a;
+            color: #ffffff;
+            border-color: #16a34a;
+        }
+
+        /* ===== LISTS ===== */
+        ul, ol {
+            margin: 10px 0 14px 24px;
+        }
+        li {
+            margin-bottom: 6px;
+            color: #2a2a4a;
+        }
+
+        /* ===== FOOTER ===== */
+        .module-footer {
+            text-align: center;
+            padding: 32px 20px;
+            color: #6a6a8a;
+            font-size: 0.85rem;
+            border-top: 1px solid #d1d1e0;
+            margin-top: 40px;
+        }
+
+        /* ===== NEXT MODULE LINK ===== */
+        .next-module {
+            display: block;
+            text-align: center;
+            padding: 18px;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: #ffffff;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-top: 24px;
+            transition: opacity 0.2s;
+        }
+        .next-module:hover, .next-module:focus {
+            opacity: 0.9;
+            outline: 3px solid #7c3aed;
+            outline-offset: 2px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .module-header h1 { font-size: 1.5rem; }
+            .module-section { padding: 20px 16px; }
+            .section-nav ol { flex-direction: column; }
+            .module-meta { flex-direction: column; align-items: center; gap: 8px; }
+        }
+
+        /* ===== PRINT ===== */
+        @media print {
+            .progress-container, .progress-text, .section-nav, .skip-link,
+            .section-complete-btn, .check-btn, .reveal-btn, .rot13-demo { display: none; }
+            .module-section { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
+            .collapsible-content { display: block !important; }
+        }
+
+        /* ===== FOCUS VISIBLE ===== */
+        *:focus-visible {
+            outline: 3px solid #2563eb;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Module reading progress">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div class="progress-text" id="progressText" aria-live="polite">0% complete</div>
+
+    <!-- HEADER -->
+    <header class="module-header">
+        <div class="course-tag">CSC 156 — Digital Forensics Fundamentals</div>
+        <h1>Module 7.3: User-Level Registry Artifacts (NTUSER.DAT)</h1>
+        <p class="subtitle">Week 7 — Windows Forensics I: Registry and User Artifacts</p>
+        <div class="module-meta">
+            <span>⏱ Estimated Time: 2.0 hours</span>
+            <span>📘 Difficulty: Intermediate → Advanced</span>
+            <span>🎯 CSLO 2</span>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main id="main-content" class="content-wrapper">
+
+        <!-- TABLE OF CONTENTS -->
+        <nav class="section-nav" aria-label="Module sections">
+            <h2>Module Sections</h2>
+            <ol>
+                <li><a href="#section1" id="nav-s1">1. Introduction</a></li>
+                <li><a href="#section2" id="nav-s2">2. NTUSER.DAT Overview</a></li>
+                <li><a href="#section3" id="nav-s3">3. UserAssist</a></li>
+                <li><a href="#section4" id="nav-s4">4. RecentDocs</a></li>
+                <li><a href="#section5" id="nav-s5">5. TypedPaths &amp; RunMRU</a></li>
+                <li><a href="#section6" id="nav-s6">6. WordWheelQuery</a></li>
+                <li><a href="#section7" id="nav-s7">7. Per-User Autoruns</a></li>
+                <li><a href="#section8" id="nav-s8">8. Artifact Summary</a></li>
+                <li><a href="#section9" id="nav-s9">9. Tool Walkthroughs</a></li>
+                <li><a href="#section10" id="nav-s10">10. Activities</a></li>
+                <li><a href="#section11" id="nav-s11">11. Knowledge Check</a></li>
+            </ol>
+        </nav>
+
+        <!-- LEARNING OBJECTIVES -->
+        <div class="objectives-box">
+            <h3>🎯 Learning Objectives</h3>
+            <p>By the end of this module, you will be able to:</p>
+            <ul>
+                <li>Locate and extract NTUSER.DAT files for each user profile from a forensic image</li>
+                <li>Parse UserAssist entries to determine program execution history, including decoding ROT13 encoding</li>
+                <li>Analyze RecentDocs keys to identify recently accessed files by type</li>
+                <li>Extract TypedPaths, WordWheelQuery, and RunMRU artifacts</li>
+                <li>Identify per-user startup programs (persistence mechanisms)</li>
+                <li>Explain the forensic significance of each artifact type and its limitations</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <div class="box-title">📋 Course Student Learning Outcome Alignment</div>
+            <p><strong>Primary CSLO:</strong> CSLO 2 — <em>Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data.</em></p>
+            <p>User-level Registry artifacts are among the most directly relevant evidence in digital forensic investigations because they tie <strong>specific actions to specific user accounts</strong>. While system hives tell you about the <em>machine</em>, NTUSER.DAT tells you about the <em>person</em>.</p>
+        </div>
+
+        <!-- ========== SECTION 1: INTRODUCTION ========== -->
+        <section class="module-section" id="section1">
+            <h2>📖 1. Introduction &amp; Context</h2>
+
+            <p>In Module 7.2, you extracted system-level artifacts from the SYSTEM, SOFTWARE, and SAM hives. Those artifacts answered questions about the <strong>machine</strong>: What is its name? What time zone is it in? Who has accounts on it? What devices have been connected?</p>
+
+            <p>Now, in Module 7.3, the focus shifts to the <strong>person</strong>. The NTUSER.DAT hive file stores per-user configuration data and — critically for forensics — records of <strong>what each user did</strong> on the system:</p>
+
+            <ul>
+                <li><strong>What programs did they run?</strong> (UserAssist)</li>
+                <li><strong>What files did they open?</strong> (RecentDocs)</li>
+                <li><strong>What paths did they type in Explorer?</strong> (TypedPaths)</li>
+                <li><strong>What did they search for?</strong> (WordWheelQuery)</li>
+                <li><strong>What commands did they execute?</strong> (RunMRU)</li>
+                <li><strong>What programs start automatically when they log in?</strong> (Per-user autoruns)</li>
+            </ul>
+
+            <p>These artifacts are often the <strong>most directly relevant</strong> to investigations because they tie specific actions to a specific user account. A system-level artifact might tell you that a USB device was connected to the computer, but a user-level artifact tells you <em>which user</em> was interacting with that device.</p>
+
+            <div class="forensic-note">
+                <div class="note-title">🔍 From Machine to Person</div>
+                <p>Consider this progression across Modules 7.1–7.3:</p>
+                <ul>
+                    <li><strong>Module 7.1:</strong> "The Registry is a hierarchical database stored in hive files." (Structure)</li>
+                    <li><strong>Module 7.2:</strong> "This computer is named DESKTOP-A1B2C3D, runs Windows 10, and has three user accounts." (Machine identity)</li>
+                    <li><strong>Module 7.3:</strong> "User jsmith ran CCleaner.exe 5 times, last on February 28 at 3:15 PM, and searched for 'how to delete browsing history'." (User behavior)</li>
+                </ul>
+                <p>Module 7.3 is where forensic analysis becomes most investigatively powerful — and most directly useful in building a case.</p>
+            </div>
+
+            <button class="section-complete-btn" data-section="1" onclick="markComplete(1)">
+                ✓ Mark Section 1 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 2: NTUSER.DAT OVERVIEW ========== -->
+        <section class="module-section" id="section2">
+            <h2>📁 2. NTUSER.DAT Overview</h2>
+
+            <div class="definition-box">
+                <div class="term">NTUSER.DAT</div>
+                <div class="meaning">A per-user Registry hive file that stores the settings and activity data for a specific Windows user account. Each user profile on the system has its own NTUSER.DAT file. When a user logs in, Windows loads their NTUSER.DAT into the Registry under <code>HKEY_USERS\{SID}</code>, and it becomes accessible as <code>HKEY_CURRENT_USER (HKCU)</code> for that session.</div>
+            </div>
+
+            <h3>2.1 File Location</h3>
+            <pre><code>C:\Users\&lt;username&gt;\NTUSER.DAT</code></pre>
+            <p>The file is marked with the <strong>Hidden</strong> and <strong>System</strong> file attributes, so it does not appear in standard Windows Explorer views. Forensic tools display all files regardless of attributes.</p>
+
+            <h3>2.2 Associated Files</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Location</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>NTUSER.DAT</code></td>
+                            <td><code>C:\Users\&lt;username&gt;\</code></td>
+                            <td>Primary user hive file — contains most per-user Registry data</td>
+                        </tr>
+                        <tr>
+                            <td><code>NTUSER.DAT.LOG1</code></td>
+                            <td><code>C:\Users\&lt;username&gt;\</code></td>
+                            <td>Transaction log — contains uncommitted changes</td>
+                        </tr>
+                        <tr>
+                            <td><code>NTUSER.DAT.LOG2</code></td>
+                            <td><code>C:\Users\&lt;username&gt;\</code></td>
+                            <td>Secondary transaction log</td>
+                        </tr>
+                        <tr>
+                            <td><code>UsrClass.dat</code></td>
+                            <td><code>C:\Users\&lt;username&gt;\AppData\Local\Microsoft\Windows\</code></td>
+                            <td>User-specific file associations and Shellbag data (covered in Module 7.4 / Week 8)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>2.3 Forensic Extraction Strategy</h3>
+
+            <div class="important-box">
+                <div class="box-title">⚠️ Critical — Extract ALL User Profiles</div>
+                <p>Extract NTUSER.DAT from <strong>every</strong> user profile in the forensic image — not just the suspected user. Other accounts may contain:</p>
+                <ul>
+                    <li><strong>Relevant evidence:</strong> A suspect may have used a different account to perform certain actions</li>
+                    <li><strong>Baseline comparison:</strong> Normal activity patterns on other accounts help you identify what is unusual about the suspect's account</li>
+                    <li><strong>Unauthorized accounts:</strong> An attacker may have created a new account (identified in Module 7.2's SAM analysis) and used it for malicious activity</li>
+                </ul>
+            </div>
+
+            <h3>2.4 Connecting SAM to NTUSER.DAT</h3>
+            <p>In Module 7.2, you enumerated user accounts from the SAM hive and mapped SIDs to profile paths using the ProfileList key in the SOFTWARE hive. Now you use that mapping to locate each user's NTUSER.DAT:</p>
+
+            <div class="tool-output"><span class="cmt">--- From Module 7.2: ProfileList mapping ---</span>
+
+SID: S-1-5-21-3456789012-1234567890-9876543210-<span class="hl">1001</span>
+ProfileImagePath: <span class="val">C:\Users\jsmith</span>
+  → NTUSER.DAT: <span class="val">C:\Users\jsmith\NTUSER.DAT</span>
+
+SID: S-1-5-21-3456789012-1234567890-9876543210-<span class="hl">1002</span>
+ProfileImagePath: <span class="val">C:\Users\temp_user</span>
+  → NTUSER.DAT: <span class="val">C:\Users\temp_user\NTUSER.DAT</span></div>
+
+            <button class="section-complete-btn" data-section="2" onclick="markComplete(2)">
+                ✓ Mark Section 2 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 3: USERASSIST ========== -->
+        <section class="module-section" id="section3">
+            <h2>🚀 3. UserAssist — Program Execution History</h2>
+
+            <div class="artifact-card">
+                <div class="artifact-header">
+                    <h4>UserAssist</h4>
+                    <span class="badge badge-high">High Forensic Value</span>
+                    <span class="badge badge-ntuser">NTUSER.DAT</span>
+                </div>
+                <div class="registry-path">HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist\{GUID}\Count</div>
+            </div>
+
+            <div class="definition-box">
+                <div class="term">UserAssist</div>
+                <div class="meaning">A Registry artifact that records which programs a user launched through the Windows graphical user interface (GUI), how many times each program was executed, the total focus time, and the timestamp of the last execution. UserAssist data is stored under GUID-identified subkeys within the user's NTUSER.DAT hive, with program paths encoded using ROT13 substitution.</div>
+            </div>
+
+            <h3>3.1 Structure</h3>
+            <p>UserAssist data is organized under two GUIDs that categorize the type of execution:</p>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>GUID</th>
+                            <th>Tracks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}</code></td>
+                            <td><strong>Executable files</strong> (.exe) launched by the user through the GUI</td>
+                        </tr>
+                        <tr>
+                            <td><code>{F4E57C4B-2036-45F0-A9AB-443BCFE33D9F}</code></td>
+                            <td><strong>Shortcut files</strong> (.lnk) opened by the user — includes Start Menu and taskbar shortcuts</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p>Under each GUID's <code>Count</code> subkey, each value represents one program or shortcut. The <strong>value name</strong> is the program path encoded in ROT13, and the <strong>value data</strong> is a binary structure containing execution metadata.</p>
+
+            <h3>3.2 ROT13 Encoding</h3>
+
+            <div class="definition-box">
+                <div class="term">ROT13 (Rotate by 13)</div>
+                <div class="meaning">A simple letter substitution cipher that replaces each letter with the letter 13 positions after it in the alphabet. A→N, B→O, C→P, ..., N→A, O→B, etc. Applying ROT13 twice returns the original text. ROT13 is <strong>not encryption</strong> — it provides no security whatsoever. Microsoft uses it in UserAssist purely as an obfuscation technique to prevent the casual observer from reading program paths in the Registry. Only alphabetic characters are rotated; numbers, symbols, backslashes, and other characters remain unchanged.</div>
+            </div>
+
+            <h4>ROT13 Alphabet Mapping</h4>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Original</th>
+                            <th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th><th>H</th><th>I</th><th>J</th><th>K</th><th>L</th><th>M</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>ROT13</strong></td>
+                            <td>N</td><td>O</td><td>P</td><td>Q</td><td>R</td><td>S</td><td>T</td><td>U</td><td>V</td><td>W</td><td>X</td><td>Y</td><td>Z</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Original</th>
+                            <th>N</th><th>O</th><th>P</th><th>Q</th><th>R</th><th>S</th><th>T</th><th>U</th><th>V</th><th>W</th><th>X</th><th>Y</th><th>Z</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>ROT13</strong></td>
+                            <td>A</td><td>B</td><td>C</td><td>D</td><td>E</td><td>F</td><td>G</td><td>H</td><td>I</td><td>J</td><td>K</td><td>L</td><td>M</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4>Example Decoding</h4>
+            <pre><code>ROT13 encoded: P:\Hfref\wfzvgu\Qbjaybnqf\frghc.rkr
+Decoded:       C:\Users\jsmith\Downloads\setup.exe
+
+Letter mapping:
+  P → C    (P is 13 letters after C)
+  H → U    (H is 13 letters after U... or U is 13 after H)
+  f → s    (lowercase also rotates: f → s)
+  e → r
+  r → e
+  \, :, . → unchanged (non-alphabetic characters are not rotated)</code></pre>
+
+            <!-- INTERACTIVE ROT13 DECODER -->
+            <div class="rot13-demo" role="region" aria-label="Interactive ROT13 decoder">
+                <h4 style="color: #2d2d5e; margin-bottom: 12px;">🔄 Interactive ROT13 Decoder</h4>
+                <label for="rot13Input">Enter ROT13-encoded text (or any text to encode):</label>
+                <input type="text" id="rot13Input" placeholder="e.g., P:\Hfref\wfzvgu\Qbjaybnqf\frghc.rkr" aria-describedby="rot13Desc">
+                <p id="rot13Desc" style="font-size: 0.82rem; color: #6a6a8a; margin-bottom: 10px;">ROT13 is its own inverse — encoding and decoding use the same operation.</p>
+                <button class="rot13-btn" onclick="decodeROT13()">Decode / Encode ROT13</button>
+                <div class="result-box" id="rot13Output" aria-live="polite">Result will appear here...</div>
+            </div>
+
+            <h3>3.3 UserAssist Value Data Structure</h3>
+            <p>The binary data for each UserAssist entry (on Windows 7 and later) is a 72-byte structure containing:</p>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Offset</th>
+                            <th>Size</th>
+                            <th>Field</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>0x00</td>
+                            <td>4 bytes</td>
+                            <td>Session ID</td>
+                            <td>Session identifier</td>
+                        </tr>
+                        <tr>
+                            <td>0x04</td>
+                            <td>4 bytes</td>
+                            <td>Run Count</td>
+                            <td>Number of times the program was executed</td>
+                        </tr>
+                        <tr>
+                            <td>0x08</td>
+                            <td>4 bytes</td>
+                            <td>Focus Count</td>
+                            <td>Number of times the application gained focus</td>
+                        </tr>
+                        <tr>
+                            <td>0x0C</td>
+                            <td>4 bytes</td>
+                            <td>Focus Time</td>
+                            <td>Total milliseconds the application had focus</td>
+                        </tr>
+                        <tr>
+                            <td>0x3C</td>
+                            <td>8 bytes</td>
+                            <td>Last Execution Time</td>
+                            <td>Windows FILETIME — when the program was last run (UTC)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>3.4 Example UserAssist Output</h3>
+            <div class="tool-output"><span class="cmt">--- Registry Explorer: UserAssist entries for user jsmith ---</span>
+
+<span class="hl">Program:</span> <span class="val">C:\Program Files\Mozilla Firefox\firefox.exe</span>
+  Run Count:     <span class="val">142</span>
+  Focus Count:   <span class="val">387</span>
+  Focus Time:    <span class="val">12:34:56 (total)</span>
+  Last Run:      <span class="val">2026-02-28 14:22:08 UTC</span>
+
+<span class="hl">Program:</span> <span class="val">C:\Windows\System32\cmd.exe</span>
+  Run Count:     <span class="val">23</span>
+  Focus Count:   <span class="val">45</span>
+  Focus Time:    <span class="val">01:12:33 (total)</span>
+  Last Run:      <span class="val">2026-02-27 22:15:44 UTC</span>
+
+<span class="hl">Program:</span> <span class="warn">C:\Users\jsmith\Downloads\CCleaner64.exe</span>
+  Run Count:     <span class="warn">5</span>
+  Focus Count:   <span class="warn">8</span>
+  Focus Time:    <span class="warn">00:04:12 (total)</span>
+  Last Run:      <span class="warn">2026-02-28 15:30:17 UTC</span>
+  <span class="cmt">← Anti-forensics tool — high investigative interest</span></div>
+
+            <h3>3.5 Forensic Significance &amp; Limitations</h3>
+
+            <div class="forensic-note">
+                <div class="note-title">🔍 Forensic Significance</div>
+                <p>UserAssist is one of the <strong>most valuable per-user artifacts</strong> because it provides:</p>
+                <ul>
+                    <li><strong>Program execution evidence:</strong> Proves a specific user launched a specific program</li>
+                    <li><strong>Frequency data:</strong> Run count shows how often a program was used — a single execution vs. habitual use</li>
+                    <li><strong>Temporal data:</strong> Last execution timestamp places the activity at a specific point in time</li>
+                    <li><strong>Anti-forensics detection:</strong> Execution of privacy tools (CCleaner, BleachBit, Eraser) is recorded here even if those tools later cleaned other artifacts</li>
+                    <li><strong>Usage patterns:</strong> Focus time reveals how long the user actually interacted with the application</li>
+                </ul>
+            </div>
+
+            <div class="important-box">
+                <div class="box-title">⚠️ Limitations of UserAssist</div>
+                <ul>
+                    <li><strong>GUI launches only:</strong> UserAssist records programs launched through the Windows GUI (double-clicking, Start Menu, taskbar). Programs launched from the command line (<code>cmd.exe</code>, <code>PowerShell</code>) or by scripts are <strong>not</strong> recorded in UserAssist (though cmd.exe itself would be recorded if launched via GUI)</li>
+                    <li><strong>No command-line arguments:</strong> UserAssist records the executable path but <strong>not</strong> the arguments passed to it</li>
+                    <li><strong>Only last execution time:</strong> Only the most recent execution timestamp is stored — previous execution times are overwritten</li>
+                    <li><strong>Can be cleared:</strong> A knowledgeable user can delete UserAssist entries, though the deletion itself may leave traces</li>
+                </ul>
+            </div>
+
+            <button class="section-complete-btn" data-section="3" onclick="markComplete(3)">
+                ✓ Mark Section 3 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 4: RECENTDOCS ========== -->
+        <section class="module-section" id="section4">
+            <h2>📄 4. RecentDocs — Recently Accessed Files</h2>
+
+            <div class="artifact-card">
+                <div class="artifact-header">
+                    <h4>RecentDocs</h4>
+                    <span class="badge badge-high">High Forensic Value</span>
+                    <span class="badge badge-ntuser">NTUSER.DAT</span>
+                </div>
+                <div class="registry-path">HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs</div>
+            </div>
+
+            <div class="definition-box">
+                <div class="term">RecentDocs</div>
+                <div class="meaning">A Registry artifact that records files recently opened by the user through Windows Explorer or the standard Open/Save dialog boxes. Entries are organized both as a master list and by file extension, providing a comprehensive record of what files the user has accessed. Each entry contains the filename and a link to the corresponding .lnk (shortcut) file in the user's Recent folder.</div>
+            </div>
+
+            <h3>4.1 Structure</h3>
+            <p>The RecentDocs key has a hierarchical structure:</p>
+
+            <pre><code>HKCU\...\Explorer\RecentDocs\
+  ├── (Default values) — Master MRU list of all recently opened files
+  ├── .docx\            — Recently opened .docx files
+  ├── .pdf\             — Recently opened .pdf files
+  ├── .xlsx\            — Recently opened .xlsx files
+  ├── .jpg\             — Recently opened .jpg files
+  ├── .txt\             — Recently opened .txt files
+  ├── .zip\             — Recently opened .zip files
+  └── Folder\           — Recently opened folders</code></pre>
+
+            <p>Each extension subkey contains <strong>MRU (Most Recently Used)</strong> values:</p>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Value Name</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>MRUListEx</code></td>
+                            <td>REG_BINARY</td>
+                            <td>An ordered list of DWORD indices indicating the order in which files were accessed (most recent first)</td>
+                        </tr>
+                        <tr>
+                            <td><code>0</code>, <code>1</code>, <code>2</code>, ...</td>
+                            <td>REG_BINARY</td>
+                            <td>Each numbered value contains the filename (Unicode string) and a reference to the corresponding .lnk file</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>4.2 Example RecentDocs Output</h3>
+            <div class="tool-output"><span class="cmt">--- Registry Explorer: RecentDocs for user jsmith ---</span>
+
+<span class="hl">RecentDocs (Master List):</span>
+  Key Last Write: <span class="val">2026-02-28 16:45:12 UTC</span>
+  MRU Order: 7, 5, 3, 12, 0, 8, ...
+
+<span class="hl">RecentDocs\.pdf:</span>
+  Key Last Write: <span class="val">2026-02-28 16:45:12 UTC</span>
+  Entry 0: <span class="val">Q4_Financial_Report.pdf</span>
+  Entry 1: <span class="val">Employee_Handbook_2026.pdf</span>
+  Entry 2: <span class="val">Network_Diagram_Confidential.pdf</span>
+
+<span class="hl">RecentDocs\.xlsx:</span>
+  Key Last Write: <span class="val">2026-02-27 11:30:55 UTC</span>
+  Entry 0: <span class="val">Customer_Database_Export.xlsx</span>
+  Entry 1: <span class="val">Salary_Schedule_2026.xlsx</span>
+
+<span class="hl">RecentDocs\.zip:</span>
+  Key Last Write: <span class="warn">2026-02-28 15:22:03 UTC</span>
+  Entry 0: <span class="warn">backup_all_data.zip</span>
+  <span class="cmt">← Potentially suspicious: large data backup on the same day as other suspicious activity</span></div>
+
+            <h3>4.3 Forensic Significance &amp; Limitations</h3>
+
+            <div class="forensic-note">
+                <div class="note-title">🔍 Forensic Significance</div>
+                <ul>
+                    <li><strong>File access evidence:</strong> Proves a user opened specific files — even if the files themselves have been deleted from the system</li>
+                    <li><strong>File type analysis:</strong> Extension subkeys reveal patterns of file access (e.g., accessing many .xlsx files could indicate data exfiltration from spreadsheets)</li>
+                    <li><strong>Filename evidence:</strong> Even without the file content, filenames like "Confidential_Client_List.xlsx" or "backup_all_data.zip" can be highly relevant</li>
+                    <li><strong>Temporal context:</strong> The key last-write timestamp on each extension subkey indicates when the most recent file of that type was accessed</li>
+                    <li><strong>Linked .lnk files:</strong> RecentDocs entries reference .lnk shortcut files in the user's Recent folder, which contain additional metadata (target path, timestamps, volume serial number, MAC address)</li>
+                </ul>
+            </div>
+
+            <div class="important-box">
+                <div class="box-title">⚠️ Limitations of RecentDocs</div>
+                <ul>
+                    <li><strong>Only Windows Explorer / Open-Save dialogs:</strong> Files opened directly by applications (without going through the standard dialog) may not be recorded</li>
+                    <li><strong>Filenames only:</strong> RecentDocs records the <strong>filename</strong> but not the full path — the full path is in the associated .lnk file</li>
+                    <li><strong>MRU list size:</strong> The list has a maximum size; older entries are pushed out as new ones are added</li>
+                    <li><strong>Can be cleared:</strong> Clearing "Recent Files" in Windows or running privacy tools can remove these entries</li>
+                </ul>
+            </div>
+
+            <button class="section-complete-btn" data-section="4" onclick="markComplete(4)">
+                ✓ Mark Section 4 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 5: TYPEDPATHS & RUNMRU ========== -->
+        <section class="module-section" id="section5">
+            <h2>⌨️ 5. TypedPaths &amp; RunMRU</h2>
+
+            <!-- TypedPaths -->
+            <div class="artifact-card">
+                <div class="artifact-header">
+                    <h4>TypedPaths</h4>
+                    <span class="badge badge-medium">Medium Forensic Value</span>
+                    <span class="badge badge-ntuser">NTUSER.DAT</span>
+                </div>
+                <div class="registry-path">HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\TypedPaths</div>
+            </div>
+
+            <div class="definition-box">
+                <div class="term">TypedPaths</div>
+                <div class="meaning">A Registry artifact that records file system paths and UNC (Universal Naming Convention) network paths that the user manually typed into the Windows Explorer address bar. Unlike paths navigated to by clicking through folders, TypedPaths specifically captures what the user <strong>typed</strong> — indicating intentional, directed navigation to specific locations.</div>
+            </div>
+
+            <h3>5.1 TypedPaths Structure</h3>
+            <pre><code>HKCU\...\Explorer\TypedPaths
+  url1 (REG_SZ) = "C:\Users\jsmith\Documents\Confidential"
+  url2 (REG_SZ) = "\\fileserver01\shared\accounting"
+  url3 (REG_SZ) = "D:\Backup"
+  url4 (REG_SZ) = "E:\"</code></pre>
+
+            <p>Values are named <code>url1</code> through <code>urlN</code>, with <code>url1</code> being the most recently typed path. The list typically stores the last <strong>25</strong> entries.</p>
+
+            <div class="forensic-note">
+                <div class="note-title">🔍 Forensic Significance</div>
+                <ul>
+                    <li><strong>Intentional navigation:</strong> Typing a path indicates the user <em>knew</em> the location and deliberately navigated there — this is stronger evidence of intent than clicking through folders</li>
+                    <li><strong>Network paths:</strong> UNC paths (e.g., <code>\\fileserver01\shared\accounting</code>) reveal network resources the user accessed, potentially on other machines</li>
+                    <li><strong>Removable media:</strong> Paths to drive letters like <code>E:\</code> or <code>D:\Backup</code> may indicate access to USB devices or external drives</li>
+                    <li><strong>Sensitive locations:</strong> Typed paths to restricted directories demonstrate the user's awareness of and interest in those locations</li>
+                </ul>
+            </div>
+
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #d1d1e0;">
+
+            <!-- RunMRU -->
+            <div class="artifact-card">
+                <div class="artifact-header">
+                    <h4>RunMRU (Run Dialog History)</h4>
+                    <span class="badge badge-high">High Forensic Value</span>
+                    <span class="badge badge-ntuser">NTUSER.DAT</span>
+                </div>
+                <div class="registry-path">HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU</div>
+            </div>
+
+            <div class="definition-box">
+                <div class="term">RunMRU</div>
+                <div class="meaning">A Registry artifact that records commands typed into the Windows <strong>Run dialog</strong> (Win+R). Each entry stores the exact command string the user typed, providing direct evidence of command execution. The MRUList value tracks the order in which commands were entered.</div>
+            </div>
+
+            <h3>5.2 RunMRU Structure</h3>
+            <pre><code>HKCU\...\Explorer\RunMRU
+  MRUList (REG_SZ) = "dcba"  ← Order: d=most recent, a=oldest
+  a (REG_SZ) = "cmd\1"
+  b (REG_SZ) = "regedit\1"
+  c (REG_SZ) = "notepad C:\Users\jsmith\Desktop\notes.txt\1"
+  d (REG_SZ) = "\\192.168.1.50\c$\1"</code></pre>
+
+            <p>Each value ends with <code>\1</code> — this is a delimiter appended by Windows and is not part of the original command. The <code>MRUList</code> value indicates the order of entries, with the first character being the most recently typed command.</p>
+
+            <div class="forensic-note">
+                <div class="note-title">🔍 Forensic Significance</div>
+                <ul>
+                    <li><strong>Direct command evidence:</strong> Shows exactly what the user typed in the Run dialog — including commands to launch programs, access network shares, or run system tools</li>
+                    <li><strong>Administrative tool access:</strong> Commands like <code>cmd</code>, <code>regedit</code>, <code>powershell</code>, <code>mmc</code> indicate the user was accessing administrative tools</li>
+                    <li><strong>Network access:</strong> UNC paths (e.g., <code>\\192.168.1.50\c$</code>) reveal attempts to access administrative shares on remote systems — a common lateral movement technique</li>
+                    <li><strong>Intent evidence:</strong> Using the Run dialog requires deliberate action — the user had to press Win+R and type a specific command</li>
+                </ul>
+            </div>
+
+            <button class="section-complete-btn" data-section="5" onclick="markComplete(5)">
+                ✓ Mark Section 5 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 6: WORDWHEELQUERY ========== -->
+        <section class="module-section" id="section6">
+            <h2>🔎 6. WordWheelQuery — Explorer Search History</h2>
+
+            <div class="artifact-card">
+                <div class="artifact-header">
+                    <h4>WordWheelQuery</h4>
+                    <span class="badge badge-high">High Forensic Value</span>
+                    <span class="badge badge-ntuser">NTUSER.DAT</span>
+                </div>
+                <div class="registry-path">HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\WordWheelQuery</div>
+            </div>
+
+            <div class="definition-box">
+                <div class="term">WordWheelQuery</div>
+                <div class="meaning">A Registry artifact that records search terms typed into the <strong>Windows Explorer search box</strong> (the search field in the upper-right corner of Explorer windows). Each entry stores the exact search string the user typed, and the MRUListEx value tracks the order in which searches were performed. This artifact captures what the user was <strong>looking for</strong> on the local system.</div>
+            </div>
+
+            <h3>6.1 Structure</h3>
+            <pre><code>HKCU\...\Explorer\WordWheelQuery
+  MRUListEx (REG_BINARY) = Order of entries (most recent first)
+  0 (REG_SZ) = "confidential client list"
+  1 (REG_SZ) = "salary"
+  2 (REG_SZ) = "password"
+  3 (REG_SZ) = "how to encrypt files"
+  4 (REG_SZ) = "backup"</code></pre>
+
+            <div class="forensic-note">
+                <div class="note-title">🔍 Forensic Significance</div>
+                <p>WordWheelQuery is <strong>extremely powerful</strong> forensic evidence because it reveals the user's <strong>intent and interests</strong>:</p>
+                <ul>
+                    <li><strong>What were they looking for?</strong> Search terms directly reveal what information the user was trying to find on the system</li>
+                    <li><strong>Knowledge and intent:</strong> Searching for "confidential client list" demonstrates the user knew such a document existed and was actively seeking it</li>
+                    <li><strong>Anti-forensics awareness:</strong> Searches for terms like "how to delete history," "wipe hard drive," or "encryption tool" may indicate the user was attempting to cover their tracks</li>
+                    <li><strong>Investigation keywords:</strong> Search terms can guide the examiner to look for specific files or data that the user was interested in</li>
+                    <li><strong>Temporal context:</strong> The key last-write timestamp indicates when the most recent search was performed</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <div class="box-title">💡 Important Distinction — Explorer Search vs. Web Search</div>
+                <p>WordWheelQuery records searches performed in <strong>Windows Explorer</strong> (the file manager), not web browser searches. Web search history is stored in browser-specific locations (browser databases, typed URLs, etc.). Both types of search evidence are forensically valuable but come from different sources.</p>
+            </div>
+
+            <h3>6.2 Forensic Scenario</h3>
+            <div class="tool-output"><span class="cmt">--- WordWheelQuery for user jsmith ---</span>
+<span class="cmt">--- Key Last Write: 2026-02-28 15:18:44 UTC ---</span>
+
+MRU Order (most recent first):
+  <span class="warn">0: "how to permanently delete files"</span>
+  <span class="warn">1: "ccleaner"</span>
+  2: "Q4 financial report"
+  3: "customer database"
+  4: "salary schedule 2026"
+  5: "network diagram"
+
+<span class="cmt">Analysis: The two most recent searches (entries 0-1) indicate</span>
+<span class="cmt">the user was looking for file deletion methods and a specific</span>
+<span class="cmt">privacy tool. Earlier searches (entries 2-5) targeted sensitive</span>
+<span class="cmt">corporate documents. This pattern suggests the user first</span>
+<span class="cmt">searched for and accessed sensitive files, then sought ways</span>
+<span class="cmt">to cover their tracks.</span></div>
+
+            <button class="section-complete-btn" data-section="6" onclick="markComplete(6)">
+                ✓ Mark Section 6 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 7: PER-USER AUTORUNS ========== -->
+        <section class="module-section" id="section7">
+            <h2>🔄 7. Per-User Startup Programs (Persistence)</h2>
+
+            <div class="artifact-card">
+                <div class="artifact-header">
+                    <h4>Per-User Autorun Keys</h4>
+                    <span class="badge badge-high">High Forensic Value</span>
+                    <span class="badge badge-ntuser">NTUSER.DAT</span>
+                </div>
+                <div class="registry-path">HKCU\Software\Microsoft\Windows\CurrentVersion\Run
+HKCU\Software\Microsoft\Windows\CurrentVersion\RunOnce</div>
+            </div>
+
+            <p>In Module 7.2, you examined the <strong>system-wide</strong> autorun keys under <code>HKLM\SOFTWARE</code>. The per-user equivalents under <code>HKCU</code> serve the same purpose but apply only to a <strong>specific user's login session</strong>.</p>
+
+            <div class="definition-box">
+                <div class="term">Per-User Autorun (Run Key)</div>
+                <div class="meaning">Registry values under <code>HKCU\...\Run</code> that specify programs to execute automatically each time the specific user logs into Windows. Unlike system-wide autoruns (HKLM), per-user autoruns affect only one account and do not require administrator privileges to create — making them a common persistence mechanism for both legitimate software and malware.</div>
+            </div>
+
+            <h3>7.1 Run vs. RunOnce</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Key</th>
+                            <th>Behavior</th>
+                            <th>Forensic Relevance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>Run</code></td>
+                            <td>Programs execute <strong>every time</strong> the user logs in</td>
+                            <td>Persistent programs — legitimate software (cloud sync, chat clients) or malware maintaining persistence</td>
+                        </tr>
+                        <tr>
+                            <td><code>RunOnce</code></td>
+                            <td>Programs execute <strong>once</strong> at next login, then the entry is deleted</td>
+                            <td>One-time execution — software updates, post-install configuration, or malware that executes once and removes its trace</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>7.2 Example</h3>
+            <div class="tool-output"><span class="cmt">--- Per-User Run key for user jsmith ---</span>
+<span class="cmt">--- Key Last Write: 2026-02-25 08:12:33 UTC ---</span>
+
+<span class="hl">HKCU\...\Run</span>
+  OneDrive      REG_SZ  "C:\Users\jsmith\AppData\Local\Microsoft\OneDrive\OneDrive.exe" /background
+  Spotify       REG_SZ  "C:\Users\jsmith\AppData\Roaming\Spotify\Spotify.exe" /minimized
+  <span class="warn">SysUpdate     REG_SZ  "C:\Users\jsmith\AppData\Local\Temp\svchost.exe"</span>
+  <span class="cmt">                      ↑ SUSPICIOUS: legitimate svchost.exe runs from System32,</span>
+  <span class="cmt">                        not from a user's Temp folder. This is a common malware</span>
+  <span class="cmt">                        technique — naming malware after legitimate system files.</span></div>
+
+            <div class="forensic-note">
+                <div class="note-title">🔍 Forensic Significance</div>
+                <ul>
+                    <li><strong>Malware persistence:</strong> Per-user Run keys are a top persistence mechanism because they do not require admin privileges</li>
+                    <li><strong>Suspicious indicators:</strong> Programs running from <code>Temp</code> folders, <code>AppData</code>, or <code>Downloads</code> are suspicious — legitimate software typically installs to <code>Program Files</code></li>
+                    <li><strong>Name masquerading:</strong> Malware often uses names of legitimate Windows processes (svchost.exe, explorer.exe, csrss.exe) but runs from non-standard locations</li>
+                    <li><strong>Timestamp:</strong> The key last-write timestamp shows when the most recent autorun entry was added or modified</li>
+                </ul>
+            </div>
+
+            <button class="section-complete-btn" data-section="7" onclick="markComplete(7)">
+                ✓ Mark Section 7 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 8: ARTIFACT SUMMARY TABLE ========== -->
+        <section class="module-section" id="section8">
+            <h2>📊 8. NTUSER.DAT Artifact Summary</h2>
+
+            <p>The following table provides a comprehensive reference for all NTUSER.DAT artifacts covered in this module:</p>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Artifact</th>
+                            <th>Registry Path (under HKCU)</th>
+                            <th>What It Records</th>
+                            <th>Key Data Points</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>UserAssist</strong></td>
+                            <td><code>...\Explorer\UserAssist\{GUID}\Count</code></td>
+                            <td>GUI program launches</td>
+                            <td>Program path (ROT13), run count, focus time, last run timestamp</td>
+                            <td>High</td>
+                        </tr>
+                        <tr>
+                            <td><strong>RecentDocs</strong></td>
+                            <td><code>...\Explorer\RecentDocs</code></td>
+                            <td>Recently opened files</td>
+                            <td>Filename, file extension, MRU order, linked .lnk files</td>
+                            <td>High</td>
+                        </tr>
+                        <tr>
+                            <td><strong>TypedPaths</strong></td>
+                            <td><code>...\Explorer\TypedPaths</code></td>
+                            <td>Paths typed in Explorer address bar</td>
+                            <td>Local paths, UNC network paths, drive letters</td>
+                            <td>Medium</td>
+                        </tr>
+                        <tr>
+                            <td><strong>RunMRU</strong></td>
+                            <td><code>...\Explorer\RunMRU</code></td>
+                            <td>Commands typed in Run dialog (Win+R)</td>
+                            <td>Command strings, MRU order</td>
+                            <td>High</td>
+                        </tr>
+                        <tr>
+                            <td><strong>WordWheelQuery</strong></td>
+                            <td><code>...\Explorer\WordWheelQuery</code></td>
+                            <td>Explorer search terms</td>
+                            <td>Search strings, MRU order</td>
+                            <td>High</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Per-User Run</strong></td>
+                            <td><code>...\CurrentVersion\Run</code></td>
+                            <td>Programs that auto-start at user login</td>
+                            <td>Program name, executable path</td>
+                            <td>High</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Per-User RunOnce</strong></td>
+                            <td><code>...\CurrentVersion\RunOnce</code></td>
+                            <td>Programs that run once at next login</td>
+                            <td>Program name, executable path</td>
+                            <td>High</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MountPoints2</strong></td>
+                            <td><code>...\Explorer\MountPoints2</code></td>
+                            <td>Volumes accessed by this user</td>
+                            <td>Volume GUIDs, last access timestamp</td>
+                            <td>High</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <button class="section-complete-btn" data-section="8" onclick="markComplete(8)">
+                ✓ Mark Section 8 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 9: TOOL WALKTHROUGHS ========== -->
+        <section class="module-section" id="section9">
+            <h2>🔧 9. Tool Walkthroughs</h2>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>Registry Explorer — Browsing UserAssist</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <ol>
+                        <li><strong>Load the NTUSER.DAT hive:</strong> File → Load Hive → select the extracted <code>NTUSER.DAT</code> (with .LOG1/.LOG2 in the same directory)</li>
+                        <li><strong>Navigate to UserAssist:</strong> <code>Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist</code></li>
+                        <li><strong>Select the executable GUID:</strong> Click on <code>{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}\Count</code></li>
+                        <li><strong>View decoded entries:</strong> Registry Explorer automatically decodes ROT13 and parses the binary data — you will see program paths, run counts, focus times, and last execution timestamps in the values panel</li>
+                        <li><strong>Bookmark suspicious entries:</strong> Right-click → Add Bookmark for any anti-forensics tools, unusual executables, or programs relevant to the investigation</li>
+                        <li><strong>Export findings:</strong> Use the export function to save selected entries for your report</li>
+                    </ol>
+                    <div class="info-box">
+                        <div class="box-title">💡 Tip</div>
+                        <p>Registry Explorer's UserAssist parsing is superior to manual analysis because it handles the ROT13 decoding, binary structure parsing, and FILETIME conversion automatically. Always verify a few entries manually to confirm the tool is parsing correctly.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>RegRipper — Automated NTUSER.DAT Extraction</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <p>RegRipper provides targeted plugins for each NTUSER.DAT artifact:</p>
+                    <pre><code>rip.exe -r C:\Evidence\jsmith_NTUSER.DAT -p userassist
+rip.exe -r C:\Evidence\jsmith_NTUSER.DAT -p recentdocs
+rip.exe -r C:\Evidence\jsmith_NTUSER.DAT -p typedpaths
+rip.exe -r C:\Evidence\jsmith_NTUSER.DAT -p runmru
+rip.exe -r C:\Evidence\jsmith_NTUSER.DAT -p wordwheelquery
+rip.exe -r C:\Evidence\jsmith_NTUSER.DAT -p run
+rip.exe -r C:\Evidence\jsmith_NTUSER.DAT -p mountpoints2</code></pre>
+
+                    <p><strong>Run all applicable plugins at once:</strong></p>
+                    <pre><code>rip.exe -r C:\Evidence\jsmith_NTUSER.DAT -a &gt; jsmith_ntuser_report.txt</code></pre>
+
+                    <p>The <code>-a</code> flag runs all plugins applicable to the detected hive type and outputs the combined results. Redirecting to a text file (<code>&gt; report.txt</code>) creates a comprehensive artifact report.</p>
+
+                    <p><strong>Example userassist plugin output:</strong></p>
+                    <div class="tool-output"><span class="cmt">--- RegRipper: userassist plugin ---</span>
+<span class="cmt">--- NTUSER.DAT (user: jsmith) ---</span>
+
+<span class="hl">UserAssist - GUID: {CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}</span>
+
+<span class="val">2026-02-28 15:30:17 UTC</span>
+  C:\Users\jsmith\Downloads\CCleaner64.exe (Count: 5)
+
+<span class="val">2026-02-28 14:22:08 UTC</span>
+  C:\Program Files\Mozilla Firefox\firefox.exe (Count: 142)
+
+<span class="val">2026-02-27 22:15:44 UTC</span>
+  C:\Windows\System32\cmd.exe (Count: 23)
+
+<span class="val">2026-02-27 19:05:12 UTC</span>
+  C:\Program Files\7-Zip\7zFM.exe (Count: 8)
+
+<span class="val">2026-02-25 10:30:00 UTC</span>
+  C:\Windows\explorer.exe (Count: 312)</div>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>Autopsy — Integrated User Artifact Analysis</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <p>Autopsy's <strong>Recent Activity</strong> ingest module automatically parses NTUSER.DAT artifacts:</p>
+                    <ul>
+                        <li><strong>Data Artifacts → Recent Documents:</strong> RecentDocs entries with filenames and timestamps</li>
+                        <li><strong>Data Artifacts → Run Programs:</strong> UserAssist entries with decoded program paths</li>
+                        <li><strong>Data Artifacts → USB Device Attached:</strong> MountPoints2 data correlated with system-level USB artifacts</li>
+                    </ul>
+                    <p><strong>Advantage:</strong> Autopsy correlates user-level artifacts with file system data — if a RecentDocs entry references a file, Autopsy can link directly to that file (or its deleted remnant) in the forensic image.</p>
+                    <p><strong>Limitation:</strong> Autopsy may not parse all NTUSER.DAT artifacts (e.g., WordWheelQuery, RunMRU, TypedPaths may require manual examination with Registry Explorer or RegRipper).</p>
+                </div>
+            </div>
+
+            <button class="section-complete-btn" data-section="9" onclick="markComplete(9)">
+                ✓ Mark Section 9 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 10: INTERACTIVE ACTIVITIES ========== -->
+        <section class="module-section" id="section10">
+            <h2>🧩 10. Interactive Activities</h2>
+
+            <!-- ACTIVITY 1: MULTIPLE CHOICE -->
+            <div class="activity-container">
+                <h3>🎮 Activity 1: User Artifact Identification</h3>
+
+                <div class="activity-question" id="q1">
+                    <p>1. A forensic examiner decodes a UserAssist entry and finds: <code>C:\Users\jsmith\Downloads\Eraser.exe</code> with a run count of 3 and last execution on the day before evidence seizure. What is the primary forensic significance?</p>
+                    <label><input type="radio" name="q1" value="a"> The user downloaded a file management tool</label>
+                    <label><input type="radio" name="q1" value="b"> The user executed an anti-forensics data wiping tool multiple times shortly before seizure</label>
+                    <label><input type="radio" name="q1" value="c"> The user's computer has a virus</label>
+                    <label><input type="radio" name="q1" value="d"> The entry is unreliable because it was ROT13 encoded</label>
+                    <div class="feedback" id="fb-q1"></div>
+                </div>
+
+                <div class="activity-question" id="q2">
+                    <p>2. Which NTUSER.DAT artifact records what a user typed into the Windows Explorer search box?</p>
+                    <label><input type="radio" name="q2" value="a"> RunMRU</label>
+                    <label><input type="radio" name="q2" value="b"> TypedPaths</label>
+                    <label><input type="radio" name="q2" value="c"> WordWheelQuery</label>
+                    <label><input type="radio" name="q2" value="d"> RecentDocs</label>
+                    <div class="feedback" id="fb-q2"></div>
+                </div>
+
+                <div class="activity-question" id="q3">
+                    <p>3. What encoding does Windows use to obfuscate program paths in UserAssist entries?</p>
+                    <label><input type="radio" name="q3" value="a"> Base64 encoding</label>
+                    <label><input type="radio" name="q3" value="b"> AES-256 encryption</label>
+                    <label><input type="radio" name="q3" value="c"> ROT13 letter substitution</label>
+                    <label><input type="radio" name="q3" value="d"> XOR encoding with a fixed key</label>
+                    <div class="feedback" id="fb-q3"></div>
+                </div>
+
+                <div class="activity-question" id="q4">
+                    <p>4. A per-user Run key contains an entry pointing to <code>C:\Users\jsmith\AppData\Local\Temp\svchost.exe</code>. Why is this suspicious?</p>
+                    <label><input type="radio" name="q4" value="a"> svchost.exe should never appear in the Registry</label>
+                    <label><input type="radio" name="q4" value="b"> The legitimate svchost.exe runs from C:\Windows\System32, not from a user's Temp folder — this is likely malware masquerading as a system process</label>
+                    <label><input type="radio" name="q4" value="c"> Run keys cannot contain paths to .exe files</label>
+                    <label><input type="radio" name="q4" value="d"> Temp folders are always empty on Windows systems</label>
+                    <div class="feedback" id="fb-q4"></div>
+                </div>
+
+                <div class="activity-question" id="q5">
+                    <p>5. What is a key limitation of UserAssist as a forensic artifact?</p>
+                    <label><input type="radio" name="q5" value="a"> It does not record timestamps</label>
+                    <label><input type="radio" name="q5" value="b"> It only records programs launched through the GUI — command-line executions are not captured</label>
+                    <label><input type="radio" name="q5" value="c"> It only exists on Windows Server, not desktop Windows</label>
+                    <label><input type="radio" name="q5" value="d"> It records program names but not how many times they were run</label>
+                    <div class="feedback" id="fb-q5"></div>
+                </div>
+
+                <div class="activity-question" id="q6">
+                    <p>6. An examiner finds <code>\\192.168.1.50\c$</code> in the RunMRU artifact. What does this indicate?</p>
+                    <label><input type="radio" name="q6" value="a"> The user browsed a website at IP address 192.168.1.50</label>
+                    <label><input type="radio" name="q6" value="b"> The user used the Run dialog to access the administrative C$ share on a remote system at 192.168.1.50</label>
+                    <label><input type="radio" name="q6" value="c"> The user's IP address is 192.168.1.50</label>
+                    <label><input type="radio" name="q6" value="d"> The system received a network connection from 192.168.1.50</label>
+                    <div class="feedback" id="fb-q6"></div>
+                </div>
+
+                <button class="check-btn" onclick="checkActivity1()">Check Answers</button>
+                <div class="feedback" id="fb-activity1"></div>
+            </div>
+
+            <!-- ACTIVITY 2: ARTIFACT MATCHING -->
+            <div class="activity-container">
+                <h3>🎮 Activity 2: Match the Evidence to the Artifact</h3>
+                <p>For each piece of evidence, select which NTUSER.DAT artifact would contain it.</p>
+
+                <div class="activity-question">
+                    <div style="margin-bottom: 12px;">
+                        <label for="m1" style="display: inline; padding: 0;"><strong>"User ran Firefox 142 times, last on Feb 28":</strong></label>
+                        <select id="m1" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d1e0; font-size: 0.9rem; margin-left: 8px;">
+                            <option value="">— Select artifact —</option>
+                            <option value="userassist">UserAssist</option>
+                            <option value="recentdocs">RecentDocs</option>
+                            <option value="typedpaths">TypedPaths</option>
+                            <option value="runmru">RunMRU</option>
+                            <option value="wordwheel">WordWheelQuery</option>
+                            <option value="run">Per-User Run Key</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label for="m2" style="display: inline; padding: 0;"><strong>"User opened Q4_Financial_Report.pdf":</strong></label>
+                        <select id="m2" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d1e0; font-size: 0.9rem; margin-left: 8px;">
+                            <option value="">— Select artifact —</option>
+                            <option value="userassist">UserAssist</option>
+                            <option value="recentdocs">RecentDocs</option>
+                            <option value="typedpaths">TypedPaths</option>
+                            <option value="runmru">RunMRU</option>
+                            <option value="wordwheel">WordWheelQuery</option>
+                            <option value="run">Per-User Run Key</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label for="m3" style="display: inline; padding: 0;"><strong>"User searched for 'confidential client list'":</strong></label>
+                        <select id="m3" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d1e0; font-size: 0.9rem; margin-left: 8px;">
+                            <option value="">— Select artifact —</option>
+                            <option value="userassist">UserAssist</option>
+                            <option value="recentdocs">RecentDocs</option>
+                            <option value="typedpaths">TypedPaths</option>
+                            <option value="runmru">RunMRU</option>
+                            <option value="wordwheel">WordWheelQuery</option>
+                            <option value="run">Per-User Run Key</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label for="m4" style="display: inline; padding: 0;"><strong>"User typed \\\\fileserver01\\shared in Explorer":</strong></label>
+                        <select id="m4" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d1e0; font-size: 0.9rem; margin-left: 8px;">
+                            <option value="">— Select artifact —</option>
+                            <option value="userassist">UserAssist</option>
+                            <option value="recentdocs">RecentDocs</option>
+                            <option value="typedpaths">TypedPaths</option>
+                            <option value="runmru">RunMRU</option>
+                            <option value="wordwheel">WordWheelQuery</option>
+                            <option value="run">Per-User Run Key</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label for="m5" style="display: inline; padding: 0;"><strong>"User typed 'cmd' in the Run dialog (Win+R)":</strong></label>
+                        <select id="m5" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d1e0; font-size: 0.9rem; margin-left: 8px;">
+                            <option value="">— Select artifact —</option>
+                            <option value="userassist">UserAssist</option>
+                            <option value="recentdocs">RecentDocs</option>
+                            <option value="typedpaths">TypedPaths</option>
+                            <option value="runmru">RunMRU</option>
+                            <option value="wordwheel">WordWheelQuery</option>
+                            <option value="run">Per-User Run Key</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label for="m6" style="display: inline; padding: 0;"><strong>"Suspicious program auto-starts at user login":</strong></label>
+                        <select id="m6" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d1e0; font-size: 0.9rem; margin-left: 8px;">
+                            <option value="">— Select artifact —</option>
+                            <option value="userassist">UserAssist</option>
+                            <option value="recentdocs">RecentDocs</option>
+                            <option value="typedpaths">TypedPaths</option>
+                            <option value="runmru">RunMRU</option>
+                            <option value="wordwheel">WordWheelQuery</option>
+                            <option value="run">Per-User Run Key</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="check-btn" onclick="checkMatching()">Check Matches</button>
+                <div class="feedback" id="fb-matching"></div>
+            </div>
+
+            <!-- ACTIVITY 3: ROT13 CHALLENGE -->
+            <div class="activity-container">
+                <h3>🎮 Activity 3: ROT13 Decoding Challenge</h3>
+                <p>Decode the following ROT13-encoded UserAssist entry to determine which program was executed. Type your answer below.</p>
+
+                <div class="activity-question">
+                    <p>Encoded value: <code>P:\Cebtenz Svyrf\Zbmvyyn Sversbk\sversbk.rkr</code></p>
+                    <label for="rot13Answer" style="display: block; padding: 0; margin: 8px 0 4px; font-weight: normal;">Your decoded answer:</label>
+                    <input type="text" id="rot13Answer" style="width: 100%; padding: 10px; border: 1px solid #d1d1e0; border-radius: 6px; font-family: 'Consolas', monospace; font-size: 0.95rem;" placeholder="Type the decoded path here...">
+                </div>
+                <button class="check-btn" onclick="checkROT13()">Check Answer</button>
+                <div class="feedback" id="fb-rot13"></div>
+            </div>
+
+            <button class="section-complete-btn" data-section="10" onclick="markComplete(10)">
+                ✓ Mark Section 10 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 11: KNOWLEDGE CHECK ========== -->
+        <section class="module-section" id="section11">
+            <h2>✅ 11. Knowledge Check — Module 7.3</h2>
+
+            <div class="knowledge-check">
+                <h3>📝 Test Your Understanding</h3>
+                <p class="instructions">Answer the following questions in your own words before revealing the model answers. These questions align with the Lab Activity 7 requirements for user-level artifact extraction.</p>
+
+                <div class="kc-question">
+                    <div class="q-text">1. Explain the forensic significance of UserAssist artifacts. What specific data points does UserAssist provide, and what are its key limitations?</div>
+                    <textarea aria-label="Your answer to question 1" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc1')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc1">
+                        <p><strong>Significance:</strong> UserAssist records which programs a user launched through the Windows GUI, providing program execution evidence tied to a specific user account. It captures the program path (ROT13 encoded), run count, focus count, total focus time, and last execution timestamp.</p>
+                        <p><strong>Data points:</strong> (1) Executable path, (2) Number of executions, (3) Focus time showing actual usage duration, (4) Last execution timestamp in UTC.</p>
+                        <p><strong>Limitations:</strong> (1) Only records GUI-launched programs — command-line executions are not captured; (2) Only stores the last execution timestamp — previous execution times are overwritten; (3) Does not record command-line arguments; (4) Can be deleted by a knowledgeable user or privacy tools.</p>
+                    </div>
+                </div>
+
+                <div class="kc-question">
+                    <div class="q-text">2. What is ROT13, and why does Microsoft use it in UserAssist? Is it a form of encryption?</div>
+                    <textarea aria-label="Your answer to question 2" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc2')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc2">
+                        <p><strong>ROT13</strong> is a simple letter substitution cipher that replaces each letter with the letter 13 positions after it in the alphabet (A→N, B→O, etc.). Applying ROT13 twice returns the original text. Only alphabetic characters are rotated; numbers, symbols, and special characters remain unchanged.</p>
+                        <p><strong>ROT13 is NOT encryption.</strong> It provides zero security — it is trivially reversible by anyone who knows what it is (or even by someone who doesn't, since forensic tools decode it automatically). Microsoft uses it purely as <strong>obfuscation</strong> to prevent casual observation of program paths in the Registry using tools like regedit.exe. It was never intended to hide data from forensic examiners.</p>
+                    </div>
+                </div>
+
+                <div class="kc-question">
+                    <div class="q-text">3. You are analyzing a suspect's NTUSER.DAT and find the following WordWheelQuery entries (most recent first): "how to permanently delete files", "eraser download", "customer database export", "salary information". What narrative might these search terms suggest?</div>
+                    <textarea aria-label="Your answer to question 3" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc3')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc3">
+                        <p>The search history suggests a <strong>progression of activity</strong>:</p>
+                        <ol>
+                            <li><strong>Earlier searches</strong> ("salary information", "customer database export") indicate the user was looking for sensitive corporate data on the system</li>
+                            <li><strong>Later searches</strong> ("eraser download", "how to permanently delete files") indicate the user then sought ways to securely delete files — potentially to cover their tracks after accessing or exfiltrating the sensitive data</li>
+                        </ol>
+                        <p><strong>Investigative next steps:</strong> Check UserAssist for execution of Eraser or similar tools, check RecentDocs for access to files matching the search terms, examine USB device history for potential data exfiltration, and check file system artifacts for evidence of file deletion.</p>
+                    </div>
+                </div>
+
+                <div class="kc-question">
+                    <div class="q-text">4. Why should a forensic examiner extract NTUSER.DAT from every user profile on the system, not just the suspected user's profile?</div>
+                    <textarea aria-label="Your answer to question 4" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc4')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc4">
+                        <p>Extracting all user profiles is important for several reasons:</p>
+                        <ul>
+                            <li><strong>Multiple account usage:</strong> A suspect may have used a different account to perform certain actions to obscure attribution</li>
+                            <li><strong>Baseline comparison:</strong> Activity patterns on other accounts help establish what is "normal" on this system, making it easier to identify anomalous behavior on the suspect's account</li>
+                            <li><strong>Unauthorized accounts:</strong> An attacker may have created a new account (identified in SAM analysis) and used it for malicious activity — you won't find this evidence if you only examine the primary user's profile</li>
+                            <li><strong>Completeness:</strong> Forensic thoroughness requires examining all available evidence. Failing to examine other profiles could be challenged in court as an incomplete investigation</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="kc-question">
+                    <div class="q-text">5. Describe how you would use RecentDocs artifacts to support an investigation into suspected data theft. What information does RecentDocs provide, and what are its limitations?</div>
+                    <textarea aria-label="Your answer to question 5" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc5')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc5">
+                        <p><strong>RecentDocs provides:</strong> Filenames of recently opened files organized by extension, MRU ordering showing which files were accessed most recently, key last-write timestamps showing when the most recent file of each type was opened, and links to .lnk shortcut files that contain additional metadata (full path, timestamps, volume information).</p>
+                        <p><strong>In a data theft investigation:</strong> RecentDocs can show that the suspect accessed specific sensitive files (e.g., "Customer_Database_Export.xlsx", "Salary_Schedule_2026.xlsx"). Even if the files themselves have been deleted, the RecentDocs entries prove they were opened. The extension subkeys can reveal patterns — accessing many .xlsx files from a financial database, for example.</p>
+                        <p><strong>Limitations:</strong> (1) Records filenames but not full paths (full paths are in linked .lnk files); (2) Only captures files opened through Explorer or standard Open/Save dialogs; (3) Has a maximum list size — older entries are pushed out; (4) Can be cleared by privacy tools or manual deletion.</p>
+                    </div>
+                </div>
+
+                <div class="kc-question">
+                    <div class="q-text">6. What are the key elements that must be documented for each artifact finding to ensure it is legally defensible?</div>
+                    <textarea aria-label="Your answer to question 6" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc6')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc6">
+                        <p>Each artifact finding must be documented with:</p>
+                        <ul>
+                            <li><strong>Source evidence:</strong> The forensic image filename and verified hash</li>
+                            <li><strong>Hive file:</strong> Which hive file the artifact was extracted from (e.g., <code>C:\Users\jsmith\NTUSER.DAT</code>)</li>
+                            <li><strong>Full Registry path:</strong> The exact key and value path (e.g., <code>HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist\{GUID}\Count</code>)</li>
+                            <li><strong>Value name and data:</strong> The specific value examined and its contents</li>
+                            <li><strong>Timestamp:</strong> Key last-write timestamp and/or artifact-specific timestamps, with time zone notation (UTC)</li>
+                            <li><strong>Tool used:</strong> Which forensic tool was used for extraction and analysis (name and version)</li>
+                            <li><strong>Examiner interpretation:</strong> What the artifact means in the context of the investigation</li>
+                            <li><strong>Screenshots:</strong> Visual evidence of the tool output showing the artifact</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <button class="section-complete-btn" data-section="11" onclick="markComplete(11)">
+                ✓ Mark Section 11 as Complete
+            </button>
+        </section>
+
+        <!-- MODULE SUMMARY -->
+        <section class="module-section">
+            <h2>📋 Module 7.3 Summary</h2>
+            <p>In this module, you learned to extract and interpret per-user forensic artifacts from NTUSER.DAT:</p>
+            <ul>
+                <li><strong>NTUSER.DAT</strong> is a per-user hive file that maps to HKCU — extract it from every user profile, not just the suspect's</li>
+                <li><strong>UserAssist</strong> records GUI program launches with ROT13-encoded paths, run counts, focus times, and last execution timestamps</li>
+                <li><strong>RecentDocs</strong> records recently opened files organized by extension, with MRU ordering and linked .lnk files</li>
+                <li><strong>TypedPaths</strong> captures paths typed into the Explorer address bar — showing intentional navigation to specific locations</li>
+                <li><strong>RunMRU</strong> records commands typed in the Run dialog (Win+R) — revealing administrative tool access and network share connections</li>
+                <li><strong>WordWheelQuery</strong> captures Explorer search terms — directly revealing user intent and interests</li>
+                <li><strong>Per-User Run/RunOnce</strong> keys identify programs that auto-start at user login — a primary persistence mechanism for malware</li>
+            </ul>
+
+            <div class="info-box">
+                <div class="box-title">⏭️ What's Next</div>
+                <p>In <strong>Module 7.4: Advanced Artifacts and Timeline Correlation</strong>, you will learn about additional artifact types (ShimCache/AppCompatCache, BAM/DAM, Jump Lists, Recycle Bin) and — most importantly — how to <strong>correlate</strong> all the artifacts from Modules 7.1–7.3 into a unified investigative timeline that tells the complete story of what happened on the system.</p>
+            </div>
+        </section>
+
+        <!-- KEY TERMS -->
+        <section class="module-section">
+            <h2>📖 Key Terms — Module 7.3</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Term</th>
+                            <th>Definition</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>NTUSER.DAT</strong></td>
+                            <td>Per-user Registry hive file located in each user's profile directory; maps to HKCU when the user is logged in</td>
+                        </tr>
+                        <tr>
+                            <td><strong>UserAssist</strong></td>
+                            <td>Registry artifact recording GUI-launched program execution history including run count, focus time, and last execution timestamp</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ROT13</strong></td>
+                            <td>A simple letter substitution cipher (rotate by 13 positions) used to obfuscate program paths in UserAssist entries; not encryption</td>
+                        </tr>
+                        <tr>
+                            <td><strong>RecentDocs</strong></td>
+                            <td>Registry artifact recording recently opened files, organized by file extension with MRU ordering</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MRU (Most Recently Used)</strong></td>
+                            <td>An ordering scheme where items are ranked by how recently they were accessed; the most recent item appears first</td>
+                        </tr>
+                        <tr>
+                            <td><strong>TypedPaths</strong></td>
+                            <td>Registry artifact recording file system and UNC paths typed into the Windows Explorer address bar</td>
+                        </tr>
+                        <tr>
+                            <td><strong>RunMRU</strong></td>
+                            <td>Registry artifact recording commands typed into the Windows Run dialog (Win+R)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>WordWheelQuery</strong></td>
+                            <td>Registry artifact recording search terms typed into the Windows Explorer search box</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Persistence Mechanism</strong></td>
+                            <td>Any technique that ensures a program (legitimate or malicious) survives system reboots and continues executing; Run keys are a common example</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Name Masquerading</strong></td>
+                            <td>A malware technique where malicious executables are given the same name as legitimate system files (e.g., svchost.exe) but placed in non-standard locations</td>
+                        </tr>
+                        <tr>
+                            <td><strong>UNC Path</strong></td>
+                            <td>Universal Naming Convention path format (\\server\share) used to access network resources; presence in TypedPaths or RunMRU indicates network activity</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- NEXT MODULE -->
+        <a href="#" class="next-module" aria-label="Proceed to Module 7.4: Advanced Artifacts and Timeline Correlation">
+            Proceed to Module 7.4: Advanced Artifacts and Timeline Correlation →
+        </a>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="module-footer">
+        <p>CSC 156 — Digital Forensics Fundamentals | Week 7: Windows Forensics I</p>
+        <p>Module 7.3: User-Level Registry Artifacts (NTUSER.DAT)</p>
+        <p>© 2026 CSC 156. For educational use only.</p>
+    </footer>
+
+    <!-- ===== JAVASCRIPT ===== -->
+    <script>
+        // ===== PROGRESS TRACKING =====
+        var TOTAL_SECTIONS = 11;
+        var STORAGE_KEY = 'csc156_mod73_progress';
+
+        function getProgress() {
+            try {
+                var data = sessionStorage.getItem(STORAGE_KEY);
+                return data ? JSON.parse(data) : {};
+            } catch (e) { return {}; }
+        }
+        function saveProgress(data) {
+            try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+            catch (e) {}
+        }
+        function markComplete(sectionNum) {
+            var progress = getProgress();
+            progress['section' + sectionNum] = true;
+            saveProgress(progress);
+            var btn = document.querySelector('[data-section="' + sectionNum + '"]');
+            if (btn) {
+                btn.classList.add('completed');
+                btn.textContent = '\u2713 Section ' + sectionNum + ' Completed';
+                btn.setAttribute('aria-label', 'Section ' + sectionNum + ' marked as complete');
+            }
+            var navLink = document.getElementById('nav-s' + sectionNum);
+            if (navLink) navLink.classList.add('completed');
+            updateProgressBar();
+        }
+        function updateProgressBar() {
+            var progress = getProgress();
+            var completed = 0;
+            for (var i = 1; i <= TOTAL_SECTIONS; i++) {
+                if (progress['section' + i]) completed++;
+            }
+            var pct = Math.round((completed / TOTAL_SECTIONS) * 100);
+            var bar = document.getElementById('progressBar');
+            var text = document.getElementById('progressText');
+            if (bar) bar.style.width = pct + '%';
+            if (text) text.textContent = pct + '% complete';
+            var container = document.querySelector('.progress-container');
+            if (container) container.setAttribute('aria-valuenow', pct);
+        }
+        function restoreProgress() {
+            var progress = getProgress();
+            for (var i = 1; i <= TOTAL_SECTIONS; i++) {
+                if (progress['section' + i]) {
+                    var btn = document.querySelector('[data-section="' + i + '"]');
+                    if (btn) {
+                        btn.classList.add('completed');
+                        btn.textContent = '\u2713 Section ' + i + ' Completed';
+                    }
+                    var navLink = document.getElementById('nav-s' + i);
+                    if (navLink) navLink.classList.add('completed');
+                }
+            }
+            updateProgressBar();
+        }
+
+        // ===== COLLAPSIBLE =====
+        function toggleCollapsible(button) {
+            var content = button.nextElementSibling;
+            var isOpen = content.classList.contains('open');
+            content.classList.toggle('open');
+            button.setAttribute('aria-expanded', !isOpen);
+        }
+
+        // ===== ROT13 DECODER =====
+        function rot13(str) {
+            return str.replace(/[A-Za-z]/g, function(c) {
+                var base = c <= 'Z' ? 65 : 97;
+                return String.fromCharCode(((c.charCodeAt(0) - base + 13) % 26) + base);
+            });
+        }
+        function decodeROT13() {
+            var input = document.getElementById('rot13Input').value;
+            var output = document.getElementById('rot13Output');
+            if (input.trim() === '') {
+                output.textContent = 'Please enter text to decode/encode.';
+                return;
+            }
+            output.textContent = rot13(input);
+        }
+
+        // ===== ACTIVITY 1: MULTIPLE CHOICE =====
+        function checkActivity1() {
+            var answers = {
+                q1: { correct: 'b', explanation: 'Eraser is a well-known secure data wiping (anti-forensics) tool. Its execution 3 times shortly before seizure strongly suggests the user was attempting to destroy evidence.' },
+                q2: { correct: 'c', explanation: 'WordWheelQuery records search terms typed into the Windows Explorer search box.' },
+                q3: { correct: 'c', explanation: 'UserAssist uses ROT13 letter substitution to obfuscate program paths. It is trivially reversible and is not encryption.' },
+                q4: { correct: 'b', explanation: 'The legitimate svchost.exe runs from C:\\Windows\\System32. An executable with the same name in a user\'s Temp folder is a classic indicator of malware using name masquerading.' },
+                q5: { correct: 'b', explanation: 'UserAssist only records programs launched through the GUI. Programs executed from the command line, scripts, or scheduled tasks are not captured.' },
+                q6: { correct: 'b', explanation: 'The \\\\server\\c$ format is a UNC path to an administrative share. Its presence in RunMRU indicates the user used the Run dialog to access the C: drive on a remote system.' }
+            };
+
+            var totalCorrect = 0;
+            var totalQuestions = 6;
+
+            for (var qId in answers) {
+                var selected = document.querySelector('input[name="' + qId + '"]:checked');
+                var fb = document.getElementById('fb-' + qId);
+                if (!selected) {
+                    fb.className = 'feedback incorrect';
+                    fb.textContent = 'Please select an answer. ' + answers[qId].explanation;
+                    fb.style.display = 'block';
+                } else if (selected.value === answers[qId].correct) {
+                    fb.className = 'feedback correct';
+                    fb.textContent = '\u2713 Correct! ' + answers[qId].explanation;
+                    fb.style.display = 'block';
+                    totalCorrect++;
+                } else {
+                    fb.className = 'feedback incorrect';
+                    fb.textContent = '\u2717 Incorrect. ' + answers[qId].explanation;
+                    fb.style.display = 'block';
+                }
+            }
+
+            var overallFb = document.getElementById('fb-activity1');
+            if (totalCorrect === totalQuestions) {
+                overallFb.className = 'feedback correct';
+                overallFb.textContent = 'Excellent! You got all ' + totalQuestions + ' questions correct!';
+            } else {
+                overallFb.className = 'feedback incorrect';
+                overallFb.textContent = 'You got ' + totalCorrect + ' out of ' + totalQuestions + ' correct. Review the sections above and try again.';
+            }
+            overallFb.style.display = 'block';
+        }
+
+        // ===== ACTIVITY 2: MATCHING =====
+        function checkMatching() {
+            var correctAnswers = {
+                m1: 'userassist',
+                m2: 'recentdocs',
+                m3: 'wordwheel',
+                m4: 'typedpaths',
+                m5: 'runmru',
+                m6: 'run'
+            };
+
+            var correct = 0;
+            var total = 6;
+
+            for (var id in correctAnswers) {
+                var select = document.getElementById(id);
+                if (select.value === correctAnswers[id]) {
+                    select.style.borderColor = '#16a34a';
+                    select.style.backgroundColor = '#d1fae5';
+                    correct++;
+                } else if (select.value === '') {
+                    select.style.borderColor = '#d97706';
+                    select.style.backgroundColor = '#fef3c7';
+                } else {
+                    select.style.borderColor = '#dc2626';
+                    select.style.backgroundColor = '#fef2f2';
+                }
+            }
+
+            var fb = document.getElementById('fb-matching');
+            if (correct === total) {
+                fb.className = 'feedback correct';
+                fb.textContent = 'Excellent! All ' + total + ' matches are correct!';
+            } else {
+                fb.className = 'feedback incorrect';
+                fb.textContent = 'You got ' + correct + ' out of ' + total + ' correct. Green = correct, Red = incorrect, Yellow = unanswered.';
+            }
+            fb.style.display = 'block';
+        }
+
+        // ===== ACTIVITY 3: ROT13 CHALLENGE =====
+        function checkROT13() {
+            var answer = document.getElementById('rot13Answer').value.trim();
+            var fb = document.getElementById('fb-rot13');
+            var correct = 'C:\\Program Files\\Mozilla Firefox\\firefox.exe';
+            // Accept variations
+            var normalized = answer.toLowerCase().replace(/\s+/g, '');
+            var target = correct.toLowerCase().replace(/\s+/g, '');
+
+            if (normalized === target || normalized === target.replace(/\\\\/g, '\\')) {
+                fb.className = 'feedback correct';
+                fb.textContent = '\u2713 Correct! The decoded path is: ' + correct;
+            } else if (answer === '') {
+                fb.className = 'feedback incorrect';
+                fb.textContent = 'Please enter your answer. Hint: Apply ROT13 to each letter — P\u2192C, e\u2192r, b\u2192o, t\u2192g, etc.';
+            } else {
+                // Check if close
+                var decoded = rot13('P:\\Cebtenz Svyrf\\Zbmvyyn Sversbk\\sversbk.rkr');
+                fb.className = 'feedback incorrect';
+                fb.textContent = '\u2717 Not quite. The correct decoded path is: ' + decoded + '. Remember: only letters are rotated; backslashes, colons, periods, and spaces remain unchanged.';
+            }
+            fb.style.display = 'block';
+        }
+
+        // ===== KNOWLEDGE CHECK REVEAL =====
+        function revealAnswer(id) {
+            var answer = document.getElementById(id);
+            if (answer) answer.classList.toggle('visible');
+        }
+
+        // ===== INITIALIZE =====
+        window.addEventListener('DOMContentLoaded', function() {
+            restoreProgress();
+        });
+    </script>
+</body>
+</html>

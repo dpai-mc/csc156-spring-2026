@@ -1,0 +1,2298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 7.1: Understanding the Windows Registry — CSC 156 Digital Forensics Fundamentals</title>
+    <style>
+        /* ===== CSS RESET & BASE ===== */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            color: #1a1a2e;
+            background-color: #f5f5fa;
+            min-height: 100vh;
+        }
+
+        /* ===== SKIP LINK (ADA) ===== */
+        .skip-link {
+            position: absolute;
+            top: -100px;
+            left: 0;
+            background: #1a1a2e;
+            color: #ffffff;
+            padding: 12px 24px;
+            z-index: 10000;
+            font-size: 1rem;
+            transition: top 0.2s;
+        }
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* ===== PROGRESS BAR ===== */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: #d1d1e0;
+            z-index: 9999;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #2563eb, #7c3aed);
+            transition: width 0.3s ease;
+        }
+        .progress-text {
+            position: fixed;
+            top: 8px;
+            right: 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #4a4a6a;
+            background: rgba(245, 245, 250, 0.9);
+            padding: 2px 10px;
+            border-radius: 10px;
+            z-index: 10000;
+            border: 1px solid #d1d1e0;
+        }
+
+        /* ===== HEADER ===== */
+        .module-header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d5e 50%, #3a3a7e 100%);
+            color: #ffffff;
+            padding: 48px 24px 40px;
+            text-align: center;
+            margin-top: 6px;
+        }
+        .module-header .course-tag {
+            display: inline-block;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+        .module-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+        .module-header .subtitle {
+            font-size: 1.15rem;
+            color: #c8c8f0;
+            margin-bottom: 20px;
+        }
+        .module-meta {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 24px;
+            font-size: 0.9rem;
+            color: #d0d0f0;
+        }
+        .module-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ===== LAYOUT ===== */
+        .content-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 32px 20px 80px;
+        }
+
+        /* ===== NAVIGATION TABS ===== */
+        .section-nav {
+            background: #ffffff;
+            border: 1px solid #d1d1e0;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 32px;
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        .section-nav h2 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6a6a8a;
+            margin-bottom: 12px;
+        }
+        .section-nav ol {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .section-nav ol li a {
+            display: inline-block;
+            padding: 6px 14px;
+            background: #f0f0fa;
+            color: #2d2d5e;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        .section-nav ol li a:hover,
+        .section-nav ol li a:focus {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+            outline: 2px solid #2563eb;
+            outline-offset: 2px;
+        }
+        .section-nav ol li a.completed {
+            background: #d1fae5;
+            color: #065f46;
+            border-color: #6ee7b7;
+        }
+
+        /* ===== SECTIONS ===== */
+        .module-section {
+            background: #ffffff;
+            border: 1px solid #d1d1e0;
+            border-radius: 12px;
+            padding: 32px 28px;
+            margin-bottom: 28px;
+            box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+        }
+        .module-section h2 {
+            font-size: 1.5rem;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #2563eb;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .module-section h3 {
+            font-size: 1.2rem;
+            color: #2d2d5e;
+            margin: 24px 0 12px;
+        }
+        .module-section h4 {
+            font-size: 1.05rem;
+            color: #3a3a6a;
+            margin: 20px 0 10px;
+        }
+        .module-section p {
+            margin-bottom: 14px;
+            color: #2a2a4a;
+        }
+
+        /* ===== LEARNING OBJECTIVES ===== */
+        .objectives-box {
+            background: #eef2ff;
+            border: 1px solid #c7d2fe;
+            border-left: 5px solid #2563eb;
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin: 20px 0;
+        }
+        .objectives-box h3 {
+            color: #1e40af;
+            margin: 0 0 12px;
+            font-size: 1.1rem;
+        }
+        .objectives-box ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .objectives-box ul li {
+            margin-bottom: 8px;
+            color: #1e3a5f;
+            line-height: 1.6;
+        }
+
+        /* ===== DEFINITION BOXES ===== */
+        .definition-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-left: 5px solid #16a34a;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+        .definition-box .term {
+            font-weight: 700;
+            color: #15803d;
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+        .definition-box .meaning {
+            color: #1a3a2a;
+            line-height: 1.6;
+        }
+
+        /* ===== FORENSIC SIGNIFICANCE BOXES ===== */
+        .forensic-note {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-left: 5px solid #d97706;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+        .forensic-note .note-title {
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .forensic-note p, .forensic-note li {
+            color: #78350f;
+        }
+
+        /* ===== IMPORTANT / WARNING BOXES ===== */
+        .important-box {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-left: 5px solid #dc2626;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+        .important-box .box-title {
+            font-weight: 700;
+            color: #991b1b;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .important-box p {
+            color: #7f1d1d;
+        }
+
+        /* ===== INFO BOXES ===== */
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-left: 5px solid #2563eb;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+        .info-box .box-title {
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 6px;
+        }
+        .info-box p, .info-box li {
+            color: #1e3a5f;
+        }
+
+        /* ===== TABLES ===== */
+        .table-container {
+            overflow-x: auto;
+            margin: 16px 0;
+            border-radius: 8px;
+            border: 1px solid #d1d1e0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.92rem;
+        }
+        thead {
+            background: #1a1a2e;
+            color: #ffffff;
+        }
+        thead th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        tbody tr {
+            border-bottom: 1px solid #e5e5f0;
+        }
+        tbody tr:nth-child(even) {
+            background: #f8f8fc;
+        }
+        tbody tr:hover {
+            background: #eef2ff;
+        }
+        tbody td {
+            padding: 10px 16px;
+            color: #2a2a4a;
+            vertical-align: top;
+        }
+
+        /* ===== CODE BLOCKS ===== */
+        code {
+            font-family: 'Consolas', 'Courier New', monospace;
+            background: #f1f5f9;
+            color: #1e293b;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            border: 1px solid #e2e8f0;
+        }
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px 24px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 16px 0;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.88rem;
+            line-height: 1.6;
+            white-space: pre;
+            border: 1px solid #334155;
+        }
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+            border: none;
+            font-size: inherit;
+            white-space: pre;
+        }
+
+        /* ===== COLLAPSIBLE / ACCORDION ===== */
+        .collapsible {
+            margin: 16px 0;
+            border: 1px solid #d1d1e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .collapsible-toggle {
+            width: 100%;
+            background: #f8f8fc;
+            border: none;
+            padding: 14px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2d2d5e;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+            text-align: left;
+        }
+        .collapsible-toggle:hover,
+        .collapsible-toggle:focus {
+            background: #eef2ff;
+            outline: 2px solid #2563eb;
+            outline-offset: -2px;
+        }
+        .collapsible-toggle .arrow {
+            transition: transform 0.3s;
+            font-size: 0.85rem;
+        }
+        .collapsible-toggle[aria-expanded="true"] .arrow {
+            transform: rotate(180deg);
+        }
+        .collapsible-content {
+            display: none;
+            padding: 16px 20px;
+            background: #ffffff;
+            border-top: 1px solid #d1d1e0;
+        }
+        .collapsible-content.open {
+            display: block;
+        }
+
+        /* ===== INTERACTIVE DIAGRAM ===== */
+        .diagram-container {
+            background: #f8f8fc;
+            border: 1px solid #d1d1e0;
+            border-radius: 8px;
+            padding: 24px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .tree-diagram {
+            display: inline-block;
+            text-align: left;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        .tree-node {
+            padding: 6px 14px;
+            margin: 4px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-block;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .tree-node:hover, .tree-node:focus {
+            outline: 2px solid #2563eb;
+            outline-offset: 2px;
+        }
+        .tree-node.root {
+            background: #1a1a2e;
+            color: #ffffff;
+            font-weight: 700;
+        }
+        .tree-node.hkcr { background: #dbeafe; color: #1e40af; font-weight: 600; }
+        .tree-node.hkcu { background: #d1fae5; color: #065f46; font-weight: 600; }
+        .tree-node.hklm { background: #fce7f3; color: #9d174d; font-weight: 600; }
+        .tree-node.hku { background: #fef3c7; color: #92400e; font-weight: 600; }
+        .tree-node.hkcc { background: #e0e7ff; color: #3730a3; font-weight: 600; }
+
+        .tree-detail {
+            display: none;
+            background: #ffffff;
+            border: 1px solid #d1d1e0;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-top: 12px;
+            text-align: left;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .tree-detail.active {
+            display: block;
+        }
+        .tree-detail h4 {
+            margin: 0 0 8px;
+            color: #1a1a2e;
+        }
+        .tree-detail p {
+            margin: 0 0 6px;
+            font-size: 0.92rem;
+            color: #2a2a4a;
+        }
+
+        /* ===== INTERACTIVE ACTIVITIES ===== */
+        .activity-container {
+            background: #f5f3ff;
+            border: 2px solid #c4b5fd;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+        .activity-container h3 {
+            color: #5b21b6;
+            margin: 0 0 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .activity-question {
+            background: #ffffff;
+            border: 1px solid #ddd6fe;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .activity-question p {
+            font-weight: 600;
+            color: #3b0764;
+            margin-bottom: 10px;
+        }
+        .activity-question label {
+            display: block;
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: #2a2a4a;
+            border: 1px solid transparent;
+        }
+        .activity-question label:hover {
+            background: #ede9fe;
+        }
+        .activity-question input[type="radio"] {
+            margin-right: 8px;
+            accent-color: #7c3aed;
+        }
+        .check-btn {
+            display: inline-block;
+            background: #7c3aed;
+            color: #ffffff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.2s;
+        }
+        .check-btn:hover, .check-btn:focus {
+            background: #6d28d9;
+            outline: 2px solid #6d28d9;
+            outline-offset: 2px;
+        }
+        .feedback {
+            margin-top: 12px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            display: none;
+        }
+        .feedback.correct {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+            display: block;
+        }
+        .feedback.incorrect {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            display: block;
+        }
+
+        /* ===== DRAG-AND-DROP MATCHING ===== */
+        .matching-activity {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 16px 0;
+        }
+        .matching-column h4 {
+            text-align: center;
+            margin-bottom: 12px;
+            color: #2d2d5e;
+        }
+        .drag-item {
+            background: #eef2ff;
+            border: 2px solid #a5b4fc;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin: 6px 0;
+            cursor: grab;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #1e3a5f;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .drag-item:active {
+            cursor: grabbing;
+            background: #c7d2fe;
+        }
+        .drop-zone {
+            background: #fafafa;
+            border: 2px dashed #c4b5fd;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin: 6px 0;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #6a6a8a;
+            transition: all 0.2s;
+        }
+        .drop-zone.over {
+            background: #ede9fe;
+            border-color: #7c3aed;
+        }
+        .drop-zone.filled {
+            background: #eef2ff;
+            border-style: solid;
+            border-color: #a5b4fc;
+            color: #1e3a5f;
+            font-weight: 500;
+        }
+        .drop-zone.correct-match {
+            background: #d1fae5;
+            border-color: #6ee7b7;
+            color: #065f46;
+        }
+        .drop-zone.incorrect-match {
+            background: #fef2f2;
+            border-color: #fca5a5;
+            color: #991b1b;
+        }
+
+        /* ===== KNOWLEDGE CHECK ===== */
+        .knowledge-check {
+            background: #fefce8;
+            border: 2px solid #fde047;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+        .knowledge-check h3 {
+            color: #854d0e;
+            margin: 0 0 8px;
+        }
+        .knowledge-check p.instructions {
+            color: #713f12;
+            margin-bottom: 16px;
+        }
+        .kc-question {
+            background: #ffffff;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .kc-question .q-text {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+        .kc-question textarea {
+            width: 100%;
+            min-height: 80px;
+            border: 1px solid #d1d1e0;
+            border-radius: 6px;
+            padding: 10px;
+            font-family: inherit;
+            font-size: 0.92rem;
+            resize: vertical;
+            color: #1a1a2e;
+        }
+        .kc-question textarea:focus {
+            outline: 2px solid #2563eb;
+            border-color: #2563eb;
+        }
+        .reveal-btn {
+            display: inline-block;
+            background: #d97706;
+            color: #ffffff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.2s;
+        }
+        .reveal-btn:hover, .reveal-btn:focus {
+            background: #b45309;
+            outline: 2px solid #b45309;
+            outline-offset: 2px;
+        }
+        .model-answer {
+            display: none;
+            background: #fef9c3;
+            border: 1px solid #fde68a;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-top: 10px;
+            color: #713f12;
+            font-size: 0.92rem;
+            line-height: 1.6;
+        }
+        .model-answer.visible {
+            display: block;
+        }
+
+        /* ===== SECTION COMPLETE BUTTON ===== */
+        .section-complete-btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: #f0fdf4;
+            border: 2px solid #86efac;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #166534;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.2s;
+        }
+        .section-complete-btn:hover, .section-complete-btn:focus {
+            background: #d1fae5;
+            border-color: #16a34a;
+            outline: 2px solid #16a34a;
+            outline-offset: 2px;
+        }
+        .section-complete-btn.completed {
+            background: #16a34a;
+            color: #ffffff;
+            border-color: #16a34a;
+        }
+
+        /* ===== LISTS ===== */
+        ul, ol {
+            margin: 10px 0 14px 24px;
+        }
+        li {
+            margin-bottom: 6px;
+            color: #2a2a4a;
+        }
+
+        /* ===== FOOTER ===== */
+        .module-footer {
+            text-align: center;
+            padding: 32px 20px;
+            color: #6a6a8a;
+            font-size: 0.85rem;
+            border-top: 1px solid #d1d1e0;
+            margin-top: 40px;
+        }
+        .module-footer a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+        .module-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* ===== NEXT MODULE LINK ===== */
+        .next-module {
+            display: block;
+            text-align: center;
+            padding: 18px;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: #ffffff;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-top: 24px;
+            transition: opacity 0.2s;
+        }
+        .next-module:hover, .next-module:focus {
+            opacity: 0.9;
+            outline: 3px solid #7c3aed;
+            outline-offset: 2px;
+        }
+
+        /* ===== VISUAL DIAGRAM - REGISTRY STRUCTURE ===== */
+        .visual-tree {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.8;
+            color: #1e293b;
+        }
+        .visual-tree .indent1 { padding-left: 24px; }
+        .visual-tree .indent2 { padding-left: 48px; }
+        .visual-tree .indent3 { padding-left: 72px; }
+        .visual-tree .key-icon { color: #d97706; }
+        .visual-tree .value-icon { color: #2563eb; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .module-header h1 { font-size: 1.5rem; }
+            .module-section { padding: 20px 16px; }
+            .matching-activity { grid-template-columns: 1fr; }
+            .section-nav ol { flex-direction: column; }
+            .module-meta { flex-direction: column; align-items: center; gap: 8px; }
+        }
+
+        /* ===== PRINT ===== */
+        @media print {
+            .progress-container, .progress-text, .section-nav, .skip-link,
+            .section-complete-btn, .check-btn, .reveal-btn { display: none; }
+            .module-section { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
+            .collapsible-content { display: block !important; }
+        }
+
+        /* ===== FOCUS VISIBLE ===== */
+        *:focus-visible {
+            outline: 3px solid #2563eb;
+            outline-offset: 2px;
+        }
+
+        /* ===== HIGHLIGHT ANIMATION ===== */
+        @keyframes highlightFade {
+            0% { background-color: #fef08a; }
+            100% { background-color: transparent; }
+        }
+        .highlight-anim {
+            animation: highlightFade 1.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Module reading progress">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div class="progress-text" id="progressText" aria-live="polite">0% complete</div>
+
+    <!-- HEADER -->
+    <header class="module-header">
+        <div class="course-tag">CSC 156 — Digital Forensics Fundamentals</div>
+        <h1>Module 7.1: Understanding the Windows Registry</h1>
+        <p class="subtitle">Week 7 — Windows Forensics I: Registry and User Artifacts</p>
+        <div class="module-meta">
+            <span>⏱ Estimated Time: 1.5 hours</span>
+            <span>📘 Difficulty: Foundational</span>
+            <span>🎯 CSLO 2</span>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main id="main-content" class="content-wrapper">
+
+        <!-- TABLE OF CONTENTS -->
+        <nav class="section-nav" aria-label="Module sections">
+            <h2>Module Sections</h2>
+            <ol>
+                <li><a href="#section1" id="nav-s1">1. Introduction</a></li>
+                <li><a href="#section2" id="nav-s2">2. What Is the Registry?</a></li>
+                <li><a href="#section3" id="nav-s3">3. The Five Root Keys</a></li>
+                <li><a href="#section4" id="nav-s4">4. Keys, Subkeys, Values &amp; Data Types</a></li>
+                <li><a href="#section5" id="nav-s5">5. Timestamps &amp; Forensic Significance</a></li>
+                <li><a href="#section6" id="nav-s6">6. Hive Files on Disk</a></li>
+                <li><a href="#section7" id="nav-s7">7. Transaction Logs</a></li>
+                <li><a href="#section8" id="nav-s8">8. Forensic Tools</a></li>
+                <li><a href="#section9" id="nav-s9">9. Extracting Hive Files</a></li>
+                <li><a href="#section10" id="nav-s10">10. Activities</a></li>
+                <li><a href="#section11" id="nav-s11">11. Knowledge Check</a></li>
+            </ol>
+        </nav>
+
+        <!-- LEARNING OBJECTIVES -->
+        <div class="objectives-box">
+            <h3>🎯 Learning Objectives</h3>
+            <p>By the end of this module, you will be able to:</p>
+            <ul>
+                <li>Define the Windows Registry and explain its role in the operating system</li>
+                <li>Identify the five root keys and describe what each contains</li>
+                <li>Distinguish between Registry keys, subkeys, values, and data types</li>
+                <li>Explain the significance of key last-write timestamps in forensic analysis</li>
+                <li>Map logical Registry hives to their physical file locations on an NTFS volume</li>
+                <li>Describe the purpose of transaction log files and their forensic value</li>
+                <li>Identify the appropriate forensic tools for offline Registry analysis</li>
+            </ul>
+        </div>
+
+        <!-- CSLO ALIGNMENT -->
+        <div class="info-box">
+            <div class="box-title">📋 Course Student Learning Outcome Alignment</div>
+            <p><strong>Primary CSLO:</strong> CSLO 2 — <em>Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data.</em></p>
+            <p>Understanding the Windows Registry is essential for examining Windows-based storage media. The Registry contains a wealth of configuration data, user activity records, and system metadata that forensic examiners rely on to reconstruct what happened on a computer.</p>
+        </div>
+
+        <!-- ========== SECTION 1: INTRODUCTION ========== -->
+        <section class="module-section" id="section1">
+            <h2>📖 1. Introduction &amp; Context</h2>
+
+            <p>Week 7 marks a pivotal transition in this course. Over Weeks 1–6, you established foundational knowledge of forensic methodology, legal frameworks, hardware, file systems, and data acquisition. Starting this week, you apply all of those skills to a <strong>real-world operating system environment</strong>.</p>
+
+            <p>Windows remains the dominant desktop operating system in both enterprise and consumer settings, making it the <strong>single most common platform</strong> encountered in digital forensic investigations. Understanding how Windows stores configuration data, user preferences, and activity records is critical for any forensic examiner.</p>
+
+            <p>This module focuses on the <strong>Windows Registry</strong> — the centralized hierarchical database that Windows uses to store virtually all operating system and application configuration data. Before you can extract forensic artifacts from the Registry (covered in Modules 7.2–7.4), you must first understand:</p>
+
+            <ul>
+                <li>What the Registry is and why it exists</li>
+                <li>How it is logically organized (root keys, keys, subkeys, values)</li>
+                <li>Where Registry data is physically stored on disk</li>
+                <li>How forensic examiners access Registry data without contaminating evidence</li>
+            </ul>
+
+            <div class="important-box">
+                <div class="box-title">⚠️ Important — Forensic Image Requirement</div>
+                <p>All forensic analysis in this week is performed on <strong>forensic images</strong> created using the techniques from Week 6. You should <strong>never</strong> perform forensic examination on original evidence media. When we discuss examining Registry hive files, we always mean extracting them from a forensic image — not from a live running system.</p>
+            </div>
+
+            <h3>Prerequisite Knowledge</h3>
+            <p>This module builds directly on skills from previous weeks:</p>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Prior Week</th>
+                            <th>Required Knowledge</th>
+                            <th>Application in This Module</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Week 3</td>
+                            <td>Legal and ethical considerations, evidence admissibility</td>
+                            <td>Ensuring extracted artifacts are legally defensible</td>
+                        </tr>
+                        <tr>
+                            <td>Week 4</td>
+                            <td>Hardware, storage media, boot processes (BIOS/UEFI, MBR/GPT)</td>
+                            <td>Understanding where Registry hive files physically reside on disk</td>
+                        </tr>
+                        <tr>
+                            <td>Week 5</td>
+                            <td>File systems (especially NTFS), MFT analysis, deleted file recovery</td>
+                            <td>Locating Registry hive files within the NTFS file system</td>
+                        </tr>
+                        <tr>
+                            <td>Week 6</td>
+                            <td>Data acquisition, forensic imaging, hash verification, write blockers</td>
+                            <td>Working from forensic images of Windows systems (not live systems)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <button class="section-complete-btn" data-section="1" onclick="markComplete(1)">
+                ✓ Mark Section 1 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 2: WHAT IS THE REGISTRY? ========== -->
+        <section class="module-section" id="section2">
+            <h2>🗄️ 2. What Is the Windows Registry?</h2>
+
+            <div class="definition-box">
+                <div class="term">Windows Registry</div>
+                <div class="meaning">A centralized, hierarchical database built into the Windows operating system that stores low-level settings, configuration data, and options for the operating system, hardware devices, installed applications, and individual user preferences. It serves as the primary repository for virtually all configuration information on a Windows system.</div>
+            </div>
+
+            <h3>2.1 Purpose of the Registry</h3>
+            <p>The Windows Registry serves as the <strong>single source of truth</strong> for system configuration. Nearly every action on a Windows system — from installing software to changing your desktop wallpaper — results in a Registry modification. The Registry stores:</p>
+
+            <ul>
+                <li><strong>Operating system configuration:</strong> Boot settings, service configurations, driver parameters, system policies</li>
+                <li><strong>Hardware profiles:</strong> Device settings, USB device history, mounted volumes, network adapter configurations</li>
+                <li><strong>Software settings:</strong> Installed application data, file associations, licensing information, application preferences</li>
+                <li><strong>User preferences:</strong> Desktop settings, recently accessed files, application usage history, typed URLs, search history</li>
+                <li><strong>Security settings:</strong> User account information, password policies, audit configurations, access control data</li>
+            </ul>
+
+            <h3>2.2 Historical Context</h3>
+            <p>Before the Registry existed, Windows (versions 3.x and earlier) stored configuration data in scattered <code>.INI</code> files (initialization files) spread across the file system. This approach had significant limitations:</p>
+
+            <ul>
+                <li>No standardized storage location — each application chose its own location</li>
+                <li>No hierarchical organization — flat text files with limited structure</li>
+                <li>No access control — any user or program could modify any <code>.INI</code> file</li>
+                <li>No data typing — all values stored as plain text strings</li>
+                <li>Size limitations — <code>.INI</code> files were limited to 64 KB</li>
+            </ul>
+
+            <p>Microsoft introduced the Registry in <strong>Windows 95</strong> and refined it significantly in <strong>Windows NT</strong>. The modern Registry (Windows 10/11) retains the same fundamental structure established in the NT era, though it has grown enormously in size and complexity.</p>
+
+            <h3>2.3 Why Forensic Examiners Care About the Registry</h3>
+            <p>The Registry is one of the <strong>most valuable sources of forensic evidence</strong> on a Windows system because:</p>
+
+            <ol>
+                <li><strong>Comprehensive activity recording:</strong> The Registry records evidence of user actions, program executions, device connections, and network activity — often without the user's knowledge</li>
+                <li><strong>Timestamps:</strong> Every Registry key records a "last-write" timestamp, providing temporal evidence of when changes occurred</li>
+                <li><strong>Persistence:</strong> Registry data persists across reboots and often survives user attempts to delete evidence (deleted keys may be recoverable from unallocated hive space)</li>
+                <li><strong>Correlation potential:</strong> Registry artifacts can be correlated with file system timestamps, event logs, and other evidence sources to build comprehensive activity timelines</li>
+                <li><strong>Anti-forensics resistance:</strong> Most users (and even many technically sophisticated suspects) do not know how to thoroughly clean Registry artifacts</li>
+            </ol>
+
+            <div class="forensic-note">
+                <div class="note-title">🔍 Forensic Significance</div>
+                <p>Consider this scenario: A suspect claims they never used a particular USB drive. However, the Registry contains entries under <code>HKLM\SYSTEM\CurrentControlSet\Enum\USBSTOR</code> documenting the device's vendor ID, product ID, serial number, and the timestamp of when it was first and last connected. The Registry provides objective, machine-generated evidence that contradicts the suspect's claim — and the suspect likely had no idea this evidence existed.</p>
+            </div>
+
+            <button class="section-complete-btn" data-section="2" onclick="markComplete(2)">
+                ✓ Mark Section 2 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 3: THE FIVE ROOT KEYS ========== -->
+        <section class="module-section" id="section3">
+            <h2>🔑 3. The Five Root Keys</h2>
+
+            <p>The Windows Registry is organized into a hierarchical tree structure, similar to a file system. At the top of this hierarchy are <strong>five root keys</strong> (also called "hives" at the top level, though technically "hive" refers to the backing file — we will clarify this distinction shortly). Every piece of data in the Registry exists under one of these five root keys.</p>
+
+            <p>The root keys are commonly referred to by their abbreviations. Click on each root key below to learn more about it:</p>
+
+            <!-- INTERACTIVE ROOT KEY EXPLORER -->
+            <div class="diagram-container" role="region" aria-label="Interactive root key explorer">
+                <div style="margin-bottom: 16px;">
+                    <span class="tree-node root">Computer (Registry Root)</span>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 16px;">
+                    <button class="tree-node hkcr" onclick="showRootDetail('hkcr')" aria-expanded="false" aria-controls="detail-hkcr">HKEY_CLASSES_ROOT</button>
+                    <button class="tree-node hkcu" onclick="showRootDetail('hkcu')" aria-expanded="false" aria-controls="detail-hkcu">HKEY_CURRENT_USER</button>
+                    <button class="tree-node hklm" onclick="showRootDetail('hklm')" aria-expanded="false" aria-controls="detail-hklm">HKEY_LOCAL_MACHINE</button>
+                    <button class="tree-node hku" onclick="showRootDetail('hku')" aria-expanded="false" aria-controls="detail-hku">HKEY_USERS</button>
+                    <button class="tree-node hkcc" onclick="showRootDetail('hkcc')" aria-expanded="false" aria-controls="detail-hkcc">HKEY_CURRENT_CONFIG</button>
+                </div>
+
+                <div class="tree-detail" id="detail-hkcr">
+                    <h4>HKEY_CLASSES_ROOT (HKCR)</h4>
+                    <p><strong>Purpose:</strong> Contains file extension associations and COM (Component Object Model) class registration information. This key determines which application opens when you double-click a file.</p>
+                    <p><strong>Technical detail:</strong> HKCR is actually a <em>merged view</em> of two other locations: <code>HKLM\SOFTWARE\Classes</code> (system-wide defaults) and <code>HKCU\SOFTWARE\Classes</code> (per-user overrides). It is not backed by its own hive file.</p>
+                    <p><strong>Forensic relevance:</strong> Moderate. Can reveal what applications were associated with specific file types, which may indicate installed software or user-configured preferences.</p>
+                    <p><strong>Example path:</strong> <code>HKCR\.docx</code> → shows which application handles <code>.docx</code> files</p>
+                </div>
+
+                <div class="tree-detail" id="detail-hkcu">
+                    <h4>HKEY_CURRENT_USER (HKCU)</h4>
+                    <p><strong>Purpose:</strong> Contains configuration settings and preferences for the <strong>currently logged-in user</strong>. This includes desktop settings, environment variables, printer connections, application preferences, and — critically for forensics — records of user activity.</p>
+                    <p><strong>Technical detail:</strong> HKCU is a <em>pointer</em> to the appropriate user's subkey under <code>HKEY_USERS</code>. It is backed by the user's <code>NTUSER.DAT</code> file located in their profile directory.</p>
+                    <p><strong>Forensic relevance:</strong> <strong>Very high.</strong> This is one of the most forensically valuable root keys because it contains per-user evidence including: recently opened files (RecentDocs), program execution history (UserAssist), typed URLs, search history, and application settings.</p>
+                    <p><strong>Example path:</strong> <code>HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs</code></p>
+                </div>
+
+                <div class="tree-detail" id="detail-hklm">
+                    <h4>HKEY_LOCAL_MACHINE (HKLM)</h4>
+                    <p><strong>Purpose:</strong> Contains configuration data for the <strong>entire computer</strong>, regardless of which user is logged in. This includes hardware configuration, installed software, security settings, system services, and boot configuration.</p>
+                    <p><strong>Technical detail:</strong> HKLM is backed by multiple hive files: <code>SAM</code>, <code>SECURITY</code>, <code>SOFTWARE</code>, <code>SYSTEM</code>, and <code>DEFAULT</code>, all located in <code>C:\Windows\System32\config\</code>.</p>
+                    <p><strong>Forensic relevance:</strong> <strong>Very high.</strong> Contains system-wide evidence including: computer name, time zone, OS version, installed software, USB device history, user account information (SAM), network configurations, and system service data.</p>
+                    <p><strong>Example path:</strong> <code>HKLM\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName</code></p>
+                </div>
+
+                <div class="tree-detail" id="detail-hku">
+                    <h4>HKEY_USERS (HKU)</h4>
+                    <p><strong>Purpose:</strong> Contains profile data for <strong>all user accounts</strong> that have been loaded on the system. Each user's profile is stored under their Security Identifier (SID).</p>
+                    <p><strong>Technical detail:</strong> Each subkey under HKU corresponds to a loaded user profile. The <code>.DEFAULT</code> subkey contains settings for the default profile (used before any user logs in). Each user's SID subkey is backed by that user's <code>NTUSER.DAT</code> file.</p>
+                    <p><strong>Forensic relevance:</strong> <strong>High.</strong> Allows forensic examiners to analyze Registry data for <em>all</em> user accounts on the system, not just the currently logged-in user. This is essential when investigating multi-user systems.</p>
+                    <p><strong>Example path:</strong> <code>HKU\S-1-5-21-...-1001\Software\Microsoft\Windows\CurrentVersion\Explorer</code></p>
+                </div>
+
+                <div class="tree-detail" id="detail-hkcc">
+                    <h4>HKEY_CURRENT_CONFIG (HKCC)</h4>
+                    <p><strong>Purpose:</strong> Contains information about the hardware profile used by the computer at startup. This is the <em>active</em> hardware configuration.</p>
+                    <p><strong>Technical detail:</strong> HKCC is a <em>pointer</em> to <code>HKLM\SYSTEM\CurrentControlSet\Hardware Profiles\Current</code>. It is not backed by its own hive file.</p>
+                    <p><strong>Forensic relevance:</strong> <strong>Low.</strong> Rarely contains unique forensic evidence because the data it references is available through HKLM\SYSTEM. Forensic examiners typically focus on HKLM and HKCU instead.</p>
+                    <p><strong>Example path:</strong> <code>HKCC\System\CurrentControlSet\Control\VIDEO</code></p>
+                </div>
+            </div>
+
+            <h3>3.1 Summary Table: The Five Root Keys</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Root Key</th>
+                            <th>Abbreviation</th>
+                            <th>Scope</th>
+                            <th>Backed By</th>
+                            <th>Forensic Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>HKEY_CLASSES_ROOT</td>
+                            <td>HKCR</td>
+                            <td>File associations / COM</td>
+                            <td>Merged view (not own file)</td>
+                            <td>Moderate</td>
+                        </tr>
+                        <tr>
+                            <td>HKEY_CURRENT_USER</td>
+                            <td>HKCU</td>
+                            <td>Current user settings</td>
+                            <td>NTUSER.DAT</td>
+                            <td><strong>Very High</strong></td>
+                        </tr>
+                        <tr>
+                            <td>HKEY_LOCAL_MACHINE</td>
+                            <td>HKLM</td>
+                            <td>System-wide settings</td>
+                            <td>SAM, SECURITY, SOFTWARE, SYSTEM, DEFAULT</td>
+                            <td><strong>Very High</strong></td>
+                        </tr>
+                        <tr>
+                            <td>HKEY_USERS</td>
+                            <td>HKU</td>
+                            <td>All loaded user profiles</td>
+                            <td>Each user's NTUSER.DAT</td>
+                            <td>High</td>
+                        </tr>
+                        <tr>
+                            <td>HKEY_CURRENT_CONFIG</td>
+                            <td>HKCC</td>
+                            <td>Current hardware profile</td>
+                            <td>Pointer to HKLM\SYSTEM</td>
+                            <td>Low</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="info-box">
+                <div class="box-title">💡 Key Insight — Virtual vs. Physical Root Keys</div>
+                <p>Notice that not all five root keys have their own backing files on disk. <strong>HKCR</strong> is a merged view of data from HKLM and HKCU. <strong>HKCC</strong> is a pointer into HKLM\SYSTEM. <strong>HKCU</strong> is a pointer to the current user's subkey under HKU. Only <strong>HKLM</strong> and <strong>HKU</strong> are directly backed by physical hive files. This distinction is important for forensic examiners because you extract and analyze the <em>physical hive files</em>, not the virtual/merged views.</p>
+            </div>
+
+            <button class="section-complete-btn" data-section="3" onclick="markComplete(3)">
+                ✓ Mark Section 3 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 4: KEYS, SUBKEYS, VALUES, DATA TYPES ========== -->
+        <section class="module-section" id="section4">
+            <h2>📂 4. Keys, Subkeys, Values, and Data Types</h2>
+
+            <p>Understanding the internal structure of the Registry is essential for forensic analysis. The Registry uses a hierarchical structure similar to a file system, but with its own terminology.</p>
+
+            <h3>4.1 Registry Hierarchy</h3>
+
+            <div class="definition-box">
+                <div class="term">Registry Key</div>
+                <div class="meaning">A container object in the Registry hierarchy, analogous to a <strong>folder</strong> in a file system. Keys can contain subkeys (child keys) and values. Every key has a name, a class (optional), a security descriptor, and a <strong>last-write timestamp</strong>.</div>
+            </div>
+
+            <div class="definition-box">
+                <div class="term">Registry Subkey</div>
+                <div class="meaning">A key that exists within (beneath) another key, analogous to a <strong>subfolder</strong>. There is no structural difference between a key and a subkey — the term "subkey" simply indicates its position relative to a parent key.</div>
+            </div>
+
+            <div class="definition-box">
+                <div class="term">Registry Value</div>
+                <div class="meaning">A named data entry stored within a key, analogous to a <strong>file</strong> within a folder. Each value has three components: a <strong>name</strong>, a <strong>data type</strong>, and the <strong>data</strong> itself. A key can contain zero or more values.</div>
+            </div>
+
+            <div class="definition-box">
+                <div class="term">(Default) Value</div>
+                <div class="meaning">Every Registry key has one unnamed value called the "(Default)" value. This value may or may not contain data. It appears in Registry editors as "(Default)" and is distinct from any named values under the same key.</div>
+            </div>
+
+            <h3>4.2 Visual Analogy: Registry vs. File System</h3>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>File System Concept</th>
+                            <th>Registry Equivalent</th>
+                            <th>Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Drive root (C:\)</td>
+                            <td>Root key</td>
+                            <td>HKEY_LOCAL_MACHINE</td>
+                        </tr>
+                        <tr>
+                            <td>Folder</td>
+                            <td>Key</td>
+                            <td>SOFTWARE</td>
+                        </tr>
+                        <tr>
+                            <td>Subfolder</td>
+                            <td>Subkey</td>
+                            <td>Microsoft\Windows</td>
+                        </tr>
+                        <tr>
+                            <td>File</td>
+                            <td>Value</td>
+                            <td>ComputerName = "WORKSTATION01"</td>
+                        </tr>
+                        <tr>
+                            <td>File type/extension</td>
+                            <td>Data type</td>
+                            <td>REG_SZ (string)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>4.3 Visualizing the Hierarchy</h3>
+
+            <div class="diagram-container">
+                <div class="visual-tree" role="img" aria-label="Registry hierarchy diagram showing HKLM containing SYSTEM key, which contains CurrentControlSet subkey, which contains Control subkey, which contains ComputerName subkey containing the value ComputerName equals WORKSTATION01">
+                    <div><span class="key-icon">📁</span> <strong>HKEY_LOCAL_MACHINE</strong> (Root Key)</div>
+                    <div class="indent1"><span class="key-icon">📁</span> SYSTEM (Key — backed by SYSTEM hive file)</div>
+                    <div class="indent2"><span class="key-icon">📁</span> CurrentControlSet (Subkey)</div>
+                    <div class="indent3"><span class="key-icon">📁</span> Control (Subkey)</div>
+                    <div class="indent3" style="padding-left: 96px;"><span class="key-icon">📁</span> ComputerName (Subkey)</div>
+                    <div style="padding-left: 120px;"><span class="value-icon">📄</span> <strong>ComputerName</strong> = "WORKSTATION01" [REG_SZ]</div>
+                </div>
+            </div>
+
+            <p>In the example above, the full <strong>Registry path</strong> to the computer name value would be written as:</p>
+            <pre><code>HKLM\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName</code></pre>
+            <p>This notation is similar to a file system path. Forensic reports always include the full Registry path when documenting artifact locations.</p>
+
+            <h3>4.4 Registry Data Types</h3>
+            <p>Each Registry value has an associated <strong>data type</strong> that determines how the data is stored and interpreted. The most common data types you will encounter in forensic analysis are:</p>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data Type</th>
+                            <th>Description</th>
+                            <th>Forensic Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>REG_SZ</code></td>
+                            <td>A fixed-length string (null-terminated Unicode text)</td>
+                            <td>Computer name, user name, application path</td>
+                        </tr>
+                        <tr>
+                            <td><code>REG_EXPAND_SZ</code></td>
+                            <td>An expandable string containing environment variable references (e.g., <code>%SystemRoot%</code>)</td>
+                            <td>Program paths using environment variables</td>
+                        </tr>
+                        <tr>
+                            <td><code>REG_BINARY</code></td>
+                            <td>Raw binary data in any format</td>
+                            <td>Timestamps, encrypted data, hardware identifiers</td>
+                        </tr>
+                        <tr>
+                            <td><code>REG_DWORD</code></td>
+                            <td>A 32-bit unsigned integer (4 bytes)</td>
+                            <td>Configuration flags, counters, boolean settings (0/1)</td>
+                        </tr>
+                        <tr>
+                            <td><code>REG_QWORD</code></td>
+                            <td>A 64-bit unsigned integer (8 bytes)</td>
+                            <td>Large counters, 64-bit timestamps</td>
+                        </tr>
+                        <tr>
+                            <td><code>REG_MULTI_SZ</code></td>
+                            <td>An array of null-terminated strings</td>
+                            <td>Lists of services, multiple values in a single entry</td>
+                        </tr>
+                        <tr>
+                            <td><code>REG_NONE</code></td>
+                            <td>No defined data type</td>
+                            <td>Varies by application</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="forensic-note">
+                <div class="note-title">🔍 Forensic Significance — Data Types Matter</div>
+                <p>Understanding data types is critical for correctly interpreting Registry evidence. For example, a <code>REG_BINARY</code> value might contain a <strong>Windows FILETIME timestamp</strong> (a 64-bit value representing the number of 100-nanosecond intervals since January 1, 1601 UTC). If you don't recognize the data type, you might misinterpret raw binary data as meaningless when it actually contains a precise date and time. Forensic tools like Registry Explorer automatically decode common data types, but an examiner must understand the underlying structure to verify tool output and identify unusual or custom data formats.</p>
+            </div>
+
+            <button class="section-complete-btn" data-section="4" onclick="markComplete(4)">
+                ✓ Mark Section 4 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 5: TIMESTAMPS ========== -->
+        <section class="module-section" id="section5">
+            <h2>⏰ 5. Key Last-Write Timestamps &amp; Forensic Significance</h2>
+
+            <p>One of the most forensically important features of the Windows Registry is that every <strong>key</strong> maintains a <strong>last-write timestamp</strong>.</p>
+
+            <div class="definition-box">
+                <div class="term">Key Last-Write Timestamp</div>
+                <div class="meaning">A 64-bit Windows FILETIME value associated with every Registry key that records the date and time when the key or any of its values was last modified. This timestamp is automatically updated by Windows whenever a value within the key is created, modified, or deleted. The timestamp is stored in UTC (Coordinated Universal Time).</div>
+            </div>
+
+            <h3>5.1 How Timestamps Work</h3>
+            <p>Critical rules about Registry timestamps that every forensic examiner must understand:</p>
+
+            <ol>
+                <li><strong>Keys have timestamps; values do not.</strong> Individual values within a key do not have their own timestamps. Only the parent key's timestamp is updated when any value changes.</li>
+                <li><strong>Any change updates the timestamp.</strong> Creating, modifying, or deleting any value under a key updates that key's last-write timestamp.</li>
+                <li><strong>The timestamp reflects the most recent change only.</strong> Previous timestamps are overwritten — there is no history of prior modifications stored in the timestamp itself.</li>
+                <li><strong>Subkey changes do NOT update the parent key's timestamp.</strong> If a subkey is modified, only that subkey's timestamp changes — the parent key's timestamp remains unchanged.</li>
+                <li><strong>Timestamps are stored in UTC.</strong> The examiner must apply the correct time zone offset (which can be found in the SYSTEM hive) to convert to local time.</li>
+            </ol>
+
+            <h3>5.2 Forensic Implications</h3>
+
+            <div class="forensic-note">
+                <div class="note-title">🔍 Forensic Significance — The "One Timestamp" Limitation</div>
+                <p>Because a key has only <strong>one</strong> timestamp that is updated whenever <strong>any</strong> value changes, you cannot determine <em>which specific value</em> was modified just by examining the timestamp. If a key contains 10 values and the timestamp shows a modification at 2:30 PM, you know <em>something</em> changed at 2:30 PM, but the timestamp alone does not tell you which value was affected.</p>
+                <p>This is why forensic examiners use <strong>multiple data sources</strong> (file system timestamps, event logs, other Registry keys) to corroborate findings and build a complete picture.</p>
+            </div>
+
+            <h3>5.3 Timestamp Example</h3>
+            <p>Consider the following Registry key:</p>
+            <pre><code>Key:    HKCU\Software\Microsoft\Office\16.0\Word\File MRU
+Last Write: 2026-02-15 14:23:47 UTC
+Values:
+  Item 1 = "C:\Users\jsmith\Documents\Report.docx"
+  Item 2 = "C:\Users\jsmith\Desktop\Notes.docx"
+  Item 3 = "C:\Users\jsmith\Downloads\Contract.docx"</code></pre>
+
+            <p>The last-write timestamp tells us that <em>something</em> in this key changed on February 15, 2026 at 2:23:47 PM UTC. Combined with the MRU (Most Recently Used) list values, we can infer that the user most recently accessed one of these Word documents around that time — but we would need additional evidence to determine exactly which file triggered the update.</p>
+
+            <div class="info-box">
+                <div class="box-title">💡 Windows FILETIME Format</div>
+                <p>The raw timestamp is stored as a 64-bit integer representing the number of 100-nanosecond intervals since <strong>January 1, 1601 00:00:00 UTC</strong>. For example, the hex value <code>01D74A2B 3C8E4000</code> decodes to a specific date and time. Forensic tools automatically convert these values to human-readable dates, but understanding the underlying format helps when examining raw binary data or verifying tool output.</p>
+            </div>
+
+            <button class="section-complete-btn" data-section="5" onclick="markComplete(5)">
+                ✓ Mark Section 5 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 6: HIVE FILES ON DISK ========== -->
+        <section class="module-section" id="section6">
+            <h2>💾 6. Registry Hive Files on Disk</h2>
+
+            <p>While the Registry appears as a single unified database when viewed through tools like <code>regedit.exe</code>, it is actually stored in multiple separate files on disk called <strong>hive files</strong>.</p>
+
+            <div class="definition-box">
+                <div class="term">Registry Hive</div>
+                <div class="meaning">A logical group of keys, subkeys, and values in the Registry that is backed by a single file on disk. Each hive file contains a discrete, self-contained tree of Registry data that is loaded into memory when the system boots or when a user logs in.</div>
+            </div>
+
+            <div class="definition-box">
+                <div class="term">Hive File</div>
+                <div class="meaning">The physical file on the NTFS volume that stores the data for a Registry hive. Hive files have no file extension (e.g., the file is simply named <code>SAM</code>, not <code>SAM.dat</code>). The exception is user-specific hives, which use the <code>.DAT</code> extension (e.g., <code>NTUSER.DAT</code>).</div>
+            </div>
+
+            <h3>6.1 System Hive Files</h3>
+            <p>The system-wide hive files are located in:</p>
+            <pre><code>C:\Windows\System32\config\</code></pre>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Hive File</th>
+                            <th>Disk Location</th>
+                            <th>Registry Location</th>
+                            <th>Contents</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>SAM</strong></td>
+                            <td><code>C:\Windows\System32\config\SAM</code></td>
+                            <td><code>HKLM\SAM</code></td>
+                            <td>Security Account Manager — local user accounts, password hashes, account policies, login history</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SECURITY</strong></td>
+                            <td><code>C:\Windows\System32\config\SECURITY</code></td>
+                            <td><code>HKLM\SECURITY</code></td>
+                            <td>Security policies, cached domain credentials, audit settings</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SOFTWARE</strong></td>
+                            <td><code>C:\Windows\System32\config\SOFTWARE</code></td>
+                            <td><code>HKLM\SOFTWARE</code></td>
+                            <td>Installed software, OS configuration, application settings, network profiles</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SYSTEM</strong></td>
+                            <td><code>C:\Windows\System32\config\SYSTEM</code></td>
+                            <td><code>HKLM\SYSTEM</code></td>
+                            <td>Hardware configuration, services, drivers, boot settings, USB device history, time zone</td>
+                        </tr>
+                        <tr>
+                            <td><strong>DEFAULT</strong></td>
+                            <td><code>C:\Windows\System32\config\DEFAULT</code></td>
+                            <td><code>HKU\.DEFAULT</code></td>
+                            <td>Default user profile settings (used before any user logs in)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>6.2 User-Specific Hive Files</h3>
+            <p>Each user account on the system has its own set of hive files, located within the user's profile directory:</p>
+            <pre><code>C:\Users\&lt;username&gt;\NTUSER.DAT
+C:\Users\&lt;username&gt;\AppData\Local\Microsoft\Windows\UsrClass.dat</code></pre>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Hive File</th>
+                            <th>Disk Location</th>
+                            <th>Registry Location</th>
+                            <th>Contents</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>NTUSER.DAT</strong></td>
+                            <td><code>C:\Users\&lt;username&gt;\NTUSER.DAT</code></td>
+                            <td><code>HKU\&lt;SID&gt;</code> (and <code>HKCU</code> for the current user)</td>
+                            <td>User preferences, recently accessed files, program execution history, typed URLs, search queries</td>
+                        </tr>
+                        <tr>
+                            <td><strong>UsrClass.dat</strong></td>
+                            <td><code>C:\Users\&lt;username&gt;\AppData\Local\Microsoft\Windows\UsrClass.dat</code></td>
+                            <td><code>HKU\&lt;SID&gt;_Classes</code></td>
+                            <td>User-specific file associations, COM registrations, shell bag data (folder access history)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>6.3 Example: Locating a Specific User's Hive</h3>
+            <p>If you are examining a forensic image and need to find the Registry data for a user named <strong>"jsmith"</strong>, you would look for:</p>
+            <pre><code>C:\Users\jsmith\NTUSER.DAT
+C:\Users\jsmith\AppData\Local\Microsoft\Windows\UsrClass.dat</code></pre>
+
+            <div class="forensic-note">
+                <div class="note-title">🔍 Forensic Significance — Hidden and System Files</div>
+                <p><code>NTUSER.DAT</code> is marked with the <strong>Hidden</strong> and <strong>System</strong> file attributes in NTFS. It will not appear in a normal Windows Explorer view. Forensic tools (Autopsy, FTK Imager) display all files regardless of attributes, but it is important to understand that these files are intentionally hidden from casual observation. Similarly, the system hive files in <code>C:\Windows\System32\config\</code> are locked by Windows while the OS is running — they cannot be copied or opened on a live system without special tools. This is one of the key reasons forensic analysis is performed on <strong>forensic images</strong> rather than live systems.</p>
+            </div>
+
+            <div class="important-box">
+                <div class="box-title">⚠️ Important — Hive Files Are Locked on Live Systems</div>
+                <p>When Windows is running, the system hive files are locked by the operating system kernel. You <strong>cannot</strong> simply copy <code>C:\Windows\System32\config\SAM</code> from a running Windows system — the OS will deny access. This is another critical reason why forensic examiners work from forensic images: the image captures the raw disk data including all locked files.</p>
+            </div>
+
+            <button class="section-complete-btn" data-section="6" onclick="markComplete(6)">
+                ✓ Mark Section 6 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 7: TRANSACTION LOGS ========== -->
+        <section class="module-section" id="section7">
+            <h2>📋 7. Transaction Log Files</h2>
+
+            <p>Each Registry hive file has associated <strong>transaction log files</strong> that play an important role in both system reliability and forensic analysis.</p>
+
+            <div class="definition-box">
+                <div class="term">Registry Transaction Log</div>
+                <div class="meaning">A file that records pending changes to a Registry hive before those changes are committed (written) to the main hive file. Transaction logs act as a journaling mechanism to protect against data corruption from unexpected shutdowns, crashes, or power failures. Each hive has two associated log files with extensions <code>.LOG1</code> and <code>.LOG2</code>.</div>
+            </div>
+
+            <h3>7.1 How Transaction Logs Work</h3>
+            <p>The Registry uses a <strong>write-ahead logging</strong> mechanism:</p>
+
+            <ol>
+                <li><strong>Change is requested</strong> — An application or the OS requests a modification to a Registry value</li>
+                <li><strong>Change is written to the transaction log</strong> — The modification is first recorded in the <code>.LOG1</code> or <code>.LOG2</code> file</li>
+                <li><strong>Change is committed to the hive file</strong> — Once the log entry is confirmed, the actual hive file is updated</li>
+                <li><strong>Log is marked as committed</strong> — The transaction log entry is marked as successfully applied</li>
+            </ol>
+
+            <p>If the system crashes between steps 2 and 3, the transaction log contains the pending change that was never written to the main hive file. On the next boot, Windows uses the transaction log to either complete or roll back the pending operation.</p>
+
+            <h3>7.2 Transaction Log File Locations</h3>
+            <p>Transaction logs are stored alongside their parent hive files:</p>
+            <pre><code>C:\Windows\System32\config\SAM.LOG1
+C:\Windows\System32\config\SAM.LOG2
+C:\Windows\System32\config\SYSTEM.LOG1
+C:\Windows\System32\config\SYSTEM.LOG2
+C:\Windows\System32\config\SOFTWARE.LOG1
+C:\Windows\System32\config\SOFTWARE.LOG2
+C:\Windows\System32\config\SECURITY.LOG1
+C:\Windows\System32\config\SECURITY.LOG2
+
+C:\Users\&lt;username&gt;\NTUSER.DAT.LOG1
+C:\Users\&lt;username&gt;\NTUSER.DAT.LOG2</code></pre>
+
+            <h3>7.3 Forensic Significance of Transaction Logs</h3>
+
+            <div class="forensic-note">
+                <div class="note-title">🔍 Forensic Significance — Why Transaction Logs Matter</div>
+                <p>Transaction logs are forensically valuable for several reasons:</p>
+                <ul>
+                    <li><strong>Recovering uncommitted changes:</strong> If the system was improperly shut down (power failure, crash, forced shutdown), the transaction logs may contain Registry modifications that were never written to the main hive file. These "dirty" transactions can reveal the most recent activity on the system.</li>
+                    <li><strong>Reconstructing recent activity:</strong> Transaction logs can contain evidence of recent changes that supplements the data in the main hive file, providing additional temporal context.</li>
+                    <li><strong>Detecting anti-forensics:</strong> If a suspect attempted to modify or delete Registry entries to cover their tracks, the transaction logs may still contain evidence of the original values or the modification itself.</li>
+                    <li><strong>Hive recovery:</strong> If a hive file is corrupted, the transaction logs can be used to reconstruct the hive to a consistent state.</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <div class="box-title">💡 Practical Tip — Always Extract Transaction Logs</div>
+                <p>When extracting Registry hive files from a forensic image, <strong>always</strong> extract the associated <code>.LOG1</code> and <code>.LOG2</code> files as well. Forensic tools like <strong>Registry Explorer</strong> can automatically apply ("replay") transaction logs to reconstruct the most complete and current version of a hive. Failing to include transaction logs may result in analyzing an incomplete or outdated version of the Registry data.</p>
+            </div>
+
+            <button class="section-complete-btn" data-section="7" onclick="markComplete(7)">
+                ✓ Mark Section 7 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 8: FORENSIC TOOLS ========== -->
+        <section class="module-section" id="section8">
+            <h2>🔧 8. Forensic Tools for Registry Analysis</h2>
+
+            <p>Forensic examiners use specialized tools to analyze Registry hive files <strong>offline</strong> — that is, by examining the extracted hive files from a forensic image rather than using the built-in Windows <code>regedit.exe</code> on a live system.</p>
+
+            <h3>8.1 Why Not Use regedit.exe?</h3>
+
+            <div class="important-box">
+                <div class="box-title">⚠️ Important — Never Use regedit.exe for Forensic Analysis</div>
+                <p>The built-in Windows Registry Editor (<code>regedit.exe</code>) is <strong>not suitable</strong> for forensic analysis because:</p>
+                <ul style="margin-top: 8px;">
+                    <li><strong>It shows the live system's Registry</strong> — not the evidence system's Registry</li>
+                    <li><strong>It does not display timestamps</strong> — key last-write timestamps are not shown</li>
+                    <li><strong>It cannot load offline hive files reliably</strong> — while it has a "Load Hive" feature, it modifies the hive when loading and unloading, potentially altering evidence</li>
+                    <li><strong>It merges virtual keys</strong> — HKCR and HKCC show merged/virtual data, not the raw hive contents</li>
+                    <li><strong>It cannot process transaction logs</strong> — dirty hive data may be incomplete</li>
+                    <li><strong>No forensic documentation features</strong> — no bookmarking, reporting, or hash verification</li>
+                </ul>
+            </div>
+
+            <h3>8.2 Recommended Forensic Registry Tools</h3>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tool</th>
+                            <th>Type</th>
+                            <th>Primary Use</th>
+                            <th>Key Features</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Registry Explorer</strong> (Eric Zimmerman)</td>
+                            <td>GUI browser</td>
+                            <td>Interactive browsing and analysis of offline hive files</td>
+                            <td>Displays timestamps, supports transaction log replay, bookmarking, data type decoding, search functionality</td>
+                        </tr>
+                        <tr>
+                            <td><strong>RegRipper</strong> (Harlan Carvey)</td>
+                            <td>Plugin-based extractor</td>
+                            <td>Automated extraction of specific forensic artifacts from hive files</td>
+                            <td>Hundreds of plugins targeting known forensic artifacts, batch processing, text output for reporting</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Autopsy</strong></td>
+                            <td>Integrated forensic suite</td>
+                            <td>Comprehensive forensic analysis including Registry parsing</td>
+                            <td>Built-in Registry ingest modules, timeline integration, keyword search across all data sources</td>
+                        </tr>
+                        <tr>
+                            <td><strong>FTK Imager</strong></td>
+                            <td>Imaging/extraction tool</td>
+                            <td>Extracting hive files from forensic images</td>
+                            <td>Browse forensic images, export individual files, verify hashes</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>8.3 Tool Usage Examples</h3>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>Registry Explorer — Opening a Hive File</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <p><strong>Registry Explorer</strong> by Eric Zimmerman is the gold standard for interactive Registry analysis. To use it:</p>
+                    <ol>
+                        <li>Extract the hive file(s) and associated <code>.LOG1</code>/<code>.LOG2</code> files from the forensic image</li>
+                        <li>Launch Registry Explorer</li>
+                        <li>Go to <strong>File → Load Hive</strong></li>
+                        <li>Select the hive file (e.g., <code>NTUSER.DAT</code>)</li>
+                        <li>Registry Explorer will automatically detect and offer to apply transaction logs if they are in the same directory</li>
+                        <li>Browse the key tree in the left panel; view values and timestamps in the right panel</li>
+                    </ol>
+                    <p><strong>Key advantages:</strong> Displays last-write timestamps for every key, decodes common data types (FILETIME, ROT-13, etc.), supports bookmarking important keys, and can export findings for reports.</p>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>RegRipper — Automated Artifact Extraction</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <p><strong>RegRipper</strong> by Harlan Carvey automates the extraction of known forensic artifacts using a plugin system. Each plugin targets a specific Registry artifact.</p>
+                    <p><strong>Command-line usage:</strong></p>
+                    <pre><code>rip.exe -r C:\Evidence\NTUSER.DAT -p userassist</code></pre>
+                    <p>This command runs the <code>userassist</code> plugin against the extracted <code>NTUSER.DAT</code> file, producing a decoded list of programs the user has executed along with run counts and timestamps.</p>
+                    <p><strong>Running all plugins for a hive type:</strong></p>
+                    <pre><code>rip.exe -r C:\Evidence\NTUSER.DAT -a</code></pre>
+                    <p>The <code>-a</code> flag runs all applicable plugins for the detected hive type and outputs the combined results.</p>
+                    <p><strong>Key advantages:</strong> Fast, automated, consistent output format suitable for reporting, extensive plugin library covering hundreds of known artifacts.</p>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>Autopsy — Integrated Registry Analysis</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <p><strong>Autopsy</strong> includes built-in ingest modules that automatically parse Registry hive files when processing a forensic image:</p>
+                    <ol>
+                        <li>Create a new case and add the forensic image as a data source</li>
+                        <li>During ingest module selection, enable <strong>"Recent Activity"</strong> and <strong>"Registry Analysis"</strong> modules</li>
+                        <li>Autopsy will automatically locate and parse all Registry hive files in the image</li>
+                        <li>Results appear in the <strong>Data Artifacts</strong> section of the tree view</li>
+                    </ol>
+                    <p><strong>Key advantages:</strong> Fully integrated with other forensic analysis (file system, timeline, keyword search), automatic hive detection, results correlated with other artifact types.</p>
+                </div>
+            </div>
+
+            <button class="section-complete-btn" data-section="8" onclick="markComplete(8)">
+                ✓ Mark Section 8 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 9: EXTRACTING HIVE FILES ========== -->
+        <section class="module-section" id="section9">
+            <h2>📤 9. Extracting Hive Files from a Forensic Image</h2>
+
+            <p>In practice, the first step of any Registry-based forensic analysis is extracting the relevant hive files from the forensic image. Here is the standard procedure:</p>
+
+            <h3>9.1 Step-by-Step Extraction Process</h3>
+
+            <div class="info-box">
+                <div class="box-title">📋 Hive File Extraction Procedure</div>
+                <ol>
+                    <li><strong>Open the forensic image</strong> in Autopsy or FTK Imager</li>
+                    <li><strong>Navigate to the system hive directory:</strong> <code>C:\Windows\System32\config\</code></li>
+                    <li><strong>Export individual system hive files:</strong> <code>SAM</code>, <code>SYSTEM</code>, <code>SOFTWARE</code>, <code>SECURITY</code>, <code>DEFAULT</code></li>
+                    <li><strong>Navigate to each user profile directory:</strong> <code>C:\Users\&lt;username&gt;\</code></li>
+                    <li><strong>Export user hive files:</strong> <code>NTUSER.DAT</code> and <code>UsrClass.dat</code> for each user</li>
+                    <li><strong>Export associated transaction log files:</strong> <code>.LOG1</code> and <code>.LOG2</code> for each hive</li>
+                    <li><strong>Document the extraction:</strong> Record file hashes (MD5/SHA-1) and source paths for each extracted file</li>
+                </ol>
+            </div>
+
+            <h3>9.2 Documentation Requirements</h3>
+            <p>For each extracted hive file, your forensic documentation should record:</p>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Documentation Element</th>
+                            <th>Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Source forensic image</td>
+                            <td><code>evidence_workstation01.E01</code></td>
+                        </tr>
+                        <tr>
+                            <td>Image hash (verified)</td>
+                            <td><code>SHA-256: a3f2b8c9...</code></td>
+                        </tr>
+                        <tr>
+                            <td>File source path</td>
+                            <td><code>C:\Windows\System32\config\SOFTWARE</code></td>
+                        </tr>
+                        <tr>
+                            <td>Extracted file hash</td>
+                            <td><code>MD5: 7e4a1d3f...</code></td>
+                        </tr>
+                        <tr>
+                            <td>File size</td>
+                            <td><code>67,108,864 bytes</code></td>
+                        </tr>
+                        <tr>
+                            <td>Extraction date/time</td>
+                            <td><code>2026-03-04 10:15:23 UTC</code></td>
+                        </tr>
+                        <tr>
+                            <td>Examiner name</td>
+                            <td><code>J. Smith, Digital Forensic Examiner</code></td>
+                        </tr>
+                        <tr>
+                            <td>Associated log files</td>
+                            <td><code>SOFTWARE.LOG1, SOFTWARE.LOG2</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="forensic-note">
+                <div class="note-title">🔍 Forensic Significance — Chain of Custody</div>
+                <p>Thorough documentation of hive file extraction maintains the <strong>chain of custody</strong> and ensures that your findings are <strong>legally defensible</strong> (connecting back to Week 3's legal frameworks). Every step from the original evidence media → forensic image → extracted file → analysis finding must be documented and verifiable. Hash values provide mathematical proof that the extracted files are identical to those in the forensic image.</p>
+            </div>
+
+            <button class="section-complete-btn" data-section="9" onclick="markComplete(9)">
+                ✓ Mark Section 9 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 10: INTERACTIVE ACTIVITIES ========== -->
+        <section class="module-section" id="section10">
+            <h2>🧩 10. Interactive Activities</h2>
+
+            <!-- ACTIVITY 1: MULTIPLE CHOICE -->
+            <div class="activity-container">
+                <h3>🎮 Activity 1: Root Key Identification</h3>
+                <p>Test your understanding of the five root keys and their purposes.</p>
+
+                <div class="activity-question" id="q1">
+                    <p>1. Which root key contains per-user settings for the currently logged-in user?</p>
+                    <label><input type="radio" name="q1" value="a"> HKEY_CLASSES_ROOT (HKCR)</label>
+                    <label><input type="radio" name="q1" value="b"> HKEY_CURRENT_USER (HKCU)</label>
+                    <label><input type="radio" name="q1" value="c"> HKEY_LOCAL_MACHINE (HKLM)</label>
+                    <label><input type="radio" name="q1" value="d"> HKEY_CURRENT_CONFIG (HKCC)</label>
+                    <div class="feedback" id="fb-q1"></div>
+                </div>
+
+                <div class="activity-question" id="q2">
+                    <p>2. Which hive file stores local user account information and password hashes?</p>
+                    <label><input type="radio" name="q2" value="a"> SOFTWARE</label>
+                    <label><input type="radio" name="q2" value="b"> SYSTEM</label>
+                    <label><input type="radio" name="q2" value="c"> SAM</label>
+                    <label><input type="radio" name="q2" value="d"> NTUSER.DAT</label>
+                    <div class="feedback" id="fb-q2"></div>
+                </div>
+
+                <div class="activity-question" id="q3">
+                    <p>3. What is the primary reason forensic examiners prefer offline Registry analysis over using regedit.exe on a live system?</p>
+                    <label><input type="radio" name="q3" value="a"> regedit.exe is too slow for forensic work</label>
+                    <label><input type="radio" name="q3" value="b"> regedit.exe shows the live system's Registry (not the evidence system), does not display timestamps, and can modify evidence</label>
+                    <label><input type="radio" name="q3" value="c"> regedit.exe requires administrator privileges</label>
+                    <label><input type="radio" name="q3" value="d"> regedit.exe cannot display REG_BINARY values</label>
+                    <div class="feedback" id="fb-q3"></div>
+                </div>
+
+                <div class="activity-question" id="q4">
+                    <p>4. If a Registry key contains five values and one of them is modified, what happens to the key's last-write timestamp?</p>
+                    <label><input type="radio" name="q4" value="a"> Only the modified value gets a new timestamp</label>
+                    <label><input type="radio" name="q4" value="b"> The key's single last-write timestamp is updated to reflect the modification time</label>
+                    <label><input type="radio" name="q4" value="c"> All five values receive updated timestamps</label>
+                    <label><input type="radio" name="q4" value="d"> The parent key and all child keys receive updated timestamps</label>
+                    <div class="feedback" id="fb-q4"></div>
+                </div>
+
+                <div class="activity-question" id="q5">
+                    <p>5. Where are the transaction log files for the SYSTEM hive located?</p>
+                    <label><input type="radio" name="q5" value="a"> <code>C:\Users\Default\SYSTEM.LOG1</code> and <code>SYSTEM.LOG2</code></label>
+                    <label><input type="radio" name="q5" value="b"> <code>C:\Windows\Logs\SYSTEM.LOG1</code> and <code>SYSTEM.LOG2</code></label>
+                    <label><input type="radio" name="q5" value="c"> <code>C:\Windows\System32\config\SYSTEM.LOG1</code> and <code>SYSTEM.LOG2</code></label>
+                    <label><input type="radio" name="q5" value="d"> <code>C:\Windows\System32\config\Logs\SYSTEM.LOG1</code> and <code>SYSTEM.LOG2</code></label>
+                    <div class="feedback" id="fb-q5"></div>
+                </div>
+
+                <div class="activity-question" id="q6">
+                    <p>6. Which data type would you expect for a Registry value that stores a computer name like "WORKSTATION01"?</p>
+                    <label><input type="radio" name="q6" value="a"> REG_BINARY</label>
+                    <label><input type="radio" name="q6" value="b"> REG_DWORD</label>
+                    <label><input type="radio" name="q6" value="c"> REG_SZ</label>
+                    <label><input type="radio" name="q6" value="d"> REG_QWORD</label>
+                    <div class="feedback" id="fb-q6"></div>
+                </div>
+
+                <button class="check-btn" onclick="checkActivity1()">Check Answers</button>
+                <div class="feedback" id="fb-activity1"></div>
+            </div>
+
+            <!-- ACTIVITY 2: MATCHING -->
+            <div class="activity-container">
+                <h3>🎮 Activity 2: Hive File Matching</h3>
+                <p>Drag each hive file to its correct disk location. (If drag-and-drop is unavailable, use the dropdown selectors below.)</p>
+
+                <div id="matching-fallback">
+                    <div class="activity-question">
+                        <p>Match each hive file to its disk location:</p>
+
+                        <div style="margin-bottom: 12px;">
+                            <label for="match1" style="display: inline; padding: 0; margin: 0;"><strong>SAM:</strong></label>
+                            <select id="match1" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d1e0; font-size: 0.9rem; margin-left: 8px;">
+                                <option value="">— Select location —</option>
+                                <option value="a">C:\Users\&lt;username&gt;\NTUSER.DAT</option>
+                                <option value="b">C:\Windows\System32\config\SAM</option>
+                                <option value="c">C:\Windows\System32\config\SOFTWARE</option>
+                                <option value="d">C:\Users\&lt;username&gt;\AppData\Local\Microsoft\Windows\UsrClass.dat</option>
+                                <option value="e">C:\Windows\System32\config\SYSTEM</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom: 12px;">
+                            <label for="match2" style="display: inline; padding: 0; margin: 0;"><strong>NTUSER.DAT:</strong></label>
+                            <select id="match2" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d1e0; font-size: 0.9rem; margin-left: 8px;">
+                                <option value="">— Select location —</option>
+                                <option value="a">C:\Users\&lt;username&gt;\NTUSER.DAT</option>
+                                <option value="b">C:\Windows\System32\config\SAM</option>
+                                <option value="c">C:\Windows\System32\config\SOFTWARE</option>
+                                <option value="d">C:\Users\&lt;username&gt;\AppData\Local\Microsoft\Windows\UsrClass.dat</option>
+                                <option value="e">C:\Windows\System32\config\SYSTEM</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom: 12px;">
+                            <label for="match3" style="display: inline; padding: 0; margin: 0;"><strong>SOFTWARE:</strong></label>
+                            <select id="match3" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d1e0; font-size: 0.9rem; margin-left: 8px;">
+                                <option value="">— Select location —</option>
+                                <option value="a">C:\Users\&lt;username&gt;\NTUSER.DAT</option>
+                                <option value="b">C:\Windows\System32\config\SAM</option>
+                                <option value="c">C:\Windows\System32\config\SOFTWARE</option>
+                                <option value="d">C:\Users\&lt;username&gt;\AppData\Local\Microsoft\Windows\UsrClass.dat</option>
+                                <option value="e">C:\Windows\System32\config\SYSTEM</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom: 12px;">
+                            <label for="match4" style="display: inline; padding: 0; margin: 0;"><strong>SYSTEM:</strong></label>
+                            <select id="match4" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d1e0; font-size: 0.9rem; margin-left: 8px;">
+                                <option value="">— Select location —</option>
+                                <option value="a">C:\Users\&lt;username&gt;\NTUSER.DAT</option>
+                                <option value="b">C:\Windows\System32\config\SAM</option>
+                                <option value="c">C:\Windows\System32\config\SOFTWARE</option>
+                                <option value="d">C:\Users\&lt;username&gt;\AppData\Local\Microsoft\Windows\UsrClass.dat</option>
+                                <option value="e">C:\Windows\System32\config\SYSTEM</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom: 12px;">
+                            <label for="match5" style="display: inline; padding: 0; margin: 0;"><strong>UsrClass.dat:</strong></label>
+                            <select id="match5" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d1e0; font-size: 0.9rem; margin-left: 8px;">
+                                <option value="">— Select location —</option>
+                                <option value="a">C:\Users\&lt;username&gt;\NTUSER.DAT</option>
+                                <option value="b">C:\Windows\System32\config\SAM</option>
+                                <option value="c">C:\Windows\System32\config\SOFTWARE</option>
+                                <option value="d">C:\Users\&lt;username&gt;\AppData\Local\Microsoft\Windows\UsrClass.dat</option>
+                                <option value="e">C:\Windows\System32\config\SYSTEM</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkMatching()">Check Matches</button>
+                    <div class="feedback" id="fb-matching"></div>
+                </div>
+            </div>
+
+            <!-- ACTIVITY 3: SCENARIO -->
+            <div class="activity-container">
+                <h3>🎮 Activity 3: Forensic Scenario</h3>
+                <p>Read the scenario and answer the question.</p>
+
+                <div class="activity-question">
+                    <p><strong>Scenario:</strong> You have been asked to determine what software is installed on a suspect's computer. You have a verified forensic image of the suspect's hard drive. Which hive file would you extract, and from what disk location?</p>
+                    <label><input type="radio" name="q-scenario" value="a"> NTUSER.DAT from C:\Users\&lt;username&gt;\</label>
+                    <label><input type="radio" name="q-scenario" value="b"> SAM from C:\Windows\System32\config\</label>
+                    <label><input type="radio" name="q-scenario" value="c"> SOFTWARE from C:\Windows\System32\config\</label>
+                    <label><input type="radio" name="q-scenario" value="d"> SYSTEM from C:\Windows\System32\config\</label>
+                    <div class="feedback" id="fb-scenario"></div>
+                </div>
+                <button class="check-btn" onclick="checkScenario()">Check Answer</button>
+            </div>
+
+            <button class="section-complete-btn" data-section="10" onclick="markComplete(10)">
+                ✓ Mark Section 10 as Complete
+            </button>
+        </section>
+
+        <!-- ========== SECTION 11: KNOWLEDGE CHECK ========== -->
+        <section class="module-section" id="section11">
+            <h2>✅ 11. Knowledge Check — Module 7.1</h2>
+
+            <div class="knowledge-check">
+                <h3>📝 Test Your Understanding</h3>
+                <p class="instructions">Answer the following questions in your own words before revealing the model answers. These questions prepare you for Module 7.2 and the Week 7 assignments.</p>
+
+                <div class="kc-question">
+                    <div class="q-text">1. What are the five root keys of the Windows Registry, and which one contains per-user settings for the currently logged-in user?</div>
+                    <textarea aria-label="Your answer to question 1" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc1')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc1">
+                        <p>The five root keys are: <strong>HKEY_CLASSES_ROOT (HKCR)</strong>, <strong>HKEY_CURRENT_USER (HKCU)</strong>, <strong>HKEY_LOCAL_MACHINE (HKLM)</strong>, <strong>HKEY_USERS (HKU)</strong>, and <strong>HKEY_CURRENT_CONFIG (HKCC)</strong>.</p>
+                        <p><strong>HKEY_CURRENT_USER (HKCU)</strong> contains per-user settings for the currently logged-in user. It is backed by the user's <code>NTUSER.DAT</code> file and is actually a pointer to the current user's SID subkey under HKU.</p>
+                    </div>
+                </div>
+
+                <div class="kc-question">
+                    <div class="q-text">2. If you modify a single value under a Registry key, what happens to the key's timestamp? What are the implications for forensic analysis?</div>
+                    <textarea aria-label="Your answer to question 2" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc2')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc2">
+                        <p>The key's <strong>last-write timestamp</strong> is updated to reflect the time of the modification. This single timestamp is the only temporal indicator at the key level — individual values do not have their own timestamps.</p>
+                        <p><strong>Forensic implications:</strong> Because the key has only one timestamp that is updated when <em>any</em> value changes, the examiner cannot determine from the timestamp alone which specific value was modified. If a key contains multiple values, additional corroborating evidence (file system timestamps, event logs, other Registry keys) is needed to identify which value changed and what the previous value was.</p>
+                    </div>
+                </div>
+
+                <div class="kc-question">
+                    <div class="q-text">3. Where on disk would you find the NTUSER.DAT file for a user named "jsmith"?</div>
+                    <textarea aria-label="Your answer to question 3" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc3')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc3">
+                        <p>The NTUSER.DAT file for user "jsmith" is located at: <code>C:\Users\jsmith\NTUSER.DAT</code></p>
+                        <p>Note that this file is marked with the Hidden and System attributes, so it would not be visible in a standard Windows Explorer view. Forensic tools display all files regardless of attributes.</p>
+                    </div>
+                </div>
+
+                <div class="kc-question">
+                    <div class="q-text">4. Why is offline analysis of Registry hive files preferred over live analysis using regedit.exe in a forensic investigation?</div>
+                    <textarea aria-label="Your answer to question 4" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc4')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc4">
+                        <p>Offline analysis is preferred for several critical reasons:</p>
+                        <ul>
+                            <li><strong>Evidence preservation:</strong> regedit.exe can modify hive data when loading/unloading offline hives, potentially altering evidence</li>
+                            <li><strong>Timestamps:</strong> regedit.exe does not display key last-write timestamps, which are essential forensic evidence</li>
+                            <li><strong>Correct target:</strong> regedit.exe shows the examiner's system Registry, not the evidence system's Registry</li>
+                            <li><strong>Virtual key merging:</strong> regedit.exe shows merged virtual views (HKCR, HKCC) rather than raw hive contents</li>
+                            <li><strong>Transaction logs:</strong> regedit.exe cannot process transaction log files to recover uncommitted changes</li>
+                            <li><strong>Forensic features:</strong> Specialized tools provide bookmarking, reporting, decoded data types, and search capabilities that regedit.exe lacks</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="kc-question">
+                    <div class="q-text">5. What is the forensic significance of Registry transaction log files (.LOG1, .LOG2)?</div>
+                    <textarea aria-label="Your answer to question 5" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc5')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc5">
+                        <p>Transaction log files are forensically significant because they:</p>
+                        <ul>
+                            <li><strong>Contain uncommitted changes:</strong> If the system was improperly shut down, the logs may contain Registry modifications that were never written to the main hive file — potentially revealing the most recent activity</li>
+                            <li><strong>Supplement hive data:</strong> Provide additional temporal context about recent changes</li>
+                            <li><strong>Aid anti-forensics detection:</strong> May retain evidence of original values even if a suspect attempted to modify or delete Registry entries</li>
+                            <li><strong>Enable hive recovery:</strong> Can be used to reconstruct a corrupted hive to a consistent state</li>
+                        </ul>
+                        <p>Forensic examiners should <strong>always</strong> extract the associated .LOG1 and .LOG2 files when extracting hive files from a forensic image.</p>
+                    </div>
+                </div>
+
+                <div class="kc-question">
+                    <div class="q-text">6. You are examining a forensic image and need to determine what software is installed on the system. Which hive file would you extract, and from what disk location?</div>
+                    <textarea aria-label="Your answer to question 6" placeholder="Type your answer here..."></textarea>
+                    <button class="reveal-btn" onclick="revealAnswer('kc6')">Reveal Model Answer</button>
+                    <div class="model-answer" id="kc6">
+                        <p>You would extract the <strong>SOFTWARE</strong> hive file from <code>C:\Windows\System32\config\SOFTWARE</code>.</p>
+                        <p>The SOFTWARE hive (mapped to <code>HKLM\SOFTWARE</code>) contains system-wide installed software information, including entries under <code>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall</code> which lists installed programs, their versions, install dates, and publisher information.</p>
+                        <p>Don't forget to also extract the associated <code>SOFTWARE.LOG1</code> and <code>SOFTWARE.LOG2</code> transaction log files from the same directory.</p>
+                    </div>
+                </div>
+            </div>
+
+            <button class="section-complete-btn" data-section="11" onclick="markComplete(11)">
+                ✓ Mark Section 11 as Complete
+            </button>
+        </section>
+
+        <!-- MODULE SUMMARY -->
+        <section class="module-section">
+            <h2>📋 Module 7.1 Summary</h2>
+
+            <p>In this module, you learned the foundational concepts needed for all Registry-based forensic analysis:</p>
+
+            <ul>
+                <li>The <strong>Windows Registry</strong> is a centralized hierarchical database storing OS, hardware, software, and user configuration data</li>
+                <li>The Registry is organized under <strong>five root keys</strong>: HKCR, HKCU, HKLM, HKU, and HKCC — with HKCU and HKLM being the most forensically valuable</li>
+                <li>The hierarchy consists of <strong>keys</strong> (like folders), <strong>subkeys</strong> (like subfolders), and <strong>values</strong> (like files) with specific <strong>data types</strong></li>
+                <li>Every key has a <strong>last-write timestamp</strong> — a single UTC timestamp updated whenever any value in the key changes</li>
+                <li>Registry data is physically stored in <strong>hive files</strong> on the NTFS volume — system hives in <code>C:\Windows\System32\config\</code> and user hives in <code>C:\Users\&lt;username&gt;\</code></li>
+                <li><strong>Transaction log files</strong> (.LOG1, .LOG2) record pending changes and may contain evidence not yet committed to the main hive</li>
+                <li>Forensic examiners use specialized tools (<strong>Registry Explorer</strong>, <strong>RegRipper</strong>, <strong>Autopsy</strong>) for offline analysis — never <code>regedit.exe</code></li>
+            </ul>
+
+            <div class="info-box">
+                <div class="box-title">⏭️ What's Next</div>
+                <p>In <strong>Module 7.2: System-Level Registry Artifacts</strong>, you will apply this foundational knowledge to extract specific forensic artifacts from the SYSTEM, SOFTWARE, and SAM hives — including computer identification, time zone settings, USB device history, and user account enumeration.</p>
+            </div>
+        </section>
+
+        <!-- KEY TERMS -->
+        <section class="module-section">
+            <h2>📖 Key Terms</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Term</th>
+                            <th>Definition</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Registry Hive</strong></td>
+                            <td>A logical group of keys, subkeys, and values in the Registry that is backed by a single file on disk</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Registry Key</strong></td>
+                            <td>A container object in the Registry hierarchy (analogous to a folder) that can contain subkeys and values</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Registry Value</strong></td>
+                            <td>A named data entry within a key, consisting of a name, data type, and data (analogous to a file)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Root Key</strong></td>
+                            <td>One of the five top-level keys in the Registry hierarchy (HKCR, HKCU, HKLM, HKU, HKCC)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Last-Write Timestamp</strong></td>
+                            <td>A 64-bit FILETIME value on each key recording when the key or any of its values was last modified (stored in UTC)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Hive File</strong></td>
+                            <td>The physical file on disk that stores Registry hive data (e.g., SAM, SYSTEM, SOFTWARE, NTUSER.DAT)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Transaction Log</strong></td>
+                            <td>A file (.LOG1, .LOG2) recording pending Registry changes before they are committed to the main hive file</td>
+                        </tr>
+                        <tr>
+                            <td><strong>NTUSER.DAT</strong></td>
+                            <td>The hive file storing per-user Registry data, located in each user's profile directory</td>
+                        </tr>
+                        <tr>
+                            <td><strong>UsrClass.dat</strong></td>
+                            <td>The hive file storing user-specific file associations and shell bag data, located in the user's AppData directory</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Offline Analysis</strong></td>
+                            <td>Examining extracted hive files from a forensic image using specialized tools, rather than analyzing a live running system</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SID (Security Identifier)</strong></td>
+                            <td>A unique identifier assigned to each user account in Windows, used as the subkey name under HKU</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- NEXT MODULE -->
+        <a href="#" class="next-module" aria-label="Proceed to Module 7.2: System-Level Registry Artifacts">
+            Proceed to Module 7.2: System-Level Registry Artifacts →
+        </a>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="module-footer">
+        <p>CSC 156 — Digital Forensics Fundamentals | Week 7: Windows Forensics I</p>
+        <p>Module 7.1: Understanding the Windows Registry</p>
+        <p>© 2026 CSC 156. For educational use only.</p>
+    </footer>
+
+    <!-- ===== JAVASCRIPT ===== -->
+    <script>
+        // ===== PROGRESS TRACKING (Session Storage) =====
+        const TOTAL_SECTIONS = 11;
+        const STORAGE_KEY = 'csc156_mod71_progress';
+
+        function getProgress() {
+            try {
+                const data = sessionStorage.getItem(STORAGE_KEY);
+                return data ? JSON.parse(data) : {};
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function saveProgress(data) {
+            try {
+                sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            } catch (e) {
+                // Session storage unavailable
+            }
+        }
+
+        function markComplete(sectionNum) {
+            const progress = getProgress();
+            progress['section' + sectionNum] = true;
+            saveProgress(progress);
+
+            const btn = document.querySelector('[data-section="' + sectionNum + '"]');
+            if (btn) {
+                btn.classList.add('completed');
+                btn.textContent = '✓ Section ' + sectionNum + ' Completed';
+                btn.setAttribute('aria-label', 'Section ' + sectionNum + ' marked as complete');
+            }
+
+            // Update nav
+            const navLink = document.getElementById('nav-s' + sectionNum);
+            if (navLink) {
+                navLink.classList.add('completed');
+            }
+
+            updateProgressBar();
+        }
+
+        function updateProgressBar() {
+            const progress = getProgress();
+            let completed = 0;
+            for (let i = 1; i <= TOTAL_SECTIONS; i++) {
+                if (progress['section' + i]) completed++;
+            }
+            const pct = Math.round((completed / TOTAL_SECTIONS) * 100);
+            const bar = document.getElementById('progressBar');
+            const text = document.getElementById('progressText');
+            if (bar) bar.style.width = pct + '%';
+            if (text) text.textContent = pct + '% complete';
+
+            const container = document.querySelector('.progress-container');
+            if (container) container.setAttribute('aria-valuenow', pct);
+        }
+
+        function restoreProgress() {
+            const progress = getProgress();
+            for (let i = 1; i <= TOTAL_SECTIONS; i++) {
+                if (progress['section' + i]) {
+                    const btn = document.querySelector('[data-section="' + i + '"]');
+                    if (btn) {
+                        btn.classList.add('completed');
+                        btn.textContent = '✓ Section ' + i + ' Completed';
+                    }
+                    const navLink = document.getElementById('nav-s' + i);
+                    if (navLink) {
+                        navLink.classList.add('completed');
+                    }
+                }
+            }
+            updateProgressBar();
+        }
+
+        // ===== COLLAPSIBLE SECTIONS =====
+        function toggleCollapsible(button) {
+            const content = button.nextElementSibling;
+            const isOpen = content.classList.contains('open');
+
+            content.classList.toggle('open');
+            button.setAttribute('aria-expanded', !isOpen);
+        }
+
+        // ===== ROOT KEY EXPLORER =====
+        function showRootDetail(key) {
+            // Hide all details
+            const details = document.querySelectorAll('.tree-detail');
+            details.forEach(function(d) { d.classList.remove('active'); });
+
+            // Reset all button aria-expanded
+            const buttons = document.querySelectorAll('.diagram-container .tree-node:not(.root)');
+            buttons.forEach(function(b) { b.setAttribute('aria-expanded', 'false'); });
+
+            // Show selected
+            const target = document.getElementById('detail-' + key);
+            if (target) {
+                target.classList.add('active');
+            }
+
+            // Update button
+            var clickedBtn = null;
+            buttons.forEach(function(b) {
+                if (b.getAttribute('aria-controls') === 'detail-' + key) {
+                    clickedBtn = b;
+                }
+            });
+            if (clickedBtn) {
+                clickedBtn.setAttribute('aria-expanded', 'true');
+            }
+        }
+
+        // ===== ACTIVITY 1: MULTIPLE CHOICE =====
+        function checkActivity1() {
+            const answers = {
+                q1: { correct: 'b', explanation: 'HKEY_CURRENT_USER (HKCU) contains per-user settings for the currently logged-in user.' },
+                q2: { correct: 'c', explanation: 'The SAM (Security Account Manager) hive stores local user account information and password hashes.' },
+                q3: { correct: 'b', explanation: 'regedit.exe shows the live system\'s Registry, does not display timestamps, and can modify evidence when loading offline hives.' },
+                q4: { correct: 'b', explanation: 'The key\'s single last-write timestamp is updated. Individual values do not have their own timestamps.' },
+                q5: { correct: 'c', explanation: 'Transaction logs are stored alongside their parent hive files in C:\\Windows\\System32\\config\\.' },
+                q6: { correct: 'c', explanation: 'REG_SZ is a string data type, appropriate for storing text values like computer names.' }
+            };
+
+            let totalCorrect = 0;
+            const totalQuestions = Object.keys(answers).length;
+
+            for (const qId in answers) {
+                const selected = document.querySelector('input[name="' + qId + '"]:checked');
+                const fb = document.getElementById('fb-' + qId);
+
+                if (!selected) {
+                    fb.className = 'feedback incorrect';
+                    fb.textContent = 'Please select an answer. ' + answers[qId].explanation;
+                    fb.style.display = 'block';
+                } else if (selected.value === answers[qId].correct) {
+                    fb.className = 'feedback correct';
+                    fb.textContent = '✓ Correct! ' + answers[qId].explanation;
+                    fb.style.display = 'block';
+                    totalCorrect++;
+                } else {
+                    fb.className = 'feedback incorrect';
+                    fb.textContent = '✗ Incorrect. ' + answers[qId].explanation;
+                    fb.style.display = 'block';
+                }
+            }
+
+            const overallFb = document.getElementById('fb-activity1');
+            if (totalCorrect === totalQuestions) {
+                overallFb.className = 'feedback correct';
+                overallFb.textContent = 'Excellent! You got all ' + totalQuestions + ' questions correct!';
+            } else {
+                overallFb.className = 'feedback incorrect';
+                overallFb.textContent = 'You got ' + totalCorrect + ' out of ' + totalQuestions + ' correct. Review the sections above and try again.';
+            }
+            overallFb.style.display = 'block';
+        }
+
+        // ===== ACTIVITY 2: MATCHING =====
+        function checkMatching() {
+            const correctAnswers = {
+                match1: 'b', // SAM -> config\SAM
+                match2: 'a', // NTUSER.DAT -> Users\<username>\NTUSER.DAT
+                match3: 'c', // SOFTWARE -> config\SOFTWARE
+                match4: 'e', // SYSTEM -> config\SYSTEM
+                match5: 'd'  // UsrClass.dat -> AppData\...\UsrClass.dat
+            };
+
+            let correct = 0;
+            const total = Object.keys(correctAnswers).length;
+
+            for (const id in correctAnswers) {
+                const select = document.getElementById(id);
+                if (select.value === correctAnswers[id]) {
+                    select.style.borderColor = '#16a34a';
+                    select.style.backgroundColor = '#d1fae5';
+                    correct++;
+                } else {
+                    select.style.borderColor = '#dc2626';
+                    select.style.backgroundColor = '#fef2f2';
+                }
+            }
+
+            const fb = document.getElementById('fb-matching');
+            if (correct === total) {
+                fb.className = 'feedback correct';
+                fb.textContent = 'Excellent! All ' + total + ' matches are correct!';
+            } else {
+                fb.className = 'feedback incorrect';
+                fb.textContent = 'You got ' + correct + ' out of ' + total + ' correct. Review Section 6 (Hive Files on Disk) and try again.';
+            }
+            fb.style.display = 'block';
+        }
+
+        // ===== ACTIVITY 3: SCENARIO =====
+        function checkScenario() {
+            const selected = document.querySelector('input[name="q-scenario"]:checked');
+            const fb = document.getElementById('fb-scenario');
+
+            if (!selected) {
+                fb.className = 'feedback incorrect';
+                fb.textContent = 'Please select an answer.';
+            } else if (selected.value === 'c') {
+                fb.className = 'feedback correct';
+                fb.textContent = '✓ Correct! The SOFTWARE hive (C:\\Windows\\System32\\config\\SOFTWARE) contains system-wide installed software information under HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall.';
+            } else {
+                fb.className = 'feedback incorrect';
+                fb.textContent = '✗ Incorrect. Installed software information is stored in the SOFTWARE hive located at C:\\Windows\\System32\\config\\SOFTWARE. The SAM hive stores user accounts, the SYSTEM hive stores hardware/services configuration, and NTUSER.DAT stores per-user settings.';
+            }
+            fb.style.display = 'block';
+        }
+
+        // ===== KNOWLEDGE CHECK REVEAL =====
+        function revealAnswer(id) {
+            const answer = document.getElementById(id);
+            if (answer) {
+                answer.classList.toggle('visible');
+            }
+        }
+
+        // ===== SCROLL PROGRESS =====
+        window.addEventListener('scroll', function() {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrollPercent = docHeight > 0 ? Math.round((scrollTop / docHeight) * 100) : 0;
+
+            // We use the section-based progress for the bar, not scroll position
+            // But we can show scroll position as a secondary indicator if desired
+        });
+
+        // ===== INITIALIZE ON LOAD =====
+        window.addEventListener('DOMContentLoaded', function() {
+            restoreProgress();
+        });
+    </script>
+</body>
+</html>
