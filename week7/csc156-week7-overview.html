@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 7 Overview: Windows Forensics I — Registry and User Artifacts | CSC 156</title>
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        html{scroll-behavior:smooth;font-size:16px}
+        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;line-height:1.7;color:#1a1a2e;background:#f5f5fa;min-height:100vh}
+
+        .skip-link{position:absolute;top:-100px;left:0;background:#1a1a2e;color:#fff;padding:12px 24px;z-index:10000;font-size:1rem;transition:top .2s}
+        .skip-link:focus{top:0}
+
+        /* ===== HERO ===== */
+        .hero{background:linear-gradient(135deg,#1a1a2e 0%,#2d2d5e 50%,#3a3a7e 100%);color:#fff;padding:56px 32px 48px;text-align:center;position:relative;overflow:hidden}
+        .hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:6px;background:linear-gradient(90deg,#2563eb,#7c3aed,#2563eb)}
+        .hero .course-tag{display:inline-block;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);padding:4px 18px;border-radius:20px;font-size:.82rem;letter-spacing:.05em;margin-bottom:14px}
+        .hero .week-number{font-size:3.5rem;font-weight:800;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1;margin-bottom:4px}
+        .hero h1{font-size:1.8rem;font-weight:700;margin-bottom:8px;line-height:1.3}
+        .hero .subtitle{font-size:1.05rem;color:#c8c8f0;max-width:680px;margin:0 auto 24px}
+        .hero-meta{display:flex;justify-content:center;flex-wrap:wrap;gap:20px;font-size:.88rem;color:#d0d0f0}
+        .hero-meta .meta-item{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);padding:6px 16px;border-radius:20px;border:1px solid rgba(255,255,255,.12)}
+
+        /* ===== LAYOUT ===== */
+        .page-grid{max-width:1200px;margin:0 auto;padding:32px 20px 60px;display:grid;grid-template-columns:1fr;gap:28px}
+        @media(min-width:900px){
+            .page-grid{grid-template-columns:2fr 1fr}
+            .full-width{grid-column:1/-1}
+        }
+
+        /* ===== CARDS ===== */
+        .card{background:#fff;border:1px solid #d1d1e0;border-radius:12px;padding:28px 24px;box-shadow:0 1px 8px rgba(0,0,0,.04)}
+        .card h2{font-size:1.3rem;color:#1a1a2e;margin-bottom:6px;padding-bottom:10px;border-bottom:3px solid #2563eb;display:flex;align-items:center;gap:8px}
+        .card h3{font-size:1.1rem;color:#2d2d5e;margin:20px 0 10px}
+        .card h4{font-size:1rem;color:#3a3a6a;margin:16px 0 8px}
+        .card p{margin-bottom:12px;color:#2a2a4a}
+
+        /* ===== SIDEBAR CARD VARIANT ===== */
+        .sidebar-card{background:#fff;border:1px solid #d1d1e0;border-radius:12px;padding:22px 20px;box-shadow:0 1px 8px rgba(0,0,0,.04)}
+        .sidebar-card h2{font-size:1.15rem;color:#1a1a2e;margin-bottom:6px;padding-bottom:8px;border-bottom:3px solid #7c3aed;display:flex;align-items:center;gap:8px}
+        .sidebar-card h3{font-size:1rem;color:#2d2d5e;margin:16px 0 8px}
+        .sidebar-card p{margin-bottom:10px;color:#2a2a4a;font-size:.93rem}
+
+        /* ===== SPECIAL BOXES ===== */
+        .highlight-box{background:#eef2ff;border:1px solid #c7d2fe;border-left:5px solid #2563eb;border-radius:8px;padding:16px 20px;margin:14px 0}
+        .highlight-box .box-title{font-weight:700;color:#1e40af;margin-bottom:4px}
+        .highlight-box p,.highlight-box li{color:#1e3a5f}
+        .highlight-box ul{margin:6px 0 4px 20px}
+
+        .transition-box{background:linear-gradient(135deg,#eff6ff 0%,#f5f3ff 100%);border:1px solid #c7d2fe;border-radius:10px;padding:20px 24px;margin:16px 0}
+        .transition-box .box-title{font-weight:700;color:#3730a3;margin-bottom:8px;font-size:1.05rem}
+        .transition-box p{color:#312e81}
+
+        .info-box{background:#eff6ff;border:1px solid #bfdbfe;border-left:5px solid #2563eb;border-radius:8px;padding:14px 18px;margin:12px 0}
+        .info-box .box-title{font-weight:700;color:#1e40af;margin-bottom:4px;font-size:.92rem}
+        .info-box p,.info-box li{color:#1e3a5f;font-size:.92rem}
+        .info-box ul{margin:6px 0 4px 18px}
+
+        /* ===== MODULE CARDS ===== */
+        .module-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:16px 0}
+        .module-card{background:#fff;border:2px solid #e0e7ff;border-radius:10px;padding:20px;transition:all .25s;cursor:default;position:relative;overflow:hidden}
+        .module-card:hover{border-color:#818cf8;box-shadow:0 4px 16px rgba(99,102,241,.12);transform:translateY(-2px)}
+        .module-card .mod-number{position:absolute;top:12px;right:14px;font-size:2rem;font-weight:800;color:#e0e7ff;line-height:1}
+        .module-card .mod-badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.72rem;font-weight:600;margin-bottom:8px}
+        .badge-foundation{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
+        .badge-intermediate{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+        .badge-intadv{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+        .badge-advanced{background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd}
+        .module-card h3{font-size:1.05rem;color:#1e40af;margin:0 0 6px;padding-right:40px}
+        .module-card p{font-size:.88rem;color:#4a4a6a;margin-bottom:8px}
+        .module-card .mod-time{font-size:.8rem;color:#6a6a8a;display:flex;align-items:center;gap:4px}
+        .module-card .mod-topics{list-style:none;padding:0;margin:8px 0 0}
+        .module-card .mod-topics li{font-size:.82rem;color:#4a4a6a;padding:3px 0;padding-left:16px;position:relative}
+        .module-card .mod-topics li::before{content:'›';position:absolute;left:0;color:#818cf8;font-weight:700}
+
+        /* ===== FLOW DIAGRAM ===== */
+        .flow-container{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;margin:20px 0;padding:16px}
+        .flow-step{background:#eef2ff;border:2px solid #c7d2fe;border-radius:10px;padding:10px 16px;text-align:center;min-width:140px;transition:all .2s}
+        .flow-step:hover{background:#dbeafe;border-color:#818cf8}
+        .flow-step .flow-num{font-size:.7rem;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:.05em}
+        .flow-step .flow-label{font-size:.85rem;font-weight:600;color:#1e40af}
+        .flow-arrow{color:#a5b4fc;font-size:1.3rem;font-weight:700}
+        @media(max-width:700px){
+            .flow-container{flex-direction:column}
+            .flow-arrow{transform:rotate(90deg)}
+        }
+
+        /* ===== ASSIGNMENT CARD ===== */
+        .assignment-card{background:#fff;border:2px solid #86efac;border-radius:12px;padding:24px;margin:16px 0;position:relative;overflow:hidden}
+        .assignment-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#16a34a,#2563eb)}
+        .assignment-card h3{color:#166534;margin:8px 0 6px;font-size:1.1rem;display:flex;align-items:center;gap:8px}
+        .assignment-card .assgn-meta{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 14px}
+        .assignment-card .assgn-tag{display:inline-block;padding:3px 12px;border-radius:14px;font-size:.78rem;font-weight:600}
+        .tag-points{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7}
+        .tag-type{background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe}
+        .assignment-card p{font-size:.92rem;color:#2a2a4a;margin-bottom:10px}
+        .assignment-card .task-list{list-style:none;padding:0;margin:10px 0}
+        .assignment-card .task-list li{font-size:.88rem;color:#2a2a4a;padding:6px 0 6px 24px;position:relative;border-bottom:1px solid #f0f0f5}
+        .assignment-card .task-list li:last-child{border-bottom:none}
+        .assignment-card .task-list li::before{content:'✓';position:absolute;left:0;color:#16a34a;font-weight:700}
+
+        /* ===== TOOL TABLE ===== */
+        .table-wrap{overflow-x:auto;margin:14px 0;border-radius:8px;border:1px solid #d1d1e0}
+        table{width:100%;border-collapse:collapse;font-size:.88rem}
+        thead{background:#1a1a2e;color:#fff}
+        thead th{padding:10px 14px;text-align:left;font-weight:600}
+        tbody tr{border-bottom:1px solid #e5e5f0}
+        tbody tr:nth-child(even){background:#f8f8fc}
+        tbody tr:hover{background:#eef2ff}
+        tbody td{padding:9px 14px;color:#2a2a4a;vertical-align:top}
+
+        /* ===== CODE ===== */
+        code{font-family:'Consolas','Courier New',monospace;background:#f1f5f9;color:#1e293b;padding:2px 5px;border-radius:3px;font-size:.88em;border:1px solid #e2e8f0}
+
+        /* ===== COLLAPSIBLE ===== */
+        .collapsible{margin:12px 0;border:1px solid #d1d1e0;border-radius:8px;overflow:hidden}
+        .collapsible-toggle{width:100%;background:#f8f8fc;border:none;padding:12px 18px;font-size:.95rem;font-weight:600;color:#2d2d5e;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:background .2s;text-align:left}
+        .collapsible-toggle:hover,.collapsible-toggle:focus{background:#eef2ff;outline:2px solid #2563eb;outline-offset:-2px}
+        .collapsible-toggle .arrow{transition:transform .3s;font-size:.8rem}
+        .collapsible-toggle[aria-expanded="true"] .arrow{transform:rotate(180deg)}
+        .collapsible-content{display:none;padding:14px 18px;background:#fff;border-top:1px solid #d1d1e0}
+        .collapsible-content.open{display:block}
+
+        /* ===== KEY TERMS GRID ===== */
+        .terms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin:14px 0}
+        .term-chip{background:#f8f8fc;border:1px solid #e0e7ff;border-radius:8px;padding:10px 14px;transition:all .2s;cursor:default}
+        .term-chip:hover{background:#eef2ff;border-color:#818cf8}
+        .term-chip .term-name{font-weight:700;color:#1e40af;font-size:.88rem;margin-bottom:2px}
+        .term-chip .term-def{font-size:.78rem;color:#4a4a6a;line-height:1.45}
+
+        /* ===== WEEK CONTEXT TIMELINE ===== */
+        .context-timeline{display:flex;align-items:stretch;gap:0;margin:16px 0;overflow-x:auto;padding:4px 0}
+        .ctx-week{flex:1;min-width:90px;text-align:center;padding:10px 8px;border:1px solid #e0e7ff;background:#f8f8fc;font-size:.75rem;color:#6a6a8a;position:relative;transition:all .2s}
+        .ctx-week:first-child{border-radius:8px 0 0 8px}
+        .ctx-week:last-child{border-radius:0 8px 8px 0}
+        .ctx-week.active{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border-color:#2563eb;font-weight:700;transform:scaleY(1.08);z-index:1;box-shadow:0 2px 12px rgba(37,99,235,.3)}
+        .ctx-week .ctx-num{font-weight:700;font-size:.85rem;display:block}
+        .ctx-week .ctx-label{display:block;margin-top:2px;line-height:1.2}
+
+        /* ===== LISTS ===== */
+        ul,ol{margin:8px 0 12px 22px}
+        li{margin-bottom:5px;color:#2a2a4a}
+
+        /* ===== FOOTER ===== */
+        .page-footer{text-align:center;padding:28px 16px;color:#6a6a8a;font-size:.82rem;border-top:1px solid #d1d1e0;margin-top:20px;max-width:1200px;margin-left:auto;margin-right:auto}
+
+        /* ===== RESPONSIVE ===== */
+        @media(max-width:600px){
+            .hero{padding:32px 18px 28px}
+            .hero .week-number{font-size:2.5rem}
+            .hero h1{font-size:1.35rem}
+            .card,.sidebar-card{padding:20px 16px}
+            .module-grid{grid-template-columns:1fr}
+            .hero-meta{flex-direction:column;align-items:center;gap:8px}
+        }
+
+        @media print{
+            .skip-link,.collapsible-toggle .arrow{display:none}
+            .card,.sidebar-card{break-inside:avoid;box-shadow:none;border:1px solid #ccc}
+            .collapsible-content{display:block!important}
+            .hero{background:#1a1a2e!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+        }
+
+        *:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- ===== HERO ===== -->
+    <header class="hero">
+        <div class="course-tag">CSC 156 — Digital Forensics Fundamentals</div>
+        <div class="week-number">Week 7</div>
+        <h1>Windows Forensics I: Registry and User Artifacts</h1>
+        <p class="subtitle">Apply your foundational skills to the most common platform in digital forensics — extract, analyze, and correlate Windows Registry artifacts to reconstruct user activity.</p>
+        <div class="hero-meta">
+            <span class="meta-item">📅 5-Day Week</span>
+            <span class="meta-item">📘 4 Learning Modules</span>
+            <span class="meta-item">🔬 1 Lab Assignment (20 pts)</span>
+            <span class="meta-item">⏱ ~9–10 Hours Total</span>
+        </div>
+    </header>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main id="main-content" class="page-grid">
+
+        <!-- ===== LEFT COLUMN: MAIN CONTENT ===== -->
+
+        <!-- COURSE CONTEXT -->
+        <section class="card full-width" aria-label="Course context timeline">
+            <h2>📍 Where We Are in the Course</h2>
+            <p>Week 7 marks a <strong>pivotal transition</strong> in this course. Over Weeks 1–6, you built foundational knowledge of forensic methodology, legal frameworks, hardware, file systems, and data acquisition. Starting this week, you apply all of those skills to a <strong>real-world operating system environment</strong>.</p>
+
+            <div class="context-timeline" role="img" aria-label="Course progression showing Weeks 4 through 10, with Week 7 highlighted as the current week">
+                <div class="ctx-week"><span class="ctx-num">W4</span><span class="ctx-label">Hardware &amp; Storage</span></div>
+                <div class="ctx-week"><span class="ctx-num">W5</span><span class="ctx-label">File Systems</span></div>
+                <div class="ctx-week"><span class="ctx-num">W6</span><span class="ctx-label">Acquisition</span></div>
+                <div class="ctx-week active"><span class="ctx-num">W7</span><span class="ctx-label">Windows Registry</span></div>
+                <div class="ctx-week"><span class="ctx-num">W8</span><span class="ctx-label">Windows II</span></div>
+                <div class="ctx-week"><span class="ctx-num">W9</span><span class="ctx-label">Linux &amp; Mac</span></div>
+                <div class="ctx-week"><span class="ctx-num">W10</span><span class="ctx-label">Network</span></div>
+            </div>
+
+            <div class="transition-box">
+                <div class="box-title">🔄 The Transition: From Foundations to Applied OS Forensics</div>
+                <p>Windows remains the dominant desktop operating system in both enterprise and consumer settings, making it the <strong>single most common platform</strong> encountered in digital forensic investigations. This week, you shift from understanding <em>how data is stored and acquired</em> to understanding <em>what that data means</em> within the context of a Windows system. The Registry is the key that unlocks that understanding.</p>
+            </div>
+        </section>
+
+        <!-- WHAT YOU'LL LEARN -->
+        <section class="card">
+            <h2>🎯 What You Will Learn</h2>
+            <p>By the end of this week, you will be able to:</p>
+
+            <div class="highlight-box">
+                <div class="box-title">Core Competencies</div>
+                <ul>
+                    <li>Navigate the Windows Registry structure — root keys, hive files, keys, subkeys, values, and data types</li>
+                    <li>Map logical Registry hives to their physical file locations on an NTFS volume</li>
+                    <li>Extract and interpret system-level artifacts: computer name, time zone, OS version, USB device history, user accounts</li>
+                    <li>Analyze user-level artifacts from NTUSER.DAT: program execution (UserAssist), file access (RecentDocs), searches (WordWheelQuery), typed paths, and commands (RunMRU)</li>
+                    <li>Parse Jump Lists and Recycle Bin artifacts for application-file relationships and deletion evidence</li>
+                    <li>Correlate multiple artifact sources into a unified investigative timeline</li>
+                    <li>Document findings with proper forensic standards for legal defensibility</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <div class="box-title">📋 CSLO Alignment</div>
+                <p><strong>Primary CSLO:</strong> CSLO 2 — <em>Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data.</em></p>
+            </div>
+        </section>
+
+        <!-- SIDEBAR: THIS WEEK AT A GLANCE -->
+        <aside class="sidebar-card" aria-label="Week at a glance">
+            <h2>📊 This Week at a Glance</h2>
+
+            <h3>Learning Modules</h3>
+            <p>Complete these four modules <strong>before</strong> starting the lab. They are designed to be completed in order, though you may adjust to fit your schedule.</p>
+            <ul style="list-style:none;padding:0;margin:10px 0">
+                <li style="padding:6px 0;border-bottom:1px solid #f0f0f5;font-size:.9rem">📘 Module 7.1 — Understanding the Registry <span style="float:right;color:#6a6a8a;font-size:.8rem">~1.5 hrs</span></li>
+                <li style="padding:6px 0;border-bottom:1px solid #f0f0f5;font-size:.9rem">📘 Module 7.2 — System-Level Artifacts <span style="float:right;color:#6a6a8a;font-size:.8rem">~2.0 hrs</span></li>
+                <li style="padding:6px 0;border-bottom:1px solid #f0f0f5;font-size:.9rem">📘 Module 7.3 — User-Level Artifacts <span style="float:right;color:#6a6a8a;font-size:.8rem">~2.0 hrs</span></li>
+                <li style="padding:6px 0;font-size:.9rem">📘 Module 7.4 — Advanced Artifacts &amp; Timeline <span style="float:right;color:#6a6a8a;font-size:.8rem">~1.5 hrs</span></li>
+            </ul>
+            <p style="font-size:.82rem;color:#6a6a8a;text-align:right;margin-top:4px">Total module time: ~7 hours</p>
+
+            <h3>Assignment</h3>
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 14px;margin:8px 0">
+                <div style="font-weight:700;color:#166534;font-size:.92rem">🔬 Lab Activity 7</div>
+                <div style="font-size:.82rem;color:#14532d;margin-top:2px">Windows Registry &amp; User Artifact Analysis</div>
+                <div style="font-size:.82rem;color:#14532d">20 points — Hands-on lab with written deliverable</div>
+            </div>
+
+            <h3>Prerequisite Skills</h3>
+            <p style="font-size:.88rem">This week builds directly on:</p>
+            <ul style="font-size:.85rem">
+                <li><strong>Week 5:</strong> NTFS file system, MFT, file paths</li>
+                <li><strong>Week 6:</strong> Forensic imaging, hash verification, working from images</li>
+                <li><strong>Week 3:</strong> Legal frameworks, chain of custody, evidence admissibility</li>
+            </ul>
+        </aside>
+
+        <!-- MODULE PROGRESSION -->
+        <section class="card full-width">
+            <h2>📚 Learning Module Progression</h2>
+            <p>Week 7 consists of <strong>four learning modules</strong> that progress from foundational concepts to advanced analysis. Each module builds on the previous, creating a complete understanding of Windows Registry forensics.</p>
+
+            <!-- FLOW DIAGRAM -->
+            <div class="flow-container" role="img" aria-label="Module progression: 7.1 Structure leads to 7.2 System Artifacts leads to 7.3 User Artifacts leads to 7.4 Correlation">
+                <div class="flow-step">
+                    <div class="flow-num">Module 7.1</div>
+                    <div class="flow-label">Registry Structure</div>
+                </div>
+                <div class="flow-arrow" aria-hidden="true">→</div>
+                <div class="flow-step">
+                    <div class="flow-num">Module 7.2</div>
+                    <div class="flow-label">System Artifacts</div>
+                </div>
+                <div class="flow-arrow" aria-hidden="true">→</div>
+                <div class="flow-step">
+                    <div class="flow-num">Module 7.3</div>
+                    <div class="flow-label">User Artifacts</div>
+                </div>
+                <div class="flow-arrow" aria-hidden="true">→</div>
+                <div class="flow-step">
+                    <div class="flow-num">Module 7.4</div>
+                    <div class="flow-label">Correlation &amp; Timeline</div>
+                </div>
+            </div>
+
+            <!-- MODULE CARDS -->
+            <div class="module-grid">
+                <!-- MODULE 7.1 -->
+                <div class="module-card">
+                    <div class="mod-number">7.1</div>
+                    <span class="mod-badge badge-foundation">Foundational</span>
+                    <h3>Understanding the Windows Registry</h3>
+                    <p>The structure, organization, and forensic significance of the Windows Registry.</p>
+                    <div class="mod-time">⏱ ~1.5 hours</div>
+                    <ul class="mod-topics">
+                        <li>What the Registry is and why it exists</li>
+                        <li>Five root keys (HKCR, HKCU, HKLM, HKU, HKCC)</li>
+                        <li>Keys, subkeys, values, and data types</li>
+                        <li>Key last-write timestamps</li>
+                        <li>Hive files and their disk locations</li>
+                        <li>Transaction log files (.LOG1, .LOG2)</li>
+                        <li>Forensic tools for offline analysis</li>
+                    </ul>
+                </div>
+
+                <!-- MODULE 7.2 -->
+                <div class="module-card">
+                    <div class="mod-number">7.2</div>
+                    <span class="mod-badge badge-intermediate">Intermediate</span>
+                    <h3>System-Level Registry Artifacts</h3>
+                    <p>Machine-wide evidence from the SYSTEM, SOFTWARE, and SAM hives.</p>
+                    <div class="mod-time">⏱ ~2.0 hours</div>
+                    <ul class="mod-topics">
+                        <li>Computer name and time zone</li>
+                        <li>OS version and install date</li>
+                        <li>CurrentControlSet identification</li>
+                        <li>User account enumeration (SAM)</li>
+                        <li>USB device history (USBSTOR)</li>
+                        <li>Installed software and autoruns</li>
+                        <li>Network connection history</li>
+                    </ul>
+                </div>
+
+                <!-- MODULE 7.3 -->
+                <div class="module-card">
+                    <div class="mod-number">7.3</div>
+                    <span class="mod-badge badge-intadv">Intermediate–Advanced</span>
+                    <h3>User-Level Registry Artifacts (NTUSER.DAT)</h3>
+                    <p>Per-user activity evidence — what the user ran, opened, searched, and typed.</p>
+                    <div class="mod-time">⏱ ~2.0 hours</div>
+                    <ul class="mod-topics">
+                        <li>NTUSER.DAT structure and extraction</li>
+                        <li>UserAssist — program execution with ROT13</li>
+                        <li>RecentDocs — recently opened files</li>
+                        <li>TypedPaths — Explorer navigation history</li>
+                        <li>RunMRU — Run dialog commands</li>
+                        <li>WordWheelQuery — search history</li>
+                        <li>Per-user startup programs (persistence)</li>
+                    </ul>
+                </div>
+
+                <!-- MODULE 7.4 -->
+                <div class="module-card">
+                    <div class="mod-number">7.4</div>
+                    <span class="mod-badge badge-advanced">Advanced</span>
+                    <h3>Advanced Artifacts &amp; Timeline Correlation</h3>
+                    <p>Additional artifact types and the methodology for building investigative timelines.</p>
+                    <div class="mod-time">⏱ ~1.5 hours</div>
+                    <ul class="mod-topics">
+                        <li>Jump Lists (application-file relationships)</li>
+                        <li>Recycle Bin artifacts ($I/$R files)</li>
+                        <li>Thumbcache and Windows Search Index</li>
+                        <li>Artifact correlation methodology</li>
+                        <li>Timeline construction (4-step process)</li>
+                        <li>Forensic documentation standards</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ASSIGNMENT -->
+        <section class="card">
+            <h2>📝 Assignment</h2>
+            <p>This week has <strong>one assignment</strong>: a hands-on lab that applies everything you learn in the four modules.</p>
+
+            <div class="assignment-card">
+                <h3>🔬 Lab Activity 7: Windows Registry and User Artifact Analysis</h3>
+                <div class="assgn-meta">
+                    <span class="assgn-tag tag-points">20 Points</span>
+                    <span class="assgn-tag tag-type">Hands-on Lab + Written Deliverable</span>
+                </div>
+                <p>Using a provided Windows forensic image, you will perform a complete Registry and user artifact examination. This lab bridges the gap between <strong>examination</strong> (extracting artifacts) and <strong>analysis</strong> (interpreting what they mean).</p>
+
+                <h4>Lab Tasks</h4>
+                <ol class="task-list">
+                    <li>Extract Registry hive files (SAM, SYSTEM, SOFTWARE, NTUSER.DAT) from the forensic image</li>
+                    <li>Determine the computer name, time zone, and OS version from system hives</li>
+                    <li>Enumerate user accounts from the SAM hive and identify account metadata</li>
+                    <li>Extract UserAssist entries to determine program execution history</li>
+                    <li>Analyze RecentDocs for recently accessed files</li>
+                    <li>Parse Jump Lists to identify application-file associations</li>
+                    <li>Examine Recycle Bin artifacts for deleted file evidence</li>
+                    <li>Compile a preliminary user activity timeline from all extracted artifacts</li>
+                </ol>
+
+                <h4>Grading Breakdown</h4>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Criteria</th><th style="text-align:center">Points</th></tr></thead>
+                        <tbody>
+                            <tr><td>Correct extraction and identification of Registry hive files</td><td style="text-align:center">3</td></tr>
+                            <tr><td>Accurate system-level artifact analysis</td><td style="text-align:center">4</td></tr>
+                            <tr><td>Complete user account enumeration</td><td style="text-align:center">3</td></tr>
+                            <tr><td>Thorough user activity artifact extraction</td><td style="text-align:center">5</td></tr>
+                            <tr><td>Timeline compilation with proper timestamp normalization</td><td style="text-align:center">3</td></tr>
+                            <tr><td>Documentation quality and screenshot evidence</td><td style="text-align:center">2</td></tr>
+                        </tbody>
+                        <tfoot><tr style="background:#1a1a2e;color:#fff;font-weight:700"><td>Total</td><td style="text-align:center">20</td></tr></tfoot>
+                    </table>
+                </div>
+
+                <div class="info-box">
+                    <div class="box-title">💡 Recommendation</div>
+                    <p>Complete all four learning modules <strong>before</strong> starting the lab. The modules provide the specific Registry paths, tool commands, and analysis techniques you will need. The lab instructions reference concepts from every module.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SIDEBAR: TOOLS -->
+        <aside class="sidebar-card" aria-label="Tools for this week">
+            <h2>🔧 Tools This Week</h2>
+            <p>You will use the following forensic tools during the learning modules and lab:</p>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>Registry Explorer</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <p style="font-size:.88rem;color:#2a2a4a"><strong>Purpose:</strong> GUI tool for browsing offline Registry hive files. Displays key timestamps, decodes data types, supports transaction log replay and bookmarking.</p>
+                    <p style="font-size:.85rem;color:#6a6a8a">By Eric Zimmerman</p>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>RegRipper</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <p style="font-size:.88rem;color:#2a2a4a"><strong>Purpose:</strong> Plugin-based command-line tool for automated extraction of specific forensic artifacts from Registry hive files.</p>
+                    <p style="font-size:.85rem;color:#6a6a8a">By Harlan Carvey — Example: <code>rip.exe -r NTUSER.DAT -p userassist</code></p>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>JLECmd</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <p style="font-size:.88rem;color:#2a2a4a"><strong>Purpose:</strong> Parses Jump List files to extract application-file relationships with timestamps and volume information.</p>
+                    <p style="font-size:.85rem;color:#6a6a8a">By Eric Zimmerman</p>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>RBCmd</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <p style="font-size:.88rem;color:#2a2a4a"><strong>Purpose:</strong> Parses Recycle Bin $I metadata files to extract original file paths, sizes, and deletion timestamps.</p>
+                    <p style="font-size:.85rem;color:#6a6a8a">By Eric Zimmerman</p>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>Autopsy / FTK Imager</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <p style="font-size:.88rem;color:#2a2a4a"><strong>Purpose:</strong> Open forensic images, browse file systems, extract individual files. Autopsy includes built-in Registry and Recent Activity ingest modules.</p>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>AppCompatCacheParser</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <p style="font-size:.88rem;color:#2a2a4a"><strong>Purpose:</strong> Extracts ShimCache / AppCompatCache entries from the SYSTEM hive for program awareness evidence.</p>
+                    <p style="font-size:.85rem;color:#6a6a8a">By Eric Zimmerman</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- KEY TERMS -->
+        <section class="card full-width">
+            <h2>📖 Key Terms for This Week</h2>
+            <p>These terms are essential vocabulary for Week 7. You will encounter all of them in the learning modules and lab.</p>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>Registry Structure Terms (Module 7.1)</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <div class="terms-grid">
+                        <div class="term-chip"><div class="term-name">Registry Hive</div><div class="term-def">A logical group of keys, subkeys, and values backed by a single file on disk</div></div>
+                        <div class="term-chip"><div class="term-name">Registry Key</div><div class="term-def">A container object (like a folder) that holds subkeys and values</div></div>
+                        <div class="term-chip"><div class="term-name">Registry Value</div><div class="term-def">A named data entry within a key, consisting of name, type, and data</div></div>
+                        <div class="term-chip"><div class="term-name">Root Key</div><div class="term-def">One of five top-level keys: HKCR, HKCU, HKLM, HKU, HKCC</div></div>
+                        <div class="term-chip"><div class="term-name">Last-Write Timestamp</div><div class="term-def">A 64-bit FILETIME on each key recording when it was last modified (UTC)</div></div>
+                        <div class="term-chip"><div class="term-name">Hive File</div><div class="term-def">Physical file storing Registry data (e.g., SAM, SYSTEM, NTUSER.DAT)</div></div>
+                        <div class="term-chip"><div class="term-name">Transaction Log</div><div class="term-def">.LOG1/.LOG2 files recording pending changes before they are committed</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>System-Level Terms (Module 7.2)</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <div class="terms-grid">
+                        <div class="term-chip"><div class="term-name">ControlSet</div><div class="term-def">A complete set of system configuration data; Windows maintains multiple for recovery</div></div>
+                        <div class="term-chip"><div class="term-name">SAM</div><div class="term-def">Security Account Manager — stores local user accounts, password hashes, and metadata</div></div>
+                        <div class="term-chip"><div class="term-name">SID</div><div class="term-def">Security Identifier — unique ID for each user, used as subkey name under HKU</div></div>
+                        <div class="term-chip"><div class="term-name">RID</div><div class="term-def">Relative Identifier — numeric account ID (500=Admin, 501=Guest, 1001+=user)</div></div>
+                        <div class="term-chip"><div class="term-name">USBSTOR</div><div class="term-def">Registry key recording USB mass storage device connection history</div></div>
+                        <div class="term-chip"><div class="term-name">Bias / ActiveTimeBias</div><div class="term-def">Time zone offset values; difference indicates DST status</div></div>
+                        <div class="term-chip"><div class="term-name">ProfileList</div><div class="term-def">SOFTWARE hive key mapping SIDs to user profile directory paths</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>User-Level Terms (Module 7.3)</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <div class="terms-grid">
+                        <div class="term-chip"><div class="term-name">NTUSER.DAT</div><div class="term-def">Per-user Registry hive file; maps to HKCU when the user is logged in</div></div>
+                        <div class="term-chip"><div class="term-name">UserAssist</div><div class="term-def">Artifact recording GUI program execution — path, count, focus time, last run</div></div>
+                        <div class="term-chip"><div class="term-name">ROT13</div><div class="term-def">Simple letter substitution (rotate 13) used to obfuscate UserAssist paths</div></div>
+                        <div class="term-chip"><div class="term-name">RecentDocs</div><div class="term-def">Artifact recording recently opened files organized by extension</div></div>
+                        <div class="term-chip"><div class="term-name">MRU List</div><div class="term-def">Most Recently Used — ordered list with most recent item first</div></div>
+                        <div class="term-chip"><div class="term-name">WordWheelQuery</div><div class="term-def">Artifact recording search terms typed in Windows Explorer</div></div>
+                        <div class="term-chip"><div class="term-name">Persistence Mechanism</div><div class="term-def">Technique ensuring a program survives reboots (e.g., Run keys)</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <button class="collapsible-toggle" aria-expanded="false" onclick="toggleCollapsible(this)">
+                    <span>Advanced Terms (Module 7.4)</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="collapsible-content">
+                    <div class="terms-grid">
+                        <div class="term-chip"><div class="term-name">Jump List</div><div class="term-def">Artifact tracking files accessed by specific applications with timestamps</div></div>
+                        <div class="term-chip"><div class="term-name">AppID</div><div class="term-def">16-character hex identifier in Jump List filenames mapping to applications</div></div>
+                        <div class="term-chip"><div class="term-name">Recycle Bin ($I/$R)</div><div class="term-def">$I = metadata (path, time); $R = file content; organized by user SID</div></div>
+                        <div class="term-chip"><div class="term-name">Thumbcache</div><div class="term-def">Database storing thumbnail images that persist after file deletion</div></div>
+                        <div class="term-chip"><div class="term-name">Artifact Correlation</div><div class="term-def">Combining evidence from multiple sources to build a complete narrative</div></div>
+                        <div class="term-chip"><div class="term-name">Timeline Analysis</div><div class="term-def">Collecting, normalizing, and analyzing timestamped events chronologically</div></div>
+                        <div class="term-chip"><div class="term-name">Time Zone Normalization</div><div class="term-def">Converting all timestamps to a common reference for accurate ordering</div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- GETTING STARTED -->
+        <section class="card">
+            <h2>🚀 Getting Started</h2>
+            <p>Here is the recommended approach for this week:</p>
+
+            <h3>Step 1: Work Through the Learning Modules</h3>
+            <p>Complete Modules 7.1 → 7.2 → 7.3 → 7.4 in order. Each module builds on the previous one. The modules are comprehensive and serve as your primary learning resource — there is no required textbook for this course.</p>
+
+            <h3>Step 2: Complete Lab Activity 7</h3>
+            <p>After finishing the modules, begin the lab. The lab applies the specific Registry paths, tool commands, and analysis techniques from all four modules. Refer back to the modules as needed while working.</p>
+
+            <h3>Step 3: Review and Submit</h3>
+            <p>Use the lab's built-in submission checklist to verify your deliverable is complete before submitting.</p>
+
+            <div class="highlight-box">
+                <div class="box-title">💡 Study Tip</div>
+                <p>As you work through the modules, keep a personal <strong>artifact reference sheet</strong> — a quick-reference list of Registry paths, their forensic significance, and the tools used to extract them. This will be invaluable during the lab and for future weeks.</p>
+            </div>
+        </section>
+
+        <!-- SIDEBAR: HELP & LOOKING AHEAD -->
+        <aside class="sidebar-card" aria-label="Help and looking ahead">
+            <h2>❓ Getting Help</h2>
+            <h3>Office Hours</h3>
+            <p style="font-size:.9rem">Instructor office hours are available for questions. Virtual office hours available by appointment. Check Canvas for the current schedule.</p>
+
+            <h3>Lab Assistance</h3>
+            <p style="font-size:.9rem">Lab assistants are available during scheduled lab times. Technical questions can be submitted via email or Canvas messaging.</p>
+
+            <h3>Resources</h3>
+            <ul style="font-size:.88rem">
+                <li>Canvas discussion board for peer collaboration</li>
+                <li>Tool documentation and tutorials</li>
+                <li>DFIR community resources</li>
+            </ul>
+
+            <hr style="border:none;border-top:1px solid #e0e7ff;margin:20px 0">
+
+            <h2 style="border-bottom-color:#16a34a">👀 Looking Ahead</h2>
+            <h3>Week 8: Windows Forensics II</h3>
+            <p style="font-size:.9rem">Next week expands on your Week 7 foundation with:</p>
+            <ul style="font-size:.88rem">
+                <li>Prefetch files for program execution evidence</li>
+                <li>Windows Event Logs</li>
+                <li>Browser artifact analysis</li>
+                <li>Email forensics</li>
+                <li>Advanced timeline analysis with automated tools</li>
+            </ul>
+            <div class="info-box" style="margin-top:12px">
+                <div class="box-title">📌 Preparation</div>
+                <p>Ensure you are comfortable with Registry analysis and artifact correlation, as Week 8 assumes mastery of Week 7 skills.</p>
+            </div>
+        </aside>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="page-footer">
+        <p>CSC 156 — Digital Forensics Fundamentals | Spring 2026</p>
+        <p>Week 7: Windows Forensics I — Registry and User Artifacts</p>
+        <p>© 2026 CSC 156. For educational use only.</p>
+    </footer>
+
+    <!-- ===== JAVASCRIPT ===== -->
+    <script>
+        function toggleCollapsible(btn) {
+            var content = btn.nextElementSibling;
+            var isOpen = content.classList.contains('open');
+            content.classList.toggle('open');
+            btn.setAttribute('aria-expanded', !isOpen);
+        }
+    </script>
+</body>
+</html>
