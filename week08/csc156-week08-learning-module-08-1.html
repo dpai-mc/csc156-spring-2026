@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 8.1 – Windows Event Log Forensics</title>
+<style>
+:root{--nav-h:52px;--accent:#1a5276;--accent-light:#2980b9;--bg:#ffffff;--bg-alt:#f4f6f8;--bg-table-head:#1a5276;--text:#212529;--text-light:#555;--border:#d5d8dc;--success:#27ae60;--danger:#c0392b;--focus-ring:#2980b9;--radius:6px}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:var(--text);background:var(--bg);line-height:1.65;font-size:16px}
+/* NAV */
+nav.topnav{position:sticky;top:0;z-index:100;background:var(--accent);display:flex;flex-wrap:wrap;align-items:center;padding:0 16px;min-height:var(--nav-h)}
+nav.topnav a{color:#fff;text-decoration:none;padding:10px 12px;font-size:.85rem;border-radius:var(--radius);transition:background .2s}
+nav.topnav a:hover,nav.topnav a:focus-visible{background:rgba(255,255,255,.2);outline:2px solid #fff;outline-offset:2px}
+/* SECTIONS */
+main{max-width:960px;margin:0 auto;padding:24px 20px 60px}
+h1{font-size:1.65rem;color:var(--accent);margin-top:0;border-bottom:3px solid var(--accent);padding-bottom:8px}
+h2{font-size:1.35rem;color:var(--accent);scroll-margin-top:60px;margin-top:2rem}
+h3{font-size:1.1rem;color:var(--accent-light);margin-top:1.4rem}
+p,li{max-width:72ch}
+.meta{font-size:.88rem;color:var(--text-light);margin-bottom:1.2rem}
+.obj-list{background:var(--bg-alt);border-left:4px solid var(--accent);padding:14px 18px;border-radius:var(--radius);margin:12px 0}
+.obj-list li{margin-bottom:6px}
+/* TABLES */
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.92rem}
+th,td{text-align:left;padding:8px 10px;border:1px solid var(--border)}
+th{background:var(--bg-table-head);color:#fff;font-weight:600}
+tr:nth-child(even){background:var(--bg-alt)}
+/* DIAGRAM BOX */
+.diagram{background:var(--bg-alt);border:1px solid var(--border);border-radius:var(--radius);padding:18px;font-family:'Courier New',monospace;font-size:.88rem;line-height:1.7;overflow-x:auto;margin:14px 0}
+/* STEPS */
+.step{background:var(--bg-alt);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin:12px 0}
+.step-title{font-weight:700;color:var(--accent);margin-bottom:4px}
+code,kbd{background:#eaf0f6;padding:2px 5px;border-radius:3px;font-size:.9em}
+pre{background:#1e1e1e;color:#d4d4d4;padding:14px;border-radius:var(--radius);overflow-x:auto;font-size:.85rem;line-height:1.5}
+/* SCENARIO */
+.scenario{background:#fef9e7;border:1px solid #f9e79f;border-radius:var(--radius);padding:16px;margin:14px 0}
+.scenario-title{font-weight:700;color:#7d6608;margin-bottom:6px;font-size:1.05rem}
+/* KNOWLEDGE CHECK */
+.kc-item{background:var(--bg-alt);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin:12px 0}
+.kc-item p.q{font-weight:600;margin:0 0 8px}
+.kc-item button{cursor:pointer;border:1px solid var(--accent);background:var(--bg);color:var(--accent);padding:6px 14px;border-radius:var(--radius);margin:3px 4px 3px 0;font-size:.88rem;transition:background .2s,color .2s}
+.kc-item button:hover,.kc-item button:focus-visible{background:var(--accent);color:#fff;outline:2px solid var(--focus-ring);outline-offset:2px}
+.kc-item button:disabled{opacity:.65;cursor:default}
+.fb{margin-top:10px;padding:10px 12px;border-radius:var(--radius);font-size:.9rem;display:none}
+.fb.correct{display:block;background:#eafaf1;border:1px solid var(--success);color:#1a5e2a}
+.fb.incorrect{display:block;background:#fdedec;border:1px solid var(--danger);color:#78281f}
+/* KEY TERMS */
+dl.terms dt{font-weight:700;color:var(--accent);margin-top:10px}
+dl.terms dd{margin:2px 0 10px 18px}
+.next-box{background:var(--bg-alt);border-left:4px solid var(--accent-light);padding:12px 16px;border-radius:var(--radius);margin-top:14px}
+</style>
+</head>
+<body>
+
+<nav class="topnav" aria-label="Module sections">
+<a href="#intro">Introduction</a>
+<a href="#architecture">Architecture</a>
+<a href="#eventids">Key Event IDs</a>
+<a href="#tools">Tool Walk-Through</a>
+<a href="#scenario">Mini-Scenario</a>
+<a href="#check">Knowledge Check</a>
+<a href="#terms">Key Terms</a>
+</nav>
+
+<main>
+
+<h1>Module 8.1 &mdash; Windows Event Log Forensics</h1>
+<p class="meta">CSC 156 &bull; Week 8: Windows Forensics II &mdash; Event Logs &amp; System Artifacts &bull; Estimated Time: 60&ndash;75 minutes</p>
+<p class="meta"><strong>CSLO 2:</strong> Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data.</p>
+
+<!-- ===== 1. INTRODUCTION ===== -->
+<h2 id="intro">1. Introduction &amp; Objectives</h2>
+<p>In Week 7 you explored the Windows Registry&mdash;artifacts that record <em>configuration and user behavior</em>. This week shifts focus to <strong>system-generated artifacts</strong>: evidence the operating system creates automatically, often without user awareness. Windows Event Logs are the most important of these. Every logon, failed password attempt, privilege escalation, service start, and policy change is recorded here, making Event Logs a primary evidence source in nearly every Windows investigation.</p>
+<p>Within a forensic workflow, Event Log analysis typically occurs <em>after</em> imaging and hash verification (Week&nbsp;6) and <em>alongside</em> Registry analysis (Week&nbsp;7). Findings from logs are later correlated with execution artifacts, LNK files, and NTFS journals (Modules 8.2&ndash;8.5) to build a unified timeline.</p>
+<div class="obj-list" role="list" aria-label="Learning objectives">
+<strong>After completing this module you will be able to:</strong>
+<ul>
+<li>Describe the <code>.evtx</code> file format, its XML-based structure, and the three main log channels.</li>
+<li>Locate Event Log files on a Windows system and explain their forensic significance.</li>
+<li>Identify critical Security Event IDs related to logon, account management, privilege use, and service activity.</li>
+<li>Filter and create custom views in Windows Event Viewer.</li>
+<li>Parse <code>.evtx</code> files with EvtxECmd, export to CSV, and analyze results in Timeline Explorer.</li>
+<li>Interpret Event Log entries to answer investigative questions about user activity.</li>
+</ul>
+</div>
+
+<!-- ===== 2. ARCHITECTURE ===== -->
+<h2 id="architecture">2. Event Log Architecture</h2>
+<h3>2.1 The .evtx Format</h3>
+<p>Since Windows Vista / Server 2008, Event Logs are stored in the <strong>EVTX</strong> (Event Log XML) binary format. Each <code>.evtx</code> file is a binary container whose individual event records are serialized as <strong>Binary XML (BinXML)</strong>. When rendered by a tool, each record produces a structured XML document containing fields such as <code>EventID</code>, <code>TimeCreated</code>, <code>Computer</code>, <code>Channel</code>, and <code>EventData</code> key-value pairs.</p>
+
+<h3>2.2 Storage Location</h3>
+<p>All default log files reside in:</p>
+<pre>C:\Windows\System32\winevt\Logs\</pre>
+<p>Filenames follow the pattern <code>ChannelName%4SubChannel.evtx</code>. The three primary files are <code>System.evtx</code>, <code>Security.evtx</code>, and <code>Application.evtx</code>.</p>
+
+<h3>2.3 Channels &amp; Their Purposes</h3>
+<div class="diagram" role="img" aria-label="Diagram showing the three main Event Log channels and their purposes">
+┌──────────────────────────────────────────────────────────┐
+│              Windows Event Log Service                   │
+│                  (wevtsvc.dll)                            │
+└────────┬──────────────┬──────────────┬───────────────────┘
+         │              │              │
+    ┌────▼────┐   ┌─────▼─────┐  ┌────▼────────┐
+    │ System  │   │ Security  │  │ Application │
+    │ .evtx   │   │ .evtx     │  │ .evtx       │
+    └─────────┘   └───────────┘  └─────────────┘
+    Driver loads    Logon/Logoff   App crashes
+    Service start   Account mgmt   Installer events
+    Hardware errors Privilege use   Runtime errors
+    Shutdown/Boot   Policy changes  Custom app logs
+</div>
+<table>
+<caption>Primary Event Log Channels</caption>
+<thead><tr><th>Channel</th><th>Provider Example</th><th>Forensic Focus</th></tr></thead>
+<tbody>
+<tr><td><strong>System</strong></td><td>Service Control Manager, Kernel-Power</td><td>Service installs/starts, driver loads, shutdown/boot times, hardware errors</td></tr>
+<tr><td><strong>Security</strong></td><td>Microsoft-Windows-Security-Auditing</td><td>Authentication, account changes, privilege use, audit policy changes</td></tr>
+<tr><td><strong>Application</strong></td><td>Application Error, MsiInstaller</td><td>Application crashes, software installation, runtime errors</td></tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> Windows also writes to many specialized channels (e.g., <em>Microsoft-Windows-TaskScheduler/Operational</em>, <em>Microsoft-Windows-PowerShell/Operational</em>). These are valuable in advanced investigations but beyond this module&rsquo;s scope.</p>
+
+<!-- ===== 3. KEY EVENT IDS ===== -->
+<h2 id="eventids">3. Key Security Event IDs</h2>
+<p>The table below lists Event IDs you will encounter most frequently in forensic casework. They are grouped by investigative category.</p>
+<table>
+<caption>Critical Windows Event IDs for Forensic Investigations</caption>
+<thead><tr><th>Category</th><th>Event ID</th><th>Log</th><th>Description</th><th>Forensic Significance</th></tr></thead>
+<tbody>
+<tr><td rowspan="2"><strong>Logon Activity</strong></td><td>4624</td><td>Security</td><td>Successful logon</td><td>Identifies <em>who</em> logged on, <em>when</em>, logon type (interactive, network, RDP), and source IP/workstation.</td></tr>
+<tr><td>4625</td><td>Security</td><td>Failed logon attempt</td><td>Reveals brute-force attempts; records target account, failure reason, and source address.</td></tr>
+<tr><td><strong>Privilege Use</strong></td><td>4672</td><td>Security</td><td>Special privileges assigned to new logon</td><td>Indicates an account received admin-equivalent privileges (e.g., SeDebugPrivilege).</td></tr>
+<tr><td rowspan="2"><strong>Account Mgmt</strong></td><td>4720</td><td>Security</td><td>User account created</td><td>Detects unauthorized account creation; records who created the account.</td></tr>
+<tr><td>4726</td><td>Security</td><td>User account deleted</td><td>May indicate cover-up activity if an attacker deletes a backdoor account.</td></tr>
+<tr><td><strong>Policy Change</strong></td><td>4719</td><td>Security</td><td>System audit policy changed</td><td>Attackers may disable auditing to hide subsequent actions.</td></tr>
+<tr><td rowspan="2"><strong>Service Events</strong></td><td>7035</td><td>System</td><td>Service sent a start/stop control</td><td>Tracks when services were requested to start or stop; useful for detecting malicious service installs.</td></tr>
+<tr><td>7036</td><td>System</td><td>Service entered running/stopped state</td><td>Confirms actual service state change; pair with 7035 to see request vs. result.</td></tr>
+</tbody>
+</table>
+<h3>Logon Type Reference (Event ID 4624 / 4625)</h3>
+<table>
+<thead><tr><th>Logon Type</th><th>Name</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td>2</td><td>Interactive</td><td>Console logon (keyboard at the machine)</td></tr>
+<tr><td>3</td><td>Network</td><td>Access to a shared folder or resource</td></tr>
+<tr><td>7</td><td>Unlock</td><td>Workstation unlocked</td></tr>
+<tr><td>10</td><td>RemoteInteractive</td><td>RDP / Remote Desktop logon</td></tr>
+</tbody>
+</table>
+
+<!-- ===== 4. TOOL WALK-THROUGH ===== -->
+<h2 id="tools">4. Tool Walk-Through</h2>
+
+<h3>4a. Windows Event Viewer &mdash; Filtering &amp; Custom Views</h3>
+<div class="step"><p class="step-title">Step 1 &mdash; Open Event Viewer</p>Press <kbd>Win + R</kbd>, type <code>eventvwr.msc</code>, and press Enter. Expand <strong>Windows Logs</strong> in the left pane to see System, Security, and Application.</div>
+<div class="step"><p class="step-title">Step 2 &mdash; Filter the Current Log</p>Right-click <strong>Security</strong> &rarr; <strong>Filter Current Log</strong>. In the dialog, enter <code>4624</code> in the <em>Event IDs</em> field. Optionally set a date/time range. Click <strong>OK</strong>. Only successful logon events are now displayed.</div>
+<div class="step"><p class="step-title">Step 3 &mdash; Create a Custom View</p>From the <strong>Action</strong> menu choose <strong>Create Custom View</strong>. Select <em>By log</em> &rarr; <strong>Security</strong>. In the Event IDs field, enter <code>4624,4625,4672</code> (comma-separated). Name the view <em>Logon Investigation</em> and click <strong>OK</strong>. The custom view now appears under <strong>Custom Views</strong> and persists across sessions.</div>
+<div class="step"><p class="step-title">Step 4 &mdash; Export for External Analysis</p>Right-click the filtered view &rarr; <strong>Save All Events As&hellip;</strong> &rarr; choose <code>.evtx</code> format. This exported file can be parsed with EvtxECmd on your forensic workstation.</div>
+
+<h3>4b. EvtxECmd &amp; Timeline Explorer</h3>
+<p>EvtxECmd (by Eric Zimmerman) parses <code>.evtx</code> files from the command line and outputs structured CSV ideal for sorting, filtering, and timeline analysis.</p>
+<div class="step"><p class="step-title">Step 1 &mdash; Parse a Single Log File</p>
+<pre>EvtxECmd.exe -f "C:\Cases\Evidence01\Security.evtx" --csv "C:\Cases\Output" --csvf Security_parsed.csv</pre>
+<p><code>-f</code> specifies the input file. <code>--csv</code> sets the output directory. <code>--csvf</code> names the output file.</p></div>
+<div class="step"><p class="step-title">Step 2 &mdash; Parse an Entire Logs Directory</p>
+<pre>EvtxECmd.exe -d "C:\Cases\Evidence01\winevt\Logs" --csv "C:\Cases\Output" --csvf AllLogs_parsed.csv</pre>
+<p><code>-d</code> processes every <code>.evtx</code> file in the directory into a single CSV.</p></div>
+<div class="step"><p class="step-title">Step 3 &mdash; Open in Timeline Explorer</p>Launch <strong>Timeline Explorer</strong> (EZTools). Open the CSV produced in Step 1 or 2. Use the column filters to narrow results&mdash;for example, filter the <em>EventId</em> column to <code>4624</code> and the <em>PayloadData1</em> column (which contains the target username) to a suspect account name.</div>
+<div class="step"><p class="step-title">Step 4 &mdash; Sort and Search</p>Click the <em>TimeCreated</em> column header to sort chronologically. Use <kbd>Ctrl + F</kbd> to search for specific values such as a workstation name or IP address across all payload fields.</div>
+
+<!-- ===== 5. MINI-SCENARIO ===== -->
+<h2 id="scenario">5. Mini-Scenario: Unauthorized Logon Investigation</h2>
+<div class="scenario">
+<p class="scenario-title">Scenario Background</p>
+<p>On <strong>2026-02-18</strong>, the IT Security team at Cascade Financial Group received an alert that a dormant service account, <code>svc_backup</code>, authenticated to the domain controller <code>CFG-DC01</code> outside of its approved maintenance window (Saturday 02:00&ndash;04:00 UTC). Your task: examine the Security Event Log excerpts below and answer the guided questions.</p>
+</div>
+
+<table>
+<caption>Extracted Security Event Log Entries (CFG-DC01)</caption>
+<thead><tr><th>#</th><th>TimeCreated (UTC)</th><th>Event ID</th><th>Account</th><th>Logon Type</th><th>Source IP</th><th>Source Workstation</th><th>Status / Details</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>2026-02-18T14:32:07Z</td><td>4625</td><td>svc_backup</td><td>10</td><td>10.20.5.118</td><td>WKS-MKT04</td><td>Failure &mdash; 0xC000006A (bad password)</td></tr>
+<tr><td>2</td><td>2026-02-18T14:32:29Z</td><td>4625</td><td>svc_backup</td><td>10</td><td>10.20.5.118</td><td>WKS-MKT04</td><td>Failure &mdash; 0xC000006A (bad password)</td></tr>
+<tr><td>3</td><td>2026-02-18T14:33:14Z</td><td>4624</td><td>svc_backup</td><td>10</td><td>10.20.5.118</td><td>WKS-MKT04</td><td>Success</td></tr>
+<tr><td>4</td><td>2026-02-18T14:33:14Z</td><td>4672</td><td>svc_backup</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>SeBackupPrivilege, SeRestorePrivilege</td></tr>
+<tr><td>5</td><td>2026-02-18T14:35:42Z</td><td>4720</td><td>svc_backup</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>New account created: <code>helpdesk$</code></td></tr>
+<tr><td>6</td><td>2026-02-18T14:41:03Z</td><td>4726</td><td>svc_backup</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>Account deleted: <code>helpdesk$</code></td></tr>
+<tr><td>7</td><td>2026-02-18T14:41:58Z</td><td>4719</td><td>svc_backup</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>Audit policy changed &mdash; Logon/Logoff auditing disabled</td></tr>
+</tbody>
+</table>
+
+<h3>Guided Questions</h3>
+<ol>
+<li><strong>Which account was targeted, and was the logon ultimately successful?</strong><br>The account <code>svc_backup</code> was targeted. After two failed attempts (entries 1 &amp; 2, Event ID 4625), a successful logon occurred at 14:33:14 UTC (entry 3, Event ID 4624).</li>
+<li><strong>What logon type was used, and what does it indicate?</strong><br>Logon Type <strong>10</strong> (RemoteInteractive) indicates a Remote Desktop (RDP) session was used.</li>
+<li><strong>From which workstation and IP address did the logon originate?</strong><br>Source workstation: <code>WKS-MKT04</code>; Source IP: <code>10.20.5.118</code>. This workstation should be investigated next.</li>
+<li><strong>What elevated privileges were obtained?</strong><br>Event ID 4672 (entry 4) shows <code>SeBackupPrivilege</code> and <code>SeRestorePrivilege</code> were assigned&mdash;these allow reading/writing any file regardless of ACLs.</li>
+<li><strong>What suspicious post-logon activity occurred?</strong><br>A new account <code>helpdesk$</code> was created (4720) and deleted roughly five minutes later (4726)&mdash;consistent with a backdoor account used temporarily. The attacker then disabled Logon/Logoff auditing (4719) to cover tracks.</li>
+<li><strong>What investigative steps would you recommend next?</strong><br>Examine <code>WKS-MKT04</code> for compromise; check Prefetch/AmCache on CFG-DC01 for tools executed during the session; review $UsnJrnl for file-system changes between 14:33 and 14:42 UTC; preserve all evidence before audit logging is re-enabled.</li>
+</ol>
+
+<!-- ===== 6. KNOWLEDGE CHECK ===== -->
+<h2 id="check">6. Knowledge Check</h2>
+<p>Answer each question, then click your choice to see immediate feedback. These are <strong>ungraded</strong> self-assessment items.</p>
+
+<div class="kc-item" id="kc1">
+<p class="q">1. A forensic examiner finds multiple Event ID 4625 entries followed by a single Event ID 4624 for the same account within two minutes. What does this pattern most likely indicate?</p>
+<button onclick="kcReveal('kc1','a')">A) Scheduled service restart</button>
+<button onclick="kcReveal('kc1','b')">B) Successful brute-force or password-guessing attack</button>
+<button onclick="kcReveal('kc1','c')">C) User changed their own password</button>
+<button onclick="kcReveal('kc1','d')">D) Audit policy was modified</button>
+<div class="fb" id="kc1-correct" role="alert">&#10003; Correct. Multiple failed logons (4625) immediately followed by a success (4624) is a classic indicator of password guessing or brute-force activity.</div>
+<div class="fb" id="kc1-incorrect" role="alert">&#10007; Incorrect. The pattern of repeated 4625 (failed logon) entries followed by a 4624 (successful logon) for the same account strongly suggests a brute-force or password-guessing attack. The correct answer is B.</div>
+</div>
+
+<div class="kc-item" id="kc2">
+<p class="q">2. Which Event ID indicates that an account received elevated (administrator-equivalent) privileges upon logon?</p>
+<button onclick="kcReveal('kc2','a')">A) 4624</button>
+<button onclick="kcReveal('kc2','b')">B) 4672</button>
+<button onclick="kcReveal('kc2','c')">C) 4720</button>
+<button onclick="kcReveal('kc2','d')">D) 7036</button>
+<div class="fb" id="kc2-correct" role="alert">&#10003; Correct. Event ID 4672 is logged when special privileges (such as SeDebugPrivilege or SeBackupPrivilege) are assigned to a new logon session.</div>
+<div class="fb" id="kc2-incorrect" role="alert">&#10007; Incorrect. Event ID 4672 records special privilege assignment at logon. 4624 is a successful logon (without privilege detail), 4720 is account creation, and 7036 is a service state change. The correct answer is B.</div>
+</div>
+
+<div class="kc-item" id="kc3">
+<p class="q">3. Where are default Windows Event Log files stored on disk?</p>
+<button onclick="kcReveal('kc3','a')">A) C:\Windows\Logs\Events\</button>
+<button onclick="kcReveal('kc3','b')">B) C:\Windows\System32\winevt\Logs\</button>
+<button onclick="kcReveal('kc3','c')">C) C:\Users\Public\EventLogs\</button>
+<button onclick="kcReveal('kc3','d')">D) C:\ProgramData\Microsoft\EventLog\</button>
+<div class="fb" id="kc3-correct" role="alert">&#10003; Correct. The default storage path for all .evtx files is C:\Windows\System32\winevt\Logs\.</div>
+<div class="fb" id="kc3-incorrect" role="alert">&#10007; Incorrect. Windows stores Event Log .evtx files in C:\Windows\System32\winevt\Logs\. The correct answer is B.</div>
+</div>
+
+<div class="kc-item" id="kc4">
+<p class="q">4. An investigator discovers Event ID 4719 in the Security log. Why is this finding significant?</p>
+<button onclick="kcReveal('kc4','a')">A) It means a new user account was created</button>
+<button onclick="kcReveal('kc4','b')">B) It records a service entering the running state</button>
+<button onclick="kcReveal('kc4','c')">C) It indicates the system audit policy was changed, possibly to disable logging</button>
+<button onclick="kcReveal('kc4','d')">D) It logs a successful interactive logon</button>
+<div class="fb" id="kc4-correct" role="alert">&#10003; Correct. Event ID 4719 records a change to the system audit policy. Attackers may disable auditing to prevent subsequent activity from being logged&mdash;a critical anti-forensic indicator.</div>
+<div class="fb" id="kc4-incorrect" role="alert">&#10007; Incorrect. Event ID 4719 means the audit policy was changed. This is significant because an attacker may disable auditing to hide their tracks. The correct answer is C.</div>
+</div>
+
+<div class="kc-item" id="kc5">
+<p class="q">5. Which EvtxECmd flag would you use to parse every .evtx file in a directory at once?</p>
+<button onclick="kcReveal('kc5','a')">A) -f</button>
+<button onclick="kcReveal('kc5','b')">B) -d</button>
+<button onclick="kcReveal('kc5','c')">C) --all</button>
+<button onclick="kcReveal('kc5','d')">D) --batch</button>
+<div class="fb" id="kc5-correct" role="alert">&#10003; Correct. The <code>-d</code> flag tells EvtxECmd to process an entire directory of .evtx files, combining results into a single output.</div>
+<div class="fb" id="kc5-incorrect" role="alert">&#10007; Incorrect. Use <code>-d</code> to specify a directory for batch processing. The <code>-f</code> flag is for a single file. The correct answer is B.</div>
+</div>
+
+<!-- ===== 7. KEY TERMS ===== -->
+<h2 id="terms">7. Key Terms &amp; Next Steps</h2>
+<dl class="terms">
+<dt>EVTX</dt>
+<dd>The modern Windows Event Log file format (introduced in Vista/Server 2008). Uses a binary container with XML-structured event records; file extension <code>.evtx</code>.</dd>
+<dt>Event ID</dt>
+<dd>A numeric identifier assigned to each type of event within a Windows Event Log channel (e.g., 4624 = successful logon).</dd>
+<dt>Channel</dt>
+<dd>A named category that groups related events. The three primary channels are System, Security, and Application.</dd>
+<dt>Logon Type</dt>
+<dd>A numeric code within Event IDs 4624/4625 that indicates <em>how</em> a user authenticated (e.g., Type 2 = Interactive, Type 10 = RDP).</dd>
+<dt>XPath Query</dt>
+<dd>An XML query language used within Event Viewer (and <code>wevtutil</code>) to filter events by field values such as Event ID, time range, or account name.</dd>
+<dt>EvtxECmd</dt>
+<dd>An open-source command-line tool (Eric Zimmerman suite) for parsing <code>.evtx</code> files and exporting structured CSV output for analysis in Timeline Explorer.</dd>
+</dl>
+
+<div class="next-box">
+<strong>Next Up &mdash; Module 8.2: Program Execution Artifacts</strong><br>
+Module 8.2 examines how Windows records evidence that a program was executed, through Prefetch files, the AmCache registry hive, and ShimCache (AppCompatCache). You will learn to correlate execution timestamps with the Event Log data explored in this module to answer questions like: <em>&ldquo;Was a specific tool run during the suspicious logon session?&rdquo;</em>
+</div>
+
+</main>
+
+<script>
+function kcReveal(qId,choice){
+  var item=document.getElementById(qId);
+  var btns=item.querySelectorAll('button');
+  var answers={kc1:'b',kc2:'b',kc3:'b',kc4:'c',kc5:'b'};
+  var isCorrect=choice===answers[qId];
+  item.querySelector('#'+qId+'-correct').style.display=isCorrect?'block':'none';
+  item.querySelector('#'+qId+'-incorrect').style.display=isCorrect?'none':'block';
+  item.querySelector('#'+qId+'-correct').className='fb '+(isCorrect?'correct':'');
+  item.querySelector('#'+qId+'-incorrect').className='fb '+(isCorrect?'':'incorrect');
+  for(var i=0;i<btns.length;i++){btns[i].disabled=true;}
+}
+</script>
+</body>
+</html>
