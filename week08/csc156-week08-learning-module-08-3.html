@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 8.3: LNK Files, Shellbags, and Volume Shadow Copies | CSC 156</title>
+<style>
+:root {
+  --nav-height: 56px;
+  --color-bg: #ffffff;
+  --color-text: #1a1a1a;
+  --color-heading: #1a2238;
+  --color-primary: #2563eb;
+  --color-primary-dark: #1d4ed8;
+  --color-primary-light: #dbeafe;
+  --color-secondary: #0f766e;
+  --color-secondary-light: #ccfbf1;
+  --color-accent: #7c3aed;
+  --color-accent-light: #ede9fe;
+  --color-border: #d1d5db;
+  --color-border-light: #e5e7eb;
+  --color-surface: #f9fafb;
+  --color-surface-alt: #f3f4f6;
+  --color-success: #16a34a;
+  --color-success-bg: #dcfce7;
+  --color-error: #dc2626;
+  --color-error-bg: #fee2e2;
+  --color-warning: #d97706;
+  --color-warning-bg: #fef3c7;
+  --color-info: #2563eb;
+  --color-info-bg: #dbeafe;
+  --font-body: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  --radius: 8px;
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --max-width: 960px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--nav-height) + 16px);}
+body{font-family:var(--font-body);font-size:1rem;line-height:1.65;color:var(--color-text);background:var(--color-bg);}
+.sticky-nav{position:sticky;top:0;z-index:1000;background:var(--color-heading);box-shadow:var(--shadow-md);}
+.sticky-nav__inner{max-width:var(--max-width);margin:0 auto;display:flex;align-items:center;flex-wrap:nowrap;padding:0 1rem;min-height:var(--nav-height);gap:0.25rem;}
+.sticky-nav__title{color:#fff;font-weight:700;font-size:0.95rem;margin-right:auto;white-space:nowrap;flex-shrink:0;padding:0.5rem 0.75rem 0.5rem 0;}
+.sticky-nav a{color:#cbd5e1;text-decoration:none;font-size:0.9rem;padding:0.4rem 0.6rem;border-radius:4px;transition:background .15s,color .15s;white-space:nowrap;position:relative;min-width:1.9rem;text-align:center;font-weight:600;}
+.sticky-nav a:hover,.sticky-nav a:focus-visible{background:rgba(255,255,255,0.12);color:#fff;}
+.sticky-nav a:focus-visible{outline:2px solid #93c5fd;outline-offset:2px;}
+.sticky-nav a::after{content:attr(data-label);position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1a2238;color:#fff;font-size:0.75rem;font-weight:400;padding:0.3rem 0.65rem;border-radius:4px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:1100;box-shadow:0 2px 6px rgba(0,0,0,0.35);}
+.sticky-nav a:hover::after,.sticky-nav a:focus-visible::after{opacity:1;}
+.module-hero{background:linear-gradient(135deg,var(--color-heading) 0%,#243358 100%);padding:1.75rem 1rem 1.5rem;box-shadow:0 2px 8px rgba(0,0,0,0.15);}
+.module-hero__inner{max-width:var(--max-width);margin:0 auto;}
+.module-hero__meta{font-size:0.82rem;color:#93c5fd;margin-bottom:0.35rem;letter-spacing:0.01em;}
+.module-hero h1{color:#fff;font-size:1.85rem;line-height:1.2;margin:0.2rem 0 0.75rem;}
+.page{max-width:var(--max-width);margin:0 auto;padding:1.5rem 1rem 4rem;}
+h2{font-size:1.4rem;color:var(--color-heading);margin:2.25rem 0 0.75rem;padding-bottom:0.35rem;border-bottom:3px solid var(--color-primary);scroll-margin-top:calc(var(--nav-height) + 16px);}
+h3{font-size:1.15rem;color:var(--color-heading);margin:1.5rem 0 0.5rem;}
+h4{font-size:1rem;color:var(--color-secondary);margin:1.25rem 0 0.4rem;}
+p{margin:0.6rem 0;}
+a{color:var(--color-primary);}
+a:focus-visible{outline:2px solid var(--color-primary);outline-offset:2px;border-radius:2px;}
+.callout{border-left:4px solid;border-radius:var(--radius);padding:1rem 1.15rem;margin:1.25rem 0;}
+.callout--info{border-color:var(--color-info);background:var(--color-info-bg);}
+.callout--success{border-color:var(--color-success);background:var(--color-success-bg);}
+.callout--warning{border-color:var(--color-warning);background:var(--color-warning-bg);}
+.callout--error{border-color:var(--color-error);background:var(--color-error-bg);}
+.callout--accent{border-color:var(--color-accent);background:var(--color-accent-light);}
+.callout__title{font-weight:700;margin-bottom:0.3rem;display:flex;align-items:center;gap:0.4rem;}
+.table-wrap{overflow-x:auto;margin:1rem 0;}
+table{width:100%;border-collapse:collapse;font-size:0.92rem;}
+th,td{text-align:left;padding:0.6rem 0.75rem;border:1px solid var(--color-border);}
+th{background:var(--color-heading);color:#fff;font-weight:600;}
+tr:nth-child(even){background:var(--color-surface);}
+caption{font-weight:700;margin-bottom:0.4rem;text-align:left;font-size:1rem;color:var(--color-heading);}
+code{font-family:var(--font-mono);font-size:0.88em;background:var(--color-surface-alt);padding:0.15em 0.4em;border-radius:4px;}
+pre{background:#1e293b;color:#e2e8f0;padding:1rem 1.15rem;border-radius:var(--radius);overflow-x:auto;font-size:0.88rem;line-height:1.55;margin:1rem 0;}
+pre code{background:transparent;padding:0;color:inherit;}
+kbd{font-family:var(--font-mono);font-size:0.85em;background:var(--color-surface-alt);border:1px solid var(--color-border);border-radius:3px;padding:0.1em 0.4em;box-shadow:0 1px 1px rgba(0,0,0,0.08);}
+details{border:1px solid var(--color-border-light);border-radius:var(--radius);margin:0.75rem 0;background:var(--color-surface);}
+details[open]{background:var(--color-bg);}
+summary{cursor:pointer;font-weight:600;padding:0.75rem 1rem;list-style:none;display:flex;align-items:center;gap:0.5rem;user-select:none;}
+summary::-webkit-details-marker{display:none;}
+summary::before{content:'▶';font-size:0.7rem;transition:transform .2s;display:inline-block;}
+details[open]>summary::before{transform:rotate(90deg);}
+summary:focus-visible{outline:2px solid var(--color-primary);outline-offset:-2px;border-radius:var(--radius);}
+.details-body{padding:0.25rem 1rem 1rem;}
+.tabs{margin:1.25rem 0;}
+.tab-list{display:flex;flex-wrap:wrap;border-bottom:2px solid var(--color-border);list-style:none;}
+.tab-btn{background:none;border:none;font:inherit;padding:0.6rem 1.1rem;cursor:pointer;color:#4b5563;font-weight:600;font-size:0.92rem;border-bottom:3px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;}
+.tab-btn:hover{color:var(--color-primary);}
+.tab-btn[aria-selected="true"]{color:var(--color-primary);border-bottom-color:var(--color-primary);}
+.tab-btn:focus-visible{outline:2px solid var(--color-primary);outline-offset:-2px;border-radius:4px 4px 0 0;}
+.tab-panel{padding:1rem 0.25rem;display:none;}
+.tab-panel.active{display:block;}
+.kc-question{border:1px solid var(--color-border-light);border-radius:var(--radius);padding:1rem 1.15rem;margin:1rem 0;background:var(--color-surface);}
+.kc-question__stem{font-weight:600;margin-bottom:0.6rem;}
+.kc-options{list-style:none;display:flex;flex-direction:column;gap:0.35rem;}
+.kc-option{display:flex;align-items:baseline;gap:0.5rem;}
+.kc-option label{cursor:pointer;}
+.kc-feedback{margin-top:0.75rem;padding:0.7rem 0.9rem;border-radius:var(--radius);font-size:0.92rem;display:none;}
+.kc-feedback--correct{background:var(--color-success-bg);border-left:4px solid var(--color-success);}
+.kc-feedback--incorrect{background:var(--color-error-bg);border-left:4px solid var(--color-error);}
+.kc-btn{margin-top:0.6rem;padding:0.5rem 1.25rem;background:var(--color-primary);color:#fff;border:none;border-radius:var(--radius);font:inherit;font-size:0.9rem;cursor:pointer;font-weight:600;transition:background .15s;}
+.kc-btn:hover{background:var(--color-primary-dark);}
+.kc-btn:focus-visible{outline:2px solid var(--color-primary-dark);outline-offset:2px;}
+.scenario{border:2px solid var(--color-accent);border-radius:var(--radius);padding:1.25rem;margin:1.25rem 0;background:var(--color-accent-light);}
+.scenario__title{font-weight:700;font-size:1.05rem;color:var(--color-accent);margin-bottom:0.5rem;display:flex;align-items:center;gap:0.4rem;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;}
+.badge{display:inline-block;font-size:0.78rem;font-weight:700;padding:0.15em 0.55em;border-radius:12px;vertical-align:middle;}
+.badge--time{background:var(--color-primary-light);color:var(--color-primary-dark);}
+.badge--cslo{background:var(--color-secondary-light);color:var(--color-secondary);}
+.flex-row{display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;}
+@media print{.sticky-nav{position:relative;}details>.details-body{display:block!important;}.tab-panel{display:block!important;}}
+@media(max-width:640px){h2{font-size:1.2rem;}.module-hero h1{font-size:1.45rem;}.sticky-nav__inner{padding:0 0.5rem;}.sticky-nav__title{font-size:0.8rem;max-width:9rem;overflow:hidden;text-overflow:ellipsis;}.sticky-nav a{font-size:0.82rem;padding:0.4rem 0.5rem;min-width:1.65rem;}pre{font-size:0.82rem;padding:0.75rem;}}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════ NAVIGATION ══════════════════════════════════════════════ -->
+<nav class="sticky-nav" aria-label="Module sections">
+  <div class="sticky-nav__inner">
+    <span class="sticky-nav__title">8.3 &mdash; LNK, Shellbags &amp; VSS</span>
+    <a href="#intro"           data-label="1. Introduction"       aria-label="Section 1: Introduction">1</a>
+    <a href="#lnk"             data-label="2. LNK Files"          aria-label="Section 2: LNK File Forensics">2</a>
+    <a href="#lecmd"           data-label="3. LECmd"              aria-label="Section 3: Tool Walk-Through LECmd">3</a>
+    <a href="#shellbags"       data-label="4. Shellbags"          aria-label="Section 4: Shellbag Analysis">4</a>
+    <a href="#sbexplorer"      data-label="5. ShellBags Explorer" aria-label="Section 5: Tool Walk-Through ShellBags Explorer">5</a>
+    <a href="#vss"             data-label="6. Volume Shadow Copies" aria-label="Section 6: Volume Shadow Copy Forensics">6</a>
+    <a href="#vss-tool"        data-label="7. VSS Tool"           aria-label="Section 7: Accessing VSS">7</a>
+    <a href="#anti-forensics"  data-label="8. Anti-Forensics"     aria-label="Section 8: Anti-Forensic Awareness">8</a>
+    <a href="#knowledge-check" data-label="9. Knowledge Check"    aria-label="Section 9: Knowledge Check">9</a>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════════════ HERO ══════════════════════════════════════════════════ -->
+<header class="module-hero">
+  <div class="module-hero__inner">
+    <p class="module-hero__meta">CSC 156 &mdash; Digital Forensics Fundamentals &nbsp;|&nbsp; Week 8 &nbsp;|&nbsp; Module 8.3 of 8.5</p>
+    <h1>LNK Files, Shellbags, and Volume Shadow Copies</h1>
+    <div class="flex-row">
+      <span class="badge badge--time" aria-label="Estimated time: 60 to 75 minutes">⏱ 60–75 min</span>
+      <span class="badge badge--cslo" aria-label="Primary CSLO alignment">CSLO 2</span>
+      <span class="badge badge--cslo" aria-label="Supporting CSLO alignment">CSLO 1</span>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+
+<!-- ══════════════════════════════════════ §1 INTRODUCTION ════════════════════════════════════════════════ -->
+<h2 id="intro">1. Introduction &amp; Objectives</h2>
+
+<p>Welcome to the third module of <strong>Week 8: Windows Forensics II</strong>. In Module 8.1 you learned how Windows Event Logs record system-wide security events. In Module 8.2 you explored Prefetch, AmCache, and ShimCache&mdash;artifacts that prove <em>what programs ran</em>. This module shifts focus to artifacts that answer a different set of questions: <em>Where did the user navigate?</em> <em>What files did they access?</em> and <em>Can we recover files that have been deleted or modified?</em></p>
+
+<p>You will study three artifact families:</p>
+<ol>
+  <li><strong>LNK (shortcut) files</strong> &mdash; preserve metadata about files a user opened, including files that have since been deleted.</li>
+  <li><strong>Shellbags</strong> &mdash; Registry entries that record every folder a user browsed, even folders on removable or network drives.</li>
+  <li><strong>Volume Shadow Copies (VSS)</strong> &mdash; point-in-time snapshots of an entire volume, enabling recovery of prior file versions and historical Registry hives.</li>
+</ol>
+
+<div class="callout callout--info">
+  <div class="callout__title">🎯 Why This Matters</div>
+  <p>Suspects often delete incriminating files and assume the evidence is gone. LNK files and Shellbags <em>persist independently</em> of the original files, proving that deleted content once existed and was accessed. Volume Shadow Copies go even further&mdash;they can contain the actual deleted or modified files in their original state. Together, these three artifact families are among the most powerful tools for defeating evidence destruction.</p>
+</div>
+
+<h3>Module Objectives</h3>
+<p>By the end of this module you will be able to:</p>
+<ol>
+  <li>Describe the internal structure of a Windows LNK file and identify forensically significant metadata fields (target path, MAC timestamps, volume serial number, drive type, NetBIOS name).</li>
+  <li>Explain how LNK files prove that a deleted file once existed and how they connect to the Jump Lists studied in Week 7.</li>
+  <li>Parse LNK files using <strong>LECmd</strong> and interpret the output.</li>
+  <li>Locate Shellbag entries in the Windows Registry (<code>NTUSER.DAT</code> and <code>UsrClass.dat</code>) and explain what they record.</li>
+  <li>Navigate and interpret Shellbag data using <strong>ShellBags Explorer</strong>.</li>
+  <li>Explain the architecture and forensic value of <strong>Volume Shadow Copies</strong>, including snapshot triggers and recovery use cases.</li>
+  <li>Describe the workflow for accessing shadow copies from a forensic image using <strong>Arsenal Image Mounter</strong>.</li>
+  <li>Identify anti-forensic techniques that target Volume Shadow Copies (VSS deletion, SSD TRIM impact).</li>
+</ol>
+
+<h3>Where This Module Connects</h3>
+<div class="table-wrap">
+<table>
+  <caption class="sr-only">Module 8.3 connections to graded work</caption>
+  <thead><tr><th scope="col">Assessment</th><th scope="col">Connection</th></tr></thead>
+  <tbody>
+    <tr><td>Lab 8 (20 pts)</td><td>The third section requires extracting data from Volume Shadow Copies on the forensic image.</td></tr>
+    <tr><td>Discussion 8 (3 pts)</td><td>VSS and LNK files are strong candidates for the "most valuable artifact" discussion prompt.</td></tr>
+    <tr><td>Homework 3 (20 pts)</td><td>LNK file data is one of the correlated sources in the integrative exercise.</td></tr>
+    <tr><td>Midterm Exam (Wk 9, 120 pts)</td><td>LNK structure, Shellbag locations, and VSS concepts are testable.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ══════════════════════════════════════ §2 LNK FILES ═══════════════════════════════════════════════════ -->
+<h2 id="lnk">2. LNK File Forensics</h2>
+
+<p>Every time a user opens a file from Windows Explorer, the operating system automatically creates (or updates) a <strong>shortcut file</strong> with the <code>.lnk</code> extension. These LNK files are stored in the user&rsquo;s <code>Recent</code> folder and contain a rich set of metadata about the <em>target</em> file&mdash;metadata that persists even if the original file is deleted.</p>
+
+<div class="callout callout--info">
+  <div class="callout__title">📂 Default LNK File Location</div>
+  <p><code>C:\Users\&lt;username&gt;\AppData\Roaming\Microsoft\Windows\Recent\</code></p>
+  <p>Additional LNK files may be found in the <code>Recent\AutomaticDestinations</code> and <code>Recent\CustomDestinations</code> subdirectories (these are the Jump List databases you studied in Week 7).</p>
+</div>
+
+<h3>LNK Internal Structure</h3>
+<p>A LNK file is a binary structure defined by the Microsoft Shell Link format. The fields most relevant to forensic examiners are:</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Key Forensic Fields in a LNK File</caption>
+  <thead><tr><th scope="col">Field</th><th scope="col">Description</th><th scope="col">Forensic Significance</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Target Path</strong></td>
+      <td>Full path to the file or folder the shortcut points to.</td>
+      <td>Proves the file existed at that path at the time the LNK was created or last updated.</td>
+    </tr>
+    <tr>
+      <td><strong>Target MAC Timestamps</strong></td>
+      <td>Modified, Accessed, and Created timestamps <em>of the target file</em> at the time the LNK was created.</td>
+      <td>Preserves a "snapshot" of the target&rsquo;s timestamps&mdash;invaluable if the original file is later deleted or timestomped.</td>
+    </tr>
+    <tr>
+      <td><strong>Target File Size</strong></td>
+      <td>Size of the target file when the LNK was created.</td>
+      <td>Can reveal file modifications if current size differs from the LNK-recorded size.</td>
+    </tr>
+    <tr>
+      <td><strong>Volume Serial Number</strong></td>
+      <td>Serial number of the volume where the target file resided.</td>
+      <td>Links the file to a specific drive or partition. Matches serial numbers found in Registry <code>MountedDevices</code> and <code>MountPoints2</code> keys.</td>
+    </tr>
+    <tr>
+      <td><strong>Drive Type</strong></td>
+      <td>Type of storage: fixed disk, removable media, network share, etc.</td>
+      <td>Identifies whether the file was on a USB drive, local hard disk, or network location.</td>
+    </tr>
+    <tr>
+      <td><strong>Volume Label</strong></td>
+      <td>The user-assigned label of the volume (e.g., "BACKUP_USB").</td>
+      <td>Helps identify specific external devices.</td>
+    </tr>
+    <tr>
+      <td><strong>NetBIOS Name</strong></td>
+      <td>Hostname of the machine where the target file resided (for network or local targets).</td>
+      <td>Proves access to files on a specific remote machine.</td>
+    </tr>
+    <tr>
+      <td><strong>LNK File Own Timestamps</strong></td>
+      <td>Created, Modified, Accessed timestamps of the <code>.lnk</code> file itself.</td>
+      <td>The LNK Created timestamp indicates when the user <em>first</em> opened the target; Modified indicates the <em>most recent</em> access.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Forensic Scenarios</h3>
+
+<div class="tabs" id="lnk-scenarios-tabs">
+  <ul class="tab-list" role="tablist" aria-label="LNK file forensic scenarios">
+    <li role="presentation"><button class="tab-btn" role="tab" aria-selected="true" aria-controls="panel-deleted" id="tab-deleted">Proving a Deleted File Existed</button></li>
+    <li role="presentation"><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-usb" id="tab-usb">Identifying USB Device Usage</button></li>
+    <li role="presentation"><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-network" id="tab-network">Network File Access</button></li>
+  </ul>
+
+  <div class="tab-panel active" role="tabpanel" id="panel-deleted" aria-labelledby="tab-deleted">
+    <h4>Scenario: The Deleted Spreadsheet</h4>
+    <p>An employee is suspected of exfiltrating a confidential customer list. The file <code>customer_database_export.xlsx</code> is not found anywhere on the system&mdash;the employee claims it never existed. However, a LNK file in the <code>Recent</code> folder tells a different story:</p>
+<pre><code>Target Path:    D:\Exports\customer_database_export.xlsx
+Target Created: 2026-02-10 09:15:22 UTC
+Target Modified:2026-02-10 09:15:22 UTC
+Target Size:    4,812,288 bytes (4.6 MB)
+Drive Type:     Removable Media
+Volume Serial:  A4F3-9B21
+Volume Label:   SANDISK_USB
+LNK Created:    2026-02-10 09:18:45 UTC
+LNK Modified:   2026-02-10 09:18:45 UTC</code></pre>
+    <p><strong>What this proves:</strong></p>
+    <ul>
+      <li>The file <em>did</em> exist&mdash;the LNK preserves its exact path, size, and timestamps.</li>
+      <li>It was on a <strong>removable USB drive</strong> (Drive Type: Removable Media) labeled "SANDISK_USB".</li>
+      <li>The user opened the file at <strong>09:18:45 UTC</strong> on February 10 (LNK Created time).</li>
+      <li>The identical Created and Modified timestamps on the target suggest the file was freshly created (exported) and not subsequently edited before being accessed.</li>
+    </ul>
+  </div>
+
+  <div class="tab-panel" role="tabpanel" id="panel-usb" aria-labelledby="tab-usb">
+    <h4>Scenario: Unauthorized External Device</h4>
+    <p>Company policy prohibits USB storage devices. You find multiple LNK files referencing paths on drive <code>E:\</code> with <strong>Drive Type: Removable Media</strong> and a consistent <strong>Volume Serial Number</strong> of <code>7C2D-1A88</code>. Cross-referencing this serial number with the Registry keys <code>SYSTEM\MountedDevices</code> and <code>NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2</code> (from Week 7) confirms the device was a Kingston DataTraveler USB drive.</p>
+    <p><strong>Forensic value:</strong> Even if the USB device has been physically removed and the files deleted, the LNK files prove the device was connected and specific files were accessed from it. The volume serial number ties all the LNK files to the <em>same</em> device.</p>
+  </div>
+
+  <div class="tab-panel" role="tabpanel" id="panel-network" aria-labelledby="tab-network">
+    <h4>Scenario: Accessing Files on a Remote Server</h4>
+    <p>During an insider-threat investigation, you discover LNK files with target paths pointing to <code>\\FILESERVER03\Finance\Q4_Projections.pptx</code>. The <strong>NetBIOS Name</strong> field in the LNK records <code>FILESERVER03</code>, and the <strong>Drive Type</strong> is <code>Network</code>.</p>
+    <p><strong>Forensic value:</strong> This proves the user accessed a file on a specific network server. Combined with Event Log data from Module 8.1 (Event 4624, Logon Type 3 showing a network logon to FILESERVER03), you can build a corroborated timeline of the user&rsquo;s access to sensitive network resources.</p>
+  </div>
+</div>
+
+<h3>Connection to Week 7: Jump Lists</h3>
+<div class="callout callout--accent">
+  <div class="callout__title">🔗 Cross-Module Connection</div>
+  <p>In Week 7 you learned that <strong>Jump Lists</strong> (stored in <code>AutomaticDestinations</code> and <code>CustomDestinations</code>) record recently and frequently accessed files per application. Internally, Jump Lists are <strong>structured storage files (OLE compound files) that contain embedded LNK entries</strong>. Each entry within a Jump List is essentially a LNK file with the same metadata fields described above.</p>
+  <p>This means the LNK parsing skills you learn in this module apply directly to Jump List analysis. Tools like <strong>JLECmd</strong> (Jump List Explorer Command Line, also by Eric Zimmerman) parse Jump Lists by extracting and interpreting their embedded LNK data. If you understand LNK structure, you understand the core data within Jump Lists.</p>
+</div>
+
+<!-- ══════════════════════════════════════ §3 LECmd ═══════════════════════════════════════════════════════ -->
+<h2 id="lecmd">3. Tool Walk-Through: LECmd</h2>
+
+<p><strong>LECmd</strong> (LNK Explorer Command Line) is part of Eric Zimmerman&rsquo;s forensic tool suite. It parses <code>.lnk</code> files and outputs structured data to the console or to CSV for analysis in Timeline Explorer.</p>
+
+<div class="callout callout--accent">
+  <div class="callout__title">🛠️ Hands-On Walkthrough</div>
+  <p>Follow along on your forensic workstation. You can practice with LNK files from your own <code>Recent</code> folder or with files extracted from a forensic image.</p>
+</div>
+
+<h3>Step-by-Step: Parsing a Single LNK File</h3>
+
+<h4>Step 1: Parse and View Console Output</h4>
+<pre><code>LECmd.exe -f "C:\Evidence\Recent\customer_database_export.lnk"</code></pre>
+<p>LECmd displays a detailed breakdown of the LNK file directly in the console. Key output sections to examine:</p>
+
+<div class="table-wrap">
+<table>
+  <caption>LECmd Console Output Sections</caption>
+  <thead><tr><th scope="col">Section</th><th scope="col">What to Look For</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Header</strong></td><td>LNK file creation time, attributes, and flags.</td></tr>
+    <tr><td><strong>Target Created / Modified / Accessed</strong></td><td>The MAC timestamps of the target file at the time the LNK was created.</td></tr>
+    <tr><td><strong>Volume Information</strong></td><td>Drive type (Fixed, Removable, Network), volume serial number, and volume label.</td></tr>
+    <tr><td><strong>Local Path</strong></td><td>Full path to the target file on the local or mapped drive.</td></tr>
+    <tr><td><strong>Network Share Info</strong></td><td>UNC path and NetBIOS name (for network targets).</td></tr>
+    <tr><td><strong>Machine ID / MAC Address</strong></td><td>NetBIOS name of the machine that created the LNK; sometimes includes a MAC address in the tracker data block.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h4>Step 2: Batch-Process the Entire Recent Folder</h4>
+<pre><code>LECmd.exe -d "C:\Evidence\Users\mtorres\AppData\Roaming\Microsoft\Windows\Recent" --csv "C:\Output" --csvf "mtorres_lnk_files.csv"</code></pre>
+<p>Flags explained:</p>
+<ul>
+  <li><code>-d</code> &mdash; process all <code>.lnk</code> files in the specified directory (and subdirectories).</li>
+  <li><code>--csv</code> &mdash; output directory for the CSV file.</li>
+  <li><code>--csvf</code> &mdash; filename for the CSV output.</li>
+</ul>
+
+<h4>Step 3: Analyze Results in Timeline Explorer</h4>
+<ol>
+  <li>Open <strong>Timeline Explorer</strong> and load the CSV file generated by LECmd.</li>
+  <li>Key columns to examine:
+    <ul>
+      <li><code>SourceFile</code> &mdash; the name of the <code>.lnk</code> file.</li>
+      <li><code>LocalPath</code> / <code>NetworkPath</code> &mdash; where the target file was located.</li>
+      <li><code>TargetCreated</code>, <code>TargetModified</code>, <code>TargetAccessed</code> &mdash; the preserved timestamps of the target.</li>
+      <li><code>VolumeSerialNumber</code>, <code>DriveType</code>, <code>VolumeLabel</code> &mdash; storage device identification.</li>
+      <li><code>MachineID</code> &mdash; the NetBIOS name embedded in the LNK.</li>
+    </ul>
+  </li>
+  <li>Filter by <code>DriveType</code> to quickly isolate files accessed from removable media or network shares.</li>
+  <li>Sort by <code>TargetModified</code> or the LNK file&rsquo;s own timestamps to establish a chronological access history.</li>
+</ol>
+
+<details>
+  <summary>Tip: Combining LECmd Output with Other Artifact Data</summary>
+  <div class="details-body">
+    <p>For maximum investigative value, load LECmd CSV output alongside your EvtxECmd output (Module 8.1) and PECmd output (Module 8.2) in separate Timeline Explorer tabs. You can then cross-reference:</p>
+    <ul>
+      <li>A LNK file showing a user opened <code>mimikatz.exe</code> from a USB drive &rarr; Prefetch confirming <code>mimikatz.exe</code> executed &rarr; Event Log showing a logon with elevated privileges around the same time.</li>
+    </ul>
+    <p>This multi-artifact correlation is the foundation of the super-timeline you will build in Module 8.5.</p>
+  </div>
+</details>
+
+<!-- ══════════════════════════════════════ §4 SHELLBAGS ═══════════════════════════════════════════════════ -->
+<h2 id="shellbags">4. Shellbag Analysis</h2>
+
+<p>While LNK files record which <em>files</em> a user opened, <strong>Shellbags</strong> record which <em>folders</em> a user browsed&mdash;including folder window size, position, view settings, and sort order. Shellbags are Registry-based artifacts that persist even after the folders themselves are deleted.</p>
+
+<h3>What Are Shellbags?</h3>
+<p>Every time a user opens a folder in Windows Explorer, the operating system saves the user&rsquo;s display preferences (icon size, sort column, window position) in Registry values collectively called <strong>Shellbags</strong>. From a forensic perspective, the display preferences themselves are uninteresting&mdash;what matters is that the <em>existence</em> of a Shellbag entry proves the user navigated to that folder, and the <em>timestamps</em> on the Registry keys indicate when.</p>
+
+<h3>Registry Locations</h3>
+<div class="table-wrap">
+<table>
+  <caption>Shellbag Registry Locations</caption>
+  <thead><tr><th scope="col">Hive</th><th scope="col">Registry Path</th><th scope="col">What It Tracks</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>NTUSER.DAT</strong></td>
+      <td><code>Software\Microsoft\Windows\Shell\BagMRU</code><br><code>Software\Microsoft\Windows\Shell\Bags</code></td>
+      <td>Folders accessed via the <strong>Desktop</strong> and classic shell paths. Primarily covers Desktop, My Computer, and Control Panel navigation.</td>
+    </tr>
+    <tr>
+      <td><strong>UsrClass.dat</strong></td>
+      <td><code>Local Settings\Software\Microsoft\Windows\Shell\BagMRU</code><br><code>Local Settings\Software\Microsoft\Windows\Shell\Bags</code></td>
+      <td>Folders accessed via <strong>Windows Explorer</strong> navigation (the majority of user browsing). This is the primary Shellbag location for forensic analysis.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout callout--info">
+  <div class="callout__title">📂 UsrClass.dat Location on Disk</div>
+  <p><code>C:\Users\&lt;username&gt;\AppData\Local\Microsoft\Windows\UsrClass.dat</code></p>
+  <p>This hive is separate from <code>NTUSER.DAT</code> and is often overlooked by less experienced examiners. Always extract <strong>both</strong> hives when performing Shellbag analysis.</p>
+</div>
+
+<h3>What Shellbags Record</h3>
+<p>Each Shellbag entry contains:</p>
+<ul>
+  <li><strong>Folder path</strong> &mdash; the full path the user navigated to (local, removable, or network).</li>
+  <li><strong>First interacted timestamp</strong> &mdash; when the user first browsed to that folder (derived from the Registry key&rsquo;s created time).</li>
+  <li><strong>Last interacted timestamp</strong> &mdash; when the user most recently browsed to that folder (derived from the Registry key&rsquo;s last-write time).</li>
+  <li><strong>Folder MAC timestamps</strong> &mdash; the Created, Modified, and Accessed timestamps of the folder as they appeared when the Shellbag was created or updated.</li>
+  <li><strong>Shell item details</strong> &mdash; folder type, GUID identifiers for special folders, and display settings.</li>
+</ul>
+
+<h3>Forensic Value of Shellbags</h3>
+
+<details>
+  <summary>Proving Access to Deleted Folders</summary>
+  <div class="details-body">
+    <p>A user creates a folder <code>D:\Project_X_Confidential</code>, copies sensitive files into it, then deletes the entire folder. The folder and its contents are gone from the file system. However, the Shellbag entry for <code>D:\Project_X_Confidential</code> remains in <code>UsrClass.dat</code>, proving the folder existed and the user navigated to it.</p>
+  </div>
+</details>
+
+<details>
+  <summary>Identifying Removable Drive Browsing</summary>
+  <div class="details-body">
+    <p>Shellbags record navigation to folders on removable drives (e.g., <code>E:\Photos\Vacation</code> on a USB drive). Even after the USB drive is removed, the Shellbag entries persist. This complements the LNK file evidence from Section 2&mdash;LNK files show which <em>files</em> were opened from the USB; Shellbags show which <em>folders</em> were browsed.</p>
+  </div>
+</details>
+
+<details>
+  <summary>Tracking Network Share Navigation</summary>
+  <div class="details-body">
+    <p>Shellbags record navigation to network paths such as <code>\\FILESERVER\HR\Payroll</code>. This proves the user actively browsed the network share&mdash;not just that a file was accessed (which could be automated). Combined with Event Log Logon Type 3 events, Shellbags provide strong evidence of intentional network exploration.</p>
+  </div>
+</details>
+
+<details>
+  <summary>Establishing User Awareness</summary>
+  <div class="details-body">
+    <p>In intellectual property theft cases, Shellbags can establish that a user <em>actively navigated</em> to folders containing sensitive data. This demonstrates awareness and intent&mdash;the user didn&rsquo;t just accidentally open a file; they browsed through a folder hierarchy to find it. A Shellbag trail showing <code>\\SERVER\Engineering → Projects → Classified → Designs</code> demonstrates deliberate, multi-level navigation.</p>
+  </div>
+</details>
+
+<!-- ══════════════════════════════════ §5 SHELLBAGS EXPLORER ══════════════════════════════════════════════ -->
+<h2 id="sbexplorer">5. Tool Walk-Through: ShellBags Explorer</h2>
+
+<p><strong>ShellBags Explorer</strong> is a GUI tool by Eric Zimmerman that parses Shellbag data from Registry hives and presents it as a navigable folder tree. It is the standard tool for Shellbag analysis in forensic investigations.</p>
+
+<div class="callout callout--accent">
+  <div class="callout__title">🛠️ Hands-On Walkthrough</div>
+  <p>You will need extracted Registry hives (<code>NTUSER.DAT</code> and <code>UsrClass.dat</code>) from a forensic image. If you are practicing on your own system, you can load your live hives, but note that some entries may be locked by the OS.</p>
+</div>
+
+<h3>Step-by-Step: Analyzing Shellbags</h3>
+
+<h4>Step 1: Load a Registry Hive</h4>
+<ol>
+  <li>Open <strong>ShellBags Explorer</strong>.</li>
+  <li>Go to <strong>File → Load offline hive</strong>.</li>
+  <li>Browse to the extracted <code>UsrClass.dat</code> file (this is the primary Shellbag hive).</li>
+  <li>ShellBags Explorer parses the hive and displays a folder tree in the left pane.</li>
+</ol>
+
+<div class="callout callout--warning">
+  <div class="callout__title">⚠️ Load Both Hives</div>
+  <p>For complete analysis, load <strong>both</strong> <code>UsrClass.dat</code> and <code>NTUSER.DAT</code>. The majority of user browsing data is in <code>UsrClass.dat</code>, but <code>NTUSER.DAT</code> contains Desktop-level navigation that may be relevant.</p>
+</div>
+
+<h4>Step 2: Navigate the Folder Tree</h4>
+<ul>
+  <li>The left pane shows a hierarchical tree of every folder the user browsed.</li>
+  <li>Expand nodes to see subfolders. The tree mirrors the folder structure the user navigated.</li>
+  <li>Look for entries under <strong>My Computer</strong> for local and removable drives, and <strong>Network</strong> for UNC paths.</li>
+</ul>
+
+<h4>Step 3: Interpret Timestamps</h4>
+<ul>
+  <li>Select a folder in the tree. The right pane displays detailed information.</li>
+  <li>Key fields:
+    <ul>
+      <li><strong>First Interacted</strong> &mdash; derived from the Shellbag Registry key&rsquo;s Created timestamp. Indicates when the user first navigated to this folder.</li>
+      <li><strong>Last Interacted</strong> &mdash; derived from the Registry key&rsquo;s Last Write timestamp. Indicates the most recent time the user browsed this folder.</li>
+      <li><strong>Created / Modified / Accessed</strong> &mdash; the folder&rsquo;s own MAC timestamps as recorded in the Shellbag entry.</li>
+    </ul>
+  </li>
+</ul>
+
+<h4>Step 4: Filter and Search</h4>
+<ul>
+  <li>Use the <strong>filter bar</strong> at the top to search for specific folder names or paths (e.g., type "USB" or a drive letter like "E:").</li>
+  <li>Look for folders with paths referencing removable drives, network shares, or suspicious directory names.</li>
+</ul>
+
+<h4>Step 5: Export Results</h4>
+<ul>
+  <li>ShellBags Explorer can export the parsed data for documentation or further analysis.</li>
+  <li>The companion command-line tool <strong>SBECmd.exe</strong> can batch-process hives and output to CSV, which loads into Timeline Explorer for integration with other artifact data.</li>
+</ul>
+<pre><code>SBECmd.exe -d "C:\Evidence\RegistryHives" --csv "C:\Output" --csvf "shellbags_parsed.csv"</code></pre>
+
+<!-- ══════════════════════════════════════ §6 VSS ═════════════════════════════════════════════════════════ -->
+<h2 id="vss">6. Volume Shadow Copy Forensics</h2>
+
+<p>The <strong>Volume Shadow Copy Service (VSS)</strong> is a Windows feature that creates point-in-time snapshots of an entire volume. These snapshots&mdash;called <strong>shadow copies</strong>&mdash;store differential data that allows the system (or a forensic examiner) to reconstruct the state of the volume at the time the snapshot was taken.</p>
+
+<h3>VSS Architecture</h3>
+<p>VSS operates at the <strong>block level</strong>, not the file level. When a shadow copy is created, VSS does not duplicate the entire volume. Instead, it uses a <strong>copy-on-write</strong> mechanism:</p>
+<ol>
+  <li>A snapshot is triggered (see triggers below).</li>
+  <li>VSS records the current state of all blocks on the volume.</li>
+  <li>When a block is about to be modified <em>after</em> the snapshot, VSS copies the <strong>original block</strong> to a shadow storage area <em>before</em> the modification occurs.</li>
+  <li>To reconstruct the volume as it appeared at snapshot time, VSS combines the current volume data with the preserved original blocks.</li>
+</ol>
+
+<div class="callout callout--info">
+  <div class="callout__title">💡 Key Concept: Differential, Not Full Copy</div>
+  <p>Shadow copies are space-efficient because they only store blocks that have <em>changed</em> since the snapshot. A shadow copy of a 500 GB volume might only consume a few gigabytes of shadow storage. However, this also means that if the shadow storage area fills up, the oldest shadow copies are deleted automatically.</p>
+</div>
+
+<h3>Snapshot Triggers</h3>
+<p>Shadow copies are created automatically by several mechanisms:</p>
+<div class="table-wrap">
+<table>
+  <caption>Common VSS Snapshot Triggers</caption>
+  <thead><tr><th scope="col">Trigger</th><th scope="col">Description</th></tr></thead>
+  <tbody>
+    <tr><td><strong>System Restore Points</strong></td><td>Windows creates restore points before significant system changes (driver installs, Windows Updates).</td></tr>
+    <tr><td><strong>Windows Backup</strong></td><td>The built-in Windows Backup utility triggers a shadow copy as part of its backup process.</td></tr>
+    <tr><td><strong>Scheduled Task</strong></td><td>By default, Windows may create periodic shadow copies on a schedule (commonly daily or weekly, depending on OS version and configuration).</td></tr>
+    <tr><td><strong>Application Request</strong></td><td>Some applications (e.g., SQL Server, Exchange) request VSS snapshots for consistent backups.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Forensic Use Cases</h3>
+
+<div class="tabs" id="vss-use-tabs">
+  <ul class="tab-list" role="tablist" aria-label="VSS forensic use cases">
+    <li role="presentation"><button class="tab-btn" role="tab" aria-selected="true" aria-controls="panel-vss-deleted" id="tab-vss-deleted">Recovering Deleted Files</button></li>
+    <li role="presentation"><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-vss-modified" id="tab-vss-modified">Recovering Prior Versions</button></li>
+    <li role="presentation"><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-vss-registry" id="tab-vss-registry">Historical Registry Hives</button></li>
+  </ul>
+
+  <div class="tab-panel active" role="tabpanel" id="panel-vss-deleted" aria-labelledby="tab-vss-deleted">
+    <h4>Use Case: Recovering Deleted Files</h4>
+    <p>A suspect deletes incriminating files from their system. Standard file recovery from unallocated space fails because the sectors have been overwritten by new data. However, a shadow copy taken <em>before</em> the deletion still contains the original blocks. By mounting the shadow copy, the examiner can browse the volume as it appeared at snapshot time and recover the deleted files in their entirety.</p>
+    <p><strong>Example:</strong> A shadow copy from January 15 contains <code>C:\Users\jsmith\Documents\financial_fraud_spreadsheet.xlsx</code>. The file was deleted on January 20. The current volume no longer contains the file, but the January 15 shadow copy does.</p>
+  </div>
+
+  <div class="tab-panel" role="tabpanel" id="panel-vss-modified" aria-labelledby="tab-vss-modified">
+    <h4>Use Case: Recovering Prior File Versions</h4>
+    <p>A suspect modifies a document to remove incriminating content before the investigation begins. The current version of the file appears innocent. However, a shadow copy from before the modification contains the <em>original</em> version with the incriminating content intact.</p>
+    <p><strong>Example:</strong> An employee edits a memo to remove references to unauthorized transactions. A shadow copy from the previous week contains the unedited memo. Comparing the two versions reveals exactly what was changed and when (by correlating with <code>$UsnJrnl</code> data from Module 8.4).</p>
+  </div>
+
+  <div class="tab-panel" role="tabpanel" id="panel-vss-registry" aria-labelledby="tab-vss-registry">
+    <h4>Use Case: Accessing Historical Registry Hives</h4>
+    <p>This is one of the most powerful forensic applications of VSS. Shadow copies contain snapshots of the entire volume&mdash;including the <strong>Registry hive files</strong>. By extracting Registry hives from a shadow copy, an examiner can analyze the system&rsquo;s configuration and user artifacts <em>as they existed at a prior point in time</em>.</p>
+    <p><strong>Example:</strong> An attacker creates a backdoor user account (<code>svc_backup</code>, from the Module 8.1 mini-case), uses it, and then deletes it before the investigation. The current Registry shows no trace of the account. But a shadow copy from the day the account existed contains a <code>SAM</code> hive with the account entry and an <code>NTUSER.DAT</code> hive with the account&rsquo;s user profile artifacts.</p>
+    <p>You can load these historical hives into Registry Explorer (Week 7) or ShellBags Explorer (Section 5 above) to analyze the system&rsquo;s state at the snapshot time.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ §7 VSS TOOL ════════════════════════════════════════════════════ -->
+<h2 id="vss-tool">7. Tool Walk-Through: Accessing VSS with Arsenal Image Mounter</h2>
+
+<p><strong>Arsenal Image Mounter</strong> is a forensic tool that mounts forensic images (E01, raw/dd, VMDK, etc.) as physical or logical disks on Windows. Critically, it can expose <strong>Volume Shadow Copies</strong> contained within the mounted image, allowing examiners to browse and extract files from prior snapshots.</p>
+
+<div class="callout callout--accent">
+  <div class="callout__title">🛠️ Hands-On Walkthrough</div>
+  <p>This walkthrough describes the workflow for accessing shadow copies from a forensic image. You will practice this technique in Lab 8.</p>
+</div>
+
+<h3>Step-by-Step: Mounting and Accessing Shadow Copies</h3>
+
+<h4>Step 1: Mount the Forensic Image</h4>
+<ol>
+  <li>Open <strong>Arsenal Image Mounter</strong> with administrator privileges.</li>
+  <li>Click <strong>Mount disk image</strong>.</li>
+  <li>Browse to the forensic image file (e.g., <code>evidence.E01</code>).</li>
+  <li>Select <strong>Write-temporary</strong> mount mode. This allows the operating system to interact with the image (required for VSS access) while keeping the original image forensically sound&mdash;all writes go to a temporary differential file.</li>
+  <li>Check <strong>Launch Windows disk signature check / offline</strong> if prompted, to prevent Windows from modifying the volume.</li>
+  <li>The image mounts as a physical disk with one or more volumes appearing in Windows Explorer (e.g., <code>F:\</code>).</li>
+</ol>
+
+<div class="callout callout--warning">
+  <div class="callout__title">⚠️ Write-Temporary Mode Is Essential</div>
+  <p>Never mount a forensic image in read/write mode. <strong>Write-temporary</strong> mode ensures all OS-initiated writes (drive letter assignment, VSS catalog access) are captured in a temporary overlay, preserving the integrity of the original evidence. Always verify your image hash after unmounting.</p>
+</div>
+
+<h4>Step 2: List Available Shadow Copies</h4>
+<p>Once the image is mounted, open an <strong>elevated Command Prompt</strong> and run:</p>
+<pre><code>vssadmin list shadows /for=F:</code></pre>
+<p>Replace <code>F:</code> with the drive letter assigned to the mounted volume. The output lists all available shadow copies with their creation dates and Shadow Copy IDs:</p>
+<pre><code>vssadmin 1.1 - Volume Shadow Copy Service administrative command-line tool
+
+Contents of shadow copy set ID: {a1b2c3d4-...}
+  Contained 1 shadow copies at creation time: 1/15/2026 3:00:12 AM
+    Shadow Copy ID: {e5f6a7b8-...}
+      Original Volume: (F:)\\?\Volume{...}\
+      Shadow Copy Volume: \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy1
+
+Contents of shadow copy set ID: {c9d0e1f2-...}
+  Contained 1 shadow copies at creation time: 1/22/2026 3:00:08 AM
+    Shadow Copy ID: {g3h4i5j6-...}
+      Original Volume: (F:)\\?\Volume{...}\
+      Shadow Copy Volume: \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy2</code></pre>
+
+<h4>Step 3: Create a Symbolic Link to a Shadow Copy</h4>
+<p>To browse a shadow copy in Windows Explorer, create a symbolic link (symlink) that maps a folder to the shadow copy volume:</p>
+<pre><code>mklink /d C:\VSS_Jan15 \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy1\</code></pre>
+<p>Now you can browse <code>C:\VSS_Jan15</code> as if it were the volume at the time of the January 15 snapshot.</p>
+
+<div class="callout callout--info">
+  <div class="callout__title">💡 Trailing Backslash Required</div>
+  <p>The shadow copy volume path <strong>must</strong> end with a backslash (<code>\</code>). Without it, the symlink will fail silently.</p>
+</div>
+
+<h4>Step 4: Browse and Extract Files</h4>
+<ol>
+  <li>Navigate to <code>C:\VSS_Jan15</code> in Windows Explorer or the command line.</li>
+  <li>You are now viewing the volume as it appeared on January 15. Deleted files are present; modified files show their prior content.</li>
+  <li>Copy any relevant files to your output directory for analysis.</li>
+  <li>To access Registry hives from the snapshot, navigate to <code>C:\VSS_Jan15\Windows\System32\config\</code> for system hives or <code>C:\VSS_Jan15\Users\&lt;username&gt;\NTUSER.DAT</code> for user hives.</li>
+</ol>
+
+<h4>Step 5: Compare Shadow Copies</h4>
+<p>If multiple shadow copies exist, mount each one and compare file versions across snapshots. This can reveal:</p>
+<ul>
+  <li>When a file was first created (present in a later snapshot but not an earlier one).</li>
+  <li>When a file was deleted (present in an earlier snapshot but not a later one).</li>
+  <li>How a file changed over time (different content in different snapshots).</li>
+</ul>
+
+<h4>Step 6: Clean Up</h4>
+<ol>
+  <li>When finished, remove the symbolic link: <code>rmdir C:\VSS_Jan15</code></li>
+  <li>Unmount the forensic image in Arsenal Image Mounter.</li>
+  <li>Verify the original image hash matches the acquisition hash to confirm no modifications.</li>
+</ol>
+
+<details>
+  <summary>Alternative: Using vshadowmount (Linux)</summary>
+  <div class="details-body">
+    <p>On a Linux forensic workstation, the <strong>libvshadow</strong> library provides <code>vshadowinfo</code> and <code>vshadowmount</code> commands for accessing shadow copies from a forensic image:</p>
+<pre><code># List shadow copies in a raw image
+vshadowinfo /path/to/evidence.raw
+
+# Mount all shadow copies as virtual files
+vshadowmount /path/to/evidence.raw /mnt/vss/
+
+# Each shadow copy appears as a file: vss1, vss2, etc.
+# Mount a specific shadow copy
+mount -o ro,loop,show_sys_files,streams_interface=windows /mnt/vss/vss1 /mnt/shadow1/</code></pre>
+    <p>This approach is common in Linux-based forensic environments and will be referenced again in Week 9 (Linux Forensics).</p>
+  </div>
+</details>
+
+<!-- ══════════════════════════════════════ §8 ANTI-FORENSICS ═════════════════════════════════════════════ -->
+<h2 id="anti-forensics">8. Anti-Forensic Awareness</h2>
+
+<p>Volume Shadow Copies are so forensically valuable that sophisticated attackers&mdash;and virtually all modern ransomware&mdash;actively target them for destruction. As a forensic examiner, you must be aware of these anti-forensic techniques and know what to look for when shadow copies are missing.</p>
+
+<h3>Ransomware and VSS Deletion</h3>
+<p>One of the first actions most ransomware families take after gaining execution is to delete all shadow copies. This prevents victims from using shadow copies to recover encrypted files without paying the ransom. The most common technique:</p>
+<pre><code>vssadmin delete shadows /all /quiet</code></pre>
+<p>This command silently deletes every shadow copy on the system. Variants include:</p>
+<pre><code>wmic shadowcopy delete
+Get-WmiObject Win32_ShadowCopy | ForEach-Object { $_.Delete() }
+vssadmin resize shadowstorage /for=C: /on=C: /maxsize=401MB</code></pre>
+
+<div class="callout callout--warning">
+  <div class="callout__title">⚠️ Detecting VSS Deletion</div>
+  <p>Even when shadow copies have been deleted, evidence of the deletion attempt often remains:</p>
+  <ul>
+    <li><strong>Event Log:</strong> The System log records VSS-related events. Look for Event ID <strong>8224</strong> (VSS service events) and Service Control Manager events showing the VSS service being stopped.</li>
+    <li><strong>Prefetch:</strong> A Prefetch file for <code>VSSADMIN.EXE</code> or <code>WMIC.EXE</code> (from Module 8.2) proves these tools were executed.</li>
+    <li><strong>$UsnJrnl:</strong> The NTFS change journal (Module 8.4) may record the deletion of VSS-related files.</li>
+    <li><strong>Command-line logging:</strong> If PowerShell script block logging is enabled, the exact commands used to delete shadow copies may be captured in the PowerShell Operational log.</li>
+  </ul>
+</div>
+
+<h3>SSD TRIM and VSS Reliability</h3>
+<p>Solid-State Drives (SSDs) use the <strong>TRIM</strong> command to proactively erase blocks that are no longer in use. This has implications for VSS:</p>
+<ul>
+  <li><strong>TRIM can erase shadow copy data.</strong> Because VSS stores differential data on the same volume, TRIM may erase blocks that VSS needs to reconstruct a prior snapshot. This can cause shadow copies to become <strong>corrupt or incomplete</strong> even though they appear in the <code>vssadmin list shadows</code> output.</li>
+  <li><strong>Impact varies by OS version and SSD firmware.</strong> Newer versions of Windows are better at protecting VSS storage areas from TRIM, but the risk remains, especially on older systems.</li>
+  <li><strong>Forensic implication:</strong> On SSD-based systems, do not assume that a listed shadow copy is fully intact. Always attempt to mount and verify the contents. If a shadow copy fails to mount or shows corrupted files, TRIM may be the cause.</li>
+</ul>
+
+<div class="callout callout--info">
+  <div class="callout__title">💡 Connection to Week 4</div>
+  <p>In Week 4 (Hardware and Storage Technologies) you learned about SSD architecture and the TRIM command. The VSS reliability issue is a practical consequence of the TRIM behavior discussed in that module. This is another example of why understanding the physical storage layer is essential for interpreting logical artifacts.</p>
+</div>
+
+<!-- ══════════════════════════════════════ §9 KNOWLEDGE CHECK ═════════════════════════════════════════════ -->
+<h2 id="knowledge-check">9. Knowledge Check</h2>
+
+<p>Test your understanding of the concepts covered in this module. These questions are <strong>ungraded</strong>&mdash;use them to identify areas you may want to review before moving on to Module 8.4.</p>
+
+<!-- Question 1 -->
+<div class="kc-question" data-correct="b" id="kc1">
+  <div class="kc-question__stem">1. A forensic examiner finds a LNK file in a user&rsquo;s <code>Recent</code> folder that references <code>E:\Confidential\merger_plan.docx</code> with a Drive Type of "Removable Media" and a Volume Serial Number of <code>8A3F-12CD</code>. The file <code>merger_plan.docx</code> does not exist anywhere on the system. What can the examiner conclude?</div>
+  <ul class="kc-options" role="list">
+    <li class="kc-option"><input type="radio" name="kc1" id="kc1a" value="a"><label for="kc1a">A. The file never existed; the LNK file is corrupted.</label></li>
+    <li class="kc-option"><input type="radio" name="kc1" id="kc1b" value="b"><label for="kc1b">B. The file existed on a removable USB device and was opened by the user; the device has since been removed.</label></li>
+    <li class="kc-option"><input type="radio" name="kc1" id="kc1c" value="c"><label for="kc1c">C. The file was on a network share that is currently offline.</label></li>
+    <li class="kc-option"><input type="radio" name="kc1" id="kc1d" value="d"><label for="kc1d">D. The LNK file was planted by malware and has no forensic value.</label></li>
+  </ul>
+  <button class="kc-btn" onclick="checkAnswer('kc1')">Check Answer</button>
+  <div class="kc-feedback kc-feedback--correct" id="kc1-correct" role="status" aria-live="polite">
+    <strong>✓ Correct!</strong> The LNK file preserves the target path (<code>E:\Confidential\merger_plan.docx</code>), the Drive Type (<strong>Removable Media</strong>), and the Volume Serial Number. This proves the file existed on a removable device (likely a USB drive) and was opened by the user. The device has been disconnected, which is why the file is not currently on the system. The Volume Serial Number can be cross-referenced with Registry <code>MountedDevices</code> and <code>MountPoints2</code> keys to identify the specific device.
+  </div>
+  <div class="kc-feedback kc-feedback--incorrect" id="kc1-incorrect" role="status" aria-live="polite">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>B</strong>. The Drive Type field explicitly says "Removable Media," ruling out a network share (C). LNK files are automatically created by the OS when a user opens a file, so corruption (A) or malware planting (D) are unlikely explanations for a well-formed LNK with consistent metadata. The LNK file is strong evidence that the file existed on a USB device.
+  </div>
+</div>
+
+<!-- Question 2 -->
+<div class="kc-question" data-correct="d" id="kc2">
+  <div class="kc-question__stem">2. Which Registry hive is the <strong>primary</strong> location for Shellbag data recording a user&rsquo;s folder navigation in Windows Explorer?</div>
+  <ul class="kc-options" role="list">
+    <li class="kc-option"><input type="radio" name="kc2" id="kc2a" value="a"><label for="kc2a">A. SYSTEM</label></li>
+    <li class="kc-option"><input type="radio" name="kc2" id="kc2b" value="b"><label for="kc2b">B. SAM</label></li>
+    <li class="kc-option"><input type="radio" name="kc2" id="kc2c" value="c"><label for="kc2c">C. NTUSER.DAT</label></li>
+    <li class="kc-option"><input type="radio" name="kc2" id="kc2d" value="d"><label for="kc2d">D. UsrClass.dat</label></li>
+  </ul>
+  <button class="kc-btn" onclick="checkAnswer('kc2')">Check Answer</button>
+  <div class="kc-feedback kc-feedback--correct" id="kc2-correct" role="status" aria-live="polite">
+    <strong>✓ Correct!</strong> <code>UsrClass.dat</code> is the primary Shellbag hive, storing folder navigation data from Windows Explorer. While <code>NTUSER.DAT</code> (C) also contains some Shellbag entries (primarily Desktop-level navigation), the vast majority of user browsing activity is recorded in <code>UsrClass.dat</code>. Always extract and analyze <strong>both</strong> hives for complete coverage.
+  </div>
+  <div class="kc-feedback kc-feedback--incorrect" id="kc2-incorrect" role="status" aria-live="polite">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>D (UsrClass.dat)</strong>. SYSTEM (A) contains hardware and service configuration. SAM (B) contains user account data. NTUSER.DAT (C) does contain <em>some</em> Shellbag entries, but the primary location for Explorer folder navigation is <code>UsrClass.dat</code>, located at <code>C:\Users\&lt;username&gt;\AppData\Local\Microsoft\Windows\UsrClass.dat</code>.
+  </div>
+</div>
+
+<!-- Question 3 -->
+<div class="kc-question" data-correct="c" id="kc3">
+  <div class="kc-question__stem">3. What mechanism does the Volume Shadow Copy Service use to minimize storage consumption?</div>
+  <ul class="kc-options" role="list">
+    <li class="kc-option"><input type="radio" name="kc3" id="kc3a" value="a"><label for="kc3a">A. It compresses the entire volume into a ZIP archive.</label></li>
+    <li class="kc-option"><input type="radio" name="kc3" id="kc3b" value="b"><label for="kc3b">B. It creates a full byte-for-byte copy of the volume at each snapshot.</label></li>
+    <li class="kc-option"><input type="radio" name="kc3" id="kc3c" value="c"><label for="kc3c">C. It uses a copy-on-write approach, saving only the original blocks before they are modified.</label></li>
+    <li class="kc-option"><input type="radio" name="kc3" id="kc3d" value="d"><label for="kc3d">D. It stores only file metadata, not file content.</label></li>
+  </ul>
+  <button class="kc-btn" onclick="checkAnswer('kc3')">Check Answer</button>
+  <div class="kc-feedback kc-feedback--correct" id="kc3-correct" role="status" aria-live="polite">
+    <strong>✓ Correct!</strong> VSS uses a <strong>copy-on-write</strong> mechanism. When a block is about to be modified after a snapshot, VSS copies the <em>original</em> block to shadow storage before allowing the modification. This means only changed blocks consume shadow storage space, making snapshots very space-efficient. A 500 GB volume might only need a few gigabytes of shadow storage.
+  </div>
+  <div class="kc-feedback kc-feedback--incorrect" id="kc3-incorrect" role="status" aria-live="polite">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>C</strong>. VSS does not compress the volume (A) or create full copies (B)&mdash;either approach would consume enormous storage. It does not store only metadata (D)&mdash;VSS preserves actual block-level data, which is why full file recovery is possible. The copy-on-write approach saves only the blocks that would be overwritten, making it efficient while preserving complete recoverability.
+  </div>
+</div>
+
+<!-- Question 4 -->
+<div class="kc-question" data-correct="a" id="kc4">
+  <div class="kc-question__stem">4. During a ransomware investigation, you discover that no Volume Shadow Copies exist on the victim system, even though VSS was enabled. You find a Prefetch file for <code>VSSADMIN.EXE</code> with a last-run time just minutes before the encryption began. What is the most likely explanation?</div>
+  <ul class="kc-options" role="list">
+    <li class="kc-option"><input type="radio" name="kc4" id="kc4a" value="a"><label for="kc4a">A. The ransomware deleted all shadow copies using <code>vssadmin delete shadows</code> before encrypting files.</label></li>
+    <li class="kc-option"><input type="radio" name="kc4" id="kc4b" value="b"><label for="kc4b">B. SSD TRIM erased all shadow copy data coincidentally.</label></li>
+    <li class="kc-option"><input type="radio" name="kc4" id="kc4c" value="c"><label for="kc4c">C. The system never had enough disk space to create shadow copies.</label></li>
+    <li class="kc-option"><input type="radio" name="kc4" id="kc4d" value="d"><label for="kc4d">D. Windows automatically deletes shadow copies when ransomware is detected.</label></li>
+  </ul>
+  <button class="kc-btn" onclick="checkAnswer('kc4')">Check Answer</button>
+  <div class="kc-feedback kc-feedback--correct" id="kc4-correct" role="status" aria-live="polite">
+    <strong>✓ Correct!</strong> This is a textbook ransomware technique. The Prefetch file for <code>VSSADMIN.EXE</code> with a last-run time immediately before encryption is strong evidence that the ransomware executed <code>vssadmin delete shadows /all /quiet</code> to prevent victims from recovering files via shadow copies. This is one of the most common anti-forensic actions in ransomware attacks.
+  </div>
+  <div class="kc-feedback kc-feedback--incorrect" id="kc4-incorrect" role="status" aria-live="polite">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>A</strong>. The key evidence is the Prefetch file for <code>VSSADMIN.EXE</code> with timing that correlates with the ransomware attack. While TRIM (B) can affect VSS reliability, it would not explain the suspicious Prefetch entry. Disk space (C) is possible but unlikely given that VSS was enabled. Windows does not automatically delete shadow copies upon ransomware detection (D).
+  </div>
+</div>
+
+<!-- Question 5 -->
+<div class="kc-question" data-correct="b" id="kc5">
+  <div class="kc-question__stem">5. An examiner needs to access Volume Shadow Copies from a forensic image without modifying the original evidence. Which Arsenal Image Mounter setting should they use?</div>
+  <ul class="kc-options" role="list">
+    <li class="kc-option"><input type="radio" name="kc5" id="kc5a" value="a"><label for="kc5a">A. Read-only mount mode</label></li>
+    <li class="kc-option"><input type="radio" name="kc5" id="kc5b" value="b"><label for="kc5b">B. Write-temporary mount mode</label></li>
+    <li class="kc-option"><input type="radio" name="kc5" id="kc5c" value="c"><label for="kc5c">C. Read/write mount mode</label></li>
+    <li class="kc-option"><input type="radio" name="kc5" id="kc5d" value="d"><label for="kc5d">D. Forensic copy mount mode</label></li>
+  </ul>
+  <button class="kc-btn" onclick="checkAnswer('kc5')">Check Answer</button>
+  <div class="kc-feedback kc-feedback--correct" id="kc5-correct" role="status" aria-live="polite">
+    <strong>✓ Correct!</strong> <strong>Write-temporary</strong> mode is required because Windows needs to perform minor writes (drive letter assignment, VSS catalog access) to expose shadow copies. A pure read-only mount (A) would prevent VSS access. Write-temporary mode captures all writes in a temporary overlay file, leaving the original forensic image completely unmodified. Read/write mode (C) would modify the original evidence. "Forensic copy mount mode" (D) is not a real Arsenal Image Mounter option.
+  </div>
+  <div class="kc-feedback kc-feedback--incorrect" id="kc5-incorrect" role="status" aria-live="polite">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>B (Write-temporary)</strong>. While read-only (A) is normally the safest option, VSS access requires the OS to perform minor writes to the volume. Write-temporary mode solves this by redirecting all writes to a temporary differential file, preserving the original image&rsquo;s integrity. Read/write mode (C) would compromise the evidence. Always verify image hashes after unmounting.
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ FOOTER / NEXT ══════════════════════════════════════════════════ -->
+<hr style="margin-top:2.5rem;">
+<div class="callout callout--success">
+  <div class="callout__title">✅ Module 8.3 Complete</div>
+  <p>You now understand how LNK files, Shellbags, and Volume Shadow Copies work together to reveal user navigation behavior and provide access to historical file versions&mdash;even when files and folders have been deleted. These artifacts are powerful individually, but their true value emerges when correlated with Event Logs (Module 8.1), execution artifacts (Module 8.2), and the NTFS journal data you will study next.</p>
+  <p>In <strong>Module 8.4: NTFS Journal Artifacts &mdash; $LogFile and $UsnJrnl</strong>, you will learn how the NTFS file system&rsquo;s own transaction logs record every file creation, deletion, rename, and modification&mdash;and how to detect timestamp manipulation (timestomping) by comparing different timestamp sources.</p>
+  <p><strong>Estimated time for Module 8.4:</strong> 50–60 minutes.</p>
+</div>
+
+</main>
+
+<!-- ═══════════════════════════════════════ JAVASCRIPT ══════════════════════════════════════════════════ -->
+<script>
+/* ── Accessible Tabs ── */
+(function(){
+  document.querySelectorAll('.tabs').forEach(function(tabGroup){
+    var btns=tabGroup.querySelectorAll('.tab-btn');
+    var panels=tabGroup.querySelectorAll('.tab-panel');
+    function activate(btn){
+      btns.forEach(function(b){b.setAttribute('aria-selected','false');b.setAttribute('tabindex','-1');});
+      panels.forEach(function(p){p.classList.remove('active');});
+      btn.setAttribute('aria-selected','true');
+      btn.setAttribute('tabindex','0');
+      var panel=document.getElementById(btn.getAttribute('aria-controls'));
+      if(panel) panel.classList.add('active');
+    }
+    btns.forEach(function(btn,i){
+      btn.setAttribute('tabindex',i===0?'0':'-1');
+      btn.addEventListener('click',function(){activate(btn);btn.focus();});
+      btn.addEventListener('keydown',function(e){
+        var idx=Array.prototype.indexOf.call(btns,btn);
+        if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();var next=btns[(idx+1)%btns.length];next.focus();activate(next);}
+        else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();var prev=btns[(idx-1+btns.length)%btns.length];prev.focus();activate(prev);}
+        else if(e.key==='Home'){e.preventDefault();btns[0].focus();activate(btns[0]);}
+        else if(e.key==='End'){e.preventDefault();btns[btns.length-1].focus();activate(btns[btns.length-1]);}
+      });
+    });
+  });
+})();
+
+/* ── Knowledge Check ── */
+function checkAnswer(qId){
+  var container=document.getElementById(qId);
+  if(!container) return;
+  var correct=container.getAttribute('data-correct');
+  var selected=container.querySelector('input[name="'+qId+'"]:checked');
+  var fbCorrect=document.getElementById(qId+'-correct');
+  var fbIncorrect=document.getElementById(qId+'-incorrect');
+  fbCorrect.style.display='none';
+  fbIncorrect.style.display='none';
+  if(!selected){
+    var errEl=container.querySelector('.kc-no-sel');
+    if(!errEl){
+      errEl=document.createElement('p');
+      errEl.className='kc-no-sel';
+      errEl.setAttribute('role','alert');
+      errEl.style.cssText='color:#b91c1c;font-size:0.88rem;margin-top:0.35rem;';
+      container.querySelector('.kc-btn').insertAdjacentElement('afterend',errEl);
+    }
+    errEl.textContent='Please select an answer first.';
+    errEl.style.display='block';
+    return;
+  }
+  var errEl=container.querySelector('.kc-no-sel');
+  if(errEl) errEl.style.display='none';
+  if(selected.value===correct){fbCorrect.style.display='block';}
+  else{fbIncorrect.style.display='block';}
+}
+</script>
+</body>
+</html>
