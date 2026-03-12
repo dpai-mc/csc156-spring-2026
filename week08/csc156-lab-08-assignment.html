@@ -160,6 +160,12 @@ th{background:#333!important;-webkit-print-color-adjust:exact;print-color-adjust
 <span>🎯 <strong>CSLO 2</strong></span>
 </div>
 
+<!-- Forensic image note -->
+<div class="callout">
+<div class="callout-title">📁 Forensic Image</div>
+<p style="margin:0;">This lab uses the <strong>same vm32 Windows 10 forensic image from Lab 07</strong>. Open it in <strong>Autopsy</strong> as you did in that lab. You will extract files from Autopsy's file browser and process them with the Zimmerman tools (EvtxECmd, PECmd, Timeline Explorer). No additional mounting software is required.</p>
+</div>
+
 <!-- Progress Bar -->
 <div class="no-print">
 <div class="progress-bar-wrap" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Lab completion progress">
@@ -173,17 +179,11 @@ th{background:#333!important;-webkit-print-color-adjust:exact;print-color-adjust
 <h2>📁 Investigative Scenario</h2>
 <div class="card">
 <p><strong>Case Number:</strong> CSC156-2026-LAB08 &nbsp;|&nbsp; <strong>Examiner:</strong> <em>(Your Name)</em></p>
-<p>Mendocino Regional Hospital's Security Operations Center (SOC) flagged unusual after-hours activity on a workstation belonging to <strong>Dr. Marcus Chen</strong>, a radiologist. On the evening of <strong>Saturday, February 28, 2026</strong>, between approximately <strong>21:00 and 23:30 UTC</strong>, the SOC observed:</p>
-<ul>
-<li>Multiple failed and successful logon attempts from an IP address not associated with Dr. Chen's normal usage.</li>
-<li>Execution of command-line utilities not typically found in a clinical workstation's software profile.</li>
-<li>Evidence suggesting that patient records may have been accessed and copied to an external location.</li>
-</ul>
-<p>Hospital administration has authorized a forensic examination. A verified forensic image of the workstation's hard drive (NTFS, Windows 10 Pro) has been acquired following proper chain-of-custody procedures (documented in the case file). Your task is to examine three categories of Windows system artifacts to reconstruct the timeline of events and determine what occurred.</p>
+<p>You will conduct a forensic examination of a Windows 10 workstation to determine whether any security-relevant activity — such as unauthorized access, unusual program execution, or file manipulation — occurred on the system. A forensic image of the workstation's hard drive has been acquired following proper chain-of-custody procedures. Your task is to examine three categories of Windows system artifacts, identify suspicious activity, and document your findings. <strong>You do not know in advance when or what that activity was; it is your job to discover it.</strong></p>
 
 <div class="callout">
 <div class="callout-title">🔎 Your Investigation Goals</div>
-<p style="margin:0;">Across three phases you will: <strong>(1)</strong> identify suspicious logon activity and service changes in the Event Logs, <strong>(2)</strong> determine which programs were executed and when using Prefetch files, and <strong>(3)</strong> recover historical file versions from Volume Shadow Copies to assess whether data was altered or deleted to cover tracks.</p>
+<p style="margin:0;">Across three phases you will: <strong>(1)</strong> identify a suspicious time window based on event patterns in the Security and System logs, <strong>(2)</strong> determine which programs were executed and when using Prefetch files, and <strong>(3)</strong> recover historical file versions from Volume Shadow Copies to assess whether data was altered or deleted to cover tracks.</p>
 </div>
 </div>
 </section>
@@ -196,7 +196,7 @@ th{background:#333!important;-webkit-print-color-adjust:exact;print-color-adjust
 <ol>
 <li><strong>Parse and interpret Windows Event Logs</strong> (Security, System, Application) to identify security-relevant events such as logon/logoff activity, account changes, and service modifications.</li>
 <li><strong>Identify evidence of program execution</strong> on a Windows system by parsing Prefetch files with PECmd and interpreting run counts and timestamps.</li>
-<li><strong>Access and examine Volume Shadow Copies</strong> from a forensic image using Arsenal Image Mounter (or vshadowmount) to extract and compare historical file versions.</li>
+<li><strong>Access and examine Volume Shadow Copies</strong> from a forensic image using Autopsy to extract and compare historical file versions.</li>
 <li><strong>Document forensic findings</strong> clearly and accurately, supporting the integrity of the investigation process.</li>
 </ol>
 <div class="callout success">
@@ -215,7 +215,7 @@ th{background:#333!important;-webkit-print-color-adjust:exact;print-color-adjust
 </div>
 
 <h3>Background</h3>
-<p>Windows Event Logs (<code>.evtx</code> files) are stored in <code>C:\Windows\System32\winevt\Logs</code> and record system, security, and application events. In this phase you will examine the <strong>Security</strong> and <strong>System</strong> log channels to identify suspicious logon activity and service changes during the incident window (<strong>Feb 28, 2026, 21:00–23:30 UTC</strong>).</p>
+<p>Windows Event Logs (<code>.evtx</code> files) are stored in <code>C:\Windows\System32\winevt\Logs</code> and record system, security, and application events. In this phase you will examine the <strong>Security</strong> and <strong>System</strong> log channels to identify a suspicious time window based on patterns you observe in the logs, then document the security-relevant events within that window.</p>
 
 <h3>Tools</h3>
 <table>
@@ -243,27 +243,30 @@ th{background:#333!important;-webkit-print-color-adjust:exact;print-color-adjust
 <h3>Step-by-Step Tasks</h3>
 <ol class="steps">
 <li>
-<strong>Mount the forensic image</strong> in your forensic workstation using Arsenal Image Mounter (read-only mode). Navigate to the Event Log directory: <code>C:\Windows\System32\winevt\Logs</code>.
+<strong>In Autopsy, open the vm32 image case from Lab 07.</strong> In the left-panel file tree, navigate to <code>Windows/System32/winevt/Logs</code>. Extract <code>Security.evtx</code> and <code>System.evtx</code> to a local output folder on your analysis machine.
 </li>
 <li>
-<strong>Open the Security log</strong> (<code>Security.evtx</code>) in Windows Event Viewer. Apply a time filter for <strong>Feb 28, 2026, 21:00–23:30 UTC</strong>. Alternatively, use EvtxECmd:
+<strong>Parse the Security log</strong> using EvtxECmd:
 <pre><code>EvtxECmd.exe -f "Security.evtx" --csv "C:\Output" --csvf Security_parsed.csv</code></pre>
-Then open the CSV in Timeline Explorer and filter by the incident time window.
+Open the resulting CSV in Timeline Explorer. Browse the full timeline to look for spikes or clusters of security-relevant events.
 </li>
 <li>
-<strong>Identify failed logon attempts (Event ID 4625).</strong> Record the number of failures, the target account names, source IP addresses, and logon types. Note any brute-force patterns (rapid sequential failures).
+<strong>Define your suspicious time window.</strong> Before filtering, scroll through the parsed log (or sort by time) to identify a 1–3 hour period showing unusual activity — for example, a cluster of logon failures, an after-hours successful logon, or unexpected account activity. Record the start and end time of your chosen window and explain why you selected it. Apply this filter for the steps that follow.
 </li>
 <li>
-<strong>Identify successful logons (Event ID 4624).</strong> For each successful logon during the window, record the account name, logon type (e.g., Type 2 = Interactive, Type 3 = Network, Type 10 = RemoteInteractive), source IP, and timestamp.
+<strong>Identify failed logon attempts (Event ID 4625)</strong> within your chosen time window. Record the number of failures, the target account names, source IP addresses, and logon types. Note any patterns (e.g., rapid sequential failures suggesting password guessing).
 </li>
 <li>
-<strong>Check for privilege escalation (Event ID 4672).</strong> Determine whether any logon session was assigned special (administrative) privileges.
+<strong>Identify successful logons (Event ID 4624)</strong> within your chosen time window. For each successful logon, record the account name, logon type (e.g., Type 2 = Interactive, Type 3 = Network, Type 10 = RemoteInteractive), source IP, and timestamp.
 </li>
 <li>
-<strong>Open the System log</strong> (<code>System.evtx</code>) and filter for Events 7035 and 7036 in the same time window. Identify any services that were started or stopped during the incident. Pay attention to unusual services (e.g., remote access tools, new services not part of the default Windows configuration).
+<strong>Check for privilege escalation (Event ID 4672)</strong> within your chosen time window. Determine whether any logon session was assigned special (administrative) privileges.
 </li>
 <li>
-<strong>Check for account management events</strong> (Event IDs 4720, 4726) in the Security log. Determine whether any new accounts were created or deleted during the window.
+<strong>Parse the System log</strong> using EvtxECmd and filter for Events 7035 and 7036 within your chosen time window. Identify any services that were started or stopped. Pay attention to unusual services (e.g., remote access tools, new services not part of the default Windows configuration).
+</li>
+<li>
+<strong>Check for account management events</strong> (Event IDs 4720, 4726) within your chosen time window. Determine whether any new accounts were created or deleted.
 </li>
 </ol>
 
@@ -271,7 +274,7 @@ Then open the CSV in Timeline Explorer and filter by the incident time window.
 <div class="hint-content" id="hint1" role="region">
 <ul>
 <li><strong>Brute-force pattern:</strong> Multiple 4625 events in rapid succession targeting the same account, followed by a 4624 success — suggests password guessing.</li>
-<li><strong>Logon Type 10 (RemoteInteractive):</strong> Indicates an RDP session — unusual for a clinical workstation after hours.</li>
+<li><strong>Logon Type 10 (RemoteInteractive):</strong> Indicates an RDP session — may indicate remote access activity.</li>
 <li><strong>New or unusual services:</strong> Attackers sometimes install services for persistence or remote access. Look for service names you don't recognize.</li>
 <li><strong>Account creation then deletion:</strong> A 4720 followed by a 4726 for the same account may indicate a temporary "backdoor" account.</li>
 </ul>
@@ -280,32 +283,32 @@ Then open the CSV in Timeline Explorer and filter by the incident time window.
 <h3>Phase 1 — Response Fields</h3>
 
 <div class="response-group">
-<label for="p1q1">1-A. Failed Logon Summary</label>
-<p class="prompt-text">List the failed logon attempts (Event ID 4625) you found within the incident window. For each, note the timestamp, target account, source IP, and logon type. How many total failures did you observe?</p>
+<label for="p1q1">1-A. Suspicious Time Window &amp; Failed Logon Summary</label>
+<p class="prompt-text">Identify the time window you selected as suspicious — give the start and end timestamps and explain your reasoning for choosing it. Then list the failed logon attempts (Event ID 4625) found within that window, noting timestamp, target account, source IP, and logon type. How many total failures did you observe?</p>
 <textarea id="p1q1" placeholder="Enter your findings here..."></textarea>
 </div>
 
 <div class="response-group">
 <label for="p1q2">1-B. Successful Logon Analysis</label>
-<p class="prompt-text">List the successful logon events (Event ID 4624) in the incident window. For each, note the timestamp, account name, logon type, and source IP. Which logon appears most suspicious and why?</p>
+<p class="prompt-text">List the successful logon events (Event ID 4624) within your chosen window. For each, note the timestamp, account name, logon type, and source IP. Which logon appears most suspicious and why?</p>
 <textarea id="p1q2" placeholder="Enter your findings here..."></textarea>
 </div>
 
 <div class="response-group">
 <label for="p1q3">1-C. Privilege Escalation and Account Changes</label>
-<p class="prompt-text">Did you find any Event ID 4672 (special privileges) entries associated with the suspicious logon? Were any accounts created (4720) or deleted (4726)? Describe your findings.</p>
+<p class="prompt-text">Did you find any Event ID 4672 (special privileges) entries associated with the suspicious logon in your chosen window? Were any accounts created (4720) or deleted (4726)? Describe your findings.</p>
 <textarea id="p1q3" placeholder="Enter your findings here..."></textarea>
 </div>
 
 <div class="response-group">
 <label for="p1q4">1-D. Service Activity</label>
-<p class="prompt-text">List any services started or stopped (Event IDs 7035/7036) during the incident window. Are any of these services unusual or potentially related to unauthorized activity? Explain.</p>
+<p class="prompt-text">List any services started or stopped (Event IDs 7035/7036) within your chosen window. Are any of these services unusual or potentially related to unauthorized activity? Explain.</p>
 <textarea id="p1q4" placeholder="Enter your findings here..."></textarea>
 </div>
 
 <div class="response-group">
 <label for="p1q5">1-E. Phase 1 Summary</label>
-<p class="prompt-text">In 3–5 sentences, summarize what the Event Log evidence tells you about what happened during the incident window. What is your working hypothesis at this point?</p>
+<p class="prompt-text">In 3–5 sentences, summarize what the Event Log evidence tells you about what happened during your chosen window. What is your working hypothesis at this point?</p>
 <textarea id="p1q5" placeholder="Enter your summary here..."></textarea>
 </div>
 
@@ -338,24 +341,24 @@ Then open the CSV in Timeline Explorer and filter by the incident time window.
 <h3>Step-by-Step Tasks</h3>
 <ol class="steps">
 <li>
-<strong>Navigate to the Prefetch directory</strong> on the mounted forensic image: <code>C:\Windows\Prefetch</code>. Note the number of <code>.pf</code> files present.
+<strong>In Autopsy, navigate to the Prefetch directory</strong> on the forensic image: <code>Windows/Prefetch</code>. Note the number of <code>.pf</code> files present. Extract the entire Prefetch folder to your local output directory.
 </li>
 <li>
 <strong>Run PECmd in batch mode</strong> to parse all Prefetch files:
-<pre><code>PECmd.exe -d "E:\Windows\Prefetch" --csv "C:\Output" --csvf Prefetch_parsed.csv</code></pre>
-Open the resulting CSV in Timeline Explorer.
+<pre><code>PECmd.exe -d "C:\Output\Prefetch" --csv "C:\Output" --csvf Prefetch_parsed.csv</code></pre>
+Open the resulting CSV in Timeline Explorer. (Replace the <code>-d</code> path with wherever you extracted the Prefetch folder.)
 </li>
 <li>
-<strong>Filter by the incident time window</strong> (Feb 28, 2026, 21:00–23:30 UTC). Identify all executables with a "last run" timestamp within this window.
+<strong>Filter by your Phase 1 suspicious window</strong> (or a nearby window you can justify). Identify all executables with a "last run" timestamp within or near that window.
 </li>
 <li>
-<strong>Identify suspicious executables.</strong> Look for command-line tools or utilities that are unusual on a clinical workstation, such as:
+<strong>Identify suspicious executables.</strong> Look for command-line tools or utilities that are unusual on a standard workstation, such as:
 <ul>
 <li><code>CMD.EXE</code>, <code>POWERSHELL.EXE</code> — command shells</li>
 <li><code>PSEXEC.EXE</code>, <code>WMIC.EXE</code> — remote execution tools</li>
 <li><code>NET.EXE</code>, <code>NET1.EXE</code> — network/account commands</li>
 <li><code>RAR.EXE</code>, <code>7Z.EXE</code> — archiving tools (potential data staging)</li>
-<li><code>RCLONE.EXE</code>, <code>MEGASYNC.EXE</code> — cloud sync tools (potential exfiltration)</li>
+<li>Cloud sync or backup utilities (potential data exfiltration)</li>
 <li>Any executable with an unfamiliar or random-looking name</li>
 </ul>
 </li>
@@ -365,20 +368,20 @@ Open the resulting CSV in Timeline Explorer.
 <li>Executable name and full path (from the <code>.pf</code> file name and referenced files)</li>
 <li>Run count (how many times it has ever been executed)</li>
 <li>Last run timestamp(s)</li>
-<li>Notable referenced files or directories (e.g., paths to patient data folders)</li>
+<li>Notable referenced files or directories (e.g., user profile paths, external drive letters, network paths, or sensitive-looking folder names)</li>
 </ul>
 </li>
 <li>
-<strong>Correlate with Phase 1.</strong> Do the Prefetch timestamps for suspicious programs align with the logon events you identified in Phase 1? Note any correlations.
+<strong>Correlate with Phase 1.</strong> Do the execution timestamps for any of these programs fall within or near your Phase 1 window? Note any correlations or gaps.
 </li>
 </ol>
 
 <button class="hint-toggle" aria-expanded="false" aria-controls="hint2" onclick="toggleHint('hint2',this)">💡 What to Look For <span aria-hidden="true">▸</span></button>
 <div class="hint-content" id="hint2" role="region">
 <ul>
-<li><strong>Low run count + incident-window timestamp:</strong> A run count of 1 with a last-run time during the incident strongly suggests the program was executed for the first time by the attacker.</li>
-<li><strong>Archiving tools:</strong> Execution of <code>RAR.EXE</code> or <code>7Z.EXE</code> during the incident may indicate data was being packaged for exfiltration.</li>
-<li><strong>Referenced files:</strong> PECmd output includes files and directories the executable touched. Look for references to sensitive data paths (e.g., <code>PatientRecords</code>, <code>D:\</code> for USB drives).</li>
+<li><strong>Low run count + window timestamp:</strong> A run count of 1 with a last-run time during your chosen window strongly suggests the program was executed for the first time by an unauthorized user.</li>
+<li><strong>Archiving tools:</strong> Execution of <code>RAR.EXE</code> or <code>7Z.EXE</code> during the window may indicate data was being packaged for exfiltration.</li>
+<li><strong>Referenced files:</strong> PECmd output includes files and directories the executable touched. Look for references to sensitive-looking paths such as user profile directories, external drives, or network locations.</li>
 <li><strong>Sequence matters:</strong> If <code>NET.EXE</code> ran before <code>RAR.EXE</code>, which ran before a cloud sync tool, this suggests reconnaissance → staging → exfiltration.</li>
 </ul>
 </div>
@@ -387,25 +390,25 @@ Open the resulting CSV in Timeline Explorer.
 
 <div class="response-group">
 <label for="p2q1">2-A. Prefetch Inventory</label>
-<p class="prompt-text">How many total Prefetch files were present in the directory? How many executables had a "last run" timestamp within the incident window (Feb 28, 21:00–23:30 UTC)?</p>
+<p class="prompt-text">How many total Prefetch files were present in the directory? How many executables had a "last run" timestamp within or near your Phase 1 window? State the window you used for this filter.</p>
 <textarea id="p2q1" placeholder="Enter your findings here..."></textarea>
 </div>
 
 <div class="response-group">
 <label for="p2q2">2-B. Suspicious Executables</label>
-<p class="prompt-text">List each suspicious executable you identified. For each, provide: (a) executable name, (b) run count, (c) last run timestamp(s), and (d) any notable referenced files or directories.</p>
+<p class="prompt-text">Select 3–5 executables you consider suspicious or noteworthy (based on name, run count, timing, or referenced files). For each, provide: (a) executable name, (b) run count, (c) last-run timestamp(s), (d) notable referenced files or directories, and (e) a brief justification for why you flagged it.</p>
 <textarea id="p2q2" placeholder="Enter your findings here..." style="min-height:150px;"></textarea>
 </div>
 
 <div class="response-group">
 <label for="p2q3">2-C. Correlation with Event Logs</label>
-<p class="prompt-text">Compare your Prefetch findings with the Event Log evidence from Phase 1. Do the execution timestamps align with the suspicious logon session? Describe any correlations or discrepancies you observe.</p>
+<p class="prompt-text">Compare your Prefetch findings with the Event Log evidence from Phase 1. Do the execution timestamps align with the suspicious logon session you identified? Describe any correlations or discrepancies you observe.</p>
 <textarea id="p2q3" placeholder="Enter your findings here..."></textarea>
 </div>
 
 <div class="response-group">
 <label for="p2q4">2-D. Phase 2 Summary</label>
-<p class="prompt-text">In 3–5 sentences, summarize what the Prefetch evidence reveals about the attacker's actions. What programs were run, in what apparent sequence, and what does this suggest about the attacker's objectives?</p>
+<p class="prompt-text">In 3–5 sentences, summarize what the Prefetch evidence reveals about the activity on this system. What programs were run, in what apparent sequence, and what does this suggest about the objectives of whoever was active during your chosen window?</p>
 <textarea id="p2q4" placeholder="Enter your summary here..."></textarea>
 </div>
 
@@ -424,14 +427,13 @@ Open the resulting CSV in Timeline Explorer.
 </div>
 
 <h3>Background</h3>
-<p>The Volume Shadow Copy Service (VSS) creates point-in-time snapshots of NTFS volumes, triggered by events such as system restore points, Windows Update, or scheduled tasks. These snapshots allow forensic examiners to recover <strong>deleted or modified files</strong> from prior system states. In this phase you will access shadow copies from the forensic image to determine whether files were altered or deleted during or after the incident.</p>
+<p>The Volume Shadow Copy Service (VSS) creates point-in-time snapshots of NTFS volumes, triggered by events such as system restore points, Windows Update, or scheduled tasks. These snapshots allow forensic examiners to recover <strong>deleted or modified files</strong> from prior system states. In this phase you will access shadow copies from the forensic image to determine whether files were altered or deleted during or after the activity you identified.</p>
 
 <h3>Tools</h3>
 <table>
 <thead><tr><th>Tool</th><th>Purpose</th></tr></thead>
 <tbody>
-<tr><td>Arsenal Image Mounter</td><td>Mount forensic image with VSS access (read-only)</td></tr>
-<tr><td>vshadowmount (libvshadow)</td><td>Linux alternative for mounting shadow copies</td></tr>
+<tr><td>Autopsy</td><td>Browse Volume Shadow Copies from the forensic image via the left-panel VSC tree</td></tr>
 <tr><td>File comparison utility</td><td>Compare current vs. historical file versions (e.g., WinMerge, <code>fc</code>, <code>diff</code>)</td></tr>
 </tbody>
 </table>
@@ -439,51 +441,49 @@ Open the resulting CSV in Timeline Explorer.
 <h3>Step-by-Step Tasks</h3>
 <ol class="steps">
 <li>
-<strong>Mount the forensic image with VSS support.</strong> In Arsenal Image Mounter, select the forensic image and enable the option to expose Volume Shadow Copies. Mount as <strong>read-only</strong>.
+<strong>In Autopsy, locate the Volume Shadow Copies.</strong> In the left-panel tree, look for the <strong>Volume Shadow Copies</strong> section listed under the image source. Autopsy surfaces available shadow copies automatically. The forensic image is already read-only in Autopsy — no additional mounting step is required.
 <div class="callout warning" style="margin-top:.5rem;">
 <div class="callout-title">⚠️ Important</div>
-<p style="margin:0;">Always mount forensic images in <strong>read-only / write-protected</strong> mode to preserve evidence integrity. Never write to the original image.</p>
+<p style="margin:0;">Autopsy opens forensic images in read-only mode. Do not export and re-open the image in a way that could modify it. Always preserve evidence integrity.</p>
 </div>
 </li>
 <li>
-<strong>Enumerate available shadow copies.</strong> Note how many shadow copies exist and their creation dates. You can use the command:
-<pre><code>vssadmin list shadows /for=E:</code></pre>
-or view them through Arsenal Image Mounter's interface. Record the shadow copy IDs and creation timestamps.
+<strong>Enumerate available shadow copies.</strong> Autopsy lists available shadow copies in the left-panel tree with their creation timestamps. Record each shadow copy's creation date and time directly from the Autopsy interface. Note how many shadow copies exist.
 </li>
 <li>
-<strong>Identify the most relevant shadow copy.</strong> Select the shadow copy with a creation date <strong>closest to but before</strong> the incident window (before Feb 28, 2026, 21:00 UTC). This represents the system state before the suspected intrusion.
+<strong>Identify the most relevant shadow copy.</strong> Select the shadow copy with a creation date <strong>closest to but before</strong> the start of your Phase 1 window. This represents the system state before the activity you identified. Record why you chose this snapshot.
 </li>
 <li>
 <strong>Browse the shadow copy.</strong> Navigate to directories of interest, such as:
 <ul>
-<li>User profile directories (e.g., <code>Users\Dr.Chen\Documents</code>)</li>
-<li>Any paths identified in Phase 2 Prefetch referenced files</li>
-<li>Temporary directories (<code>Users\Dr.Chen\AppData\Local\Temp</code>)</li>
+<li>A user profile directory and any subfolders you consider sensitive or potentially relevant (e.g., Documents, Desktop, Downloads, AppData\Local\Temp)</li>
+<li>Any paths identified from Phase 2 Prefetch referenced files</li>
+<li>Any other locations you can justify as forensically significant</li>
 </ul>
 </li>
 <li>
-<strong>Compare file versions.</strong> Select 2–3 files that exist in both the shadow copy (pre-incident) and the current image. Compare them:
+<strong>Compare file versions.</strong> Select 2–3 files that exist in both the shadow copy (pre-activity) and the current image. Compare them:
 <ul>
-<li>Are any files present in the shadow copy but <strong>missing</strong> from the current image? (Deleted after incident)</li>
-<li>Are any files present in the current image but <strong>absent</strong> from the shadow copy? (Created during/after incident)</li>
-<li>Do any files have <strong>different content or sizes</strong> between the two versions? (Modified during incident)</li>
+<li>Are any files present in the shadow copy but <strong>missing</strong> from the current image? (Deleted after activity)</li>
+<li>Are any files present in the current image but <strong>absent</strong> from the shadow copy? (Created during/after activity)</li>
+<li>Do any files have <strong>different content or sizes</strong> between the two versions? (Modified during activity)</li>
 </ul>
 </li>
 <li>
-<strong>Extract relevant historical files.</strong> Copy any significant files from the shadow copy to your analysis output folder for documentation. Record the hash (MD5 or SHA-256) of each extracted file.
+<strong>Extract relevant historical files.</strong> In Autopsy, right-click the file in the shadow copy tree and choose <em>Extract File(s)</em> to save it to your output folder. Record the hash (MD5 or SHA-256) of each extracted file.
 </li>
 <li>
-<strong>Check for anti-forensic activity.</strong> Look for evidence that the attacker attempted to delete shadow copies. Check the System Event Log (from Phase 1) for events related to <code>vssadmin delete shadows</code> or the Volume Shadow Copy Service being stopped.
+<strong>Check for anti-forensic activity.</strong> Look in the System Event Log (from Phase 1) for evidence that shadow copies were deleted or the Volume Shadow Copy Service was stopped unexpectedly. Also look for gaps in the shadow copy timeline — a large gap between creation dates that does not match normal system activity may indicate deliberate deletion.
 </li>
 </ol>
 
 <button class="hint-toggle" aria-expanded="false" aria-controls="hint3" onclick="toggleHint('hint3',this)">💡 What to Look For <span aria-hidden="true">▸</span></button>
 <div class="hint-content" id="hint3" role="region">
 <ul>
-<li><strong>Deleted files recovered:</strong> If a file exists in the shadow copy but not on the live volume, the attacker (or someone) deleted it after the snapshot was taken. This is strong evidence of cover-up activity.</li>
+<li><strong>Deleted files recovered:</strong> If a file exists in the shadow copy but not on the live volume, someone deleted it after the snapshot was taken. This is strong evidence of cover-up activity.</li>
 <li><strong>Log file tampering:</strong> Compare Event Log files between the shadow copy and the current image. If the current logs are smaller or missing entries, log clearing may have occurred.</li>
-<li><strong>New files post-incident:</strong> Files present on the current image but not in the pre-incident shadow copy were created during or after the intrusion — potential attacker tools or staged data.</li>
-<li><strong>Ransomware indicator:</strong> If shadow copies have been deleted (no shadows available, or VSS service stopped), this is a common ransomware or anti-forensic tactic.</li>
+<li><strong>New files post-activity:</strong> Files present on the current image but not in the pre-activity shadow copy were created during or after the intrusion — potential attacker tools or staged data.</li>
+<li><strong>Missing or sparse shadow copies:</strong> If shadow copies are absent or span an unexpected gap, this may indicate anti-forensic activity (common in ransomware and intrusion scenarios) or simply that VSS was disabled on this system. Note whichever you observe.</li>
 </ul>
 </div>
 
@@ -491,13 +491,13 @@ or view them through Arsenal Image Mounter's interface. Record the shadow copy I
 
 <div class="response-group">
 <label for="p3q1">3-A. Shadow Copy Inventory</label>
-<p class="prompt-text">How many Volume Shadow Copies were available on the forensic image? List the creation date/time of each. Which shadow copy did you select as the pre-incident baseline, and why?</p>
+<p class="prompt-text">How many Volume Shadow Copies were available on the forensic image? List the creation date and time of each. Which shadow copy did you select as your pre-activity baseline, and why? How does its creation date relate to your Phase 1 window?</p>
 <textarea id="p3q1" placeholder="Enter your findings here..."></textarea>
 </div>
 
 <div class="response-group">
 <label for="p3q2">3-B. File Comparison Results</label>
-<p class="prompt-text">Describe the 2–3 files you compared between the shadow copy and the current image. For each file, state: (a) file name and path, (b) whether it was present/absent/modified in each version, (c) any size or content differences, and (d) the forensic significance of the difference.</p>
+<p class="prompt-text">Describe 2–3 files or folders you selected for comparison (explain why you chose them). For each, state: (a) file name and path, (b) presence/absence/modification status in each version, (c) any size or content differences, and (d) whether the difference appears normal or suspicious, and why.</p>
 <textarea id="p3q2" placeholder="Enter your findings here..." style="min-height:150px;"></textarea>
 </div>
 
@@ -509,13 +509,13 @@ or view them through Arsenal Image Mounter's interface. Record the shadow copy I
 
 <div class="response-group">
 <label for="p3q4">3-D. Anti-Forensic Indicators</label>
-<p class="prompt-text">Did you find any evidence that the attacker attempted to delete shadow copies or tamper with VSS? Describe what you found (or note the absence of such evidence).</p>
+<p class="prompt-text">Did you find any evidence that shadow copies were deleted or the VSS service was tampered with? Describe what you found (or note the absence of such evidence and what that suggests).</p>
 <textarea id="p3q4" placeholder="Enter your findings here..."></textarea>
 </div>
 
 <div class="response-group">
 <label for="p3q5">3-E. Phase 3 Summary</label>
-<p class="prompt-text">In 3–5 sentences, summarize what the Volume Shadow Copy evidence adds to your understanding of the incident. How does it complement or expand upon the Event Log and Prefetch findings?</p>
+<p class="prompt-text">In 3–5 sentences, summarize what the Volume Shadow Copy evidence adds to your understanding of the activity on this system. How does it complement or expand upon the Event Log and Prefetch findings?</p>
 <textarea id="p3q5" placeholder="Enter your summary here..."></textarea>
 </div>
 
@@ -546,9 +546,9 @@ or view them through Arsenal Image Mounter's interface. Record the shadow copy I
 <table>
 <thead><tr><th>Component</th><th>Points</th><th>Criteria</th></tr></thead>
 <tbody>
-<tr><td>Phase 1 — Event Log Analysis</td><td>7</td><td>Correctly identifies suspicious logon activity, privilege escalation, service changes; clear documentation with specific Event IDs and timestamps</td></tr>
-<tr><td>Phase 2 — Prefetch File Analysis</td><td>6</td><td>Accurately parses Prefetch files; identifies suspicious executables with run counts and timestamps; correlates with Phase 1 findings</td></tr>
-<tr><td>Phase 3 — Volume Shadow Copy Examination</td><td>7</td><td>Successfully accesses shadow copies; compares file versions; extracts relevant evidence with hashes; identifies anti-forensic indicators</td></tr>
+<tr><td>Phase 1 — Event Log Analysis</td><td>7</td><td>Identifies and justifies a suspicious time window; correctly lists and interprets relevant Event IDs (4624, 4625, 4672, 4720/4726, 7035/7036) within that window; clear documentation with specific timestamps</td></tr>
+<tr><td>Phase 2 — Prefetch File Analysis</td><td>6</td><td>Correctly uses PECmd to parse Prefetch files; selects 3–5 suspicious or noteworthy executables with justification; correlates execution timing with Phase 1 window</td></tr>
+<tr><td>Phase 3 — Volume Shadow Copy Examination</td><td>7</td><td>Successfully enumerates and accesses shadow copies; selects a justified pre-activity baseline; compares 2–3 files with clear descriptions of differences and their significance; notes presence or absence of anti-forensic indicators with reasoning</td></tr>
 </tbody>
 </table>
 
