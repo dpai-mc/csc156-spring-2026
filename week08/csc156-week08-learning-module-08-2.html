@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 8.2: Program Execution Artifacts | CSC 156</title>
+<style>
+:root {
+  --nav-height: 56px;
+  --color-bg: #ffffff;
+  --color-text: #1a1a1a;
+  --color-heading: #1a2238;
+  --color-primary: #2563eb;
+  --color-primary-dark: #1d4ed8;
+  --color-primary-light: #dbeafe;
+  --color-secondary: #0f766e;
+  --color-secondary-light: #ccfbf1;
+  --color-accent: #7c3aed;
+  --color-accent-light: #ede9fe;
+  --color-border: #d1d5db;
+  --color-border-light: #e5e7eb;
+  --color-surface: #f9fafb;
+  --color-surface-alt: #f3f4f6;
+  --color-success: #16a34a;
+  --color-success-bg: #dcfce7;
+  --color-error: #dc2626;
+  --color-error-bg: #fee2e2;
+  --color-warning: #d97706;
+  --color-warning-bg: #fef3c7;
+  --color-info: #2563eb;
+  --color-info-bg: #dbeafe;
+  --font-body: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  --radius: 8px;
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --max-width: 960px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--nav-height) + 16px);}
+body{font-family:var(--font-body);font-size:1rem;line-height:1.65;color:var(--color-text);background:var(--color-bg);}
+
+.sticky-nav{position:sticky;top:0;z-index:1000;background:var(--color-heading);box-shadow:var(--shadow-md);}
+.sticky-nav__inner{max-width:var(--max-width);margin:0 auto;display:flex;align-items:center;flex-wrap:nowrap;padding:0 1rem;min-height:var(--nav-height);gap:0.25rem;}
+.sticky-nav__title{color:#fff;font-weight:700;font-size:0.95rem;margin-right:auto;white-space:nowrap;flex-shrink:0;padding:0.5rem 0.75rem 0.5rem 0;}
+.sticky-nav a{color:#cbd5e1;text-decoration:none;font-size:0.9rem;padding:0.4rem 0.6rem;border-radius:4px;transition:background .15s,color .15s;white-space:nowrap;position:relative;min-width:1.9rem;text-align:center;font-weight:600;}
+.sticky-nav a:hover,.sticky-nav a:focus-visible{background:rgba(255,255,255,0.12);color:#fff;}
+.sticky-nav a:focus-visible{outline:2px solid #93c5fd;outline-offset:2px;}
+.sticky-nav a::after{content:attr(data-label);position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1a2238;color:#fff;font-size:0.75rem;font-weight:400;padding:0.3rem 0.65rem;border-radius:4px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:1100;box-shadow:0 2px 6px rgba(0,0,0,0.35);}
+.sticky-nav a:hover::after,.sticky-nav a:focus-visible::after{opacity:1;}
+
+.module-hero{background:linear-gradient(135deg,var(--color-heading) 0%,#243358 100%);padding:1.75rem 1rem 1.5rem;box-shadow:0 2px 8px rgba(0,0,0,0.15);}
+.module-hero__inner{max-width:var(--max-width);margin:0 auto;}
+.module-hero__meta{font-size:0.82rem;color:#93c5fd;margin-bottom:0.35rem;letter-spacing:0.01em;}
+.module-hero h1{color:#fff;font-size:1.85rem;line-height:1.2;margin:0.2rem 0 0.75rem;}
+
+.page{max-width:var(--max-width);margin:0 auto;padding:1.5rem 1rem 4rem;}
+
+h2{font-size:1.4rem;color:var(--color-heading);margin:2.25rem 0 0.75rem;padding-bottom:0.35rem;border-bottom:3px solid var(--color-primary);scroll-margin-top:calc(var(--nav-height) + 16px);}
+h3{font-size:1.15rem;color:var(--color-heading);margin:1.5rem 0 0.5rem;}
+h4{font-size:1rem;color:var(--color-secondary);margin:1.25rem 0 0.4rem;}
+p{margin:0.6rem 0;}
+a{color:var(--color-primary);}
+a:focus-visible{outline:2px solid var(--color-primary);outline-offset:2px;border-radius:2px;}
+
+.callout{border-left:4px solid;border-radius:var(--radius);padding:1rem 1.15rem;margin:1.25rem 0;}
+.callout--info{border-color:var(--color-info);background:var(--color-info-bg);}
+.callout--success{border-color:var(--color-success);background:var(--color-success-bg);}
+.callout--warning{border-color:var(--color-warning);background:var(--color-warning-bg);}
+.callout--error{border-color:var(--color-error);background:var(--color-error-bg);}
+.callout--accent{border-color:var(--color-accent);background:var(--color-accent-light);}
+.callout__title{font-weight:700;margin-bottom:0.3rem;display:flex;align-items:center;gap:0.4rem;}
+
+.table-wrap{overflow-x:auto;margin:1rem 0;}
+table{width:100%;border-collapse:collapse;font-size:0.92rem;}
+th,td{text-align:left;padding:0.6rem 0.75rem;border:1px solid var(--color-border);}
+th{background:var(--color-heading);color:#fff;font-weight:600;}
+tr:nth-child(even){background:var(--color-surface);}
+caption{font-weight:700;margin-bottom:0.4rem;text-align:left;font-size:1rem;color:var(--color-heading);}
+
+code{font-family:var(--font-mono);font-size:0.88em;background:var(--color-surface-alt);padding:0.15em 0.4em;border-radius:4px;}
+pre{background:#1e293b;color:#e2e8f0;padding:1rem 1.15rem;border-radius:var(--radius);overflow-x:auto;font-size:0.88rem;line-height:1.55;margin:1rem 0;}
+pre code{background:transparent;padding:0;color:inherit;}
+kbd{font-family:var(--font-mono);font-size:0.85em;background:var(--color-surface-alt);border:1px solid var(--color-border);border-radius:3px;padding:0.1em 0.4em;box-shadow:0 1px 1px rgba(0,0,0,0.08);}
+
+details{border:1px solid var(--color-border-light);border-radius:var(--radius);margin:0.75rem 0;background:var(--color-surface);}
+details[open]{background:var(--color-bg);}
+summary{cursor:pointer;font-weight:600;padding:0.75rem 1rem;list-style:none;display:flex;align-items:center;gap:0.5rem;user-select:none;}
+summary::-webkit-details-marker{display:none;}
+summary::before{content:'▶';font-size:0.7rem;transition:transform .2s;display:inline-block;}
+details[open]>summary::before{transform:rotate(90deg);}
+summary:focus-visible{outline:2px solid var(--color-primary);outline-offset:-2px;border-radius:var(--radius);}
+.details-body{padding:0.25rem 1rem 1rem;}
+
+.tabs{margin:1.25rem 0;}
+.tab-list{display:flex;flex-wrap:wrap;border-bottom:2px solid var(--color-border);list-style:none;}
+.tab-btn{background:none;border:none;font:inherit;padding:0.6rem 1.1rem;cursor:pointer;color:#4b5563;font-weight:600;font-size:0.92rem;border-bottom:3px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;}
+.tab-btn:hover{color:var(--color-primary);}
+.tab-btn[aria-selected="true"]{color:var(--color-primary);border-bottom-color:var(--color-primary);}
+.tab-btn:focus-visible{outline:2px solid var(--color-primary);outline-offset:-2px;border-radius:4px 4px 0 0;}
+.tab-panel{padding:1rem 0.25rem;display:none;}
+.tab-panel.active{display:block;}
+
+.kc-question{border:1px solid var(--color-border-light);border-radius:var(--radius);padding:1rem 1.15rem;margin:1rem 0;background:var(--color-surface);}
+.kc-question__stem{font-weight:600;margin-bottom:0.6rem;}
+.kc-options{list-style:none;display:flex;flex-direction:column;gap:0.35rem;}
+.kc-option{display:flex;align-items:baseline;gap:0.5rem;}
+.kc-option label{cursor:pointer;}
+.kc-feedback{margin-top:0.75rem;padding:0.7rem 0.9rem;border-radius:var(--radius);font-size:0.92rem;display:none;}
+.kc-feedback--correct{background:var(--color-success-bg);border-left:4px solid var(--color-success);}
+.kc-feedback--incorrect{background:var(--color-error-bg);border-left:4px solid var(--color-error);}
+.kc-btn{margin-top:0.6rem;padding:0.5rem 1.25rem;background:var(--color-primary);color:#fff;border:none;border-radius:var(--radius);font:inherit;font-size:0.9rem;cursor:pointer;font-weight:600;transition:background .15s;}
+.kc-btn:hover{background:var(--color-primary-dark);}
+.kc-btn:focus-visible{outline:2px solid var(--color-primary-dark);outline-offset:2px;}
+
+.scenario{border:2px solid var(--color-accent);border-radius:var(--radius);padding:1.25rem;margin:1.25rem 0;background:var(--color-accent-light);}
+.scenario__title{font-weight:700;font-size:1.05rem;color:var(--color-accent);margin-bottom:0.5rem;display:flex;align-items:center;gap:0.4rem;}
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;}
+.badge{display:inline-block;font-size:0.78rem;font-weight:700;padding:0.15em 0.55em;border-radius:12px;vertical-align:middle;}
+.badge--time{background:var(--color-primary-light);color:var(--color-primary-dark);}
+.badge--cslo{background:var(--color-secondary-light);color:var(--color-secondary);}
+.flex-row{display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;}
+
+@media print{
+  .sticky-nav{position:relative;}
+  details>.details-body{display:block!important;}
+  .tab-panel{display:block!important;}
+}
+@media(max-width:640px){
+  .module-hero h1{font-size:1.45rem;}
+  h2{font-size:1.2rem;}
+  .sticky-nav__inner{padding:0 0.5rem;}
+  .sticky-nav__title{font-size:0.8rem;max-width:9rem;overflow:hidden;text-overflow:ellipsis;}
+  .sticky-nav a{font-size:0.82rem;padding:0.4rem 0.5rem;min-width:1.65rem;}
+  pre{font-size:0.82rem;padding:0.75rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════ NAVIGATION ═══════════════════════════ -->
+<nav class="sticky-nav" aria-label="Module sections">
+  <div class="sticky-nav__inner">
+    <span class="sticky-nav__title">8.2 &mdash; Execution Artifacts</span>
+    <a href="#intro"       data-label="1. Introduction"      aria-label="Section 1: Introduction">1</a>
+    <a href="#prefetch"    data-label="2. Prefetch Files"     aria-label="Section 2: Prefetch Files">2</a>
+    <a href="#pecmd"       data-label="3. PECmd"              aria-label="Section 3: PECmd Tool Walk-Through">3</a>
+    <a href="#amcache"     data-label="4. AmCache"            aria-label="Section 4: AmCache">4</a>
+    <a href="#shimcache"   data-label="5. ShimCache"          aria-label="Section 5: ShimCache">5</a>
+    <a href="#correlation" data-label="6. Correlation"        aria-label="Section 6: Correlation Exercise">6</a>
+    <a href="#comparison"  data-label="7. Comparison"         aria-label="Section 7: Comparison Table">7</a>
+    <a href="#kc"          data-label="8. Knowledge Check"    aria-label="Section 8: Knowledge Check">8</a>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════ HERO ═══════════════════════════ -->
+<header class="module-hero">
+  <div class="module-hero__inner">
+    <p class="module-hero__meta">CSC 156 &mdash; Digital Forensics Fundamentals &nbsp;|&nbsp; Week 8 &nbsp;|&nbsp; Module 8.2 of 8.5</p>
+    <h1>Program Execution Artifacts &mdash; Prefetch, AmCache, and ShimCache</h1>
+    <div class="flex-row">
+      <span class="badge badge--time" aria-label="Estimated time: 50 to 65 minutes">⏱ 50–65 min</span>
+      <span class="badge badge--cslo" aria-label="Primary CSLO alignment">CSLO 2</span>
+      <span class="badge badge--cslo" aria-label="Supporting CSLO alignment">CSLO 1</span>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+
+<!-- ═══════════════════ §1 INTRODUCTION ═══════════════════ -->
+<h2 id="intro">1. Introduction &amp; Objectives</h2>
+
+<p>In Module 8.1 you learned how Windows Event Logs record <em>who</em> logged on, <em>when</em>, and <em>from where</em>. But Event Logs rarely tell you <strong>what programs a user ran</strong> during that session. That is where <strong>program execution artifacts</strong> come in.</p>
+
+<p>Windows maintains several independent mechanisms that track which executables have been launched on a system. Each artifact records slightly different information, has different retention characteristics, and carries different evidentiary weight. A skilled examiner uses them together&mdash;and cross-references them with Event Logs&mdash;to build an airtight picture of program activity.</p>
+
+<div class="callout callout--info">
+  <div class="callout__title">🎯 Why This Matters</div>
+  <p>Consider these investigative questions:</p>
+  <ul>
+    <li>Did the suspect run a data-exfiltration tool on this workstation?</li>
+    <li>Was the ransomware binary actually executed, or was it only downloaded?</li>
+    <li>Did the attacker use PsExec to move laterally to this machine?</li>
+    <li>Has an anti-forensic wiping utility ever been run on this system?</li>
+  </ul>
+  <p>Execution artifacts&mdash;Prefetch, AmCache, and ShimCache&mdash;can answer every one of these questions, even after the executable itself has been deleted.</p>
+</div>
+
+<h3>Module Objectives</h3>
+<p>By the end of this module you will be able to:</p>
+<ol>
+  <li>Explain the purpose, location, and internal structure of <strong>Windows Prefetch files</strong>, including OS version differences.</li>
+  <li>Parse Prefetch files using <strong>PECmd</strong> and interpret the output (run count, last-run timestamps, referenced files).</li>
+  <li>Describe the <strong>AmCache.hve</strong> Registry hive&mdash;its location, key fields, and forensic significance.</li>
+  <li>Explain what <strong>ShimCache (AppCompatCache)</strong> records and articulate the critical nuance that ShimCache proves file <em>presence</em>, not necessarily <em>execution</em>.</li>
+  <li>Correlate execution artifacts with Event Log data to confirm <em>who</em> ran a program, <em>when</em>, and <em>how</em>.</li>
+  <li>Compare Prefetch, AmCache, ShimCache, and UserAssist (from Week 7) in terms of what each records, its limitations, and OS support.</li>
+</ol>
+
+<h3>Where This Module Connects</h3>
+<div class="table-wrap">
+<table>
+  <caption class="sr-only">Module 8.2 connections to graded work</caption>
+  <thead><tr><th scope="col">Assessment</th><th scope="col">Connection</th></tr></thead>
+  <tbody>
+    <tr><td>Lab 8 (20 pts)</td><td>The second section of Lab 8 requires parsing Prefetch files from a forensic image to determine which programs were executed and when.</td></tr>
+    <tr><td>Discussion 8 (3 pts)</td><td>Execution artifacts are strong candidates for the &ldquo;most valuable artifact&rdquo; discussion prompt.</td></tr>
+    <tr><td>Homework 3 (20 pts)</td><td>Execution artifacts are a required data source in the integrative correlation exercise.</td></tr>
+    <tr><td>Midterm Exam (Wk 9, 120 pts)</td><td>Expect questions distinguishing between execution artifacts and their evidentiary value.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Prerequisites</h3>
+<p>This module assumes you have completed:</p>
+<ul>
+  <li><strong>Module 8.1</strong> &mdash; Windows Event Log Forensics (Event IDs, EvtxECmd, XPath filtering).</li>
+  <li><strong>Week 7, Module 7.3</strong> &mdash; User-level artifacts, including <strong>UserAssist</strong> (GUI-based execution tracking) and <strong>RecentDocs</strong>.</li>
+</ul>
+
+<!-- ═══════════════════ §2 PREFETCH ═══════════════════ -->
+<h2 id="prefetch">2. Prefetch Files</h2>
+
+<p>Windows <strong>Prefetch</strong> is a performance-optimization feature that monitors the first ~10 seconds of an application&rsquo;s launch, records which files and directories the application accesses, and stores that data in a <code>.pf</code> file. On subsequent launches, the OS uses this data to pre-load resources into memory, reducing startup time.</p>
+
+<p>For forensic examiners, Prefetch is a goldmine: it records <strong>evidence of execution</strong> that persists even after the executable is deleted.</p>
+
+<div class="callout callout--info">
+  <div class="callout__title">📂 Location</div>
+  <p><code>C:\Windows\Prefetch\</code></p>
+  <p>This directory contains <code>.pf</code> files, one per unique executable (by name and path). The directory is limited to <strong>1,024 entries</strong> on Windows 10/11 (128 on Windows 7/8), so older entries are eventually evicted.</p>
+</div>
+
+<h3>File Naming Convention</h3>
+<p>Prefetch files follow a specific naming pattern:</p>
+<pre><code>EXECUTABLE_NAME-XXXXXXXX.pf</code></pre>
+<p>Where:</p>
+<ul>
+  <li><code>EXECUTABLE_NAME</code> &mdash; uppercase name of the executable (e.g., <code>CMD.EXE</code>).</li>
+  <li><code>XXXXXXXX</code> &mdash; an 8-character hexadecimal <strong>hash</strong> of the executable&rsquo;s file path. This means the same executable launched from two different locations produces <em>two separate</em> Prefetch files.</li>
+</ul>
+<p><strong>Example:</strong> <code>CMD.EXE-4A81B364.pf</code> and <code>CMD.EXE-AC113AA8.pf</code> represent <code>cmd.exe</code> launched from two different paths.</p>
+
+<h3>What a Prefetch File Records</h3>
+
+<div class="table-wrap">
+<table>
+  <caption>Key Data Fields in a Prefetch File</caption>
+  <thead><tr><th scope="col">Field</th><th scope="col">Description</th><th scope="col">Forensic Value</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Executable name</strong></td>
+      <td>Name of the program that was run.</td>
+      <td>Confirms the program existed and was executed on this system.</td>
+    </tr>
+    <tr>
+      <td><strong>Run count</strong></td>
+      <td>Number of times the executable has been launched.</td>
+      <td>Distinguishes a one-time event from habitual usage.</td>
+    </tr>
+    <tr>
+      <td><strong>Last run timestamp(s)</strong></td>
+      <td>The most recent execution time. On Windows 8+, the <strong>last 8 run times</strong> are stored.</td>
+      <td>Establishes <em>when</em> the program was used. Multiple timestamps show a pattern of usage over time.</td>
+    </tr>
+    <tr>
+      <td><strong>Referenced files &amp; directories</strong></td>
+      <td>List of files and folders accessed during the first ~10 seconds of execution.</td>
+      <td>Reveals what the program interacted with&mdash;DLLs loaded, config files read, data files opened. Can link an executable to specific data files.</td>
+    </tr>
+    <tr>
+      <td><strong>Volume information</strong></td>
+      <td>Volume serial number and creation timestamp of the volume the executable was on.</td>
+      <td>Can tie execution to a specific drive, including removable media.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3>OS Version Differences</h3>
+<p>The Prefetch format has evolved across Windows versions. Understanding these differences is important when examining images from different OS versions:</p>
+
+<div class="tabs" id="os-tabs">
+  <ul class="tab-list" role="tablist" aria-label="Prefetch OS version differences">
+    <li role="presentation"><button class="tab-btn" role="tab" aria-selected="true" aria-controls="panel-win7" id="tab-win7">Windows 7</button></li>
+    <li role="presentation"><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-win8" id="tab-win8">Windows 8/8.1</button></li>
+    <li role="presentation"><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-win10" id="tab-win10">Windows 10/11</button></li>
+  </ul>
+
+  <div class="tab-panel active" role="tabpanel" id="panel-win7" aria-labelledby="tab-win7">
+    <h4>Windows 7 (Prefetch Version 23)</h4>
+    <ul>
+      <li><strong>Timestamps:</strong> Only the <em>single most recent</em> run time is stored.</li>
+      <li><strong>Compression:</strong> Files are <em>not</em> compressed.</li>
+      <li><strong>Max entries:</strong> 128 Prefetch files in the directory.</li>
+      <li><strong>Forensic note:</strong> With only one timestamp and a lower entry limit, Windows 7 Prefetch provides less historical depth than later versions.</li>
+    </ul>
+  </div>
+
+  <div class="tab-panel" role="tabpanel" id="panel-win8" aria-labelledby="tab-win8">
+    <h4>Windows 8 / 8.1 (Prefetch Version 26)</h4>
+    <ul>
+      <li><strong>Timestamps:</strong> The <strong>last 8 run times</strong> are stored&mdash;a major improvement for forensic analysis.</li>
+      <li><strong>Compression:</strong> Files are compressed using <strong>MAM (Microsoft Application Model)</strong> compression. Tools like PECmd handle decompression automatically.</li>
+      <li><strong>Max entries:</strong> 1,024 Prefetch files.</li>
+      <li><strong>Forensic note:</strong> The jump from 1 to 8 timestamps provides a usage pattern over time, not just the last event.</li>
+    </ul>
+  </div>
+
+  <div class="tab-panel" role="tabpanel" id="panel-win10" aria-labelledby="tab-win10">
+    <h4>Windows 10 / 11 (Prefetch Version 30)</h4>
+    <ul>
+      <li><strong>Timestamps:</strong> The <strong>last 8 run times</strong> are stored (same as Windows 8+).</li>
+      <li><strong>Compression:</strong> Files are compressed (same MAM compression as Win 8).</li>
+      <li><strong>Max entries:</strong> 1,024 Prefetch files.</li>
+      <li><strong>Forensic note:</strong> Functionally similar to Windows 8 for forensic purposes. The internal format version changed (30 vs. 26) but the data fields are largely the same. PECmd handles both transparently.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="callout callout--warning">
+  <div class="callout__title">⚠️ When Prefetch Is Disabled</div>
+  <p>Prefetch can be disabled via Group Policy or Registry settings. It is also <strong>disabled by default on Windows Server</strong> editions. Additionally, systems with SSDs may have the <strong>Superfetch/SysMain</strong> service configured differently, though Prefetch itself typically remains enabled on client editions of Windows 10/11 even with SSDs.</p>
+  <p>Always verify that Prefetch is enabled on the system under examination. Check the Registry key:<br>
+  <code>HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters</code><br>
+  Value <code>EnablePrefetcher</code>: <strong>0</strong> = disabled, <strong>1</strong> = application only, <strong>2</strong> = boot only, <strong>3</strong> = both (default on client editions).</p>
+</div>
+
+<details>
+  <summary>Deep Dive: How the Path Hash Works</summary>
+  <div class="details-body">
+    <p>The 8-character hex value in the Prefetch filename is a hash of the <strong>full path</strong> to the executable (including the device path). For example:</p>
+    <ul>
+      <li><code>C:\Windows\System32\cmd.exe</code> → hash <code>4A81B364</code></li>
+      <li><code>C:\Users\jsmith\Desktop\cmd.exe</code> → hash <code>AC113AA8</code></li>
+    </ul>
+    <p>This means:</p>
+    <ul>
+      <li>If an attacker copies <code>cmd.exe</code> to a different directory and runs it from there, a <em>new</em> Prefetch file is created with a different hash.</li>
+      <li>Finding a Prefetch file for an executable in an unusual path (e.g., <code>C:\Windows\Temp\</code>) is a strong indicator of suspicious activity.</li>
+      <li>The hash algorithm is documented and deterministic, so you can compute the expected hash for a known path to verify which Prefetch file corresponds to which location.</li>
+    </ul>
+  </div>
+</details>
+
+<!-- ═══════════════════ §3 PECMD ═══════════════════ -->
+<h2 id="pecmd">3. Tool Walk-Through: PECmd</h2>
+
+<p><strong>PECmd</strong> (Prefetch Explorer Command Line) is part of Eric Zimmerman&rsquo;s open-source forensic tool suite. It parses individual <code>.pf</code> files or an entire Prefetch directory and exports structured data to CSV, JSON, or the console.</p>
+
+<div class="callout callout--accent">
+  <div class="callout__title">🛠️ Hands-On Walkthrough</div>
+  <p>Follow along with these commands on your forensic workstation. If you have a forensic image mounted, navigate to the <code>C:\Windows\Prefetch</code> directory within the image. Otherwise, you can practice on your own system&rsquo;s Prefetch directory (run the tool as Administrator).</p>
+</div>
+
+<h3>Step 1: Parse a Single Prefetch File</h3>
+<pre><code>PECmd.exe -f "C:\Windows\Prefetch\CMD.EXE-4A81B364.pf"</code></pre>
+<p>This displays parsed output directly in the console. Key fields to look for:</p>
+<ul>
+  <li><strong>Executable name</strong> and the path hash.</li>
+  <li><strong>Run count</strong> &mdash; how many times the program has been launched.</li>
+  <li><strong>Last run</strong> &mdash; the most recent execution timestamp (UTC).</li>
+  <li><strong>Previous runs</strong> (Win 8+) &mdash; up to 7 additional historical run times.</li>
+  <li><strong>Volume information</strong> &mdash; serial number and creation time.</li>
+  <li><strong>Directories referenced</strong> and <strong>Files referenced</strong> &mdash; resources the program accessed at launch.</li>
+</ul>
+
+<h3>Step 2: Parse an Entire Prefetch Directory to CSV</h3>
+<pre><code>PECmd.exe -d "C:\Windows\Prefetch" --csv "C:\Output" --csvf "Prefetch_parsed.csv"</code></pre>
+<p>Flags explained:</p>
+<ul>
+  <li><code>-d</code> &mdash; path to a directory of <code>.pf</code> files (batch processing).</li>
+  <li><code>--csv</code> &mdash; output directory for CSV files.</li>
+  <li><code>--csvf</code> &mdash; filename for the main timeline CSV.</li>
+</ul>
+<p>PECmd generates <strong>two CSV files</strong>:</p>
+<ol>
+  <li>A <strong>timeline CSV</strong> (the filename you specified) &mdash; one row per Prefetch file with run count, timestamps, and volume info.</li>
+  <li>A <strong>referenced-files CSV</strong> (automatically named with <code>_Timeline</code> suffix) &mdash; one row per referenced file/directory per Prefetch entry.</li>
+</ol>
+
+<h3>Step 3: Load and Analyze in Timeline Explorer</h3>
+<ol>
+  <li>Open <strong>Timeline Explorer</strong> and load the main CSV.</li>
+  <li>Sort by <code>LastRun</code> to see the most recently executed programs.</li>
+  <li>Filter the <code>ExecutableName</code> column to search for a specific program (e.g., <code>PSEXEC</code>).</li>
+  <li>Check the <code>RunCount</code> column to see how many times each program was launched.</li>
+</ol>
+
+<h3>Step 4: Interpreting Sample Output</h3>
+<p>Here is an example of parsed PECmd console output for a suspicious executable:</p>
+
+<pre><code>---------- Processed C:\Evidence\Prefetch\SVCH0ST.EXE-1B3C8A7F.pf ----------
+
+Executable name: SVCH0ST.EXE
+Hash: 1B3C8A7F
+File size (bytes): 28,672
+Version: Windows 10 or 11 (Version 30)
+
+Run count: 3
+Last run: 2026-02-14 02:52:44 (UTC)
+  Other run times: 2026-02-13 23:15:02 (UTC), 2026-02-13 18:40:11 (UTC)
+
+Volume 0:
+  Name:        \VOLUME{01234567-89ab-cdef-0123-456789abcdef}
+  Serial:      A4E7-2B19
+  Created:     2025-09-15 10:22:08 (UTC)
+
+Directories referenced: 7
+  \VOLUME{...}\WINDOWS\TEMP
+  \VOLUME{...}\WINDOWS\SYSTEM32
+  ...
+
+Files referenced: 14
+  \VOLUME{...}\WINDOWS\TEMP\SVCH0ST.EXE
+  \VOLUME{...}\WINDOWS\SYSTEM32\NTDLL.DLL
+  \VOLUME{...}\WINDOWS\SYSTEM32\KERNEL32.DLL
+  \VOLUME{...}\WINDOWS\TEMP\CONFIG.DAT
+  ...</code></pre>
+
+<div class="callout callout--warning">
+  <div class="callout__title">🔎 Forensic Interpretation</div>
+  <p>Notice the red flags in this output:</p>
+  <ul>
+    <li>The executable name <code>SVCH0ST.EXE</code> mimics <code>svchost.exe</code> (zero instead of &ldquo;o&rdquo;).</li>
+    <li>It runs from <code>C:\Windows\Temp\</code>&mdash;not a normal location for system binaries.</li>
+    <li>It was run <strong>3 times</strong> over approximately 8 hours.</li>
+    <li>The referenced files include a <code>CONFIG.DAT</code> in the same Temp directory&mdash;possibly a malware configuration file.</li>
+  </ul>
+  <p>This Prefetch entry correlates directly with the Event 7045 (new service installed) from the Module 8.1 mini-case, confirming the suspicious service actually executed.</p>
+</div>
+
+<!-- ═══════════════════ §4 AMCACHE ═══════════════════ -->
+<h2 id="amcache">4. AmCache.hve</h2>
+
+<p>The <strong>AmCache</strong> is a Windows Registry hive that tracks information about applications and executables that have been run or installed on the system. It was introduced in Windows 8 and is present on all subsequent versions (Windows 8, 8.1, 10, 11, and corresponding Server editions).</p>
+
+<div class="callout callout--info">
+  <div class="callout__title">📂 Location</div>
+  <p><code>C:\Windows\AppCompat\Programs\Amcache.hve</code></p>
+  <p>This is a standalone Registry hive file (not loaded into the standard Registry editor view). It must be parsed with forensic tools such as Eric Zimmerman&rsquo;s <strong>AmcacheParser</strong> or loaded manually in Registry Explorer.</p>
+</div>
+
+<h3>What AmCache Records</h3>
+<p>AmCache stores metadata about executables and application installations. The data is organized under several key paths within the hive:</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Key AmCache Data Fields</caption>
+  <thead><tr><th scope="col">Field</th><th scope="col">Description</th><th scope="col">Forensic Value</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Full file path</strong></td>
+      <td>Complete path to the executable.</td>
+      <td>Shows exactly where the program was located on disk.</td>
+    </tr>
+    <tr>
+      <td><strong>SHA-1 hash</strong></td>
+      <td>Cryptographic hash of the executable file.</td>
+      <td><strong>Extremely valuable.</strong> Allows positive identification of the binary even after deletion. Can be searched against malware databases (e.g., VirusTotal).</td>
+    </tr>
+    <tr>
+      <td><strong>File size</strong></td>
+      <td>Size of the executable in bytes.</td>
+      <td>Supports identification and comparison with known samples.</td>
+    </tr>
+    <tr>
+      <td><strong>Publisher / company name</strong></td>
+      <td>From the file&rsquo;s version information (PE header).</td>
+      <td>Helps distinguish legitimate software from suspicious binaries.</td>
+    </tr>
+    <tr>
+      <td><strong>File description &amp; version</strong></td>
+      <td>Product name, version number from PE metadata.</td>
+      <td>Identifies the specific version of software that was present.</td>
+    </tr>
+    <tr>
+      <td><strong>Link date (compile time)</strong></td>
+      <td>Timestamp from the PE header indicating when the binary was compiled.</td>
+      <td>Can reveal when malware was built; anomalous compile times are suspicious.</td>
+    </tr>
+    <tr>
+      <td><strong>Last modified timestamp</strong></td>
+      <td>Key last-write time in the AmCache hive.</td>
+      <td>Approximates when the entry was created or updated&mdash;often close to first execution or installation time.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3>AmCache Structure</h3>
+<p>The hive is organized into several subkeys. The two most forensically relevant are:</p>
+<ul>
+  <li><strong><code>Root\InventoryApplicationFile</code></strong> &mdash; records individual executable files with the fields described above. This is the primary location for execution/installation evidence on Windows 10+.</li>
+  <li><strong><code>Root\InventoryApplication</code></strong> &mdash; records installed applications (from Add/Remove Programs), including install date, publisher, and version.</li>
+</ul>
+
+<details>
+  <summary>Historical Note: The File Key Structure (Windows 8 / Early Win 10)</summary>
+  <div class="details-body">
+    <p>On older systems (Windows 8 and early builds of Windows 10), AmCache used a different structure under <code>Root\File\</code> with volume GUIDs as subkeys. Each entry was keyed by a sequence number and contained similar fields (path, SHA-1, size, etc.).</p>
+    <p>Modern versions of Windows 10 and all Windows 11 systems use the <code>InventoryApplicationFile</code> structure. Forensic tools like AmcacheParser handle both formats automatically, but it is useful to know that the structure changed in case you encounter older images.</p>
+  </div>
+</details>
+
+<h3>Forensic Significance</h3>
+
+<div class="callout callout--success">
+  <div class="callout__title">💡 Why AmCache Is Uniquely Valuable</div>
+  <p>AmCache is the <strong>only standard Windows artifact</strong> that records a <strong>SHA-1 hash</strong> of executed or installed programs. This means:</p>
+  <ul>
+    <li>Even if the attacker deletes the malware binary, the AmCache entry preserves the hash.</li>
+    <li>You can search the hash on threat intelligence platforms to determine if the binary is known malware.</li>
+    <li>You can compare the hash with other systems on the network to identify lateral movement (same malware deployed to multiple machines).</li>
+  </ul>
+  <p>No other execution artifact (Prefetch, ShimCache, or UserAssist) provides a cryptographic hash of the executable.</p>
+</div>
+
+<h3>Parsing AmCache with AmcacheParser</h3>
+<pre><code>AmcacheParser.exe -f "C:\Evidence\Amcache.hve" --csv "C:\Output" --csvf "AmCache_parsed.csv"</code></pre>
+<p>The tool exports CSV files that can be loaded into Timeline Explorer for filtering and analysis. Key columns to examine: <code>FullPath</code>, <code>SHA1</code>, <code>FileSize</code>, <code>Publisher</code>, <code>LinkDate</code>, and <code>KeyLastWriteTimestamp</code>.</p>
+
+<!-- ═══════════════════ §5 SHIMCACHE ═══════════════════ -->
+<h2 id="shimcache">5. ShimCache / AppCompatCache</h2>
+
+<p>The <strong>Application Compatibility Cache</strong>&mdash;commonly called <strong>ShimCache</strong>&mdash;is a Windows mechanism that helps the OS determine whether an executable needs compatibility fixes (&ldquo;shims&rdquo;) to run properly. It is stored in the <strong>SYSTEM</strong> Registry hive and records metadata about executables the OS has encountered.</p>
+
+<div class="callout callout--info">
+  <div class="callout__title">📂 Location</div>
+  <p><code>HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\AppCompatCache</code></p>
+  <p>The data is stored as a binary blob within the <code>AppCompatCache</code> value. It must be parsed with a specialized tool&mdash;it is not human-readable in a Registry editor.</p>
+</div>
+
+<h3>What ShimCache Records</h3>
+<div class="table-wrap">
+<table>
+  <caption>ShimCache Data Fields</caption>
+  <thead><tr><th scope="col">Field</th><th scope="col">Description</th></tr></thead>
+  <tbody>
+    <tr><td><strong>File path</strong></td><td>Full path to the executable file.</td></tr>
+    <tr><td><strong>Last modified time</strong></td><td>The <code>$STANDARD_INFORMATION</code> last-modified timestamp of the file (from the file system, <em>not</em> the time it was added to ShimCache).</td></tr>
+    <tr><td><strong>Cache entry position</strong></td><td>The order of the entry in the cache (most recent entries first). This is a <em>relative</em> ordering, not a timestamp.</td></tr>
+    <tr><td><strong>Execution flag</strong> (Win 7/Server 2008 R2 only)</td><td>A flag indicating whether the file was actually executed. <strong>Not present on Windows 8+.</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>The Critical Nuance: Presence ≠ Execution</h3>
+
+<div class="callout callout--error">
+  <div class="callout__title">⚠️ Key Forensic Distinction</div>
+  <p><strong>On Windows 8 and later, ShimCache records that a file was <em>present on the system</em>, not that it was <em>executed</em>.</strong></p>
+  <p>A file can appear in ShimCache simply because:</p>
+  <ul>
+    <li>The user browsed to the directory containing the executable (e.g., opened the folder in Explorer).</li>
+    <li>The OS scanned the directory (e.g., during an antivirus scan or Windows Search indexing).</li>
+    <li>An application enumerated files in the directory.</li>
+  </ul>
+  <p>On <strong>Windows 7 and Server 2008 R2</strong>, the execution flag can distinguish between presence and execution. On Windows 8+, this flag is absent, so <strong>ShimCache alone cannot prove execution</strong>&mdash;only that the file existed on disk at some point.</p>
+</div>
+
+<p>This is one of the most commonly misunderstood points in Windows forensics. Many inexperienced examiners incorrectly claim that a ShimCache entry proves a program was run. In court or in a professional report, this distinction matters enormously.</p>
+
+<h3>How ShimCache Works</h3>
+<ol>
+  <li>When an executable file is &ldquo;encountered&rdquo; by the OS, the Application Compatibility subsystem checks the ShimCache to see if it already has compatibility information for that file.</li>
+  <li>If not, the file&rsquo;s path and last-modified timestamp are added to the cache.</li>
+  <li>The cache is maintained <strong>in memory</strong> during the current session and is only <strong>written to the Registry when the system shuts down</strong>.</li>
+</ol>
+
+<div class="callout callout--warning">
+  <div class="callout__title">⚠️ Shutdown Dependency</div>
+  <p>Because ShimCache is written to the Registry only at shutdown, entries from the <em>current</em> (still-running) session are only in memory. If a system is seized while running, the on-disk ShimCache may be missing the most recent entries. This is one reason <strong>memory forensics</strong> (Week 10) is important&mdash;the in-memory ShimCache can be extracted from a RAM dump.</p>
+</div>
+
+<h3>Parsing ShimCache with AppCompatCacheParser</h3>
+
+<h4>Step 1: Parse from a SYSTEM Hive</h4>
+<pre><code>AppCompatCacheParser.exe -f "C:\Evidence\SYSTEM" --csv "C:\Output" --csvf "ShimCache_parsed.csv"</code></pre>
+<p>Flags:</p>
+<ul>
+  <li><code>-f</code> &mdash; path to the <code>SYSTEM</code> Registry hive file extracted from the forensic image.</li>
+  <li><code>--csv</code> / <code>--csvf</code> &mdash; CSV output directory and filename.</li>
+</ul>
+
+<h4>Step 2: Examine the Output</h4>
+<p>Load the CSV in Timeline Explorer. Key columns:</p>
+<ul>
+  <li><code>Path</code> &mdash; full path to the executable.</li>
+  <li><code>LastModifiedTimeUTC</code> &mdash; the file&rsquo;s last-modified timestamp (filesystem metadata, <em>not</em> execution time).</li>
+  <li><code>CacheEntryPosition</code> &mdash; lower numbers are more recent entries. Use this for relative chronological ordering.</li>
+  <li><code>Executed</code> &mdash; (Windows 7 only) &ldquo;Yes&rdquo; or &ldquo;No&rdquo;.</li>
+</ul>
+
+<h4>Step 3: Investigative Use</h4>
+<p>ShimCache is most useful when combined with other artifacts:</p>
+<ul>
+  <li><strong>ShimCache entry + Prefetch file</strong> → confirms both presence <em>and</em> execution.</li>
+  <li><strong>ShimCache entry + AmCache entry</strong> → provides the SHA-1 hash of the binary that was present.</li>
+  <li><strong>ShimCache entry alone (Win 8+)</strong> → proves the file existed on disk, but does <em>not</em> prove it was executed.</li>
+</ul>
+
+<!-- ═══════════════════ §6 CORRELATION EXERCISE ═══════════════════ -->
+<h2 id="correlation">6. Correlation Exercise</h2>
+
+<div class="scenario">
+  <div class="scenario__title">🔍 Scenario: Did PsExec Run on FILESVR-01?</div>
+  <p>You are investigating a suspected lateral-movement incident. The security team believes an attacker used <strong>PsExec</strong> to remotely execute commands on the file server <strong>FILESVR-01</strong>. You have extracted artifacts from a forensic image of FILESVR-01 and parsed them with Eric Zimmerman&rsquo;s tools. Your task: determine whether <code>psexec.exe</code> (or its service component <code>PSEXESVC.exe</code>) was executed on this system, when, and correlate with Event Log data.</p>
+</div>
+
+<h3>Evidence Set A: Prefetch (PECmd Output)</h3>
+<pre><code>---------- Prefetch Entry 1 ----------
+Executable name: PSEXESVC.EXE
+Hash: 7A2B3C4D
+Run count: 2
+Last run: 2026-03-01 14:32:18 (UTC)
+  Other run times: 2026-03-01 09:15:44 (UTC)
+
+Directories referenced:
+  \VOLUME{...}\WINDOWS\
+  \VOLUME{...}\WINDOWS\SYSTEM32\
+
+Files referenced:
+  \VOLUME{...}\WINDOWS\PSEXESVC.EXE
+  \VOLUME{...}\WINDOWS\SYSTEM32\NTDLL.DLL
+  \VOLUME{...}\WINDOWS\SYSTEM32\KERNEL32.DLL</code></pre>
+
+<h3>Evidence Set B: Event Log Entries (EvtxECmd Output)</h3>
+<pre><code>Record A:
+  TimeCreated:  2026-03-01T09:15:30Z
+  EventId:      4624
+  Channel:      Security
+  Computer:     FILESVR-01
+  UserName:     admin_jdoe
+  LogonType:    3
+  RemoteHost:   10.0.10.55
+  LogonId:      0x2B8F401
+
+Record B:
+  TimeCreated:  2026-03-01T09:15:42Z
+  EventId:      7045
+  Channel:      System
+  Computer:     FILESVR-01
+  ServiceName:  PSEXESVC
+  ImagePath:    C:\Windows\PSEXESVC.exe
+  AccountName:  LocalSystem
+
+Record C:
+  TimeCreated:  2026-03-01T14:32:05Z
+  EventId:      4624
+  Channel:      Security
+  Computer:     FILESVR-01
+  UserName:     admin_jdoe
+  LogonType:    3
+  RemoteHost:   10.0.10.55
+  LogonId:      0x3C7A902
+
+Record D:
+  TimeCreated:  2026-03-01T14:32:16Z
+  EventId:      7036
+  Channel:      System
+  Computer:     FILESVR-01
+  ServiceName:  PSEXESVC
+  State:        Running</code></pre>
+
+<h3>Investigative Questions</h3>
+<p>Use the evidence above to answer each question. Click to reveal the analysis.</p>
+
+<details>
+  <summary>Q1: Was PsExec executed on FILESVR-01? What evidence confirms this?</summary>
+  <div class="details-body">
+    <p><strong>Answer: Yes.</strong> Multiple independent artifacts confirm execution:</p>
+    <ol>
+      <li><strong>Prefetch:</strong> A Prefetch file exists for <code>PSEXESVC.EXE</code> with a run count of 2 and specific timestamps. Prefetch files are created only when a program <em>executes</em>.</li>
+      <li><strong>Event Log (7045):</strong> A new service named <code>PSEXESVC</code> was installed (Record B). PsExec works by copying <code>PSEXESVC.exe</code> to the target system and installing it as a service.</li>
+      <li><strong>Event Log (7036):</strong> The <code>PSEXESVC</code> service entered the Running state (Record D), confirming the service binary executed.</li>
+    </ol>
+    <p>Three independent artifact types (Prefetch, service installation event, service state-change event) all corroborate execution. This is strong, multi-source evidence.</p>
+  </div>
+</details>
+
+<details>
+  <summary>Q2: How many times was PsExec used, and when?</summary>
+  <div class="details-body">
+    <p><strong>Answer: At least 2 times.</strong></p>
+    <ul>
+      <li><strong>First use:</strong> ~09:15 UTC on March 1, 2026 (Prefetch second run time: 09:15:44; service install event: 09:15:42).</li>
+      <li><strong>Second use:</strong> ~14:32 UTC on March 1, 2026 (Prefetch last run: 14:32:18; service running event: 14:32:16).</li>
+    </ul>
+    <p>The Prefetch run count of 2 matches the two sets of corroborating Event Log entries. The timestamps are within seconds of each other across artifacts, providing strong temporal correlation.</p>
+  </div>
+</details>
+
+<details>
+  <summary>Q3: Who initiated the PsExec sessions? How do you know?</summary>
+  <div class="details-body">
+    <p><strong>Answer: The account <code>admin_jdoe</code>, connecting from IP <code>10.0.10.55</code>.</strong></p>
+    <p>Records A and C show Event 4624 (successful logon) with <code>LogonType: 3</code> (Network logon) from <code>10.0.10.55</code> under the <code>admin_jdoe</code> account. Both logon events occur <em>seconds before</em> the corresponding PSEXESVC service events, establishing a clear causal link:</p>
+    <ul>
+      <li>09:15:30 → network logon by <code>admin_jdoe</code> → 09:15:42 → PSEXESVC installed.</li>
+      <li>14:32:05 → network logon by <code>admin_jdoe</code> → 14:32:16 → PSEXESVC running.</li>
+    </ul>
+    <p><strong>Note:</strong> Prefetch alone cannot tell you <em>who</em> ran a program&mdash;it records execution but not the user context. The Event Log provides the &ldquo;who&rdquo; and &ldquo;from where.&rdquo; This is why cross-artifact correlation is essential.</p>
+  </div>
+</details>
+
+<details>
+  <summary>Q4: If you found a ShimCache entry for PSEXESVC.EXE but no Prefetch file, could you conclude it was executed?</summary>
+  <div class="details-body">
+    <p><strong>Answer: Not definitively (on Windows 8+).</strong></p>
+    <p>A ShimCache entry on Windows 8+ proves only that the file was <em>present on disk</em>&mdash;it could have been written to the system without being executed. You would need corroborating evidence from another artifact (Event Log service events, AmCache, UserAssist, or memory forensics) to confirm execution.</p>
+    <p>On <strong>Windows 7</strong>, you would check the ShimCache execution flag. If it shows &ldquo;Yes,&rdquo; that provides stronger (though not absolute) evidence of execution.</p>
+  </div>
+</details>
+
+<!-- ═══════════════════ §7 COMPARISON TABLE ═══════════════════ -->
+<h2 id="comparison">7. Comparison Table: Execution Artifacts</h2>
+
+<p>The following reference table compares the four major Windows execution artifacts you have studied in Weeks 7 and 8. Use this as a quick-reference guide for Lab 8, Homework 3, and the Midterm Exam.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Execution Artifact Comparison: Prefetch vs. AmCache vs. ShimCache vs. UserAssist</caption>
+  <thead>
+    <tr>
+      <th scope="col">Characteristic</th>
+      <th scope="col">Prefetch</th>
+      <th scope="col">AmCache</th>
+      <th scope="col">ShimCache</th>
+      <th scope="col">UserAssist (Wk 7)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Location</strong></td>
+      <td><code>C:\Windows\Prefetch\</code> (<code>.pf</code> files)</td>
+      <td><code>C:\Windows\AppCompat\Programs\Amcache.hve</code></td>
+      <td><code>SYSTEM</code> hive → <code>AppCompatCache</code> value</td>
+      <td><code>NTUSER.DAT</code> → <code>UserAssist</code> keys</td>
+    </tr>
+    <tr>
+      <td><strong>Proves execution?</strong></td>
+      <td><strong>Yes</strong></td>
+      <td><strong>Yes</strong> (for entries in <code>InventoryApplicationFile</code>)</td>
+      <td><strong>No</strong> (Win 8+); <strong>Possibly</strong> (Win 7, via execution flag)</td>
+      <td><strong>Yes</strong> (GUI-launched programs only)</td>
+    </tr>
+    <tr>
+      <td><strong>What it records</strong></td>
+      <td>Executable name, run count, last 8 run times (Win 8+), referenced files/dirs, volume info</td>
+      <td>File path, SHA-1 hash, file size, publisher, compile time, version info</td>
+      <td>File path, last-modified timestamp (of the file), cache entry position</td>
+      <td>Program path (ROT-13 encoded), run count, last-run time, focus time, focus count</td>
+    </tr>
+    <tr>
+      <td><strong>Timestamps</strong></td>
+      <td>Last run + up to 7 previous (Win 8+); 1 timestamp on Win 7</td>
+      <td>Key last-write time (≈ first seen); PE link date (compile time)</td>
+      <td>File&rsquo;s last-modified time (filesystem), <em>not</em> an execution time</td>
+      <td>Last-run time per user</td>
+    </tr>
+    <tr>
+      <td><strong>Unique strength</strong></td>
+      <td>Referenced files list reveals what the program accessed at launch</td>
+      <td><strong>SHA-1 hash</strong> enables positive binary identification and malware lookups</td>
+      <td>Can record entries for files that were never executed&mdash;useful for proving file presence</td>
+      <td>Per-user execution data; includes focus time (how long the user interacted with the program)</td>
+    </tr>
+    <tr>
+      <td><strong>Key limitation</strong></td>
+      <td>Disabled on Server editions; limited to 1,024 entries (Win 10/11); does not record <em>who</em> ran the program</td>
+      <td>Structure changed between Win 8 and Win 10; may not capture all executions</td>
+      <td>Does <em>not</em> prove execution on Win 8+; only written to disk at shutdown</td>
+      <td>Only tracks programs launched via <strong>Windows Explorer GUI</strong> (not command-line or service execution)</td>
+    </tr>
+    <tr>
+      <td><strong>OS support</strong></td>
+      <td>Windows XP+; disabled by default on Server editions</td>
+      <td>Windows 8+</td>
+      <td>Windows XP+ (format varies by version)</td>
+      <td>Windows XP+</td>
+    </tr>
+    <tr>
+      <td><strong>Parsing tool</strong></td>
+      <td>PECmd</td>
+      <td>AmcacheParser</td>
+      <td>AppCompatCacheParser</td>
+      <td>Registry Explorer (Week 7)</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout callout--accent">
+  <div class="callout__title">🧩 The Power of Correlation</div>
+  <p>No single execution artifact tells the complete story. The strongest forensic conclusions come from <strong>correlating multiple artifacts</strong>:</p>
+  <ul>
+    <li><strong>Prefetch</strong> tells you <em>what</em> ran and <em>when</em>.</li>
+    <li><strong>AmCache</strong> tells you <em>what binary</em> it was (via SHA-1 hash).</li>
+    <li><strong>ShimCache</strong> confirms the file was <em>present on disk</em>.</li>
+    <li><strong>UserAssist</strong> tells you <em>which user</em> launched it (if GUI-based).</li>
+    <li><strong>Event Logs</strong> (Module 8.1) tell you <em>who was logged on</em> and <em>from where</em>.</li>
+  </ul>
+  <p>Together, these artifacts answer: <em>What program ran? When? Who ran it? Where did it come from? What did it interact with? Is it known malware?</em></p>
+</div>
+
+<!-- ═══════════════════ §8 KNOWLEDGE CHECK ═══════════════════ -->
+<h2 id="kc">8. Knowledge Check</h2>
+
+<p>Test your understanding of the concepts covered in this module. These questions are <strong>ungraded</strong>&mdash;use them to identify areas you may want to review before Lab 8 and Homework 3.</p>
+
+<!-- KC Question 1 -->
+<div class="kc-question" data-correct="b" id="kc1">
+  <div class="kc-question__stem">1. A forensic examiner finds the Prefetch file <code>MIMIKATZ.EXE-5F1A2B3C.pf</code> in the <code>C:\Windows\Prefetch\</code> directory of a forensic image. The run count is 1 and the last-run time is 2026-02-20 at 03:14 UTC. What can the examiner conclude?</div>
+  <ul class="kc-options" role="list">
+    <li class="kc-option"><input type="radio" name="kc1" id="kc1a" value="a"><label for="kc1a">A. Mimikatz was downloaded but never executed.</label></li>
+    <li class="kc-option"><input type="radio" name="kc1" id="kc1b" value="b"><label for="kc1b">B. Mimikatz was executed exactly once on this system, at approximately 03:14 UTC on Feb 20, 2026.</label></li>
+    <li class="kc-option"><input type="radio" name="kc1" id="kc1c" value="c"><label for="kc1c">C. Mimikatz was executed by the user currently logged on at 03:14 UTC.</label></li>
+    <li class="kc-option"><input type="radio" name="kc1" id="kc1d" value="d"><label for="kc1d">D. Mimikatz was present on disk but may not have been executed.</label></li>
+  </ul>
+  <button class="kc-btn" onclick="checkAnswer('kc1')">Check Answer</button>
+  <div class="kc-feedback kc-feedback--correct" id="kc1-correct" role="status" aria-live="polite">
+    <strong>✓ Correct!</strong> A Prefetch file is created when a program <em>executes</em>. The run count of 1 and the last-run timestamp confirm a single execution at that time. However, Prefetch does <strong>not</strong> record <em>who</em> ran the program (eliminating C), and a Prefetch entry <em>does</em> prove execution (eliminating A and D&mdash;the &ldquo;presence only&rdquo; caveat applies to ShimCache, not Prefetch).
+  </div>
+  <div class="kc-feedback kc-feedback--incorrect" id="kc1-incorrect" role="status" aria-live="polite">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>B</strong>. Prefetch files are created when a program executes, so the entry proves execution (not just presence&mdash;that&rsquo;s ShimCache). The run count of 1 confirms a single execution. Prefetch does not record <em>which user</em> ran the program, so C overstates what Prefetch alone can prove.
+  </div>
+</div>
+
+<!-- KC Question 2 -->
+<div class="kc-question" data-correct="d" id="kc2">
+  <div class="kc-question__stem">2. Which execution artifact uniquely provides a <strong>SHA-1 hash</strong> of the executable, allowing the examiner to positively identify the binary and search malware databases?</div>
+  <ul class="kc-options" role="list">
+    <li class="kc-option"><input type="radio" name="kc2" id="kc2a" value="a"><label for="kc2a">A. Prefetch</label></li>
+    <li class="kc-option"><input type="radio" name="kc2" id="kc2b" value="b"><label for="kc2b">B. ShimCache</label></li>
+    <li class="kc-option"><input type="radio" name="kc2" id="kc2c" value="c"><label for="kc2c">C. UserAssist</label></li>
+    <li class="kc-option"><input type="radio" name="kc2" id="kc2d" value="d"><label for="kc2d">D. AmCache</label></li>
+  </ul>
+  <button class="kc-btn" onclick="checkAnswer('kc2')">Check Answer</button>
+  <div class="kc-feedback kc-feedback--correct" id="kc2-correct" role="status" aria-live="polite">
+    <strong>✓ Correct!</strong> AmCache is the only standard Windows execution artifact that stores a <strong>SHA-1 hash</strong> of the executable file. This makes it uniquely valuable for malware identification&mdash;you can search the hash on platforms like VirusTotal even after the binary has been deleted from disk.
+  </div>
+  <div class="kc-feedback kc-feedback--incorrect" id="kc2-incorrect" role="status" aria-live="polite">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>D (AmCache)</strong>. Prefetch records run counts, timestamps, and referenced files but no hash. ShimCache records file paths and last-modified times but no hash. UserAssist records GUI execution counts and times but no hash. Only AmCache stores a SHA-1 hash of the executable.
+  </div>
+</div>
+
+<!-- KC Question 3 -->
+<div class="kc-question" data-correct="a" id="kc3">
+  <div class="kc-question__stem">3. An examiner finds a ShimCache entry for <code>C:\Tools\wce.exe</code> on a Windows 10 system. No Prefetch file or AmCache entry exists for this executable. What is the most accurate conclusion?</div>
+  <ul class="kc-options" role="list">
+    <li class="kc-option"><input type="radio" name="kc3" id="kc3a" value="a"><label for="kc3a">A. The file was present on disk at some point, but there is insufficient evidence to confirm it was executed.</label></li>
+    <li class="kc-option"><input type="radio" name="kc3" id="kc3b" value="b"><label for="kc3b">B. The file was definitely executed because ShimCache records execution.</label></li>
+    <li class="kc-option"><input type="radio" name="kc3" id="kc3c" value="c"><label for="kc3c">C. The file never existed on this system; ShimCache entries can be fabricated.</label></li>
+    <li class="kc-option"><input type="radio" name="kc3" id="kc3d" value="d"><label for="kc3d">D. The file was executed exactly once and then deleted.</label></li>
+  </ul>
+  <button class="kc-btn" onclick="checkAnswer('kc3')">Check Answer</button>
+  <div class="kc-feedback kc-feedback--correct" id="kc3-correct" role="status" aria-live="polite">
+    <strong>✓ Correct!</strong> On Windows 10, ShimCache records file <em>presence</em>, not execution. The file was encountered by the OS (e.g., the user browsed to the directory, or the system scanned it), but without corroborating evidence from Prefetch, AmCache, Event Logs, or memory forensics, you <strong>cannot</strong> conclude it was executed. This is the critical &ldquo;presence ≠ execution&rdquo; nuance.
+  </div>
+  <div class="kc-feedback kc-feedback--incorrect" id="kc3-incorrect" role="status" aria-live="polite">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>A</strong>. On Windows 8 and later, ShimCache does <em>not</em> prove execution&mdash;only that the file was present on disk. Without supporting evidence from Prefetch, AmCache, or Event Logs, the examiner can only conclude the file existed, not that it ran. This is one of the most important nuances in Windows forensics.
+  </div>
+</div>
+
+<!-- KC Question 4 -->
+<div class="kc-question" data-correct="c" id="kc4">
+  <div class="kc-question__stem">4. On a Windows 10 system, how many historical run timestamps does a single Prefetch file store?</div>
+  <ul class="kc-options" role="list">
+    <li class="kc-option"><input type="radio" name="kc4" id="kc4a" value="a"><label for="kc4a">A. 1 (only the most recent run)</label></li>
+    <li class="kc-option"><input type="radio" name="kc4" id="kc4b" value="b"><label for="kc4b">B. 4</label></li>
+    <li class="kc-option"><input type="radio" name="kc4" id="kc4c" value="c"><label for="kc4c">C. 8 (the last 8 run times)</label></li>
+    <li class="kc-option"><input type="radio" name="kc4" id="kc4d" value="d"><label for="kc4d">D. Unlimited (all historical run times)</label></li>
+  </ul>
+  <button class="kc-btn" onclick="checkAnswer('kc4')">Check Answer</button>
+  <div class="kc-feedback kc-feedback--correct" id="kc4-correct" role="status" aria-live="polite">
+    <strong>✓ Correct!</strong> Windows 8 and later (including Windows 10 and 11) store the <strong>last 8 run timestamps</strong> in each Prefetch file. Windows 7 stores only the single most recent run time. This is a significant forensic improvement&mdash;8 timestamps let you see a pattern of usage over time, not just the last event.
+  </div>
+  <div class="kc-feedback kc-feedback--incorrect" id="kc4-incorrect" role="status" aria-live="polite">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>C (8)</strong>. Windows 10/11 Prefetch files (version 30) store the last 8 run timestamps. Only Windows 7 (version 23) is limited to a single timestamp. The storage is not unlimited&mdash;only the 8 most recent runs are retained.
+  </div>
+</div>
+
+<!-- KC Question 5 -->
+<div class="kc-question" data-correct="b" id="kc5">
+  <div class="kc-question__stem">5. Why is ShimCache data only written to the SYSTEM Registry hive at system shutdown, and what is the forensic implication of this behavior?</div>
+  <ul class="kc-options" role="list">
+    <li class="kc-option"><input type="radio" name="kc5" id="kc5a" value="a"><label for="kc5a">A. It is a security feature to prevent tampering; the implication is that ShimCache data is more trustworthy than Prefetch data.</label></li>
+    <li class="kc-option"><input type="radio" name="kc5" id="kc5b" value="b"><label for="kc5b">B. The cache is maintained in memory for performance; the implication is that entries from the current (still-running) session may be missing from the on-disk Registry and can only be recovered via memory forensics.</label></li>
+    <li class="kc-option"><input type="radio" name="kc5" id="kc5c" value="c"><label for="kc5c">C. Windows intentionally delays writing to prevent disk wear; the implication is that ShimCache is unreliable on SSDs.</label></li>
+    <li class="kc-option"><input type="radio" name="kc5" id="kc5d" value="d"><label for="kc5d">D. It is written at shutdown to compress the data; the implication is that ShimCache files are always compressed and require special tools.</label></li>
+  </ul>
+  <button class="kc-btn" onclick="checkAnswer('kc5')">Check Answer</button>
+  <div class="kc-feedback kc-feedback--correct" id="kc5-correct" role="status" aria-live="polite">
+    <strong>✓ Correct!</strong> ShimCache is maintained in memory during the active session for performance reasons and is flushed to the SYSTEM Registry hive only at shutdown. The forensic implication is significant: if a system is seized while still running (e.g., during a live response), the on-disk ShimCache will be missing entries from the current session. To recover those entries, an examiner needs a <strong>memory dump</strong> (covered in Week 10: Memory Forensics).
+  </div>
+  <div class="kc-feedback kc-feedback--incorrect" id="kc5-incorrect" role="status" aria-live="polite">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>B</strong>. ShimCache is kept in memory for performance and written to the Registry at shutdown. This means the on-disk version may lack entries from the current session. Memory forensics (Week 10) can recover the in-memory ShimCache. It is not a security feature (A), not related to SSD wear (C), and not about compression (D).
+  </div>
+</div>
+
+<!-- ═══════════════════ FOOTER ═══════════════════ -->
+<hr style="margin-top:2.5rem;">
+<div class="callout callout--success">
+  <div class="callout__title">✅ Module 8.2 Complete</div>
+  <p>You now understand three critical Windows execution artifacts&mdash;Prefetch, AmCache, and ShimCache&mdash;and how to parse them with Eric Zimmerman&rsquo;s tools. Most importantly, you know <em>when</em> each artifact proves execution and when it only proves presence, and how to correlate them with Event Log data for a complete investigative picture.</p>
+  <p>In <strong>Module 8.3: LNK Files, Shellbags, and Volume Shadow Copies</strong>, you will learn how to reconstruct user navigation patterns and recover historical file versions&mdash;adding even more layers to your forensic analysis.</p>
+  <p><strong>Estimated time for Module 8.3:</strong> 60–75 minutes.</p>
+</div>
+
+</main>
+
+<footer class="sr-only">
+  <p>End of Module 8.2 – Program Execution Artifacts. CSC 156 – Digital Forensics Fundamentals.</p>
+</footer>
+
+<!-- ═══════════════════ JAVASCRIPT ═══════════════════ -->
+<script>
+/* Accessible Tabs */
+(function(){
+  document.querySelectorAll('.tabs').forEach(function(tabGroup){
+    var btns=tabGroup.querySelectorAll('.tab-btn');
+    var panels=tabGroup.querySelectorAll('.tab-panel');
+    function activate(btn){
+      btns.forEach(function(b){b.setAttribute('aria-selected','false');b.setAttribute('tabindex','-1');});
+      panels.forEach(function(p){p.classList.remove('active');});
+      btn.setAttribute('aria-selected','true');
+      btn.setAttribute('tabindex','0');
+      var panel=document.getElementById(btn.getAttribute('aria-controls'));
+      if(panel) panel.classList.add('active');
+    }
+    btns.forEach(function(btn,i){
+      btn.setAttribute('tabindex',i===0?'0':'-1');
+      btn.addEventListener('click',function(){activate(btn);btn.focus();});
+      btn.addEventListener('keydown',function(e){
+        var idx=Array.prototype.indexOf.call(btns,btn);
+        if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();var next=btns[(idx+1)%btns.length];next.focus();activate(next);}
+        else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();var prev=btns[(idx-1+btns.length)%btns.length];prev.focus();activate(prev);}
+        else if(e.key==='Home'){e.preventDefault();btns[0].focus();activate(btns[0]);}
+        else if(e.key==='End'){e.preventDefault();btns[btns.length-1].focus();activate(btns[btns.length-1]);}
+      });
+    });
+  });
+})();
+
+/* Knowledge Check */
+function checkAnswer(qId){
+  var container=document.getElementById(qId);
+  if(!container) return;
+  var correct=container.getAttribute('data-correct');
+  var selected=container.querySelector('input[name="'+qId+'"]:checked');
+  var fbCorrect=document.getElementById(qId+'-correct');
+  var fbIncorrect=document.getElementById(qId+'-incorrect');
+  fbCorrect.style.display='none';
+  fbIncorrect.style.display='none';
+  if(!selected){
+    var errEl=container.querySelector('.kc-no-sel');
+    if(!errEl){
+      errEl=document.createElement('p');
+      errEl.className='kc-no-sel';
+      errEl.setAttribute('role','alert');
+      errEl.style.cssText='color:#b91c1c;font-size:0.88rem;margin-top:0.35rem;';
+      container.querySelector('.kc-btn').insertAdjacentElement('afterend',errEl);
+    }
+    errEl.textContent='Please select an answer first.';
+    errEl.style.display='block';
+    return;
+  }
+  var errEl=container.querySelector('.kc-no-sel');
+  if(errEl) errEl.style.display='none';
+  if(selected.value===correct){fbCorrect.style.display='block';}
+  else{fbIncorrect.style.display='block';}
+}
+</script>
+</body>
+</html>
