@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 8.4: NTFS Journal Artifacts — $LogFile and $UsnJrnl | CSC 156</title>
+<style>
+:root {
+  --nav-height: 56px;
+  --color-bg: #ffffff;
+  --color-text: #1a1a1a;
+  --color-heading: #1a2238;
+  --color-primary: #2563eb;
+  --color-primary-dark: #1d4ed8;
+  --color-primary-light: #dbeafe;
+  --color-secondary: #0f766e;
+  --color-secondary-light: #ccfbf1;
+  --color-accent: #7c3aed;
+  --color-accent-light: #ede9fe;
+  --color-border: #d1d5db;
+  --color-border-light: #e5e7eb;
+  --color-surface: #f9fafb;
+  --color-surface-alt: #f3f4f6;
+  --color-success: #16a34a;
+  --color-success-bg: #dcfce7;
+  --color-error: #dc2626;
+  --color-error-bg: #fee2e2;
+  --color-warning: #d97706;
+  --color-warning-bg: #fef3c7;
+  --color-info: #2563eb;
+  --color-info-bg: #dbeafe;
+  --font-body: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  --radius: 8px;
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --max-width: 960px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--nav-height) + 16px);}
+body{font-family:var(--font-body);font-size:1rem;line-height:1.65;color:var(--color-text);background:var(--color-bg);}
+
+.sticky-nav{position:sticky;top:0;z-index:1000;background:var(--color-heading);box-shadow:var(--shadow-md);}
+.sticky-nav__inner{max-width:var(--max-width);margin:0 auto;display:flex;align-items:center;flex-wrap:nowrap;padding:0 1rem;min-height:var(--nav-height);gap:0.25rem;}
+.sticky-nav__title{color:#fff;font-weight:700;font-size:0.95rem;margin-right:auto;white-space:nowrap;flex-shrink:0;padding:0.5rem 0.75rem 0.5rem 0;}
+.sticky-nav a{color:#cbd5e1;text-decoration:none;font-size:0.9rem;padding:0.4rem 0.6rem;border-radius:4px;transition:background .15s,color .15s;white-space:nowrap;position:relative;min-width:1.9rem;text-align:center;font-weight:600;}
+.sticky-nav a:hover,.sticky-nav a:focus-visible{background:rgba(255,255,255,0.12);color:#fff;}
+.sticky-nav a:focus-visible{outline:2px solid #93c5fd;outline-offset:2px;}
+.sticky-nav a::after{content:attr(data-label);position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1a2238;color:#fff;font-size:0.75rem;font-weight:400;padding:0.3rem 0.65rem;border-radius:4px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:1100;box-shadow:0 2px 6px rgba(0,0,0,0.35);}
+.sticky-nav a:hover::after,.sticky-nav a:focus-visible::after{opacity:1;}
+
+.module-hero{background:linear-gradient(135deg,var(--color-heading) 0%,#243358 100%);padding:1.75rem 1rem 1.5rem;box-shadow:0 2px 8px rgba(0,0,0,0.15);}
+.module-hero__inner{max-width:var(--max-width);margin:0 auto;}
+.module-hero__meta{font-size:0.82rem;color:#93c5fd;margin-bottom:0.35rem;letter-spacing:0.01em;}
+.module-hero h1{color:#fff;font-size:1.85rem;line-height:1.2;margin:0.2rem 0 0.75rem;}
+
+.page{max-width:var(--max-width);margin:0 auto;padding:1.5rem 1rem 4rem;}
+h2{font-size:1.4rem;color:var(--color-heading);margin:2.25rem 0 0.75rem;padding-bottom:0.35rem;border-bottom:3px solid var(--color-primary);scroll-margin-top:calc(var(--nav-height) + 16px);}
+h3{font-size:1.15rem;color:var(--color-heading);margin:1.5rem 0 0.5rem;}
+h4{font-size:1rem;color:var(--color-secondary);margin:1.25rem 0 0.4rem;}
+p{margin:0.6rem 0;}
+a{color:var(--color-primary);}
+a:focus-visible{outline:2px solid var(--color-primary);outline-offset:2px;border-radius:2px;}
+
+.callout{border-left:4px solid;border-radius:var(--radius);padding:1rem 1.15rem;margin:1.25rem 0;}
+.callout--info{border-color:var(--color-info);background:var(--color-info-bg);}
+.callout--success{border-color:var(--color-success);background:var(--color-success-bg);}
+.callout--warning{border-color:var(--color-warning);background:var(--color-warning-bg);}
+.callout--error{border-color:var(--color-error);background:var(--color-error-bg);}
+.callout--accent{border-color:var(--color-accent);background:var(--color-accent-light);}
+.callout__title{font-weight:700;margin-bottom:0.3rem;display:flex;align-items:center;gap:0.4rem;}
+
+.table-wrap{overflow-x:auto;margin:1rem 0;}
+table{width:100%;border-collapse:collapse;font-size:0.92rem;}
+th,td{text-align:left;padding:0.6rem 0.75rem;border:1px solid var(--color-border);}
+th{background:var(--color-heading);color:#fff;font-weight:600;}
+tr:nth-child(even){background:var(--color-surface);}
+caption{font-weight:700;margin-bottom:0.4rem;text-align:left;font-size:1rem;color:var(--color-heading);}
+
+code{font-family:var(--font-mono);font-size:0.88em;background:var(--color-surface-alt);padding:0.15em 0.4em;border-radius:4px;}
+pre{background:#1e293b;color:#e2e8f0;padding:1rem 1.15rem;border-radius:var(--radius);overflow-x:auto;font-size:0.88rem;line-height:1.55;margin:1rem 0;}
+pre code{background:transparent;padding:0;color:inherit;}
+kbd{font-family:var(--font-mono);font-size:0.85em;background:var(--color-surface-alt);border:1px solid var(--color-border);border-radius:3px;padding:0.1em 0.4em;box-shadow:0 1px 1px rgba(0,0,0,0.08);}
+
+details{border:1px solid var(--color-border-light);border-radius:var(--radius);margin:0.75rem 0;background:var(--color-surface);}
+details[open]{background:var(--color-bg);}
+summary{cursor:pointer;font-weight:600;padding:0.75rem 1rem;list-style:none;display:flex;align-items:center;gap:0.5rem;user-select:none;}
+summary::-webkit-details-marker{display:none;}
+summary::before{content:'▶';font-size:0.7rem;transition:transform .2s;display:inline-block;}
+details[open]>summary::before{transform:rotate(90deg);}
+summary:focus-visible{outline:2px solid var(--color-primary);outline-offset:-2px;border-radius:var(--radius);}
+.details-body{padding:0.25rem 1rem 1rem;}
+
+.tabs{margin:1.25rem 0;}
+.tab-list{display:flex;flex-wrap:wrap;border-bottom:2px solid var(--color-border);list-style:none;}
+.tab-btn{background:none;border:none;font:inherit;padding:0.6rem 1.1rem;cursor:pointer;color:#4b5563;font-weight:600;font-size:0.92rem;border-bottom:3px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;}
+.tab-btn:hover{color:var(--color-primary);}
+.tab-btn[aria-selected="true"]{color:var(--color-primary);border-bottom-color:var(--color-primary);}
+.tab-btn:focus-visible{outline:2px solid var(--color-primary);outline-offset:-2px;border-radius:4px 4px 0 0;}
+.tab-panel{padding:1rem 0.25rem;display:none;}
+.tab-panel.active{display:block;}
+
+.kc-question{border:1px solid var(--color-border-light);border-radius:var(--radius);padding:1rem 1.15rem;margin:1rem 0;background:var(--color-surface);}
+.kc-question__stem{font-weight:600;margin-bottom:0.6rem;}
+.kc-options{list-style:none;display:flex;flex-direction:column;gap:0.35rem;}
+.kc-option{display:flex;align-items:baseline;gap:0.5rem;}
+.kc-option label{cursor:pointer;}
+.kc-feedback{margin-top:0.75rem;padding:0.7rem 0.9rem;border-radius:var(--radius);font-size:0.92rem;display:none;}
+.kc-feedback--correct{background:var(--color-success-bg);border-left:4px solid var(--color-success);}
+.kc-feedback--incorrect{background:var(--color-error-bg);border-left:4px solid var(--color-error);}
+.kc-btn{margin-top:0.6rem;padding:0.5rem 1.25rem;background:var(--color-primary);color:#fff;border:none;border-radius:var(--radius);font:inherit;font-size:0.9rem;cursor:pointer;font-weight:600;transition:background .15s;}
+.kc-btn:hover{background:var(--color-primary-dark);}
+.kc-btn:focus-visible{outline:2px solid var(--color-primary-dark);outline-offset:2px;}
+
+.scenario{border:2px solid var(--color-accent);border-radius:var(--radius);padding:1.25rem;margin:1.25rem 0;background:var(--color-accent-light);}
+.scenario__title{font-weight:700;font-size:1.05rem;color:var(--color-accent);margin-bottom:0.5rem;display:flex;align-items:center;gap:0.4rem;}
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;}
+.badge{display:inline-block;font-size:0.78rem;font-weight:700;padding:0.15em 0.55em;border-radius:12px;vertical-align:middle;}
+.badge--time{background:var(--color-primary-light);color:var(--color-primary-dark);}
+.badge--cslo{background:var(--color-secondary-light);color:var(--color-secondary);}
+.flex-row{display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;}
+
+.ts-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0;}
+.ts-card{border:1px solid var(--color-border);border-radius:var(--radius);padding:1rem;background:var(--color-surface);}
+.ts-card--alert{border-color:var(--color-error);background:var(--color-error-bg);}
+.ts-card h4{margin-top:0;}
+
+@media print{.sticky-nav{position:relative;}details>.details-body{display:block!important;}.tab-panel{display:block!important;}}
+@media(max-width:640px){
+  h2{font-size:1.2rem;}
+  .module-hero h1{font-size:1.45rem;}
+  .sticky-nav__inner{padding:0 0.5rem;}
+  .sticky-nav__title{font-size:0.8rem;max-width:9rem;overflow:hidden;text-overflow:ellipsis;}
+  .sticky-nav a{font-size:0.82rem;padding:0.4rem 0.5rem;min-width:1.65rem;}
+  pre{font-size:0.82rem;padding:0.75rem;}
+  .ts-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════ NAVIGATION ══════════════════════════════════════════════ -->
+<nav class="sticky-nav" aria-label="Module sections">
+  <div class="sticky-nav__inner">
+    <span class="sticky-nav__title">8.4 &mdash; NTFS Journals</span>
+    <a href="#intro"       data-label="1. Introduction"      aria-label="Section 1: Introduction">1</a>
+    <a href="#mft-review"  data-label="2. MFT Timestamps"    aria-label="Section 2: MFT Timestamp Review">2</a>
+    <a href="#timestomping" data-label="3. Timestomping"     aria-label="Section 3: Detecting Timestomping">3</a>
+    <a href="#logfile"     data-label="4. $LogFile"           aria-label="Section 4: $LogFile">4</a>
+    <a href="#usnjrnl"     data-label="5. $UsnJrnl"           aria-label="Section 5: $UsnJrnl">5</a>
+    <a href="#tools"       data-label="6. MFTECmd"            aria-label="Section 6: Tool Walk-Through">6</a>
+    <a href="#exercise"    data-label="7. Exercise"           aria-label="Section 7: Practical Exercise">7</a>
+    <a href="#knowledge-check" data-label="8. Knowledge Check" aria-label="Section 8: Knowledge Check">8</a>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════ HERO ════════════════════════════════════════════════ -->
+<header class="module-hero">
+  <div class="module-hero__inner">
+    <p class="module-hero__meta">CSC 156 &mdash; Digital Forensics Fundamentals &nbsp;|&nbsp; Week 8 &nbsp;|&nbsp; Module 8.4 of 8.5</p>
+    <h1>NTFS Journal Artifacts &mdash; $LogFile and $UsnJrnl</h1>
+    <div class="flex-row">
+      <span class="badge badge--time" aria-label="Estimated time: 50 to 60 minutes">⏱ 50–60 min</span>
+      <span class="badge badge--cslo" aria-label="Primary CSLO alignment">CSLO 2</span>
+      <span class="badge badge--cslo" aria-label="Supporting CSLO alignment">CSLO 1</span>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+
+<!-- ══════════════════════════════════ §1 INTRODUCTION ═══════════════════════════════════════════ -->
+<h2 id="intro">1. Introduction &amp; Objectives</h2>
+
+<p>In Module 5.3 you learned that NTFS maintains two journal structures&mdash;<code>$LogFile</code> and <code>$UsnJrnl</code>&mdash;that record metadata changes on the volume. In this module you will move from conceptual understanding to <strong>forensic application</strong>: parsing journal data, interpreting reason codes, and&mdash;critically&mdash;using journal timestamps to <strong>detect timestomping</strong>, one of the most common anti-forensic techniques an examiner will encounter.</p>
+
+<div class="callout callout--info">
+  <div class="callout__title">🎯 Why This Matters</div>
+  <p>An attacker can easily change the dates on a malicious file to make it blend in with legitimate system files. Standard file-system timestamps (<code>dir</code>, Windows Explorer) will show the faked dates. But the NTFS journals tell a different story&mdash;one the attacker almost never thinks to alter. Journals are your <strong>ground-truth timeline</strong> when timestamps cannot be trusted.</p>
+</div>
+
+<h3>Module Objectives</h3>
+<p>By the end of this module you will be able to:</p>
+<ol>
+  <li>Explain the difference between <code>$STANDARD_INFORMATION</code> and <code>$FILE_NAME</code> timestamps and which can be modified by user-level tools.</li>
+  <li>Detect timestomping by comparing SI and FN timestamps for the same file.</li>
+  <li>Describe the purpose, contents, and forensic value of the <code>$LogFile</code> (NTFS transaction journal).</li>
+  <li>Describe the purpose, reason codes, and forensic value of the <code>$UsnJrnl</code> (change journal).</li>
+  <li>Parse <code>$MFT</code>, <code>$LogFile</code>, and <code>$UsnJrnl</code> with <strong>MFTECmd</strong> and analyze the output in <strong>Timeline Explorer</strong>.</li>
+  <li>Interpret parsed <code>$UsnJrnl</code> output to reconstruct file-system activity.</li>
+</ol>
+
+<h3>Where This Module Connects</h3>
+<div class="table-wrap">
+<table>
+  <caption class="sr-only">Module 8.4 connections to graded work</caption>
+  <thead><tr><th scope="col">Assessment</th><th scope="col">Connection</th></tr></thead>
+  <tbody>
+    <tr><td>Homework 3 (20 pts)</td><td><code>$UsnJrnl</code> data is one of the required artifact sources for the integrative correlation exercise. You must incorporate journal evidence into your written findings.</td></tr>
+    <tr><td>Discussion 8 (3 pts)</td><td>Journal artifacts are strong candidates when arguing for the &ldquo;most valuable artifact&rdquo; discussion prompt.</td></tr>
+    <tr><td>Midterm Exam (Wk 9, 120 pts)</td><td>NTFS journal concepts, timestomping detection, and <code>$UsnJrnl</code> reason codes are testable topics.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ══════════════════════════════ §2 MFT TIMESTAMP REVIEW ══════════════════════════════════════ -->
+<h2 id="mft-review">2. $MFT Timestamp Review</h2>
+
+<p>Before diving into the journals, let&rsquo;s revisit a critical concept from Week 5 (Module 5.3): every file on an NTFS volume has <strong>two separate sets of timestamps</strong> stored in its MFT entry, and they behave very differently from a forensic perspective.</p>
+
+<h3>Two Attribute Sets, Eight Timestamps</h3>
+<p>Each MFT entry contains (at minimum) two attributes that store MAC(b) timestamps&mdash;Modified, Accessed, Changed (MFT entry), and Born (created):</p>
+
+<div class="tabs" id="attr-tabs">
+  <ul class="tab-list" role="tablist" aria-label="MFT timestamp attributes">
+    <li role="presentation"><button class="tab-btn" role="tab" aria-selected="true" aria-controls="panel-si" id="tab-si">$STANDARD_INFORMATION</button></li>
+    <li role="presentation"><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-fn" id="tab-fn">$FILE_NAME</button></li>
+  </ul>
+
+  <div class="tab-panel active" role="tabpanel" id="panel-si" aria-labelledby="tab-si">
+    <h4>$STANDARD_INFORMATION (SI) Attribute &mdash; Type 0x10</h4>
+    <p>Present in <strong>every</strong> MFT entry. Contains four timestamps:</p>
+    <ul>
+      <li><strong>SI_Modified</strong> &mdash; last time the file <em>content</em> was written.</li>
+      <li><strong>SI_Accessed</strong> &mdash; last time the file was read (often disabled on modern Windows for performance).</li>
+      <li><strong>SI_Changed</strong> (MFT Entry Modified) &mdash; last time the MFT record itself was changed (e.g., permission change, rename).</li>
+      <li><strong>SI_Born</strong> (Created) &mdash; when the file was originally created on this volume.</li>
+    </ul>
+    <div class="callout callout--warning">
+      <div class="callout__title">⚠️ Key Forensic Fact</div>
+      <p>SI timestamps can be <strong>modified by any user-level process</strong> using the Windows API function <code>SetFileTime()</code>. This is exactly what timestomping tools exploit. When you view a file&rsquo;s properties in Windows Explorer or run <code>dir</code>, you are seeing SI timestamps.</p>
+    </div>
+  </div>
+
+  <div class="tab-panel" role="tabpanel" id="panel-fn" aria-labelledby="tab-fn">
+    <h4>$FILE_NAME (FN) Attribute &mdash; Type 0x30</h4>
+    <p>Also present in every MFT entry (at least one; files with both a short 8.3 name and a long name have two FN attributes). Contains its own four timestamps:</p>
+    <ul>
+      <li><strong>FN_Modified</strong></li>
+      <li><strong>FN_Accessed</strong></li>
+      <li><strong>FN_Changed</strong> (MFT Entry Modified)</li>
+      <li><strong>FN_Born</strong> (Created)</li>
+    </ul>
+    <div class="callout callout--success">
+      <div class="callout__title">✅ Key Forensic Fact</div>
+      <p>FN timestamps can <strong>only be modified by the NTFS kernel-mode driver</strong>. There is no documented user-level API to change them. This means FN timestamps are <strong>highly resistant to manipulation</strong> and serve as a trusted baseline when SI timestamps are suspect.</p>
+    </div>
+    <p>FN timestamps are updated by the kernel during specific operations: file creation, file rename, file move (to a different directory), and certain hard-link operations. They are <strong>not</strong> updated on every read or write, so they tend to reflect the file&rsquo;s original creation or last structural change rather than its most recent content modification.</p>
+  </div>
+</div>
+
+<h3>Quick Comparison</h3>
+<div class="table-wrap">
+<table>
+  <caption>SI vs. FN Timestamp Comparison</caption>
+  <thead><tr><th scope="col">Property</th><th scope="col">$STANDARD_INFORMATION</th><th scope="col">$FILE_NAME</th></tr></thead>
+  <tbody>
+    <tr><td>Attribute type code</td><td>0x10</td><td>0x30</td></tr>
+    <tr><td>Number of timestamps</td><td>4 (M, A, C, B)</td><td>4 (M, A, C, B)</td></tr>
+    <tr><td>Shown by Windows Explorer / <code>dir</code></td><td>Yes</td><td>No</td></tr>
+    <tr><td>Modifiable by user-level API</td><td><strong>Yes</strong> (<code>SetFileTime</code>)</td><td><strong>No</strong> (kernel-only)</td></tr>
+    <tr><td>Updated on content write</td><td>Yes (SI_Modified)</td><td>No</td></tr>
+    <tr><td>Updated on rename / move</td><td>Yes (SI_Changed)</td><td>Yes (FN timestamps reset)</td></tr>
+    <tr><td>Forensic trust level</td><td>Low (easily faked)</td><td>High (tamper-resistant)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ═══════════════════════════ §3 DETECTING TIMESTOMPING ═══════════════════════════════════════ -->
+<h2 id="timestomping">3. Detecting Timestomping</h2>
+
+<p><strong>Timestomping</strong> is the anti-forensic technique of modifying a file&rsquo;s timestamps to mislead investigators. Attackers use it to make a malicious file appear as though it was created months or years ago&mdash;blending it in with legitimate system files&mdash;or to push the creation date outside the investigation&rsquo;s time window.</p>
+
+<h3>How Timestomping Works</h3>
+<p>Tools such as <em>Timestomp</em> (part of the Metasploit framework) or custom PowerShell scripts call the <code>SetFileTime()</code> Windows API to overwrite the four SI timestamps. The attacker can set any arbitrary date and time. However, <strong>the FN timestamps remain untouched</strong> because they are managed exclusively by the NTFS driver in kernel mode.</p>
+
+<h3>Detection: SI vs. FN Comparison</h3>
+<p>The primary detection method is straightforward: <strong>compare SI and FN timestamps for the same file</strong>. If the SI timestamps are significantly <em>earlier</em> than the FN timestamps, the file has almost certainly been timestomped.</p>
+
+<h4>Example: Timestomped Malware</h4>
+<p>Consider a file named <code>C:\Windows\System32\healthsvc.dll</code> found on a suspect system. The MFT entry reveals:</p>
+
+<div class="ts-grid">
+  <div class="ts-card">
+    <h4>$STANDARD_INFORMATION Timestamps</h4>
+    <pre><code>SI_Born:     2024-04-12  09:15:33 UTC
+SI_Modified: 2024-04-12  09:15:33 UTC
+SI_Accessed: 2024-04-12  09:15:33 UTC
+SI_Changed:  2024-04-12  09:15:33 UTC</code></pre>
+    <p><em>All four timestamps are identical and date to April 2024&mdash;over a year before the investigation.</em></p>
+  </div>
+  <div class="ts-card ts-card--alert">
+    <h4>$FILE_NAME Timestamps</h4>
+    <pre><code>FN_Born:     2026-02-14  02:53:07 UTC
+FN_Modified: 2026-02-14  02:53:07 UTC
+FN_Accessed: 2026-02-14  02:53:07 UTC
+FN_Changed:  2026-02-14  02:53:07 UTC</code></pre>
+    <p><strong>🚩 The FN timestamps show the file was actually created on February 14, 2026&mdash;during the incident window.</strong></p>
+  </div>
+</div>
+
+<h3>Red-Flag Patterns</h3>
+<p>When reviewing MFT data, watch for these timestomping indicators:</p>
+<ul>
+  <li><strong>SI_Born earlier than FN_Born:</strong> This is logically impossible under normal NTFS operation. A file cannot have an SI creation date before its FN creation date. This is the strongest single indicator of timestomping.</li>
+  <li><strong>All four SI timestamps identical:</strong> Legitimate files almost never have all four timestamps set to the exact same second. Timestomping tools often set all four to one value for simplicity.</li>
+  <li><strong>SI timestamps with suspicious precision:</strong> Timestamps rounded to the exact second (e.g., <code>09:15:33.0000000</code>) while surrounding files have normal nanosecond precision may indicate manual setting.</li>
+  <li><strong>SI dates inconsistent with OS install date:</strong> A file in <code>System32</code> with an SI_Born date predating the OS installation is suspicious.</li>
+</ul>
+
+<div class="callout callout--info">
+  <div class="callout__title">💡 Investigative Significance</div>
+  <p>Detecting timestomping does more than just reveal the file&rsquo;s true creation time. It demonstrates <strong>intent to deceive</strong>&mdash;the attacker deliberately tried to hide their activity. This is powerful evidence of malicious intent and can be presented in court to show the sophistication and deliberateness of the intrusion.</p>
+</div>
+
+<details>
+  <summary>Advanced: Can FN Timestamps Be Manipulated?</summary>
+  <div class="details-body">
+    <p>In theory, a kernel-mode driver or a raw-disk editing tool could modify FN timestamps directly in the MFT on disk. However, this requires:</p>
+    <ul>
+      <li>Administrator (or SYSTEM) privileges <strong>and</strong> the ability to load a kernel driver, or</li>
+      <li>Offline access to the raw NTFS volume (e.g., booting from a USB drive).</li>
+    </ul>
+    <p>In practice, this level of sophistication is <strong>extremely rare</strong> in real-world cases. The vast majority of timestomping affects only SI timestamps. Even when an attacker modifies FN timestamps, the <code>$UsnJrnl</code> and <code>$LogFile</code> entries will still contain the original operation timestamps&mdash;providing yet another layer of evidence.</p>
+  </div>
+</details>
+
+<!-- ═══════════════════════════════ §4 $LOGFILE ═════════════════════════════════════════════════ -->
+<h2 id="logfile">4. $LogFile &mdash; The NTFS Transaction Journal</h2>
+
+<p>The <code>$LogFile</code> is NTFS&rsquo;s internal <strong>transaction journal</strong>. Its primary purpose is crash recovery: if the system loses power or crashes mid-operation, NTFS replays or rolls back incomplete transactions from <code>$LogFile</code> to restore the volume to a consistent state.</p>
+
+<h3>What $LogFile Records</h3>
+<p><code>$LogFile</code> records <strong>metadata operations</strong>&mdash;changes to MFT entries, index entries (directory listings), and other NTFS metadata structures. It does <strong>not</strong> record file content changes (data writes to clusters).</p>
+
+<p>Operations captured include:</p>
+<ul>
+  <li>File and directory <strong>creation</strong></li>
+  <li>File and directory <strong>deletion</strong></li>
+  <li>File <strong>rename</strong> and <strong>move</strong></li>
+  <li><strong>Attribute changes</strong> (timestamps, permissions, flags)</li>
+  <li><strong>Index updates</strong> (adding/removing entries from directory indexes)</li>
+  <li>MFT record <strong>allocation and deallocation</strong></li>
+</ul>
+
+<h3>Structure and Size</h3>
+<div class="table-wrap">
+<table>
+  <caption>$LogFile Key Facts</caption>
+  <thead><tr><th scope="col">Property</th><th scope="col">Detail</th></tr></thead>
+  <tbody>
+    <tr><td>MFT record number</td><td>2 (always the third record in the MFT)</td></tr>
+    <tr><td>Location</td><td>Root of the NTFS volume (hidden system file)</td></tr>
+    <tr><td>Typical size</td><td>~64 MB (default on most volumes)</td></tr>
+    <tr><td>Logging behavior</td><td><strong>Circular</strong> &mdash; oldest entries overwritten when full</td></tr>
+    <tr><td>Record format</td><td>Restart Area + Log Record Pages containing redo/undo operation pairs</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Forensic Value</h3>
+<ul>
+  <li><strong>Short-term, high-detail history:</strong> Because <code>$LogFile</code> is relatively small and circular, it typically retains only hours to a few days of activity on an active system. But within that window, it provides <em>granular, operation-level</em> detail about every metadata change.</li>
+  <li><strong>Deleted file evidence:</strong> Even after a file is deleted and its MFT entry reused, <code>$LogFile</code> may still contain the original creation, rename, or deletion records if they fall within the journal&rsquo;s retention window.</li>
+  <li><strong>Redo/Undo pairs:</strong> Each logged operation includes both a <em>redo</em> record (how to replay the operation) and an <em>undo</em> record (how to reverse it). Forensically, the undo data can reveal the <strong>previous state</strong> of an attribute before it was changed&mdash;including prior timestamps and filenames.</li>
+  <li><strong>Timestomping corroboration:</strong> If an attacker modified SI timestamps, the <code>$LogFile</code> may contain the redo/undo records showing the original values and the new (faked) values.</li>
+</ul>
+
+<div class="callout callout--warning">
+  <div class="callout__title">⚠️ Limitations</div>
+  <p><strong>Retention is short.</strong> On a busy system, <code>$LogFile</code> may wrap (overwrite old entries) in just a few hours. If you are investigating an event from weeks ago, <code>$LogFile</code> data is likely gone. This is why prompt evidence acquisition is critical&mdash;the longer you wait, the more journal data you lose.</p>
+</div>
+
+<details>
+  <summary>Deep Dive: $LogFile Internal Structure</summary>
+  <div class="details-body">
+    <p>The <code>$LogFile</code> begins with two <strong>Restart Area</strong> pages (for redundancy) followed by <strong>Log Record Pages</strong>. Each log record page contains multiple individual log records.</p>
+    <p>Each log record includes:</p>
+    <ul>
+      <li><strong>LSN (Log Sequence Number):</strong> A monotonically increasing 64-bit number that uniquely identifies the record and establishes order.</li>
+      <li><strong>Transaction ID:</strong> Groups related operations into atomic transactions.</li>
+      <li><strong>Redo Operation:</strong> The operation code and data needed to replay the change (e.g., &ldquo;write these bytes to offset X of MFT record Y&rdquo;).</li>
+      <li><strong>Undo Operation:</strong> The operation code and data needed to reverse the change.</li>
+      <li><strong>Target MFT reference:</strong> Which MFT record and attribute were affected.</li>
+    </ul>
+    <p>Common operation codes include: <code>InitializeFileRecordSegment</code>, <code>DeallocateFileRecordSegment</code>, <code>CreateAttribute</code>, <code>DeleteAttribute</code>, <code>UpdateResidentValue</code>, <code>AddIndexEntryRoot</code>, <code>DeleteIndexEntryRoot</code>, and many more.</p>
+  </div>
+</details>
+
+<!-- ═══════════════════════════════ §5 $USNJRNL ═════════════════════════════════════════════════ -->
+<h2 id="usnjrnl">5. $UsnJrnl &mdash; The Change Journal</h2>
+
+<p>The <code>$UsnJrnl</code> (Update Sequence Number Journal), also called the <strong>change journal</strong>, is a separate NTFS structure that records a <strong>high-level log of file and directory changes</strong> on the volume. While <code>$LogFile</code> is designed for crash recovery, <code>$UsnJrnl</code> is designed to help applications (such as backup software, search indexers, and antivirus) efficiently detect what has changed since they last checked.</p>
+
+<h3>Location and Structure</h3>
+<div class="table-wrap">
+<table>
+  <caption>$UsnJrnl Key Facts</caption>
+  <thead><tr><th scope="col">Property</th><th scope="col">Detail</th></tr></thead>
+  <tbody>
+    <tr><td>Location</td><td><code>$Extend\$UsnJrnl</code> (a system file in the <code>$Extend</code> directory)</td></tr>
+    <tr><td>Data streams</td><td><code>$Max</code> (configuration) and <code>$J</code> (journal entries)</td></tr>
+    <tr><td>Typical size</td><td>32–64 MB default allocation; can be larger</td></tr>
+    <tr><td>Logging behavior</td><td><strong>Circular</strong> within the allocated space; oldest entries overwritten</td></tr>
+    <tr><td>Retention</td><td>Days to weeks on a typical workstation (much longer than <code>$LogFile</code>)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>The forensically important data stream is <strong><code>$J</code></strong>. Each record in <code>$J</code> contains:</p>
+<ul>
+  <li><strong>USN (Update Sequence Number):</strong> Byte offset of the record within the journal; monotonically increasing.</li>
+  <li><strong>Timestamp:</strong> When the change occurred (UTC, 100-nanosecond precision).</li>
+  <li><strong>Filename:</strong> The name of the file or directory that changed.</li>
+  <li><strong>MFT Reference Number:</strong> Links the entry back to the MFT record.</li>
+  <li><strong>Parent MFT Reference:</strong> The directory containing the file.</li>
+  <li><strong>Reason Code:</strong> A bitmask describing <em>what</em> changed (see below).</li>
+  <li><strong>Source Info:</strong> Indicates if the change was from the OS, replication, etc.</li>
+</ul>
+
+<h3>Reason Codes</h3>
+<p>Reason codes are the heart of <code>$UsnJrnl</code> forensic analysis. Each record contains one or more reason flags that describe the nature of the change:</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Common $UsnJrnl Reason Codes</caption>
+  <thead><tr><th scope="col">Reason Code</th><th scope="col">Hex Value</th><th scope="col">Meaning</th><th scope="col">Forensic Significance</th></tr></thead>
+  <tbody>
+    <tr><td><code>FILE_CREATE</code></td><td>0x00000100</td><td>A new file or directory was created.</td><td>Establishes when a file first appeared on the volume.</td></tr>
+    <tr><td><code>FILE_DELETE</code></td><td>0x00000200</td><td>A file or directory was deleted.</td><td>Proves a file existed and when it was removed&mdash;even if the MFT entry has been reused.</td></tr>
+    <tr><td><code>DATA_EXTEND</code></td><td>0x00000002</td><td>Data was appended to the file (file grew).</td><td>Indicates active writing; useful for tracking data exfiltration or file downloads.</td></tr>
+    <tr><td><code>DATA_OVERWRITE</code></td><td>0x00000001</td><td>Existing data was overwritten.</td><td>Content modification; may indicate file tampering.</td></tr>
+    <tr><td><code>DATA_TRUNCATION</code></td><td>0x00000004</td><td>File was truncated (shrank).</td><td>May indicate log clearing or evidence destruction.</td></tr>
+    <tr><td><code>RENAME_OLD_NAME</code></td><td>0x00001000</td><td>The file&rsquo;s previous name (before rename).</td><td>Paired with <code>RENAME_NEW_NAME</code> to track file renaming&mdash;a common anti-forensic technique.</td></tr>
+    <tr><td><code>RENAME_NEW_NAME</code></td><td>0x00002000</td><td>The file&rsquo;s new name (after rename).</td><td>See above. Together they reconstruct the full rename history.</td></tr>
+    <tr><td><code>SECURITY_CHANGE</code></td><td>0x00000800</td><td>File permissions (ACL) were modified.</td><td>May indicate privilege escalation or evidence-access attempts.</td></tr>
+    <tr><td><code>BASIC_INFO_CHANGE</code></td><td>0x00008000</td><td>Basic attributes changed (timestamps, flags).</td><td><strong>Key timestomping indicator</strong>&mdash;if you see this without a corresponding content write, timestamps may have been manipulated.</td></tr>
+    <tr><td><code>CLOSE</code></td><td>0x80000000</td><td>The file handle was closed.</td><td>Marks the end of an operation sequence. The <code>CLOSE</code> record typically carries a combined reason mask summarizing all changes made during that open-close cycle.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout callout--info">
+  <div class="callout__title">💡 Reading Combined Reason Codes</div>
+  <p>A single <code>$UsnJrnl</code> record often contains <strong>multiple reason flags OR&rsquo;d together</strong>. For example, a record with reason <code>FILE_CREATE | CLOSE</code> (hex <code>0x80000100</code>) means a new file was created and the handle was immediately closed. When you see <code>DATA_EXTEND | CLOSE</code>, it means data was written and the file was closed. Parsed output from MFTECmd displays these as comma-separated labels for readability.</p>
+</div>
+
+<h3>Forensic Value of $UsnJrnl</h3>
+<ul>
+  <li><strong>Longer retention than $LogFile:</strong> Because the <code>$J</code> stream is typically larger, it retains entries for days to weeks&mdash;covering a much wider investigation window.</li>
+  <li><strong>Evidence of deleted files:</strong> Even after a file is deleted and its MFT entry overwritten, the <code>$UsnJrnl</code> may still contain the <code>FILE_CREATE</code>, <code>DATA_EXTEND</code>, and <code>FILE_DELETE</code> records with the original filename and timestamps.</li>
+  <li><strong>Rename tracking:</strong> The <code>RENAME_OLD_NAME</code> / <code>RENAME_NEW_NAME</code> pairs let you trace a file&rsquo;s complete naming history&mdash;critical when attackers rename malware to mimic system files.</li>
+  <li><strong>Timeline backbone:</strong> <code>$UsnJrnl</code> entries, with their precise timestamps and reason codes, form the <strong>backbone of a file-system timeline</strong>. In Module 8.5 you will merge this data with Event Logs, Prefetch, and Registry artifacts to build a super-timeline.</li>
+</ul>
+
+<h3>$LogFile vs. $UsnJrnl &mdash; Comparison</h3>
+<div class="table-wrap">
+<table>
+  <caption>Comparing the Two NTFS Journals</caption>
+  <thead><tr><th scope="col">Feature</th><th scope="col">$LogFile</th><th scope="col">$UsnJrnl</th></tr></thead>
+  <tbody>
+    <tr><td>Primary purpose</td><td>Crash recovery (transaction rollback/replay)</td><td>Change notification for applications</td></tr>
+    <tr><td>Detail level</td><td>Very high (byte-level redo/undo of MFT changes)</td><td>Medium (operation type + filename + timestamp)</td></tr>
+    <tr><td>Typical retention</td><td>Hours to a few days</td><td>Days to weeks</td></tr>
+    <tr><td>Typical size</td><td>~64 MB</td><td>32–64 MB (but often larger effective coverage due to less data per record)</td></tr>
+    <tr><td>Records file content changes</td><td>No (metadata only)</td><td>Indirectly (reason codes like <code>DATA_EXTEND</code>)</td></tr>
+    <tr><td>Parsing tool</td><td>MFTECmd (<code>--log</code> flag)</td><td>MFTECmd (<code>--usn</code> flag)</td></tr>
+    <tr><td>Best forensic use</td><td>Recovering prior attribute values; corroborating timestomping</td><td>Building file-system timelines; tracking creates/deletes/renames</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ═══════════════════════════════ §6 TOOL WALK-THROUGH ════════════════════════════════════════ -->
+<h2 id="tools">6. Tool Walk-Through: MFTECmd</h2>
+
+<p><strong>MFTECmd</strong> is part of Eric Zimmerman&rsquo;s forensic tool suite. It parses three NTFS structures: the <code>$MFT</code>, the <code>$LogFile</code>, and the <code>$UsnJrnl:$J</code> data stream. Output is exported to CSV for analysis in Timeline Explorer or any spreadsheet application.</p>
+
+<div class="callout callout--accent">
+  <div class="callout__title">🛠️ Hands-On Walkthrough</div>
+  <p>Follow along on your forensic workstation. You will need the extracted <code>$MFT</code>, <code>$LogFile</code>, and <code>$UsnJrnl:$J</code> files from a forensic image. If you do not have these yet, the commands below show the exact syntax you will use in Lab 8 and Homework 3.</p>
+</div>
+
+<h3>Step 1: Parse the $MFT</h3>
+<pre><code>MFTECmd.exe -f "C:\Evidence\$MFT" --csv "C:\Output" --csvf "MFT_parsed.csv"</code></pre>
+<p>This produces a CSV with one row per MFT entry, including both SI and FN timestamps. You can immediately filter for timestomping by comparing SI_Born and FN_Born columns.</p>
+
+<h3>Step 2: Parse the $LogFile</h3>
+<pre><code>MFTECmd.exe -f "C:\Evidence\$LogFile" --csv "C:\Output" --csvf "LogFile_parsed.csv"</code></pre>
+<p>The <code>$LogFile</code> CSV contains columns for LSN, operation type, redo/undo data, and the affected MFT reference. Use this to investigate specific metadata changes within the journal&rsquo;s retention window.</p>
+
+<h3>Step 3: Parse the $UsnJrnl ($J stream)</h3>
+<pre><code>MFTECmd.exe -f "C:\Evidence\$J" --csv "C:\Output" --csvf "UsnJrnl_parsed.csv"</code></pre>
+<p>The <code>$UsnJrnl</code> CSV includes the following key columns:</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Key MFTECmd $UsnJrnl Output Columns</caption>
+  <thead><tr><th scope="col">Column</th><th scope="col">Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>UpdateTimestamp</code></td><td>UTC timestamp of the journal entry.</td></tr>
+    <tr><td><code>Name</code></td><td>Filename of the affected file or directory.</td></tr>
+    <tr><td><code>UpdateReasons</code></td><td>Comma-separated reason codes (e.g., <code>FileCreate, Close</code>).</td></tr>
+    <tr><td><code>EntryNumber</code></td><td>MFT entry number of the affected file.</td></tr>
+    <tr><td><code>ParentEntryNumber</code></td><td>MFT entry number of the parent directory.</td></tr>
+    <tr><td><code>UpdateSequenceNumber</code></td><td>The USN (byte offset in the journal).</td></tr>
+    <tr><td><code>FileAttributes</code></td><td>File attributes (Archive, Hidden, System, Directory, etc.).</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Step 4: Load in Timeline Explorer</h3>
+<ol>
+  <li>Open <strong>Timeline Explorer</strong>.</li>
+  <li>Go to <strong>File → Open</strong> and select <code>UsnJrnl_parsed.csv</code>.</li>
+  <li>The data loads into a sortable, filterable grid.</li>
+</ol>
+
+<h3>Step 5: Filter by Reason Code</h3>
+<ol>
+  <li>Click the filter icon on the <code>UpdateReasons</code> column.</li>
+  <li>Type <code>FileCreate</code> to see only file-creation events.</li>
+  <li>Clear and type <code>FileDelete</code> to see deletions.</li>
+  <li>Use <code>RenameOldName</code> to find files that were renamed&mdash;then look for the adjacent <code>RenameNewName</code> entry to see the new name.</li>
+</ol>
+
+<h3>Step 6: Filter by Time Range</h3>
+<ol>
+  <li>Click the <code>UpdateTimestamp</code> column header to sort chronologically.</li>
+  <li>Use the column filter to specify a date range matching your incident window.</li>
+  <li>This narrows thousands of entries down to the relevant time period.</li>
+</ol>
+
+<h3>Step 7: Cross-Reference with $MFT</h3>
+<p>When you find a suspicious <code>$UsnJrnl</code> entry, note the <code>EntryNumber</code> (MFT record number). Then open <code>MFT_parsed.csv</code> in Timeline Explorer and filter the <code>EntryNumber</code> column to that value. This gives you the full MFT record including both SI and FN timestamps&mdash;allowing you to check for timestomping on the same file.</p>
+
+<details>
+  <summary>Tip: Extracting $UsnJrnl:$J from a Forensic Image</summary>
+  <div class="details-body">
+    <p>The <code>$UsnJrnl</code> is an NTFS system file with an alternate data stream (<code>$J</code>). Extracting it requires a tool that understands NTFS alternate data streams:</p>
+    <ul>
+      <li><strong>Autopsy:</strong> Navigate to the root of the NTFS volume → <code>$Extend</code> → <code>$UsnJrnl</code>. Right-click the <code>$J</code> stream and select <strong>Extract File(s)</strong>.</li>
+      <li><strong>FTK Imager:</strong> Browse to the same path, select the <code>$J</code> data stream, and export.</li>
+      <li><strong>icat (Sleuth Kit):</strong> Use the MFT entry number for <code>$UsnJrnl</code> with the ADS name: <code>icat -o &lt;offset&gt; image.E01 &lt;inode&gt;-128-3 &gt; $J</code>.</li>
+    </ul>
+    <p>Similarly, extract <code>$MFT</code> (MFT entry 0) and <code>$LogFile</code> (MFT entry 2) from the image root.</p>
+  </div>
+</details>
+
+<!-- ═══════════════════════════ §7 PRACTICAL EXERCISE ═══════════════════════════════════════════ -->
+<h2 id="exercise">7. Practical Exercise: Interpret $UsnJrnl Output</h2>
+
+<div class="scenario">
+  <div class="scenario__title">🔍 Scenario: Suspicious File Activity on HR-PC</div>
+  <p>You are analyzing a forensic image from workstation <strong>HR-PC</strong>. An insider-threat investigation is focused on the time window <strong>2026-02-14 between 01:00 and 02:00 UTC</strong>. You have parsed the <code>$UsnJrnl</code> with MFTECmd and filtered to that window. Below are the relevant entries, listed in chronological order.</p>
+</div>
+
+<h3>Parsed $UsnJrnl Entries (Filtered)</h3>
+
+<pre><code>Entry  UpdateTimestamp            Name                     UpdateReasons                    EntryNumber  ParentEntry
+-----  ------------------------  -----------------------  ------------------------------   -----------  -----------
+  1    2026-02-14 01:12:05.332   employee_salaries.xlsx   FileCreate, Close                48291        31005
+  2    2026-02-14 01:12:06.118   employee_salaries.xlsx   DataExtend, Close                48291        31005
+  3    2026-02-14 01:15:22.774   employee_salaries.xlsx   RenameOldName, Close             48291        31005
+  4    2026-02-14 01:15:22.790   Q4_budget_draft.xlsx     RenameNewName, Close             48291        31005
+  5    2026-02-14 01:23:41.005   backup.zip               FileCreate, Close                48295        31005
+  6    2026-02-14 01:23:42.887   backup.zip               DataExtend, Close                48295        31005
+  7    2026-02-14 01:23:58.112   backup.zip               DataExtend, Close                48295        31005
+  8    2026-02-14 01:31:09.443   Q4_budget_draft.xlsx     FileDelete, Close                48291        31005
+  9    2026-02-14 01:31:15.667   backup.zip               FileDelete, Close                48295        31005</code></pre>
+
+<h3>Additional Context: $MFT Timestamps for Entry 48291</h3>
+<pre><code>EntryNumber: 48291
+SI_Born:     2025-06-15 10:30:00 UTC
+SI_Modified: 2025-06-15 10:30:00 UTC
+FN_Born:     2026-02-14 01:12:05 UTC
+FN_Modified: 2026-02-14 01:15:22 UTC
+Current Name: Q4_budget_draft.xlsx  (marked as deleted)</code></pre>
+
+<h3>Investigative Questions</h3>
+<p>Use the journal entries and MFT data above to answer the following. Click each question to reveal the answer.</p>
+
+<details>
+  <summary>Q1: What was the original name of the file, and what was it renamed to?</summary>
+  <div class="details-body">
+    <p><strong>Answer:</strong> The file was originally created as <code>employee_salaries.xlsx</code> (Entry 1) and renamed to <code>Q4_budget_draft.xlsx</code> (Entries 3 &amp; 4).</p>
+    <p><strong>Analysis:</strong> <code>$UsnJrnl</code> Entry 3 shows <code>RenameOldName</code> for <code>employee_salaries.xlsx</code> and Entry 4 shows <code>RenameNewName</code> for <code>Q4_budget_draft.xlsx</code>. Both share the same <code>EntryNumber</code> (48291), confirming they are the same file. The rename occurred at 01:15:22 UTC&mdash;about 3 minutes after creation. The new name appears designed to disguise the file&rsquo;s true contents.</p>
+  </div>
+</details>
+
+<details>
+  <summary>Q2: What evidence suggests the file was timestomped?</summary>
+  <div class="details-body">
+    <p><strong>Answer:</strong> The SI_Born timestamp (2025-06-15) is <strong>8 months earlier</strong> than the FN_Born timestamp (2026-02-14 01:12:05).</p>
+    <p><strong>Analysis:</strong> Under normal NTFS operation, SI_Born cannot be earlier than FN_Born. The <code>$UsnJrnl</code> confirms the file was created at 01:12:05 on Feb 14, 2026 (Entry 1: <code>FileCreate</code>). The SI timestamps were set to June 2025&mdash;a date that would make the file appear to be a routine document from months ago. Additionally, all four SI timestamps being identical (both set to <code>2025-06-15 10:30:00</code>) is another red flag.</p>
+  </div>
+</details>
+
+<details>
+  <summary>Q3: Reconstruct the complete sequence of events in chronological order.</summary>
+  <div class="details-body">
+    <ol>
+      <li><strong>01:12:05</strong> &mdash; File <code>employee_salaries.xlsx</code> was <strong>created</strong> (Entry 1: <code>FileCreate</code>).</li>
+      <li><strong>01:12:06</strong> &mdash; Data was <strong>written</strong> to the file (Entry 2: <code>DataExtend</code>).</li>
+      <li><strong>01:15:22</strong> &mdash; File was <strong>renamed</strong> from <code>employee_salaries.xlsx</code> to <code>Q4_budget_draft.xlsx</code> (Entries 3–4: <code>RenameOldName</code> / <code>RenameNewName</code>).</li>
+      <li><strong>Between 01:15 and 01:23</strong> &mdash; SI timestamps were <strong>timestomped</strong> to June 2025 (evidenced by SI vs. FN mismatch; the exact journal entry for the <code>BASIC_INFO_CHANGE</code> may have been filtered out or combined with another record).</li>
+      <li><strong>01:23:41</strong> &mdash; File <code>backup.zip</code> was <strong>created</strong> (Entry 5: <code>FileCreate</code>).</li>
+      <li><strong>01:23:42 – 01:23:58</strong> &mdash; Data was written to <code>backup.zip</code> in two phases (Entries 6–7: <code>DataExtend</code>), suggesting the ZIP was being built incrementally.</li>
+      <li><strong>01:31:09</strong> &mdash; <code>Q4_budget_draft.xlsx</code> (the renamed salary file) was <strong>deleted</strong> (Entry 8: <code>FileDelete</code>).</li>
+      <li><strong>01:31:15</strong> &mdash; <code>backup.zip</code> was <strong>deleted</strong> (Entry 9: <code>FileDelete</code>).</li>
+    </ol>
+    <p><strong>Investigative narrative:</strong> Someone created a file containing employee salary data, wrote content to it, renamed it to disguise its contents, timestomped it to hide its true creation date, compressed it into a ZIP archive (likely for exfiltration), and then deleted both files to cover their tracks&mdash;all within a 19-minute window in the early morning hours.</p>
+  </div>
+</details>
+
+<details>
+  <summary>Q4: Despite both files being deleted, what evidence remains? What would you investigate next?</summary>
+  <div class="details-body">
+    <p><strong>Evidence that persists:</strong></p>
+    <ul>
+      <li>The <code>$UsnJrnl</code> entries documenting the entire create → write → rename → delete sequence.</li>
+      <li>The <code>$MFT</code> entry (48291) still exists (marked as deleted) with both SI and FN timestamps revealing the timestomping.</li>
+      <li>The <code>$LogFile</code> may contain additional detail if the events are within its retention window.</li>
+      <li>The file content may still be recoverable if the clusters have not been overwritten.</li>
+    </ul>
+    <p><strong>Next steps:</strong></p>
+    <ol>
+      <li><strong>Attempt file recovery:</strong> Use Autopsy or Sleuth Kit to recover the deleted <code>employee_salaries.xlsx</code> and <code>backup.zip</code> from unallocated space.</li>
+      <li><strong>Check Event Logs:</strong> Who was logged into HR-PC at 01:12 UTC? (Module 8.1 skills &mdash; look for Event 4624.)</li>
+      <li><strong>Check Prefetch:</strong> Was a ZIP utility or timestomping tool executed? (Module 8.2 skills.)</li>
+      <li><strong>Check LNK files / Jump Lists:</strong> Did the user open <code>employee_salaries.xlsx</code>? (Module 8.3 skills.)</li>
+      <li><strong>Network artifacts:</strong> Was <code>backup.zip</code> transmitted before deletion? (Weeks 11–12.)</li>
+    </ol>
+  </div>
+</details>
+
+<!-- ═══════════════════════════ §8 KNOWLEDGE CHECK ══════════════════════════════════════════════ -->
+<h2 id="knowledge-check">8. Knowledge Check</h2>
+
+<p>Test your understanding of NTFS journal artifacts and timestomping detection. These questions are <strong>ungraded</strong>&mdash;use them to identify areas to review before Module 8.5.</p>
+
+<!-- Question 1 -->
+<div class="kc-question" data-correct="b" id="kc1">
+  <div class="kc-question__stem">1. An examiner finds a file where <code>SI_Born</code> is <code>2024-01-15</code> and <code>FN_Born</code> is <code>2026-02-14</code>. What is the most likely explanation?</div>
+  <ul class="kc-options" role="list">
+    <li class="kc-option"><input type="radio" name="kc1" id="kc1a" value="a"><label for="kc1a">A. The file was copied from an older system, which preserved the original creation date.</label></li>
+    <li class="kc-option"><input type="radio" name="kc1" id="kc1b" value="b"><label for="kc1b">B. The SI timestamps were modified (timestomped) to an earlier date; the FN timestamp reflects the true creation time.</label></li>
+    <li class="kc-option"><input type="radio" name="kc1" id="kc1c" value="c"><label for="kc1c">C. The FN timestamps were modified to a later date to frame someone.</label></li>
+    <li class="kc-option"><input type="radio" name="kc1" id="kc1d" value="d"><label for="kc1d">D. Both timestamps are unreliable due to NTFS corruption.</label></li>
+  </ul>
+  <button class="kc-btn" onclick="checkAnswer('kc1')">Check Answer</button>
+  <div class="kc-feedback kc-feedback--correct" id="kc1-correct" role="status" aria-live="polite">
+    <strong>✓ Correct!</strong> When SI_Born is earlier than FN_Born, it is a strong indicator of timestomping. Under normal NTFS operation, SI_Born and FN_Born are set to the same value at file creation, and SI_Born can only move <em>forward</em> (or stay the same) through normal operations. An SI_Born date years before FN_Born means someone used <code>SetFileTime()</code> or a similar tool to backdate the SI timestamps. FN timestamps cannot be modified by user-level tools, so FN_Born reflects the true creation time.
+  </div>
+  <div class="kc-feedback kc-feedback--incorrect" id="kc1-incorrect" role="status" aria-live="polite">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>B</strong>. SI_Born earlier than FN_Born is the classic timestomping signature. FN timestamps are managed by the NTFS kernel driver and cannot be changed by user-level APIs. While file copying (A) can affect SI timestamps, a copy operation creates a new FN_Born that matches or is close to SI_Born&mdash;it would not produce a two-year gap where SI is <em>older</em>. FN modification (C) requires kernel-level access and is extremely rare.
+  </div>
+</div>
+
+<!-- Question 2 -->
+<div class="kc-question" data-correct="c" id="kc2">
+  <div class="kc-question__stem">2. Which of the following best describes the difference between <code>$LogFile</code> and <code>$UsnJrnl</code>?</div>
+  <ul class="kc-options" role="list">
+    <li class="kc-option"><input type="radio" name="kc2" id="kc2a" value="a"><label for="kc2a">A. <code>$LogFile</code> records file content changes; <code>$UsnJrnl</code> records metadata changes.</label></li>
+    <li class="kc-option"><input type="radio" name="kc2" id="kc2b" value="b"><label for="kc2b">B. <code>$LogFile</code> has longer retention; <code>$UsnJrnl</code> overwrites faster.</label></li>
+    <li class="kc-option"><input type="radio" name="kc2" id="kc2c" value="c"><label for="kc2c">C. <code>$LogFile</code> provides low-level redo/undo transaction data for crash recovery; <code>$UsnJrnl</code> provides higher-level change records with reason codes for application use.</label></li>
+    <li class="kc-option"><input type="radio" name="kc2" id="kc2d" value="d"><label for="kc2d">D. They are identical structures stored in different locations for redundancy.</label></li>
+  </ul>
+  <button class="kc-btn" onclick="checkAnswer('kc2')">Check Answer</button>
+  <div class="kc-feedback kc-feedback--correct" id="kc2-correct" role="status" aria-live="polite">
+    <strong>✓ Correct!</strong> <code>$LogFile</code> is the NTFS transaction journal designed for crash recovery, storing granular redo/undo operation pairs at the byte level. <code>$UsnJrnl</code> is the change journal designed for applications, storing higher-level records with reason codes (FileCreate, FileDelete, etc.). <code>$LogFile</code> actually has <em>shorter</em> retention (hours to days) than <code>$UsnJrnl</code> (days to weeks), and neither records file <em>content</em> directly.
+  </div>
+  <div class="kc-feedback kc-feedback--incorrect" id="kc2-incorrect" role="status" aria-live="polite">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>C</strong>. <code>$LogFile</code> stores low-level redo/undo pairs for crash recovery; <code>$UsnJrnl</code> stores higher-level change notifications with reason codes. Neither records actual file content (A is wrong). <code>$LogFile</code> has <em>shorter</em> retention than <code>$UsnJrnl</code> (B is backwards). They are structurally different systems with different purposes (D is wrong).
+  </div>
+</div>
+
+<!-- Question 3 -->
+<div class="kc-question" data-correct="a" id="kc3">
+  <div class="kc-question__stem">3. You find the following consecutive <code>$UsnJrnl</code> entries for MFT entry 50123:<br>
+  Entry A: <code>RenameOldName</code> — Name: <code>malware.exe</code><br>
+  Entry B: <code>RenameNewName</code> — Name: <code>svchost.exe</code><br>
+  What does this sequence indicate?</div>
+  <ul class="kc-options" role="list">
+    <li class="kc-option"><input type="radio" name="kc3" id="kc3a" value="a"><label for="kc3a">A. A file originally named <code>malware.exe</code> was renamed to <code>svchost.exe</code>, likely to disguise it as a legitimate system process.</label></li>
+    <li class="kc-option"><input type="radio" name="kc3" id="kc3b" value="b"><label for="kc3b">B. A file named <code>svchost.exe</code> was renamed to <code>malware.exe</code>.</label></li>
+    <li class="kc-option"><input type="radio" name="kc3" id="kc3c" value="c"><label for="kc3c">C. Two separate files were created with different names.</label></li>
+    <li class="kc-option"><input type="radio" name="kc3" id="kc3d" value="d"><label for="kc3d">D. The file <code>malware.exe</code> was deleted and <code>svchost.exe</code> was created.</label></li>
+  </ul>
+  <button class="kc-btn" onclick="checkAnswer('kc3')">Check Answer</button>
+  <div class="kc-feedback kc-feedback--correct" id="kc3-correct" role="status" aria-live="polite">
+    <strong>✓ Correct!</strong> <code>RenameOldName</code> records the file&rsquo;s name <em>before</em> the rename, and <code>RenameNewName</code> records the name <em>after</em>. Both entries share the same MFT entry number (50123), confirming it is the same file. The attacker renamed <code>malware.exe</code> to <code>svchost.exe</code> to disguise it as a legitimate Windows system binary. This is a common evasion technique.
+  </div>
+  <div class="kc-feedback kc-feedback--incorrect" id="kc3-incorrect" role="status" aria-live="polite">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>A</strong>. In <code>$UsnJrnl</code>, <code>RenameOldName</code> always contains the <em>previous</em> name and <code>RenameNewName</code> contains the <em>new</em> name. Since both entries reference the same MFT entry (50123), this is a single file rename operation: <code>malware.exe</code> → <code>svchost.exe</code>. This is not a deletion/creation (D) or two separate files (C).
+  </div>
+</div>
+
+<!-- Question 4 -->
+<div class="kc-question" data-correct="d" id="kc4">
+  <div class="kc-question__stem">4. Which MFTECmd command correctly parses the <code>$UsnJrnl:$J</code> data stream and exports to CSV?</div>
+  <ul class="kc-options" role="list">
+    <li class="kc-option"><input type="radio" name="kc4" id="kc4a" value="a"><label for="kc4a">A. <code>MFTECmd.exe -d "C:\Evidence\$J" --csv "C:\Output"</code></label></li>
+    <li class="kc-option"><input type="radio" name="kc4" id="kc4b" value="b"><label for="kc4b">B. <code>EvtxECmd.exe -f "C:\Evidence\$J" --csv "C:\Output"</code></label></li>
+    <li class="kc-option"><input type="radio" name="kc4" id="kc4c" value="c"><label for="kc4c">C. <code>MFTECmd.exe -f "C:\Evidence\$MFT" --usn --csv "C:\Output"</code></label></li>
+    <li class="kc-option"><input type="radio" name="kc4" id="kc4d" value="d"><label for="kc4d">D. <code>MFTECmd.exe -f "C:\Evidence\$J" --csv "C:\Output" --csvf "UsnJrnl_parsed.csv"</code></label></li>
+  </ul>
+  <button class="kc-btn" onclick="checkAnswer('kc4')">Check Answer</button>
+  <div class="kc-feedback kc-feedback--correct" id="kc4-correct" role="status" aria-live="polite">
+    <strong>✓ Correct!</strong> MFTECmd uses the <code>-f</code> flag to specify the input file (the extracted <code>$J</code> stream), <code>--csv</code> for the output directory, and <code>--csvf</code> for the output filename. MFTECmd automatically detects whether the input is an <code>$MFT</code>, <code>$LogFile</code>, or <code>$J</code> stream based on its internal structure. Option A uses <code>-d</code> (directory mode, wrong). Option B uses EvtxECmd (wrong tool&mdash;that&rsquo;s for Event Logs). Option C points to the <code>$MFT</code> file, not <code>$J</code>.
+  </div>
+  <div class="kc-feedback kc-feedback--incorrect" id="kc4-incorrect" role="status" aria-live="polite">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>D</strong>. MFTECmd parses NTFS structures (<code>$MFT</code>, <code>$LogFile</code>, <code>$J</code>); EvtxECmd is for Event Logs (B is wrong tool). The <code>-f</code> flag specifies a single file; <code>-d</code> is for directories (A is wrong). The input must be the extracted <code>$J</code> file, not the <code>$MFT</code> (C is wrong input).
+  </div>
+</div>
+
+<!-- Question 5 -->
+<div class="kc-question" data-correct="b" id="kc5">
+  <div class="kc-question__stem">5. Why is <code>$UsnJrnl</code> generally more useful than <code>$LogFile</code> for building a file-system timeline covering the past week?</div>
+  <ul class="kc-options" role="list">
+    <li class="kc-option"><input type="radio" name="kc5" id="kc5a" value="a"><label for="kc5a">A. <code>$UsnJrnl</code> records file content, while <code>$LogFile</code> does not.</label></li>
+    <li class="kc-option"><input type="radio" name="kc5" id="kc5b" value="b"><label for="kc5b">B. <code>$UsnJrnl</code> typically retains entries for days to weeks, while <code>$LogFile</code> often wraps within hours to a few days on an active system.</label></li>
+    <li class="kc-option"><input type="radio" name="kc5" id="kc5c" value="c"><label for="kc5c">C. <code>$UsnJrnl</code> is never overwritten, providing a permanent record.</label></li>
+    <li class="kc-option"><input type="radio" name="kc5" id="kc5d" value="d"><label for="kc5d">D. <code>$UsnJrnl</code> contains redo/undo data that <code>$LogFile</code> lacks.</label></li>
+  </ul>
+  <button class="kc-btn" onclick="checkAnswer('kc5')">Check Answer</button>
+  <div class="kc-feedback kc-feedback--correct" id="kc5-correct" role="status" aria-live="polite">
+    <strong>✓ Correct!</strong> The key advantage of <code>$UsnJrnl</code> for timeline work is its <strong>longer retention</strong>. Because each <code>$UsnJrnl</code> record is smaller than a <code>$LogFile</code> transaction record, and the <code>$J</code> stream is often larger, <code>$UsnJrnl</code> typically covers days to weeks of activity. <code>$LogFile</code> wraps much faster. Neither journal records file content (A is wrong), <code>$UsnJrnl</code> <em>is</em> circular and can be overwritten (C is wrong), and redo/undo data is a <code>$LogFile</code> feature, not <code>$UsnJrnl</code> (D is backwards).
+  </div>
+  <div class="kc-feedback kc-feedback--incorrect" id="kc5-incorrect" role="status" aria-live="polite">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>B</strong>. <code>$UsnJrnl</code>&rsquo;s longer retention (days to weeks vs. hours to days for <code>$LogFile</code>) makes it far more useful for timeline construction over a multi-day period. Neither journal stores file content (A). <code>$UsnJrnl</code> is circular and <em>does</em> overwrite old entries (C). Redo/undo data belongs to <code>$LogFile</code>, not <code>$UsnJrnl</code> (D is backwards).
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ FOOTER / NEXT ═══════════════════════════════════════════════ -->
+<hr style="margin-top:2.5rem;">
+<div class="callout callout--success">
+  <div class="callout__title">✅ Module 8.4 Complete</div>
+  <p>You now understand how NTFS journals work, how to detect timestomping using SI vs. FN timestamp comparison, and how to parse and interpret <code>$UsnJrnl</code> data with MFTECmd. These skills are essential for the file-system timeline component of Homework 3.</p>
+  <p>In <strong>Module 8.5: Integrated Timeline Analysis and Midterm Preparation</strong>, you will bring <em>everything</em> together&mdash;merging Event Logs, Prefetch, LNK files, Registry artifacts, and NTFS journals into a unified <strong>super-timeline</strong>. Module 8.5 also includes a structured midterm review covering Weeks 1&ndash;8.</p>
+  <p><strong>Estimated time for Module 8.5:</strong> 60–75 minutes.</p>
+</div>
+
+</main>
+
+<!-- ════════════════════════════════════ JAVASCRIPT ═════════════════════════════════════════════ -->
+<script>
+/* ── Accessible Tabs ── */
+(function(){
+  document.querySelectorAll('.tabs').forEach(function(tabGroup){
+    var btns=tabGroup.querySelectorAll('.tab-btn');
+    var panels=tabGroup.querySelectorAll('.tab-panel');
+    function activate(btn){
+      btns.forEach(function(b){b.setAttribute('aria-selected','false');b.setAttribute('tabindex','-1');});
+      panels.forEach(function(p){p.classList.remove('active');});
+      btn.setAttribute('aria-selected','true');btn.setAttribute('tabindex','0');
+      var panel=document.getElementById(btn.getAttribute('aria-controls'));
+      if(panel) panel.classList.add('active');
+    }
+    btns.forEach(function(btn,i){
+      btn.setAttribute('tabindex',i===0?'0':'-1');
+      btn.addEventListener('click',function(){activate(btn);btn.focus();});
+      btn.addEventListener('keydown',function(e){
+        var idx=Array.prototype.indexOf.call(btns,btn);
+        if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();var n=btns[(idx+1)%btns.length];n.focus();activate(n);}
+        else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();var p=btns[(idx-1+btns.length)%btns.length];p.focus();activate(p);}
+        else if(e.key==='Home'){e.preventDefault();btns[0].focus();activate(btns[0]);}
+        else if(e.key==='End'){e.preventDefault();btns[btns.length-1].focus();activate(btns[btns.length-1]);}
+      });
+    });
+  });
+})();
+
+/* ── Knowledge Check ── */
+function checkAnswer(qId){
+  var container=document.getElementById(qId);
+  if(!container) return;
+  var correct=container.getAttribute('data-correct');
+  var selected=container.querySelector('input[name="'+qId+'"]:checked');
+  var fbC=document.getElementById(qId+'-correct');
+  var fbI=document.getElementById(qId+'-incorrect');
+  fbC.style.display='none';fbI.style.display='none';
+  if(!selected){
+    var errEl=container.querySelector('.kc-no-sel');
+    if(!errEl){errEl=document.createElement('p');errEl.className='kc-no-sel';errEl.setAttribute('role','alert');errEl.style.cssText='color:#b91c1c;font-size:0.88rem;margin-top:0.35rem;';container.querySelector('.kc-btn').insertAdjacentElement('afterend',errEl);}
+    errEl.textContent='Please select an answer first.';errEl.style.display='block';return;
+  }
+  var errEl=container.querySelector('.kc-no-sel');if(errEl) errEl.style.display='none';
+  if(selected.value===correct){fbC.style.display='block';}else{fbI.style.display='block';}
+}
+</script>
+</body>
+</html>
