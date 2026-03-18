@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 9.1 – Linux Forensics Orientation | CSC 156</title>
+<style>
+  /* ── DESIGN TOKENS ─────────────────────────────────────────── */
+  :root {
+    --clr-primary:       #1a3a5c;   /* deep navy */
+    --clr-primary-light: #2563a8;   /* mid blue  */
+    --clr-accent:        #e07b2a;   /* amber     */
+    --clr-accent-light:  #fdf0e0;   /* pale amber*/
+    --clr-success:       #1a6b3c;
+    --clr-success-bg:    #eaf5ee;
+    --clr-error:         #8b1a1a;
+    --clr-error-bg:      #fdeaea;
+    --clr-info:          #1a4a6b;
+    --clr-info-bg:       #e6f0f8;
+    --clr-warn:          #7a4f00;
+    --clr-warn-bg:       #fff8e6;
+    --clr-surface:       #f7f9fc;
+    --clr-border:        #ccd6e0;
+    --clr-text:          #1a1a2e;
+    --clr-text-muted:    #4a5568;
+    --clr-white:         #ffffff;
+    --clr-code-bg:       #1e2a38;
+    --clr-code-text:     #a8d8a8;
+    --radius-sm:  4px;
+    --radius-md:  8px;
+    --radius-lg:  12px;
+    --shadow-sm:  0 1px 3px rgba(0,0,0,.12);
+    --shadow-md:  0 4px 12px rgba(0,0,0,.14);
+    --font-sans:  system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono:  "Fira Code", "Cascadia Code", Consolas, "Courier New", monospace;
+    --max-w:      860px;
+    --nav-h:       3.25rem;
+  }
+
+  /* ── RESET / BASE ───────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--clr-text);
+    background: var(--clr-surface);
+  }
+  h1,h2,h3,h4 { line-height: 1.3; color: var(--clr-primary); }
+  h2 { font-size: 1.55rem; margin-bottom: .5rem; }
+  h3 { font-size: 1.2rem;  margin-bottom: .4rem; }
+  h4 { font-size: 1rem;    margin-bottom: .3rem; }
+  p  { margin-bottom: .9rem; }
+  ul, ol { padding-left: 1.4rem; margin-bottom: .9rem; }
+  li { margin-bottom: .3rem; }
+  strong { color: var(--clr-primary); }
+  code {
+    font-family: var(--font-mono);
+    font-size: .88em;
+    background: #e8eef4;
+    padding: .1em .35em;
+    border-radius: var(--radius-sm);
+    color: #1a3a5c;
+  }
+  a { color: var(--clr-primary-light); }
+  a:focus-visible {
+    outline: 3px solid var(--clr-accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* ── SKIP LINK ──────────────────────────────────────────────── */
+  .skip-link {
+    position: absolute;
+    top: -60px;
+    left: 0;
+    background: var(--clr-accent);
+    color: var(--clr-white);
+    padding: .5rem 1rem;
+    font-weight: 700;
+    z-index: 9999;
+    border-radius: 0 0 var(--radius-md) 0;
+    transition: top .2s;
+  }
+  .skip-link:focus { top: 0; }
+
+  /* ── TOP NAV ────────────────────────────────────────────────── */
+  .top-nav {
+    background: var(--clr-primary);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-md);
+  }
+  .top-nav__inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .25rem;
+  }
+  .top-nav__brand {
+    color: var(--clr-accent);
+    font-weight: 700;
+    font-size: .9rem;
+    padding: .6rem .5rem .6rem 0;
+    margin-right: .5rem;
+    white-space: nowrap;
+    border-right: 1px solid rgba(255,255,255,.2);
+  }
+  .top-nav__links {
+    display: flex;
+    flex-wrap: wrap;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: .1rem;
+  }
+  .top-nav__links a {
+    display: block;
+    color: rgba(255,255,255,.88);
+    text-decoration: none;
+    font-size: .82rem;
+    font-weight: 700;
+    padding: .55rem .7rem;
+    border-radius: var(--radius-sm);
+    transition: background .15s, color .15s;
+    white-space: nowrap;
+    min-width: 1.8rem;
+    text-align: center;
+  }
+  .top-nav__links a:hover {
+    background: rgba(255,255,255,.12);
+    color: var(--clr-white);
+  }
+  .top-nav__links a:focus-visible {
+    outline: 3px solid var(--clr-accent);
+    outline-offset: 2px;
+  }
+
+  /* ── PAGE HEADER ────────────────────────────────────────────── */
+  .page-header {
+    background: linear-gradient(135deg, var(--clr-primary) 0%, #0f2540 100%);
+    color: var(--clr-white);
+    padding: 2.8rem 1.5rem 2.2rem;
+  }
+  .page-header__inner { max-width: var(--max-w); margin: 0 auto; }
+  .page-header__eyebrow {
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--clr-accent);
+    margin-bottom: .5rem;
+  }
+  .page-header h1 {
+    color: var(--clr-white);
+    font-size: 1.9rem;
+    margin-bottom: .6rem;
+  }
+  .page-header__sub {
+    font-size: 1rem;
+    color: rgba(255,255,255,.78);
+    max-width: 640px;
+    margin-bottom: 1.2rem;
+  }
+  .badge-row { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    font-size: .75rem;
+    font-weight: 600;
+    padding: .25rem .7rem;
+    border-radius: 999px;
+    background: rgba(255,255,255,.12);
+    color: rgba(255,255,255,.9);
+    border: 1px solid rgba(255,255,255,.2);
+  }
+  .badge--accent { background: var(--clr-accent); color: var(--clr-white); border-color: transparent; }
+
+  /* ── MAIN CONTENT ───────────────────────────────────────────── */
+  .main { max-width: var(--max-w); margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+
+  /* ── SECTION WRAPPER ────────────────────────────────────────── */
+  .section { margin-bottom: 2.8rem; scroll-margin-top: var(--nav-h); }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    margin-bottom: 1rem;
+    padding-bottom: .5rem;
+    border-bottom: 3px solid var(--clr-primary-light);
+  }
+  .section-icon {
+    width: 2rem; height: 2rem;
+    background: var(--clr-primary);
+    border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--clr-white);
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  /* ── CALLOUT BOXES ──────────────────────────────────────────── */
+  .callout {
+    border-left: 4px solid;
+    padding: .9rem 1.1rem;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    margin-bottom: 1rem;
+  }
+  .callout__label {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    margin-bottom: .3rem;
+  }
+  .callout--info  { background: var(--clr-info-bg);    border-color: var(--clr-info);    color: var(--clr-info);    }
+  .callout--info  .callout__label  { color: var(--clr-info);    }
+  .callout--info  p, .callout--info li { color: var(--clr-text); }
+  .callout--warn  { background: var(--clr-warn-bg);    border-color: #c07000;            }
+  .callout--warn  .callout__label  { color: var(--clr-warn);    }
+  .callout--warn  p, .callout--warn li { color: var(--clr-text); }
+  .callout--success { background: var(--clr-success-bg); border-color: var(--clr-success); }
+  .callout--success .callout__label { color: var(--clr-success); }
+  .callout--success p, .callout--success li { color: var(--clr-text); }
+  .callout--scenario {
+    background: #f0f4ff;
+    border-color: #3a5bbf;
+    border-left-width: 5px;
+  }
+  .callout--scenario .callout__label { color: #3a5bbf; }
+  .callout--scenario p { color: var(--clr-text); }
+
+  /* ── SCENARIO CARD ──────────────────────────────────────────── */
+  .scenario-card {
+    background: linear-gradient(135deg, #1a2e4a 0%, #0f1e32 100%);
+    border-radius: var(--radius-lg);
+    padding: 1.8rem;
+    color: var(--clr-white);
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+  }
+  .scenario-card::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 120px; height: 120px;
+    background: rgba(224,123,42,.15);
+    border-radius: 50%;
+  }
+  .scenario-card__label {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--clr-accent);
+    margin-bottom: .6rem;
+  }
+  .scenario-card h3 {
+    color: var(--clr-white);
+    font-size: 1.15rem;
+    margin-bottom: .7rem;
+  }
+  .scenario-card p { color: rgba(255,255,255,.85); margin-bottom: .6rem; }
+  .scenario-card p:last-child { margin-bottom: 0; }
+  .scenario-card strong { color: var(--clr-accent); }
+
+  /* ── STAT GRID ──────────────────────────────────────────────── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+  }
+  .stat-card {
+    background: var(--clr-white);
+    border: 1px solid var(--clr-border);
+    border-top: 4px solid var(--clr-primary-light);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.1rem;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+  }
+  .stat-card__number {
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: var(--clr-primary);
+    line-height: 1.1;
+  }
+  .stat-card__label {
+    font-size: .8rem;
+    color: var(--clr-text-muted);
+    margin-top: .3rem;
+  }
+
+  /* ── COMPARISON TABLE ───────────────────────────────────────── */
+  .compare-table-wrap { overflow-x: auto; margin-bottom: 1.2rem; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .91rem;
+    background: var(--clr-white);
+  }
+  .compare-table thead tr { background: var(--clr-primary); color: var(--clr-white); }
+  .compare-table thead th {
+    padding: .75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: .85rem;
+    letter-spacing: .04em;
+  }
+  .compare-table thead th:first-child { border-radius: var(--radius-md) 0 0 0; }
+  .compare-table thead th:last-child  { border-radius: 0 var(--radius-md) 0 0; }
+  .compare-table tbody tr { border-bottom: 1px solid var(--clr-border); }
+  .compare-table tbody tr:nth-child(even) { background: #f4f7fb; }
+  .compare-table tbody tr:hover { background: #eaf0f8; }
+  .compare-table td { padding: .65rem 1rem; vertical-align: top; }
+  .compare-table td:first-child { font-weight: 600; color: var(--clr-text-muted); font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+  .compare-table td:nth-child(2) { border-right: 2px solid var(--clr-border); }
+  .tag {
+    display: inline-block;
+    font-size: .7rem;
+    font-weight: 700;
+    padding: .1em .5em;
+    border-radius: 999px;
+    margin-left: .3rem;
+    vertical-align: middle;
+  }
+  .tag--linux   { background: #d4edda; color: #155724; }
+  .tag--win     { background: #d1ecf1; color: #0c5460; }
+  .tag--key     { background: var(--clr-accent-light); color: var(--clr-warn); }
+
+  /* ── ACCORDION ──────────────────────────────────────────────── */
+  .accordion { border: 1px solid var(--clr-border); border-radius: var(--radius-md); overflow: hidden; margin-bottom: 1rem; }
+  .accordion + .accordion { margin-top: .5rem; }
+  .accordion__trigger {
+    width: 100%;
+    background: var(--clr-white);
+    border: none;
+    padding: .85rem 1.1rem;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    font-family: var(--font-sans);
+    font-size: .95rem;
+    font-weight: 600;
+    color: var(--clr-primary);
+    transition: background .15s;
+  }
+  .accordion__trigger:hover { background: #eef3f9; }
+  .accordion__trigger:focus-visible {
+    outline: 3px solid var(--clr-accent);
+    outline-offset: -3px;
+  }
+  .accordion__icon {
+    margin-left: auto;
+    font-size: .8rem;
+    transition: transform .25s;
+    color: var(--clr-text-muted);
+    flex-shrink: 0;
+  }
+  .accordion__trigger[aria-expanded="true"] .accordion__icon { transform: rotate(180deg); }
+  .accordion__trigger[aria-expanded="true"] { background: #eef3f9; border-bottom: 1px solid var(--clr-border); }
+  .accordion__panel {
+    display: none;
+    padding: .9rem 1.1rem;
+    background: var(--clr-white);
+    font-size: .93rem;
+  }
+  .accordion__panel.is-open { display: block; }
+  .accordion__path {
+    font-family: var(--font-mono);
+    font-size: .9rem;
+    font-weight: 700;
+    color: var(--clr-primary);
+    background: #e8eef4;
+    padding: .2em .5em;
+    border-radius: var(--radius-sm);
+    margin-right: .4rem;
+  }
+  .dir-badge {
+    display: inline-block;
+    font-size: .7rem;
+    font-weight: 700;
+    padding: .15em .55em;
+    border-radius: 999px;
+    margin-right: .3rem;
+    vertical-align: middle;
+  }
+  .dir-badge--high   { background: #fde8e8; color: #8b1a1a; }
+  .dir-badge--medium { background: #fff3e0; color: #7a4f00; }
+  .dir-badge--low    { background: #e8f5e9; color: #1a6b3c; }
+
+  /* ── CODE BLOCK ─────────────────────────────────────────────── */
+  .code-block {
+    background: var(--clr-code-bg);
+    color: var(--clr-code-text);
+    font-family: var(--font-mono);
+    font-size: .83rem;
+    padding: 1rem 1.2rem;
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    margin: .7rem 0;
+    line-height: 1.6;
+  }
+  .code-block .comment { color: #7a9ab8; font-style: italic; }
+  .code-block .flag    { color: #f9c74f; }
+  .code-block .path    { color: #90e0ef; }
+  .code-block .cmd     { color: #a8d8a8; }
+
+  /* ── DECISION FRAMEWORK ─────────────────────────────────────── */
+  .decision-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  @media (max-width: 560px) { .decision-grid { grid-template-columns: 1fr; } }
+  .decision-card {
+    border: 2px solid;
+    border-radius: var(--radius-md);
+    padding: 1.1rem;
+  }
+  .decision-card--dead { border-color: #3a5bbf; background: #f0f4ff; }
+  .decision-card--live { border-color: #b85c00; background: #fff8f0; }
+  .decision-card__header {
+    display: flex; align-items: center; gap: .5rem;
+    font-size: 1rem; font-weight: 700; margin-bottom: .6rem;
+  }
+  .decision-card--dead .decision-card__header { color: #1a3080; }
+  .decision-card--live .decision-card__header { color: #7a3a00; }
+  .decision-card ul { margin-bottom: 0; }
+
+  /* ── KNOWLEDGE CHECK ────────────────────────────────────────── */
+  .kc-section {
+    background: var(--clr-white);
+    border: 2px solid var(--clr-primary-light);
+    border-radius: var(--radius-lg);
+    padding: 1.6rem;
+    box-shadow: var(--shadow-sm);
+  }
+  .kc-header {
+    display: flex; align-items: center; gap: .6rem;
+    margin-bottom: 1.2rem;
+  }
+  .kc-header__icon {
+    width: 2.2rem; height: 2.2rem;
+    background: var(--clr-primary);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--clr-white); font-size: 1rem; flex-shrink: 0;
+  }
+  .kc-header h2 { border-bottom: none; padding-bottom: 0; margin-bottom: 0; font-size: 1.3rem; }
+  .kc-question { margin-bottom: 1.6rem; }
+  .kc-question__stem {
+    font-weight: 600;
+    margin-bottom: .75rem;
+    font-size: .97rem;
+  }
+  .kc-question__num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.6rem; height: 1.6rem;
+    background: var(--clr-primary); color: var(--clr-white);
+    border-radius: 50%; font-size: .75rem; font-weight: 700;
+    margin-right: .5rem; flex-shrink: 0;
+    vertical-align: middle;
+  }
+  .kc-options { list-style: none; padding: 0; }
+  .kc-options li { margin-bottom: .45rem; }
+  .kc-options label {
+    display: flex;
+    align-items: flex-start;
+    gap: .6rem;
+    cursor: pointer;
+    padding: .55rem .8rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--clr-border);
+    background: var(--clr-surface);
+    font-size: .93rem;
+    transition: background .15s, border-color .15s;
+  }
+  .kc-options label:hover { background: #eef3f9; border-color: var(--clr-primary-light); }
+  .kc-options input[type="radio"] { margin-top: .2rem; accent-color: var(--clr-primary-light); flex-shrink: 0; }
+  .kc-options input:focus-visible + span { outline: 2px solid var(--clr-accent); border-radius: 2px; }
+  .kc-btn {
+    background: var(--clr-primary);
+    color: var(--clr-white);
+    border: none;
+    padding: .55rem 1.3rem;
+    border-radius: var(--radius-md);
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: background .15s;
+    margin-top: .4rem;
+  }
+  .kc-btn:hover { background: var(--clr-primary-light); }
+  .kc-btn:focus-visible { outline: 3px solid var(--clr-accent); outline-offset: 3px; }
+  .kc-feedback {
+    display: none;
+    margin-top: .8rem;
+    padding: .8rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: .91rem;
+    line-height: 1.6;
+  }
+  .kc-feedback.show { display: block; }
+  .kc-feedback--correct {
+    background: var(--clr-success-bg);
+    border-left: 4px solid var(--clr-success);
+    color: var(--clr-text);
+  }
+  .kc-feedback--incorrect {
+    background: var(--clr-error-bg);
+    border-left: 4px solid var(--clr-error);
+    color: var(--clr-text);
+  }
+  .kc-feedback__verdict {
+    font-weight: 700;
+    margin-bottom: .3rem;
+  }
+  .kc-feedback--correct .kc-feedback__verdict { color: var(--clr-success); }
+  .kc-feedback--incorrect .kc-feedback__verdict { color: var(--clr-error); }
+
+  /* ── PROGRESS STRIP ─────────────────────────────────────────── */
+  .module-progress {
+    background: var(--clr-white);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius-md);
+    padding: .8rem 1.1rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    flex-wrap: wrap;
+    font-size: .82rem;
+  }
+  .module-progress__label { font-weight: 600; color: var(--clr-text-muted); white-space: nowrap; }
+  .module-dots { display: flex; gap: .4rem; }
+  .module-dot {
+    width: .85rem; height: .85rem;
+    border-radius: 50%;
+    border: 2px solid var(--clr-border);
+    background: var(--clr-surface);
+    position: relative;
+  }
+  .module-dot--current {
+    background: var(--clr-primary);
+    border-color: var(--clr-primary);
+  }
+  .module-dot--current::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid var(--clr-primary-light);
+  }
+  .module-dot__tooltip {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--clr-primary);
+    color: var(--clr-white);
+    font-size: .7rem;
+    padding: .2em .5em;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .15s;
+  }
+  .module-dot:hover .module-dot__tooltip { opacity: 1; }
+  .module-progress__note { color: var(--clr-text-muted); font-style: italic; }
+
+  /* ── FOOTER ─────────────────────────────────────────────────── */
+  .page-footer {
+    background: var(--clr-primary);
+    color: rgba(255,255,255,.7);
+    text-align: center;
+    padding: 1.2rem;
+    font-size: .8rem;
+    margin-top: 2rem;
+  }
+  .page-footer strong { color: var(--clr-accent); }
+
+  /* ── UTILITY ────────────────────────────────────────────────── */
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+  .mt-sm { margin-top: .5rem; }
+  .mt-md { margin-top: 1rem; }
+  .divider { border: none; border-top: 1px solid var(--clr-border); margin: 1.5rem 0; }
+
+  @media (max-width: 600px) {
+    .page-header h1 { font-size: 1.45rem; }
+    h2 { font-size: 1.3rem; }
+    .compare-table { font-size: .82rem; }
+    .kc-options label { font-size: .88rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SKIP LINK -->
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<!-- TOP NAV -->
+<nav class="top-nav" aria-label="Module section navigation">
+  <div class="top-nav__inner">
+    <div class="top-nav__brand">CSC 156 · Mod 9.1</div>
+    <ul class="top-nav__links">
+      <li><a href="#scenario" title="Investigation Scenario">1</a></li>
+      <li><a href="#why-linux" title="Why Linux Matters in Forensics">2</a></li>
+      <li><a href="#linux-vs-windows" title="Linux vs. Windows">3</a></li>
+      <li><a href="#directory-hierarchy" title="Directory Hierarchy">4</a></li>
+      <li><a href="#acquisition" title="Forensic Acquisition Approach">5</a></li>
+      <li><a href="#knowledge-check" title="Knowledge Check">6</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<header class="page-header" role="banner">
+  <div class="page-header__inner">
+    <p class="page-header__eyebrow">Week 9 · Module 9.1 · Day 1</p>
+    <h1>Linux Forensics Orientation</h1>
+    <p class="page-header__sub">Environment, Architecture, and Investigative Approach — the foundation for all five Week 9 Linux forensics modules.</p>
+    <div class="badge-row">
+      <span class="badge badge--accent">▶ Day 1 – First Activity</span>
+      <span class="badge">📖 Concepts &amp; Orientation</span>
+      <span class="badge">✅ Ungraded Knowledge Check</span>
+      <span class="badge">⏱ ~45 min</span>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main id="main-content" class="main">
+
+  <!-- MODULE PROGRESS STRIP -->
+  <div class="module-progress" role="region" aria-label="Week 9 module progress">
+    <span class="module-progress__label">Week 9 Modules:</span>
+    <div class="module-dots" aria-label="5 modules; currently on module 1">
+      <div class="module-dot module-dot--current" role="img" aria-label="Module 9.1 – current">
+        <span class="module-dot__tooltip">9.1 – Orientation</span>
+      </div>
+      <div class="module-dot" role="img" aria-label="Module 9.2 – upcoming">
+        <span class="module-dot__tooltip">9.2 – User Artifacts</span>
+      </div>
+      <div class="module-dot" role="img" aria-label="Module 9.3 – upcoming">
+        <span class="module-dot__tooltip">9.3 – Log Analysis</span>
+      </div>
+      <div class="module-dot" role="img" aria-label="Module 9.4 – upcoming">
+        <span class="module-dot__tooltip">9.4 – Persistence</span>
+      </div>
+      <div class="module-dot" role="img" aria-label="Module 9.5 – upcoming">
+        <span class="module-dot__tooltip">9.5 – Triage Lab</span>
+      </div>
+    </div>
+    <span class="module-progress__note">You are on Module 9.1. Complete all five modules this week.</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 1 — OPENING SCENARIO
+  ════════════════════════════════════════════════════════════ -->
+  <section class="section" id="scenario" aria-labelledby="scenario-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">🔎</div>
+      <h2 id="scenario-heading">Investigation Scenario — Week 9 Context</h2>
+    </div>
+
+    <div class="scenario-card" role="region" aria-label="Week 9 investigation scenario">
+      <p class="scenario-card__label">📋 Scenario — Used Across All Five Week 9 Modules</p>
+      <h3>You've just been handed a forensic image of a compromised Ubuntu 22.04 web server. Where do you start?</h3>
+      <p>It is 9:47 PM. Your organization's Security Operations Center has flagged anomalous outbound traffic from <strong>web-prod-03</strong>, a public-facing Ubuntu 22.04 LTS server hosting a customer portal. The server was taken offline by the network team at 21:32 and a forensic image was captured using <code>dd</code>. The image file — <code>web-prod-03.img</code> — is sitting on your forensic workstation.</p>
+      <p>You have no access to the original hardware. The system owner reports the server has been running for <strong>217 days</strong> without a reboot. The last known-good deployment was 14 weeks ago. You have been asked to determine: <strong>Was the server compromised? If so, how, when, and what data may have been accessed?</strong></p>
+      <p>Every concept, directory, artifact, and technique you study this week connects back to answering that question. Keep this scenario in mind as you work through Modules 9.1–9.5.</p>
+    </div>
+
+    <div class="callout callout--info">
+      <p class="callout__label">💡 How This Module Fits</p>
+      <p>Before you can examine <em>any</em> artifact on that Ubuntu image, you need to understand <strong>why Linux matters forensically</strong>, how its architecture differs from Windows, which directories hold the most investigative value, and how to safely mount the image without contaminating evidence. That is exactly what Module 9.1 covers.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 2 — WHY LINUX MATTERS
+  ════════════════════════════════════════════════════════════ -->
+  <section class="section" id="why-linux" aria-labelledby="why-linux-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">🌐</div>
+      <h2 id="why-linux-heading">Why Linux Matters in Forensics</h2>
+    </div>
+
+    <p>Linux is not just an alternative desktop operating system — it is the dominant platform for servers, cloud infrastructure, embedded systems, and network appliances. Understanding Linux forensics is no longer a specialty skill; it is a <strong>core competency</strong> for any digital forensic examiner.</p>
+
+    <div class="stat-grid" role="list" aria-label="Linux prevalence statistics">
+      <div class="stat-card" role="listitem">
+        <div class="stat-card__number">~96%</div>
+        <div class="stat-card__label">of the top 1 million web servers run Linux (Netcraft, 2024)</div>
+      </div>
+      <div class="stat-card" role="listitem">
+        <div class="stat-card__number">&gt;90%</div>
+        <div class="stat-card__label">of public cloud workloads run on Linux-based VMs or containers</div>
+      </div>
+      <div class="stat-card" role="listitem">
+        <div class="stat-card__number">100%</div>
+        <div class="stat-card__label">of the top 500 supercomputers in the world run Linux</div>
+      </div>
+      <div class="stat-card" role="listitem">
+        <div class="stat-card__number">~75%</div>
+        <div class="stat-card__label">of IoT and embedded devices run a Linux kernel</div>
+      </div>
+    </div>
+
+    <h3>Where You Will Encounter Linux in Investigations</h3>
+    <ul>
+      <li><strong>Web and application servers</strong> — Apache, NGINX, Node.js deployments on Ubuntu, RHEL, Debian, CentOS</li>
+      <li><strong>Database servers</strong> — MySQL, PostgreSQL, MongoDB typically hosted on Linux</li>
+      <li><strong>Cloud instances</strong> — AWS EC2, Azure VMs, GCP Compute Engine default images are Linux</li>
+      <li><strong>Containers and orchestration</strong> — Docker images and Kubernetes nodes are Linux-based</li>
+      <li><strong>Network infrastructure</strong> — Firewalls, routers, and NAS devices often run embedded Linux</li>
+      <li><strong>Developer workstations</strong> — Many software engineers use Ubuntu, Fedora, or Arch Linux</li>
+      <li><strong>Attacker infrastructure</strong> — Threat actors frequently stage operations on compromised Linux VPS instances</li>
+    </ul>
+
+    <h3 class="mt-md">Common Distributions You Will Encounter</h3>
+
+    <div class="accordion">
+    <button class="accordion__trigger" aria-expanded="false" aria-controls="distro-panel" id="distro-btn">
+      <span>📦</span>
+      <span>Click to explore common Linux distributions and their forensic relevance</span>
+      <span class="accordion__icon" aria-hidden="true">▼</span>
+    </button>
+    <div class="accordion__panel" id="distro-panel" role="region" aria-labelledby="distro-btn">
+      <table class="compare-table" style="margin-bottom:.5rem;">
+        <thead>
+          <tr>
+            <th scope="col">Distribution</th>
+            <th scope="col">Common Use</th>
+            <th scope="col">Forensic Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Ubuntu (LTS)</strong></td>
+            <td>Web servers, developer workstations, cloud images</td>
+            <td>Snap packages add artifact locations under <code>/var/lib/snapd</code>; <code>journald</code> + <code>syslog</code> both present</td>
+          </tr>
+          <tr>
+            <td><strong>Debian</strong></td>
+            <td>Stable servers, embedded systems</td>
+            <td>Very similar artifact locations to Ubuntu; minimal pre-installed software reduces noise</td>
+          </tr>
+          <tr>
+            <td><strong>RHEL / CentOS / Rocky</strong></td>
+            <td>Enterprise servers, regulated environments</td>
+            <td>SELinux audit logs at <code>/var/log/audit/audit.log</code> are extremely valuable; <code>dnf</code> history in <code>/var/log/dnf.log</code></td>
+          </tr>
+          <tr>
+            <td><strong>Kali Linux</strong></td>
+            <td>Penetration testing, attacker toolkits</td>
+            <td>Presence on a non-pentester system is a significant indicator; tool installation artifacts visible in <code>dpkg</code> logs</td>
+          </tr>
+          <tr>
+            <td><strong>Alpine Linux</strong></td>
+            <td>Docker base images, minimal containers</td>
+            <td>Very sparse logs; <code>busybox</code> replaces standard utilities; limited shell history by default</td>
+          </tr>
+          <tr>
+            <td><strong>Amazon Linux 2 / AL2023</strong></td>
+            <td>AWS EC2 default instances</td>
+            <td>Cloud-init logs at <code>/var/log/cloud-init.log</code> record instance provisioning history</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size:.85rem; color: var(--clr-text-muted);">Note: Artifact <em>locations</em> are largely standardized across distributions by the Filesystem Hierarchy Standard (FHS), but log formats, init systems (systemd vs. SysV), and package managers differ.</p>
+    </div>
+    </div>
+
+    <div class="callout callout--warn mt-md">
+      <p class="callout__label">⚠️ Examiner Awareness</p>
+      <p>Never assume a Linux system is "just like" another Linux system. Always determine the <strong>distribution, version, and init system</strong> (systemd vs. SysV init) early in your examination — these affect where logs are stored, how services are managed, and what persistence mechanisms are available to an attacker.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 3 — LINUX VS. WINDOWS
+  ════════════════════════════════════════════════════════════ -->
+  <section class="section" id="linux-vs-windows" aria-labelledby="compare-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">⚖️</div>
+      <h2 id="compare-heading">Linux vs. Windows — Key Forensic Dimensions</h2>
+    </div>
+
+    <p>If you are coming from a Windows forensics background (as most examiners do), Linux will challenge some deeply ingrained assumptions. The most important conceptual shift is understanding the <strong>"everything is a file"</strong> philosophy versus Windows' registry-centric design.</p>
+
+    <div class="callout callout--scenario">
+      <p class="callout__label">🧠 Core Concept — "Everything Is a File"</p>
+      <p>In Linux, almost every system resource is represented as a file in the filesystem: hardware devices (<code>/dev/sda</code>), running processes (<code>/proc/1234/</code>), network sockets, and system configuration. This is fundamentally different from Windows, where configuration is stored in a binary database (the Registry) separate from the filesystem.</p>
+      <p><strong>Forensic implication:</strong> On Linux, you can often read configuration and state information using standard text-processing tools (<code>cat</code>, <code>grep</code>, <code>awk</code>) directly from files. On Windows, you need specialized Registry parsing tools. Linux artifacts are often more human-readable — but they are also easier for an attacker to modify or delete.</p>
+    </div>
+
+    <h3 class="mt-md">Side-by-Side Comparison</h3>
+    <div class="compare-table-wrap">
+      <table class="compare-table" aria-label="Linux vs Windows forensic comparison table">
+        <thead>
+          <tr>
+            <th scope="col">Dimension</th>
+            <th scope="col">Linux <span class="tag tag--linux">🐧</span></th>
+            <th scope="col">Windows <span class="tag tag--win">🪟</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Configuration Storage</td>
+            <td>Plain-text files in <code>/etc/</code> — human-readable, version-controllable</td>
+            <td>Binary Registry hive files (NTUSER.DAT, SOFTWARE, SYSTEM, etc.) — requires specialized parsing</td>
+          </tr>
+          <tr>
+            <td>Log Format</td>
+            <td>Mix of plain-text (<code>/var/log/syslog</code>) and binary journal (<code>journald</code>) — <code>journalctl</code> needed for binary logs</td>
+            <td>Binary EVTX format in Windows Event Logs — requires Event Viewer or parser (e.g., <code>evtx_dump</code>)</td>
+          </tr>
+          <tr>
+            <td>User Account Data</td>
+            <td><code>/etc/passwd</code> (user info), <code>/etc/shadow</code> (hashed passwords), <code>/etc/group</code> — all plain text</td>
+            <td>SAM Registry hive (local accounts) or Active Directory (domain accounts) — binary, encrypted</td>
+          </tr>
+          <tr>
+            <td>Shell History</td>
+            <td><code>~/.bash_history</code>, <code>~/.zsh_history</code> — plain text, per-user, easily deleted or manipulated</td>
+            <td>PowerShell history at <code>%APPDATA%\...\PSReadLine\ConsoleHost_history.txt</code> — similar plain-text risks</td>
+          </tr>
+          <tr>
+            <td>Persistence Mechanisms</td>
+            <td>Cron jobs (<code>/etc/cron*</code>, <code>crontab -l</code>), systemd unit files (<code>/etc/systemd/system/</code>), init scripts, <code>~/.bashrc</code>, <code>~/.profile</code>, SUID binaries</td>
+            <td>Run keys (Registry), Scheduled Tasks, Services, Startup folder, DLL hijacking</td>
+          </tr>
+          <tr>
+            <td>Installed Software</td>
+            <td>Package manager databases: <code>/var/lib/dpkg/</code> (Debian/Ubuntu), <code>/var/lib/rpm/</code> (RHEL); install logs in <code>/var/log/dpkg.log</code></td>
+            <td>Registry keys under <code>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall</code>; Windows Installer logs</td>
+          </tr>
+          <tr>
+            <td>Network Configuration</td>
+            <td><code>/etc/network/interfaces</code>, <code>/etc/netplan/</code>, <code>/etc/hosts</code>, <code>/etc/resolv.conf</code> — plain text</td>
+            <td>Registry keys + <code>ipconfig</code> output; <code>C:\Windows\System32\drivers\etc\hosts</code></td>
+          </tr>
+          <tr>
+            <td>Process / Memory Artifacts</td>
+            <td><code>/proc/</code> virtual filesystem — live process data, memory maps, open file descriptors (live system only)</td>
+            <td>Process memory via WinPMem or similar; Prefetch files, Superfetch/ReFS artifacts</td>
+          </tr>
+          <tr>
+            <td>Timestamps (MAC)</td>
+            <td>ext4: mtime, atime, ctime (change time, not creation); <code>crtime</code> available on some filesystems via <code>debugfs</code></td>
+            <td>NTFS: Created, Modified, Accessed, MFT-Modified — $MFT and $STANDARD_INFORMATION can differ (timestomping)</td>
+          </tr>
+          <tr>
+            <td>Forensic Tooling</td>
+            <td><code>Autopsy</code>, <code>The Sleuth Kit</code>, <code>Volatility</code> (memory), <code>grep</code>/<code>awk</code>/<code>find</code> for artifact hunting</td>
+            <td><code>Autopsy</code>, <code>FTK</code>, <code>Volatility</code>, <code>RegRipper</code>, <code>Eric Zimmerman tools</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout--info">
+      <p class="callout__label">📌 Key Takeaway for Examiners</p>
+      <p>The absence of a centralized Registry means Linux forensics is <strong>more distributed</strong> — evidence is scattered across many individual files. This requires a systematic, directory-aware approach rather than a single-hive extraction workflow. The upside: many Linux artifacts are plain text, making them accessible with basic command-line tools.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 4 — DIRECTORY HIERARCHY
+  ════════════════════════════════════════════════════════════ -->
+  <section class="section" id="directory-hierarchy" aria-labelledby="dir-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">📁</div>
+      <h2 id="dir-heading">Linux Directory Hierarchy for Forensic Examiners</h2>
+    </div>
+
+    <p>Linux organizes all files under a single root directory (<code>/</code>), defined by the <strong>Filesystem Hierarchy Standard (FHS)</strong>. As a forensic examiner, you do not need to memorize every directory — you need to know <em>which directories hold the most investigative value</em> and why. Expand each entry below to learn its forensic significance.</p>
+
+    <div class="callout callout--warn" style="margin-bottom:1.2rem;">
+      <p class="callout__label">🔑 Priority Legend</p>
+      <p>
+        <span class="dir-badge dir-badge--high">HIGH</span> Examine in almost every investigation &nbsp;
+        <span class="dir-badge dir-badge--medium">MEDIUM</span> Examine based on case type &nbsp;
+        <span class="dir-badge dir-badge--low">REFERENCE</span> Useful for context
+      </p>
+    </div>
+
+    <!-- /etc -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="dir-etc" id="btn-etc">
+        <span aria-hidden="true">⚙️</span>
+        <span><span class="accordion__path">/etc</span> — System Configuration <span class="dir-badge dir-badge--high">HIGH</span></span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="dir-etc" role="region" aria-labelledby="btn-etc">
+        <p><strong>What it contains:</strong> System-wide configuration files for almost every service and application. All files are plain text.</p>
+        <p><strong>Key forensic artifacts:</strong></p>
+        <ul>
+          <li><code>/etc/passwd</code> — User accounts (username, UID, GID, home directory, shell). Readable by all users. Check for unauthorized accounts or UID 0 (root) entries.</li>
+          <li><code>/etc/shadow</code> — Hashed passwords and password aging data. Root-readable only. Cracked hashes may reveal weak credentials used in an attack.</li>
+          <li><code>/etc/group</code> — Group memberships. Look for unauthorized additions to <code>sudo</code> or <code>wheel</code> groups.</li>
+          <li><code>/etc/sudoers</code> and <code>/etc/sudoers.d/</code> — Privilege escalation configuration. Attackers frequently modify this to grant persistent root access.</li>
+          <li><code>/etc/ssh/sshd_config</code> — SSH server configuration. Check for <code>PermitRootLogin yes</code>, <code>PasswordAuthentication yes</code>, or custom <code>AuthorizedKeysFile</code> paths.</li>
+          <li><code>/etc/cron*</code> and <code>/etc/crontab</code> — System-wide scheduled tasks. Common persistence location.</li>
+          <li><code>/etc/hosts</code> — Static hostname-to-IP mappings. Attackers may redirect domains here to intercept traffic.</li>
+          <li><code>/etc/rc.local</code>, <code>/etc/init.d/</code> — Legacy startup scripts (SysV init systems).</li>
+        </ul>
+        <div class="callout callout--info" style="margin-top:.6rem; margin-bottom:0;">
+          <p class="callout__label">🔍 Scenario Connection</p>
+          <p>On <strong>web-prod-03</strong>, you would examine <code>/etc/passwd</code> and <code>/etc/sudoers</code> early to determine if any new accounts were created or if privilege escalation paths were modified after the last known-good deployment.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- /var/log -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="dir-varlog" id="btn-varlog">
+        <span aria-hidden="true">📋</span>
+        <span><span class="accordion__path">/var/log</span> — System and Application Logs <span class="dir-badge dir-badge--high">HIGH</span></span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="dir-varlog" role="region" aria-labelledby="btn-varlog">
+        <p><strong>What it contains:</strong> Log files from the kernel, init system, services, and applications. This is the primary timeline reconstruction source on Linux.</p>
+        <p><strong>Key forensic artifacts:</strong></p>
+        <ul>
+          <li><code>/var/log/syslog</code> or <code>/var/log/messages</code> — General system messages. Contains kernel messages, daemon activity, and service events.</li>
+          <li><code>/var/log/auth.log</code> (Debian/Ubuntu) or <code>/var/log/secure</code> (RHEL) — Authentication events: SSH logins, sudo usage, su attempts, PAM events. <strong>Critical for intrusion analysis.</strong></li>
+          <li><code>/var/log/apache2/</code> or <code>/var/log/nginx/</code> — Web server access and error logs. Web-based attack vectors (SQLi, RCE, LFI) leave traces here.</li>
+          <li><code>/var/log/dpkg.log</code> / <code>/var/log/dnf.log</code> — Package installation history. Look for attacker-installed tools.</li>
+          <li><code>/var/log/wtmp</code> — Binary log of all logins/logouts. Parse with <code>last</code> command.</li>
+          <li><code>/var/log/btmp</code> — Binary log of failed login attempts. Parse with <code>lastb</code>.</li>
+          <li><code>/var/log/lastlog</code> — Last login time per user. Binary format; parse with <code>lastlog</code>.</li>
+          <li><code>/var/log/audit/audit.log</code> — (RHEL/CentOS with auditd) Detailed audit trail of system calls, file access, and privilege use.</li>
+        </ul>
+        <div class="callout callout--warn" style="margin-top:.6rem; margin-bottom:0;">
+          <p class="callout__label">⚠️ Log Rotation and Deletion</p>
+          <p>Linux systems rotate logs on a schedule (typically managed by <code>logrotate</code>). Rotated logs are compressed as <code>syslog.1</code>, <code>syslog.2.gz</code>, etc. Attackers may delete or truncate log files — the <em>absence</em> of expected log entries is itself evidence. Always check <code>/var/log/</code> for unexpectedly empty files or unusual timestamps.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- /home -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="dir-home" id="btn-home">
+        <span aria-hidden="true">🏠</span>
+        <span><span class="accordion__path">/home</span> — User Home Directories <span class="dir-badge dir-badge--high">HIGH</span></span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="dir-home" role="region" aria-labelledby="btn-home">
+        <p><strong>What it contains:</strong> Personal files, configuration, and history for each non-root user. Each user has a subdirectory: <code>/home/username/</code>.</p>
+        <p><strong>Key forensic artifacts:</strong></p>
+        <ul>
+          <li><code>~/.bash_history</code> — Bash command history. Attackers may clear this (<code>history -c</code>, <code>unset HISTFILE</code>), but timestamps may survive in the filesystem metadata. Check <code>HISTTIMEFORMAT</code> setting.</li>
+          <li><code>~/.ssh/</code> — SSH keys and configuration:
+            <ul>
+              <li><code>authorized_keys</code> — Public keys that can authenticate as this user. <strong>Attacker-added keys are a primary persistence mechanism.</strong></li>
+              <li><code>known_hosts</code> — Systems this user has connected to (lateral movement evidence).</li>
+              <li><code>id_rsa</code>, <code>id_ed25519</code> — Private keys (potential exfiltration risk).</li>
+            </ul>
+          </li>
+          <li><code>~/.bashrc</code>, <code>~/.bash_profile</code>, <code>~/.profile</code> — Shell initialization scripts. Attackers inject malicious commands here for persistence.</li>
+          <li><code>~/.local/share/recently-used.xbel</code> — Recently accessed files (desktop environments).</li>
+          <li><code>~/.wget-hsts</code>, <code>~/.curl_history</code> — Download history artifacts.</li>
+          <li>Browser profiles (Firefox: <code>~/.mozilla/</code>, Chrome: <code>~/.config/google-chrome/</code>) — Browsing history, saved credentials.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- /root -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="dir-root" id="btn-root">
+        <span aria-hidden="true">👑</span>
+        <span><span class="accordion__path">/root</span> — Root User's Home Directory <span class="dir-badge dir-badge--high">HIGH</span></span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="dir-root" role="region" aria-labelledby="btn-root">
+        <p><strong>What it contains:</strong> The home directory for the <code>root</code> (superuser) account. Separate from <code>/home</code> — root lives at <code>/root/</code>, not <code>/home/root/</code>.</p>
+        <p><strong>Why it is critical:</strong> Any attacker who achieved privilege escalation will have left artifacts here. This directory is readable only by root, but on a forensic image you have full access.</p>
+        <p><strong>Key forensic artifacts:</strong></p>
+        <ul>
+          <li><code>/root/.bash_history</code> — Root's command history. Every command run as root after escalation may appear here.</li>
+          <li><code>/root/.ssh/authorized_keys</code> — Attacker-added SSH keys for persistent root access. <strong>Check this immediately.</strong></li>
+          <li><code>/root/.ssh/known_hosts</code> — Systems root has SSH'd to (lateral movement, C2 connections).</li>
+          <li><code>/root/.bashrc</code>, <code>/root/.profile</code> — Root shell initialization; malicious code injected here runs with full privileges.</li>
+          <li>Any scripts, tools, or downloaded files dropped by an attacker after escalation.</li>
+        </ul>
+        <div class="callout callout--info" style="margin-top:.6rem; margin-bottom:0;">
+          <p class="callout__label">🔍 Scenario Connection</p>
+          <p>On <strong>web-prod-03</strong>, <code>/root/.ssh/authorized_keys</code> and <code>/root/.bash_history</code> are among the first artifacts to examine after confirming the image is properly mounted. An attacker who gained root access almost certainly interacted with these files.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- /tmp -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="dir-tmp" id="btn-tmp">
+        <span aria-hidden="true">🗑️</span>
+        <span><span class="accordion__path">/tmp</span> and <span class="accordion__path">/var/tmp</span> — Temporary File Directories <span class="dir-badge dir-badge--high">HIGH</span></span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="dir-tmp" role="region" aria-labelledby="btn-tmp">
+        <p><strong>What it contains:</strong> Temporary files created by the system and users. <code>/tmp</code> is cleared on reboot; <code>/var/tmp</code> persists across reboots.</p>
+        <p><strong>Why attackers love it:</strong> <code>/tmp</code> is world-writable (any user can write here), making it a favorite staging area for malware, exploit scripts, and downloaded tools. It requires no special permissions to use.</p>
+        <p><strong>Key forensic artifacts:</strong></p>
+        <ul>
+          <li>Malware binaries or scripts staged for execution</li>
+          <li>Exploit code downloaded during an attack</li>
+          <li>Output files from data exfiltration staging</li>
+          <li>Compiler output from in-memory build-and-execute attacks</li>
+          <li>Deleted file remnants recoverable through unallocated space analysis</li>
+        </ul>
+        <div class="callout callout--warn" style="margin-top:.6rem; margin-bottom:0;">
+          <p class="callout__label">⚠️ Volatility Note</p>
+          <p>Because <code>/tmp</code> is cleared on reboot, files staged there are lost when the system restarts. This is one reason <strong>live acquisition</strong> (capturing a running system) is sometimes necessary — you preserve <code>/tmp</code> contents that would otherwise be gone after a shutdown.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Additional directories -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="dir-other" id="btn-other">
+        <span aria-hidden="true">📂</span>
+        <span>Additional Forensically Relevant Directories <span class="dir-badge dir-badge--medium">MEDIUM</span></span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="dir-other" role="region" aria-labelledby="btn-other">
+        <ul>
+          <li><code>/proc/</code> — Virtual filesystem exposing live kernel and process data. <strong>Only exists on a running system</strong> — not present in a dead-box image. Contains per-process directories (<code>/proc/PID/</code>) with memory maps, open files, and command-line arguments.</li>
+          <li><code>/usr/bin/</code>, <code>/usr/sbin/</code>, <code>/usr/local/bin/</code> — Standard binary locations. Look for unusual executables or modified system binaries (rootkit indicators).</li>
+          <li><code>/opt/</code> — Optional/third-party software. Web applications, commercial tools, and attacker-installed software often live here.</li>
+          <li><code>/srv/</code> — Service data (web root files sometimes here alongside <code>/var/www/</code>). Web shells and malicious files may be planted in web-accessible directories.</li>
+          <li><code>/var/www/</code> — Default Apache/NGINX web root. <strong>Check for web shells</strong> (e.g., <code>.php</code> files with <code>eval(base64_decode(...))</code> patterns).</li>
+          <li><code>/var/spool/cron/crontabs/</code> — Per-user cron job files. Persistence mechanism frequently used by attackers.</li>
+          <li><code>/lib/systemd/system/</code> and <code>/etc/systemd/system/</code> — Systemd service unit files. Malicious services installed as systemd units persist across reboots.</li>
+          <li><code>/dev/shm/</code> — Shared memory filesystem (RAM-backed). Used by some malware families to stage payloads in memory without touching disk.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 5 — ACQUISITION APPROACH
+  ════════════════════════════════════════════════════════════ -->
+  <section class="section" id="acquisition" aria-labelledby="acq-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">💾</div>
+      <h2 id="acq-heading">Forensic Acquisition Approach</h2>
+    </div>
+
+    <p>Before examining any artifact, you must acquire the evidence in a forensically sound manner. For Linux systems, the first decision is whether to perform a <strong>dead-box</strong> (offline) acquisition or a <strong>live</strong> acquisition of a running system. This decision has significant consequences for what evidence you can recover.</p>
+
+    <h3>The Dead-Box vs. Live Acquisition Decision</h3>
+
+    <div class="decision-grid">
+      <div class="decision-card decision-card--dead" role="region" aria-label="Dead-box acquisition">
+        <div class="decision-card__header">
+          <span aria-hidden="true">🔒</span>
+          <span>Dead-Box Acquisition</span>
+        </div>
+        <p style="font-size:.88rem; color:var(--clr-text-muted); margin-bottom:.5rem;"><em>System is powered off before imaging</em></p>
+        <ul style="font-size:.9rem;">
+          <li>Full disk image captured with <code>dd</code>, <code>dcfldd</code>, or <code>FTK Imager</code></li>
+          <li>No risk of evidence modification during acquisition</li>
+          <li>Preserves deleted file remnants in unallocated space</li>
+          <li>Hash verification is stable (no writes occurring)</li>
+          <li><strong>Loses:</strong> RAM contents, running processes, network connections, <code>/proc/</code> data, <code>/tmp</code> contents (if tmpfs)</li>
+        </ul>
+        <p style="font-size:.88rem; margin-top:.6rem;"><strong>Best when:</strong> System can be taken offline without business impact; volatile data is not critical; legal/chain-of-custody requirements favor offline imaging.</p>
+      </div>
+
+      <div class="decision-card decision-card--live" role="region" aria-label="Live acquisition">
+        <div class="decision-card__header">
+          <span aria-hidden="true">⚡</span>
+          <span>Live Acquisition</span>
+        </div>
+        <p style="font-size:.88rem; color:var(--clr-text-muted); margin-bottom:.5rem;"><em>System remains running during acquisition</em></p>
+        <ul style="font-size:.9rem;">
+          <li>RAM captured with <code>LiME</code> (Linux Memory Extractor) kernel module</li>
+          <li>Running processes, network connections, and <code>/proc/</code> data preserved</li>
+          <li><code>/tmp</code> and <code>/dev/shm/</code> contents captured</li>
+          <li>Encryption keys may be recoverable from memory</li>
+          <li><strong>Risk:</strong> Every action on the live system modifies evidence; requires careful documentation</li>
+        </ul>
+        <p style="font-size:.88rem; margin-top:.6rem;"><strong>Best when:</strong> Malware is suspected to be memory-resident only; encrypted volumes are mounted; volatile network connections are critical; system cannot be shut down.</p>
+      </div>
+    </div>
+
+    <div class="callout callout--warn">
+      <p class="callout__label">⚠️ Order of Volatility</p>
+      <p>When performing live acquisition, always collect evidence in <strong>order of volatility</strong> — most volatile first. The general order for Linux: CPU registers and cache → RAM → Network connections and routing tables → Running processes → <code>/tmp</code> → Disk image → Remote logs. This principle ensures you capture the most transient evidence before it disappears.</p>
+    </div>
+
+    <h3 class="mt-md">Read-Only Mount Procedure</h3>
+    <p>Whether you acquired a dead-box image or are working from a live capture, you must <strong>mount the filesystem read-only</strong> to prevent any writes to the evidence. On Linux, this is accomplished with the <code>mount</code> command and specific flags.</p>
+
+    <div class="code-block" role="region" aria-label="Read-only mount command example">
+      <span class="comment"># Step 1: Create a mount point directory</span><br>
+      <span class="cmd">sudo mkdir -p /mnt/evidence</span><br><br>
+      <span class="comment"># Step 2: Mount the image read-only with noexec and nosuid for safety</span><br>
+      <span class="cmd">sudo mount</span> <span class="flag">-o ro,noexec,nosuid,noatime</span> <span class="flag">-t ext4</span> <span class="path">/path/to/web-prod-03.img</span> <span class="path">/mnt/evidence</span><br><br>
+      <span class="comment"># Step 3: Verify the mount is read-only</span><br>
+      <span class="cmd">mount | grep</span> <span class="path">/mnt/evidence</span><br><br>
+      <span class="comment"># Expected output should show: (ro,noexec,nosuid,noatime,...)</span>
+    </div>
+
+    <h4>Mount Flag Explanations</h4>
+    <div class="compare-table-wrap">
+      <table class="compare-table" aria-label="Mount flag explanations">
+        <thead>
+          <tr>
+            <th scope="col">Flag</th>
+            <th scope="col">Meaning</th>
+            <th scope="col">Forensic Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>ro</code></td>
+            <td>Read-only</td>
+            <td>Prevents any writes to the evidence image — the most critical flag for evidence integrity</td>
+          </tr>
+          <tr>
+            <td><code>noexec</code></td>
+            <td>No execution of binaries</td>
+            <td>Prevents accidentally running malware or attacker tools present on the image</td>
+          </tr>
+          <tr>
+            <td><code>nosuid</code></td>
+            <td>Ignore SUID/SGID bits</td>
+            <td>Prevents SUID binaries on the evidence image from running with elevated privileges on your forensic workstation</td>
+          </tr>
+          <tr>
+            <td><code>noatime</code></td>
+            <td>Do not update access times</td>
+            <td>Prevents read operations from updating file <code>atime</code> timestamps — preserves original timestamp evidence</td>
+          </tr>
+          <tr>
+            <td><code>-t ext4</code></td>
+            <td>Filesystem type</td>
+            <td>Explicitly specifies the filesystem type; use <code>blkid</code> or <code>file</code> to determine the correct type before mounting</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout--success">
+      <p class="callout__label">🔗 Connection to Week 6 — Hash Verification</p>
+      <p>Before mounting any evidence image, always verify its integrity using a cryptographic hash. As you learned in Week 6, compute the SHA-256 hash of the image and compare it to the hash recorded at acquisition time. If the hashes match, the image has not been altered. If they do not match, the image's chain of custody is broken and its admissibility is in question.</p>
+      <div class="code-block" style="margin-top:.5rem;" role="region" aria-label="Hash verification command">
+        <span class="comment"># Verify image integrity before mounting</span><br>
+        <span class="cmd">sha256sum</span> <span class="path">/path/to/web-prod-03.img</span><br>
+        <span class="comment"># Compare output to the hash recorded in your acquisition documentation</span>
+      </div>
+    </div>
+
+    <div class="callout callout--info">
+      <p class="callout__label">💡 Hardware Write Blockers on Linux</p>
+      <p>When working with physical media (not image files), always use a hardware write blocker between the evidence drive and your forensic workstation. On Linux, if a hardware write blocker is unavailable, you can use <code>hdparm</code> or configure the kernel to treat the device as read-only — but a hardware write blocker is always preferred for court-admissible evidence.</p>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 6 — KNOWLEDGE CHECK
+  ════════════════════════════════════════════════════════════ -->
+  <section class="section" id="knowledge-check" aria-labelledby="kc-heading">
+    <div class="kc-section" role="region" aria-label="Ungraded knowledge check">
+      <div class="kc-header">
+        <div class="kc-header__icon" aria-hidden="true">✅</div>
+        <div>
+          <h2 id="kc-heading">Knowledge Check</h2>
+          <p style="font-size:.85rem; color:var(--clr-text-muted); margin:0;">Ungraded · Immediate feedback · 3 questions</p>
+        </div>
+      </div>
+
+      <div class="callout callout--info" style="margin-bottom:1.4rem;">
+        <p class="callout__label">📋 Instructions</p>
+        <p>Select the best answer for each question, then click <strong>Check Answer</strong>. You will receive immediate explanatory feedback — not just "correct" or "incorrect." These questions are not graded and do not submit to Canvas.</p>
+      </div>
+
+      <!-- Q1 -->
+      <div class="kc-question" id="q1-block">
+        <p class="kc-question__stem" id="q1-stem">
+          <span class="kc-question__num" aria-hidden="true">1</span>
+          You are examining a forensic image of a compromised Ubuntu server. You want to determine whether any new user accounts were created after the last known-good deployment. Which file should you examine first?
+        </p>
+        <ul class="kc-options" role="radiogroup" aria-labelledby="q1-stem">
+          <li>
+            <label>
+              <input type="radio" name="q1" value="a">
+              <span><code>/var/log/auth.log</code></span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q1" value="b">
+              <span><code>/etc/passwd</code></span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q1" value="c">
+              <span><code>/root/.bash_history</code></span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q1" value="d">
+              <span><code>/tmp/</code></span>
+            </label>
+          </li>
+        </ul>
+        <button class="kc-btn" onclick="checkAnswer(1, 'b', this)" aria-label="Check answer for question 1">Check Answer</button>
+        <div class="kc-feedback" id="q1-feedback" role="alert" aria-live="polite"></div>
+      </div>
+
+      <!-- Q2 -->
+      <div class="kc-question" id="q2-block">
+        <p class="kc-question__stem" id="q2-stem">
+          <span class="kc-question__num" aria-hidden="true">2</span>
+          An incident responder arrives at a running Linux server suspected of being compromised. The server hosts an encrypted database that is currently mounted and accessible. The responder needs to capture encryption keys if possible. Which acquisition approach is most appropriate, and why?
+        </p>
+        <ul class="kc-options" role="radiogroup" aria-labelledby="q2-stem">
+          <li>
+            <label>
+              <input type="radio" name="q2" value="a">
+              <span>Dead-box acquisition — shut the system down immediately to prevent further damage, then image the disk.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q2" value="b">
+              <span>Live acquisition — capture RAM first using a tool like LiME to preserve encryption keys and volatile state before shutting down.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q2" value="c">
+              <span>Dead-box acquisition — encryption keys are stored in <code>/etc/</code> and will survive a shutdown.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q2" value="d">
+              <span>Live acquisition — because it is always preferable to dead-box acquisition regardless of circumstances.</span>
+            </label>
+          </li>
+        </ul>
+        <button class="kc-btn" onclick="checkAnswer(2, 'b', this)" aria-label="Check answer for question 2">Check Answer</button>
+        <div class="kc-feedback" id="q2-feedback" role="alert" aria-live="polite"></div>
+      </div>
+
+      <!-- Q3 -->
+      <div class="kc-question" id="q3-block">
+        <p class="kc-question__stem" id="q3-stem">
+          <span class="kc-question__num" aria-hidden="true">3</span>
+          Which of the following mount flag combinations is most appropriate when mounting a Linux forensic image for examination, and what is the primary reason for using the <code>noatime</code> flag specifically?
+        </p>
+        <ul class="kc-options" role="radiogroup" aria-labelledby="q3-stem">
+          <li>
+            <label>
+              <input type="radio" name="q3" value="a">
+              <span><code>-o rw,exec</code> — read-write access is needed to extract artifacts to the evidence volume.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q3" value="b">
+              <span><code>-o ro,noexec,nosuid,noatime</code> — read-only prevents writes; <code>noatime</code> prevents read operations from updating file access timestamps, preserving original timestamp evidence.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q3" value="c">
+              <span><code>-o ro,noatime</code> — read-only is sufficient; <code>noatime</code> improves performance on large images.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q3" value="d">
+              <span><code>-o ro,noexec,nosuid,noatime</code> — read-only prevents writes; <code>noatime</code> prevents the system from logging your examination activity in <code>/var/log/</code>.</span>
+            </label>
+          </li>
+        </ul>
+        <button class="kc-btn" onclick="checkAnswer(3, 'b', this)" aria-label="Check answer for question 3">Check Answer</button>
+        <div class="kc-feedback" id="q3-feedback" role="alert" aria-live="polite"></div>
+      </div>
+
+    </div><!-- /.kc-section -->
+  </section>
+
+  <!-- MODULE SUMMARY -->
+  <section class="section" aria-labelledby="summary-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">📌</div>
+      <h2 id="summary-heading">Module 9.1 Summary</h2>
+    </div>
+    <p>You have completed the orientation module for Week 9. Here is what you should now be able to explain:</p>
+    <ul>
+      <li><strong>Why Linux is a critical forensic target</strong> — it dominates server, cloud, and embedded environments worldwide.</li>
+      <li><strong>The "everything is a file" philosophy</strong> — Linux configuration and state are stored as plain-text files in the filesystem, not in a centralized binary registry.</li>
+      <li><strong>Key forensic differences between Linux and Windows</strong> — configuration storage, log formats, user account data, persistence mechanisms, and tooling all differ significantly.</li>
+      <li><strong>The six highest-priority forensic directories</strong> — <code>/etc</code>, <code>/var/log</code>, <code>/home</code>, <code>/root</code>, <code>/tmp</code>, and additional locations like <code>/var/www</code> and <code>/var/spool/cron</code>.</li>
+      <li><strong>The dead-box vs. live acquisition decision</strong> — when each approach is appropriate and what evidence each preserves or loses.</li>
+      <li><strong>Read-only mount procedure</strong> — the correct flags (<code>ro</code>, <code>noexec</code>, <code>nosuid</code>, <code>noatime</code>) and their forensic rationale.</li>
+    </ul>
+    <div class="callout callout--success">
+      <p class="callout__label">▶ What's Next</p>
+      <p><strong>Module 9.2 – Linux User Artifacts</strong> dives deeper into user-level evidence: shell history analysis, SSH key forensics, <code>.bashrc</code> persistence, and reconstructing user activity timelines from the artifacts introduced in this module. Make sure you have completed this module before moving on.</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="page-footer" role="contentinfo">
+  <p><strong>CSC 156 – Digital Forensics Fundamentals</strong> &nbsp;|&nbsp; Week 9, Module 9.1 &nbsp;|&nbsp; Spring 2026</p>
+  <p style="margin-top:.3rem;">This page is for instructional use only. Content is ungraded unless otherwise noted in the course gradebook.</p>
+</footer>
+
+<script>
+  /* ── ACCORDION ─────────────────────────────────────────────── */
+  (function () {
+    const triggers = document.querySelectorAll('.accordion__trigger');
+    triggers.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const expanded = this.getAttribute('aria-expanded') === 'true';
+        const panelId  = this.getAttribute('aria-controls');
+        const panel    = document.getElementById(panelId);
+        if (!panel) return;
+        this.setAttribute('aria-expanded', String(!expanded));
+        panel.classList.toggle('is-open', !expanded);
+      });
+      btn.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          this.click();
+        }
+      });
+    });
+  })();
+
+  /* ── KNOWLEDGE CHECK ───────────────────────────────────────── */
+  var feedback = {
+    1: {
+      b: {
+        correct: true,
+        verdict: '✅ Correct!',
+        text: '<code>/etc/passwd</code> is the right starting point. This file lists all user accounts on the system, including their username, UID, home directory, and default shell. By comparing its modification timestamp and contents against the last known-good deployment date, you can quickly identify any accounts created after that point. Note: <code>/var/log/auth.log</code> (option A) would show <em>when</em> accounts were used to log in, and may also show <code>useradd</code> events — but <code>/etc/passwd</code> gives you the definitive list of current accounts. Always check both.'
+      },
+      a: {
+        correct: false,
+        verdict: '❌ Not the best first choice.',
+        text: '<code>/var/log/auth.log</code> is extremely valuable and you should absolutely examine it — but it shows login <em>events</em>, not the current state of user accounts. An attacker could create an account, use it, and the account would still appear in <code>/etc/passwd</code> even if no login events remain in the logs (logs may have been cleared). Start with <code>/etc/passwd</code> to get the ground truth on what accounts exist, then use <code>auth.log</code> to trace activity.'
+      },
+      c: {
+        correct: false,
+        verdict: '❌ Incorrect.',
+        text: '<code>/root/.bash_history</code> records commands typed at the root shell and could show a <code>useradd</code> command — but shell history is easily deleted or manipulated by an attacker. It is also only present if the attacker used the root shell interactively. <code>/etc/passwd</code> is the authoritative source for user accounts and is harder to selectively falsify without leaving traces.'
+      },
+      d: {
+        correct: false,
+        verdict: '❌ Incorrect.',
+        text: '<code>/tmp/</code> is a staging area for temporary files and is a valuable forensic location — but it does not contain user account information. It would not help you determine whether new accounts were created. Examine <code>/etc/passwd</code> for user account data.'
+      }
+    },
+    2: {
+      b: {
+        correct: true,
+        verdict: '✅ Correct!',
+        text: 'Live acquisition is the right choice here because <strong>encryption keys exist only in RAM while a volume is mounted</strong>. Once the system is shut down, those keys are gone — and with them, your ability to access the encrypted database. Using a tool like LiME (Linux Memory Extractor), you would load the kernel module to capture a full RAM image first, then proceed with disk imaging. This follows the Order of Volatility principle: capture the most transient evidence (RAM) before the less volatile evidence (disk).'
+      },
+      a: {
+        correct: false,
+        verdict: '❌ Incorrect.',
+        text: 'Shutting the system down immediately would destroy the encryption keys held in RAM. Once the system powers off, the encrypted database becomes inaccessible without those keys — potentially making a significant portion of the evidence unreadable. While dead-box acquisition is appropriate in many situations, this scenario specifically requires preserving volatile memory contents before shutdown.'
+      },
+      c: {
+        correct: false,
+        verdict: '❌ Incorrect.',
+        text: 'Encryption keys for a mounted volume are <strong>not</strong> stored in <code>/etc/</code> in plaintext — they are held in RAM as part of the kernel\'s cryptographic subsystem (e.g., dm-crypt/LUKS key slots are in memory while the volume is mounted). The key derivation material in <code>/etc/</code> (e.g., LUKS header) requires the passphrase or key file to be useful. You cannot recover active session keys from disk alone after shutdown.'
+      },
+      d: {
+        correct: false,
+        verdict: '❌ Partially correct reasoning, but the conclusion is overstated.',
+        text: 'Live acquisition is the right choice <em>in this specific scenario</em> because of the encrypted volume — not because live acquisition is always preferable. Dead-box acquisition is often preferable when: the system can be safely shut down, volatile data is not critical, and minimizing evidence modification is the priority. The choice always depends on the specific circumstances of the investigation.'
+      }
+    },
+    3: {
+      b: {
+        correct: true,
+        verdict: '✅ Correct!',
+        text: 'The full flag set <code>ro,noexec,nosuid,noatime</code> is correct, and the reason for <code>noatime</code> is accurate: <strong>reading a file normally updates its access time (atime) timestamp</strong>. If you mount without <code>noatime</code>, every file you open during examination will have its atime updated — potentially overwriting original timestamp evidence that could be significant to your timeline. The <code>noatime</code> flag suppresses these updates, preserving the original timestamps exactly as they existed at acquisition time.'
+      },
+      a: {
+        correct: false,
+        verdict: '❌ Incorrect — this would compromise your evidence.',
+        text: 'Mounting with <code>rw</code> (read-write) is a serious forensic error. Any write to the mounted image — even an accidental one — modifies the evidence and could invalidate your hash verification, break chain of custody, and render the evidence inadmissible. Always mount forensic images read-only (<code>ro</code>). Never mount evidence volumes with write access unless you are working on a verified copy and have documented your reasons.'
+      },
+      c: {
+        correct: false,
+        verdict: '❌ Partially correct, but the reasoning for noatime is wrong.',
+        text: 'The flag set is partially correct — <code>ro</code> and <code>noatime</code> are both appropriate. However, omitting <code>noexec</code> and <code>nosuid</code> creates safety risks: without <code>noexec</code>, you could accidentally execute malware present on the image; without <code>nosuid</code>, SUID binaries on the evidence image could run with elevated privileges on your forensic workstation. Also, the stated reason for <code>noatime</code> (performance) is a secondary benefit — the primary forensic reason is preserving original access timestamps.'
+      },
+      d: {
+        correct: false,
+        verdict: '❌ The flag set is correct, but the explanation for noatime is wrong.',
+        text: 'The mount flags (<code>ro,noexec,nosuid,noatime</code>) are exactly right. However, the explanation for <code>noatime</code> is incorrect. The <code>noatime</code> flag does <em>not</em> affect <code>/var/log/</code> on your forensic workstation — it affects the access timestamps (<code>atime</code>) of files <em>on the mounted evidence image</em>. Without <code>noatime</code>, reading files on the image would update their atime fields, modifying the evidence. The correct explanation: <code>noatime</code> prevents read operations from updating file access timestamps on the evidence image, preserving original timestamp evidence.'
+      }
+    }
+  };
+
+  function checkAnswer(qNum, correctVal, btn) {
+    var selected = document.querySelector('input[name="q' + qNum + '"]:checked');
+    var feedbackEl = document.getElementById('q' + qNum + '-feedback');
+
+    if (!selected) {
+      feedbackEl.className = 'kc-feedback kc-feedback--incorrect show';
+      feedbackEl.innerHTML = '<p class="kc-feedback__verdict">⚠️ Please select an answer first.</p>';
+      return;
+    }
+
+    var val = selected.value;
+    var data = feedback[qNum][val];
+    var isCorrect = (val === correctVal);
+
+    feedbackEl.className = 'kc-feedback ' + (isCorrect ? 'kc-feedback--correct' : 'kc-feedback--incorrect') + ' show';
+    feedbackEl.innerHTML = '<p class="kc-feedback__verdict">' + data.verdict + '</p><p>' + data.text + '</p>';
+
+    /* disable options after answering */
+    var radios = document.querySelectorAll('input[name="q' + qNum + '"]');
+    radios.forEach(function (r) { r.disabled = true; });
+
+    btn.textContent = isCorrect ? '✅ Answered' : '🔄 Answered';
+    btn.disabled = true;
+    btn.style.background = isCorrect ? 'var(--clr-success)' : '#8b1a1a';
+
+    /* move focus to feedback for screen readers */
+    feedbackEl.setAttribute('tabindex', '-1');
+    feedbackEl.focus();
+  }
+</script>
+</body>
+</html>
