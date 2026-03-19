@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 9.5 – Midterm Review: Synthesizing Weeks 1–8 | CSC 156</title>
+<style>
+  /* ── DESIGN TOKENS ─────────────────────────────────────────── */
+  :root {
+    --clr-primary:       #1a3a5c;
+    --clr-primary-light: #2563a8;
+    --clr-accent:        #e07b2a;
+    --clr-accent-light:  #fdf0e0;
+    --clr-success:       #1a6b3c;
+    --clr-success-bg:    #eaf5ee;
+    --clr-error:         #8b1a1a;
+    --clr-error-bg:      #fdeaea;
+    --clr-info:          #1a4a6b;
+    --clr-info-bg:       #e6f0f8;
+    --clr-warn:          #7a4f00;
+    --clr-warn-bg:       #fff8e6;
+    --clr-surface:       #f7f9fc;
+    --clr-border:        #ccd6e0;
+    --clr-text:          #1a1a2e;
+    --clr-text-muted:    #4a5568;
+    --clr-white:         #ffffff;
+    --clr-code-bg:       #1e2a38;
+    --clr-code-text:     #a8d8a8;
+    --radius-sm:  4px;
+    --radius-md:  8px;
+    --radius-lg:  12px;
+    --shadow-sm:  0 1px 3px rgba(0,0,0,.12);
+    --shadow-md:  0 4px 12px rgba(0,0,0,.14);
+    --font-sans:  system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono:  "Fira Code", "Cascadia Code", Consolas, "Courier New", monospace;
+    --max-w:      860px;
+    --nav-h:      3.25rem;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--clr-text);
+    background: var(--clr-surface);
+  }
+  h1,h2,h3,h4 { line-height: 1.3; color: var(--clr-primary); }
+  h2 { font-size: 1.55rem; margin-bottom: .5rem; }
+  h3 { font-size: 1.2rem;  margin-bottom: .4rem; }
+  h4 { font-size: 1rem;    margin-bottom: .3rem; }
+  p  { margin-bottom: .9rem; }
+  ul, ol { padding-left: 1.4rem; margin-bottom: .9rem; }
+  li { margin-bottom: .3rem; }
+  strong { color: var(--clr-primary); }
+  code {
+    font-family: var(--font-mono);
+    font-size: .88em;
+    background: #e8eef4;
+    padding: .1em .35em;
+    border-radius: var(--radius-sm);
+    color: #1a3a5c;
+  }
+  a { color: var(--clr-primary-light); }
+  a:focus-visible {
+    outline: 3px solid var(--clr-accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* ── SKIP LINK ──────────────────────────────────────────────── */
+  .skip-link {
+    position: absolute; top: -60px; left: 0;
+    background: var(--clr-accent); color: var(--clr-white);
+    padding: .5rem 1rem; font-weight: 700; z-index: 9999;
+    border-radius: 0 0 var(--radius-md) 0; transition: top .2s;
+  }
+  .skip-link:focus { top: 0; }
+
+  /* ── TOP NAV ────────────────────────────────────────────────── */
+  .top-nav {
+    background: var(--clr-primary);
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: var(--shadow-md);
+  }
+  .top-nav__inner {
+    max-width: var(--max-w); margin: 0 auto; padding: 0 1rem;
+    display: flex; flex-wrap: wrap; align-items: center; gap: .25rem;
+  }
+  .top-nav__brand {
+    color: var(--clr-accent); font-weight: 700; font-size: .9rem;
+    padding: .6rem .5rem .6rem 0; margin-right: .5rem;
+    white-space: nowrap; border-right: 1px solid rgba(255,255,255,.2);
+  }
+  .top-nav__links {
+    display: flex; flex-wrap: wrap; list-style: none;
+    padding: 0; margin: 0; gap: .1rem;
+  }
+  .top-nav__links a {
+    display: block; color: rgba(255,255,255,.88); text-decoration: none;
+    font-size: .8rem; font-weight: 700; padding: .55rem .65rem;
+    border-radius: var(--radius-sm);
+    transition: background .15s, color .15s; white-space: nowrap;
+  }
+  .top-nav__links a:hover { background: rgba(255,255,255,.12); color: var(--clr-white); }
+  .top-nav__links a:focus-visible { outline: 3px solid var(--clr-accent); outline-offset: 2px; }
+
+  /* ── EXAM BANNER ────────────────────────────────────────────── */
+  .exam-banner {
+    background: linear-gradient(135deg, #0f2540 0%, #1a3a5c 60%, #7a3a00 100%);
+    border-bottom: 4px solid var(--clr-accent);
+    padding: 2rem 1.5rem;
+  }
+  .exam-banner__inner { max-width: var(--max-w); margin: 0 auto; }
+  .exam-banner__eyebrow {
+    font-size: .78rem; font-weight: 700; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--clr-accent); margin-bottom: .5rem;
+  }
+  .exam-banner h1 {
+    color: var(--clr-white); font-size: 1.85rem; margin-bottom: .5rem;
+  }
+  .exam-banner__sub {
+    color: rgba(255,255,255,.8); font-size: .97rem; margin-bottom: 1.2rem; max-width: 640px;
+  }
+  .exam-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: .75rem; margin-bottom: 1.2rem;
+  }
+  .exam-stat {
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: var(--radius-md);
+    padding: .85rem 1rem; text-align: center;
+  }
+  .exam-stat__val {
+    font-size: 1.6rem; font-weight: 800; color: var(--clr-accent); line-height: 1.1;
+  }
+  .exam-stat__lbl { font-size: .78rem; color: rgba(255,255,255,.75); margin-top: .25rem; }
+  .exam-access-note {
+    background: rgba(224,123,42,.18);
+    border: 1px solid rgba(224,123,42,.4);
+    border-radius: var(--radius-md);
+    padding: .85rem 1.1rem;
+    color: rgba(255,255,255,.92);
+    font-size: .92rem;
+  }
+  .exam-access-note strong { color: var(--clr-accent); }
+  .badge-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+  .badge {
+    display: inline-flex; align-items: center; gap: .3rem;
+    font-size: .75rem; font-weight: 600; padding: .25rem .7rem;
+    border-radius: 999px; background: rgba(255,255,255,.12);
+    color: rgba(255,255,255,.9); border: 1px solid rgba(255,255,255,.2);
+  }
+  .badge--accent { background: var(--clr-accent); color: var(--clr-white); border-color: transparent; }
+
+  /* ── PAGE HEADER (module header below banner) ───────────────── */
+  .page-header {
+    background: linear-gradient(135deg, var(--clr-primary) 0%, #0f2540 100%);
+    color: var(--clr-white); padding: 2.2rem 1.5rem 1.8rem;
+  }
+  .page-header__inner { max-width: var(--max-w); margin: 0 auto; }
+  .page-header__eyebrow {
+    font-size: .78rem; font-weight: 600; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--clr-accent); margin-bottom: .4rem;
+  }
+  .page-header h1 { color: var(--clr-white); font-size: 1.75rem; margin-bottom: .5rem; }
+  .page-header__sub { font-size: .97rem; color: rgba(255,255,255,.78); max-width: 640px; margin-bottom: 1rem; }
+
+  /* ── MAIN ───────────────────────────────────────────────────── */
+  .main { max-width: var(--max-w); margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+
+  /* ── SECTION ────────────────────────────────────────────────── */
+  .section { margin-bottom: 2.8rem; scroll-margin-top: var(--nav-h); }
+  .section-header {
+    display: flex; align-items: center; gap: .65rem;
+    margin-bottom: 1rem; padding-bottom: .5rem;
+    border-bottom: 3px solid var(--clr-primary-light);
+  }
+  .section-icon {
+    width: 2rem; height: 2rem; background: var(--clr-primary);
+    border-radius: var(--radius-md); display: flex; align-items: center;
+    justify-content: center; color: var(--clr-white); font-size: 1rem; flex-shrink: 0;
+  }
+
+  /* ── CALLOUT ────────────────────────────────────────────────── */
+  .callout {
+    border-left: 4px solid; padding: .9rem 1.1rem;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0; margin-bottom: 1rem;
+  }
+  .callout__label {
+    font-size: .72rem; font-weight: 700; letter-spacing: .09em;
+    text-transform: uppercase; margin-bottom: .3rem;
+  }
+  .callout--info  { background: var(--clr-info-bg);    border-color: var(--clr-info); }
+  .callout--info  .callout__label { color: var(--clr-info); }
+  .callout--info  p, .callout--info li { color: var(--clr-text); }
+  .callout--warn  { background: var(--clr-warn-bg);    border-color: #c07000; }
+  .callout--warn  .callout__label { color: var(--clr-warn); }
+  .callout--warn  p, .callout--warn li { color: var(--clr-text); }
+  .callout--success { background: var(--clr-success-bg); border-color: var(--clr-success); }
+  .callout--success .callout__label { color: var(--clr-success); }
+  .callout--success p, .callout--success li { color: var(--clr-text); }
+  .callout--exam {
+    background: #fff8f0; border-color: var(--clr-accent); border-left-width: 5px;
+  }
+  .callout--exam .callout__label { color: #b85c00; }
+  .callout--exam p, .callout--exam li { color: var(--clr-text); }
+
+  /* ── MODULE PROGRESS STRIP ──────────────────────────────────── */
+  .module-progress {
+    background: var(--clr-white); border: 1px solid var(--clr-border);
+    border-radius: var(--radius-md); padding: .8rem 1.1rem;
+    margin-bottom: 2rem; display: flex; align-items: center;
+    gap: .8rem; flex-wrap: wrap; font-size: .82rem;
+  }
+  .module-progress__label { font-weight: 600; color: var(--clr-text-muted); white-space: nowrap; }
+  .module-dots { display: flex; gap: .4rem; }
+  .module-dot {
+    width: .85rem; height: .85rem; border-radius: 50%;
+    border: 2px solid var(--clr-border); background: var(--clr-surface); position: relative;
+  }
+  .module-dot--done { background: var(--clr-success); border-color: var(--clr-success); }
+  .module-dot--current { background: var(--clr-primary); border-color: var(--clr-primary); }
+  .module-dot--current::after {
+    content: ''; position: absolute; inset: -4px; border-radius: 50%;
+    border: 2px solid var(--clr-primary-light);
+  }
+  .module-dot__tooltip {
+    position: absolute; bottom: calc(100% + 6px); left: 50%;
+    transform: translateX(-50%); background: var(--clr-primary);
+    color: var(--clr-white); font-size: .7rem; padding: .2em .5em;
+    border-radius: var(--radius-sm); white-space: nowrap;
+    pointer-events: none; opacity: 0; transition: opacity .15s;
+  }
+  .module-dot:hover .module-dot__tooltip { opacity: 1; }
+  .module-progress__note { color: var(--clr-text-muted); font-style: italic; }
+
+  /* ── ACCORDION ──────────────────────────────────────────────── */
+  .accordion {
+    border: 1px solid var(--clr-border); border-radius: var(--radius-md);
+    overflow: hidden; margin-bottom: .75rem;
+  }
+  .accordion__trigger {
+    width: 100%; background: var(--clr-white); border: none;
+    padding: .85rem 1.1rem; text-align: left; cursor: pointer;
+    display: flex; align-items: center; gap: .7rem;
+    font-family: var(--font-sans); font-size: .95rem; font-weight: 600;
+    color: var(--clr-primary); transition: background .15s;
+  }
+  .accordion__trigger:hover { background: #eef3f9; }
+  .accordion__trigger:focus-visible { outline: 3px solid var(--clr-accent); outline-offset: -3px; }
+  .accordion__icon { margin-left: auto; font-size: .8rem; transition: transform .25s; color: var(--clr-text-muted); flex-shrink: 0; }
+  .accordion__trigger[aria-expanded="true"] .accordion__icon { transform: rotate(180deg); }
+  .accordion__trigger[aria-expanded="true"] { background: #eef3f9; border-bottom: 1px solid var(--clr-border); }
+  .accordion__panel { display: none; padding: 1rem 1.2rem; background: var(--clr-white); font-size: .93rem; }
+  .accordion__panel.is-open { display: block; }
+
+  /* week label badge inside accordion trigger */
+  .week-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 2rem; height: 1.5rem; padding: 0 .5rem;
+    background: var(--clr-primary); color: var(--clr-white);
+    border-radius: 999px; font-size: .72rem; font-weight: 700; flex-shrink: 0;
+  }
+  .week-badge--cslo1 { background: #3a5bbf; }
+  .week-badge--cslo2 { background: #1a6b3c; }
+  .week-badge--cslo3 { background: #b85c00; }
+
+  /* self-check inside accordion */
+  .self-check {
+    background: #f4f7fb; border: 1px solid var(--clr-border);
+    border-radius: var(--radius-md); padding: 1rem 1.1rem; margin-top: .8rem;
+  }
+  .self-check__label {
+    font-size: .72rem; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--clr-primary-light); margin-bottom: .5rem;
+  }
+  .self-check__stem { font-weight: 600; font-size: .94rem; margin-bottom: .65rem; }
+  .sc-options { list-style: none; padding: 0; margin-bottom: .6rem; }
+  .sc-options li { margin-bottom: .35rem; }
+  .sc-options label {
+    display: flex; align-items: flex-start; gap: .55rem; cursor: pointer;
+    padding: .45rem .75rem; border-radius: var(--radius-md);
+    border: 1px solid var(--clr-border); background: var(--clr-white);
+    font-size: .9rem; transition: background .15s, border-color .15s;
+  }
+  .sc-options label:hover { background: #eef3f9; border-color: var(--clr-primary-light); }
+  .sc-options input[type="radio"] { margin-top: .2rem; accent-color: var(--clr-primary-light); flex-shrink: 0; }
+  .sc-btn {
+    background: var(--clr-primary); color: var(--clr-white); border: none;
+    padding: .45rem 1.1rem; border-radius: var(--radius-md); font-size: .87rem;
+    font-weight: 600; cursor: pointer; font-family: var(--font-sans);
+    transition: background .15s;
+  }
+  .sc-btn:hover { background: var(--clr-primary-light); }
+  .sc-btn:focus-visible { outline: 3px solid var(--clr-accent); outline-offset: 3px; }
+  .sc-feedback {
+    display: none; margin-top: .7rem; padding: .75rem 1rem;
+    border-radius: var(--radius-md); font-size: .89rem; line-height: 1.6;
+  }
+  .sc-feedback.show { display: block; }
+  .sc-feedback--correct { background: var(--clr-success-bg); border-left: 4px solid var(--clr-success); }
+  .sc-feedback--incorrect { background: var(--clr-error-bg); border-left: 4px solid var(--clr-error); }
+  .sc-feedback__verdict { font-weight: 700; margin-bottom: .3rem; }
+  .sc-feedback--correct .sc-feedback__verdict { color: var(--clr-success); }
+  .sc-feedback--incorrect .sc-feedback__verdict { color: var(--clr-error); }
+
+  /* ── CSLO CHECKLIST ─────────────────────────────────────────── */
+  .cslo-block {
+    background: var(--clr-white); border: 1px solid var(--clr-border);
+    border-radius: var(--radius-lg); padding: 1.2rem 1.4rem; margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm);
+  }
+  .cslo-block__header {
+    display: flex; align-items: center; gap: .65rem; margin-bottom: .8rem;
+  }
+  .cslo-num {
+    width: 2.2rem; height: 2.2rem; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: .95rem; color: var(--clr-white); flex-shrink: 0;
+  }
+  .cslo-num--1 { background: #3a5bbf; }
+  .cslo-num--2 { background: #1a6b3c; }
+  .cslo-num--3 { background: #b85c00; }
+  .cslo-block__title { font-size: 1rem; font-weight: 700; color: var(--clr-primary); }
+  .cslo-block__stmt { font-size: .88rem; color: var(--clr-text-muted); margin-bottom: .8rem; font-style: italic; }
+  .checklist { list-style: none; padding: 0; }
+  .checklist li { margin-bottom: .4rem; }
+  .checklist label {
+    display: flex; align-items: flex-start; gap: .6rem; cursor: pointer;
+    font-size: .9rem; padding: .3rem 0;
+  }
+  .checklist input[type="checkbox"] {
+    margin-top: .18rem; accent-color: var(--clr-primary-light);
+    width: 1rem; height: 1rem; flex-shrink: 0;
+  }
+  .checklist input:focus-visible { outline: 2px solid var(--clr-accent); }
+  .checklist label.checked-item { color: var(--clr-text-muted); text-decoration: line-through; }
+  .cslo-progress-bar-wrap {
+    margin-top: .8rem; background: #e2e8f0;
+    border-radius: 999px; height: .55rem; overflow: hidden;
+  }
+  .cslo-progress-bar {
+    height: 100%; border-radius: 999px; background: var(--clr-primary-light);
+    transition: width .3s;
+  }
+  .cslo-progress-label { font-size: .78rem; color: var(--clr-text-muted); margin-top: .3rem; }
+
+  /* ── QUICK REFERENCE TABLE ──────────────────────────────────── */
+  .table-wrap { overflow-x: auto; margin-bottom: 1.2rem; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
+  .ref-table {
+    width: 100%; border-collapse: collapse; font-size: .88rem;
+    background: var(--clr-white);
+  }
+  .ref-table thead tr { background: var(--clr-primary); color: var(--clr-white); }
+  .ref-table thead th {
+    padding: .7rem .9rem; text-align: left; font-weight: 600;
+    font-size: .82rem; letter-spacing: .04em;
+  }
+  .ref-table thead th:first-child { border-radius: var(--radius-md) 0 0 0; }
+  .ref-table thead th:last-child  { border-radius: 0 var(--radius-md) 0 0; }
+  .ref-table tbody tr { border-bottom: 1px solid var(--clr-border); }
+  .ref-table tbody tr:nth-child(even) { background: #f4f7fb; }
+  .ref-table tbody tr:hover { background: #eaf0f8; }
+  .ref-table td { padding: .6rem .9rem; vertical-align: top; font-size: .86rem; }
+  .ref-table td:first-child { font-weight: 600; color: var(--clr-primary); white-space: nowrap; }
+
+  /* ── KNOWLEDGE CHECK ────────────────────────────────────────── */
+  .kc-section {
+    background: var(--clr-white); border: 2px solid var(--clr-primary-light);
+    border-radius: var(--radius-lg); padding: 1.6rem; box-shadow: var(--shadow-sm);
+  }
+  .kc-header { display: flex; align-items: center; gap: .6rem; margin-bottom: 1.2rem; }
+  .kc-header__icon {
+    width: 2.2rem; height: 2.2rem; background: var(--clr-primary);
+    border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; color: var(--clr-white); font-size: 1rem; flex-shrink: 0;
+  }
+  .kc-header h2 { border-bottom: none; padding-bottom: 0; margin-bottom: 0; font-size: 1.3rem; }
+  .kc-question { margin-bottom: 1.6rem; }
+  .kc-question__stem { font-weight: 600; margin-bottom: .75rem; font-size: .97rem; }
+  .kc-question__num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.6rem; height: 1.6rem; background: var(--clr-primary);
+    color: var(--clr-white); border-radius: 50%; font-size: .75rem;
+    font-weight: 700; margin-right: .5rem; flex-shrink: 0; vertical-align: middle;
+  }
+  .kc-options { list-style: none; padding: 0; }
+  .kc-options li { margin-bottom: .45rem; }
+  .kc-options label {
+    display: flex; align-items: flex-start; gap: .6rem; cursor: pointer;
+    padding: .55rem .8rem; border-radius: var(--radius-md);
+    border: 1px solid var(--clr-border); background: var(--clr-surface);
+    font-size: .93rem; transition: background .15s, border-color .15s;
+  }
+  .kc-options label:hover { background: #eef3f9; border-color: var(--clr-primary-light); }
+  .kc-options input[type="radio"] { margin-top: .2rem; accent-color: var(--clr-primary-light); flex-shrink: 0; }
+  .kc-btn {
+    background: var(--clr-primary); color: var(--clr-white); border: none;
+    padding: .55rem 1.3rem; border-radius: var(--radius-md); font-size: .9rem;
+    font-weight: 600; cursor: pointer; font-family: var(--font-sans);
+    transition: background .15s; margin-top: .4rem;
+  }
+  .kc-btn:hover { background: var(--clr-primary-light); }
+  .kc-btn:focus-visible { outline: 3px solid var(--clr-accent); outline-offset: 3px; }
+  .kc-feedback {
+    display: none; margin-top: .8rem; padding: .8rem 1rem;
+    border-radius: var(--radius-md); font-size: .91rem; line-height: 1.6;
+  }
+  .kc-feedback.show { display: block; }
+  .kc-feedback--correct { background: var(--clr-success-bg); border-left: 4px solid var(--clr-success); }
+  .kc-feedback--incorrect { background: var(--clr-error-bg); border-left: 4px solid var(--clr-error); }
+  .kc-feedback__verdict { font-weight: 700; margin-bottom: .3rem; }
+  .kc-feedback--correct .kc-feedback__verdict { color: var(--clr-success); }
+  .kc-feedback--incorrect .kc-feedback__verdict { color: var(--clr-error); }
+
+  /* ── STRATEGY TIPS GRID ─────────────────────────────────────── */
+  .tips-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem; margin-bottom: 1rem;
+  }
+  .tip-card {
+    background: var(--clr-white); border: 1px solid var(--clr-border);
+    border-top: 4px solid var(--clr-primary-light);
+    border-radius: var(--radius-md); padding: 1rem 1.1rem; box-shadow: var(--shadow-sm);
+  }
+  .tip-card__icon { font-size: 1.4rem; margin-bottom: .4rem; display: block; }
+  .tip-card h4 { color: var(--clr-primary); margin-bottom: .4rem; }
+  .tip-card p, .tip-card ul { font-size: .88rem; margin-bottom: 0; }
+
+  /* ── FOOTER ─────────────────────────────────────────────────── */
+  .page-footer {
+    background: var(--clr-primary); color: rgba(255,255,255,.7);
+    text-align: center; padding: 1.2rem; font-size: .8rem; margin-top: 2rem;
+  }
+  .page-footer strong { color: var(--clr-accent); }
+
+  /* ── UTILITY ────────────────────────────────────────────────── */
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+  .mt-sm { margin-top: .5rem; }
+  .mt-md { margin-top: 1rem; }
+  .divider { border: none; border-top: 1px solid var(--clr-border); margin: 1.5rem 0; }
+
+  @media (max-width: 600px) {
+    .exam-banner h1, .page-header h1 { font-size: 1.35rem; }
+    h2 { font-size: 1.25rem; }
+    .ref-table { font-size: .8rem; }
+    .kc-options label { font-size: .88rem; }
+    .tips-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SKIP LINK -->
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<!-- TOP NAV -->
+<nav class="top-nav" aria-label="Module section navigation">
+  <div class="top-nav__inner">
+    <div class="top-nav__brand">CSC 156 · Mod 9.5</div>
+    <ul class="top-nav__links">
+      <li><a href="#exam-overview"   title="Midterm Exam Overview">Exam</a></li>
+      <li><a href="#week-review"     title="Week-by-Week Review">Review</a></li>
+      <li><a href="#cslo-checklist"  title="CSLO Review Checklist">CSLOs</a></li>
+      <li><a href="#quick-reference" title="Key Tools and Artifacts">Tools</a></li>
+      <li><a href="#exam-strategy"   title="Exam Strategy and Tips">Strategy</a></li>
+      <li><a href="#knowledge-check" title="Cumulative Knowledge Check">Check</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════
+     EXAM BANNER
+════════════════════════════════════════════════════════════ -->
+<div class="exam-banner" id="exam-overview" role="region" aria-labelledby="exam-banner-heading">
+  <div class="exam-banner__inner">
+    <p class="exam-banner__eyebrow">Week 9 · Module 9.5 · Days 4–5 · Exam Preparation</p>
+    <h1 id="exam-banner-heading">Midterm Exam Overview</h1>
+    <p class="exam-banner__sub">This module is your structured review and exam-prep resource for the Midterm Exam. Use it to consolidate everything from Weeks 1–8 before you sit the exam.</p>
+    <div class="exam-stat-grid" role="list" aria-label="Midterm exam details">
+      <div class="exam-stat" role="listitem">
+        <div class="exam-stat__val">120</div>
+        <div class="exam-stat__lbl">Points (12% of final grade)</div>
+      </div>
+      <div class="exam-stat" role="listitem">
+        <div class="exam-stat__val">Wks 1–8</div>
+        <div class="exam-stat__lbl">Coverage</div>
+      </div>
+      <div class="exam-stat" role="listitem">
+        <div class="exam-stat__val">3</div>
+        <div class="exam-stat__lbl">Question Formats</div>
+      </div>
+      <div class="exam-stat" role="listitem">
+        <div class="exam-stat__val">CSLOs 1–3</div>
+        <div class="exam-stat__lbl">Outcomes Assessed</div>
+      </div>
+    </div>
+    <div class="exam-access-note" role="note">
+      <strong>📋 Exam Format:</strong> Multiple choice, short answer, and scenario-based questions. &nbsp;|&nbsp;
+      <strong>📍 How to Access:</strong> Access the <strong>Midterm Exam</strong> directly in Canvas under the Week 9 module. The exam is not linked from this page — navigate to Canvas to open it when you are ready.
+    </div>
+    <div class="badge-row">
+      <span class="badge badge--accent">🎯 120 Points</span>
+      <span class="badge">📖 Weeks 1–8</span>
+      <span class="badge">✅ Ungraded Review</span>
+      <span class="badge">⏱ ~60–90 min prep</span>
+    </div>
+  </div>
+</div>
+
+<!-- MODULE HEADER -->
+<header class="page-header" role="banner">
+  <div class="page-header__inner">
+    <p class="page-header__eyebrow">Week 9 · Module 9.5 · Midterm Review</p>
+    <h1>Synthesizing Weeks 1–8</h1>
+    <p class="page-header__sub">A structured, interactive review of all testable concepts. Work through each section at your own pace. Nothing on this page is graded — all feedback is for self-assessment only.</p>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main id="main-content" class="main">
+
+  <!-- MODULE PROGRESS STRIP -->
+  <div class="module-progress" role="region" aria-label="Week 9 module progress">
+    <span class="module-progress__label">Week 9 Modules:</span>
+    <div class="module-dots" aria-label="5 modules; currently on module 5">
+      <div class="module-dot module-dot--done" role="img" aria-label="Module 9.1 – completed">
+        <span class="module-dot__tooltip">9.1 – Orientation</span>
+      </div>
+      <div class="module-dot module-dot--done" role="img" aria-label="Module 9.2 – completed">
+        <span class="module-dot__tooltip">9.2 – User Artifacts</span>
+      </div>
+      <div class="module-dot module-dot--done" role="img" aria-label="Module 9.3 – completed">
+        <span class="module-dot__tooltip">9.3 – Log Analysis</span>
+      </div>
+      <div class="module-dot module-dot--done" role="img" aria-label="Module 9.4 – completed">
+        <span class="module-dot__tooltip">9.4 – Persistence</span>
+      </div>
+      <div class="module-dot module-dot--current" role="img" aria-label="Module 9.5 – current">
+        <span class="module-dot__tooltip">9.5 – Midterm Review</span>
+      </div>
+    </div>
+    <span class="module-progress__note">You are on Module 9.5 — the final module of Week 9. Complete this review before sitting the Midterm Exam.</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 2 — WEEK-BY-WEEK REVIEW
+  ════════════════════════════════════════════════════════════ -->
+  <section class="section" id="week-review" aria-labelledby="review-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">📚</div>
+      <h2 id="review-heading">Week-by-Week Review — Weeks 1–8</h2>
+    </div>
+
+    <div class="callout callout--info">
+      <p class="callout__label">💡 How to Use This Section</p>
+      <p>Expand each week to review the most testable concepts and complete one ungraded self-check question. The self-check questions are representative of the types of questions you will encounter on the Midterm Exam. Work through every week — even topics that feel familiar.</p>
+    </div>
+
+    <!-- WEEK 1 -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="w1-panel" id="w1-btn">
+        <span class="week-badge week-badge--cslo1">W1</span>
+        <span>Introduction to Digital Forensics</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="w1-panel" role="region" aria-labelledby="w1-btn">
+        <h4>Most Testable Concepts</h4>
+        <ul>
+          <li><strong>Definition of digital forensics:</strong> The application of scientific methods to collect, preserve, analyze, and present digital evidence in a legally admissible manner.</li>
+          <li><strong>Role in incident response:</strong> Forensics supports IR by providing evidence of what happened, how, when, and by whom — after containment is initiated.</li>
+          <li><strong>Professional certifications:</strong> IACIS CFCE, GIAC GCFE, GIAC GCFA, EC-Council CHFI — know which organization issues each and their general focus areas.</li>
+          <li><strong>CSLO 1 anchor week:</strong> Week 1 establishes the foundational vocabulary for the entire course. Exam questions may ask you to define terms or distinguish between concepts introduced here.</li>
+          <li><strong>Career context:</strong> Digital forensics practitioners work in law enforcement, corporate security, incident response, legal support, and consulting.</li>
+        </ul>
+        <div class="self-check" role="region" aria-label="Week 1 self-check question">
+          <p class="self-check__label">🔎 Self-Check — Week 1</p>
+          <p class="self-check__stem" id="sc-w1-stem">Which of the following best describes the primary distinction between digital forensics and general IT troubleshooting?</p>
+          <ul class="sc-options" role="radiogroup" aria-labelledby="sc-w1-stem">
+            <li><label><input type="radio" name="sc-w1" value="a"><span>Digital forensics uses more advanced software tools than standard IT support.</span></label></li>
+            <li><label><input type="radio" name="sc-w1" value="b"><span>Digital forensics requires evidence to be collected and preserved in a legally defensible manner, with chain of custody maintained throughout.</span></label></li>
+            <li><label><input type="radio" name="sc-w1" value="c"><span>Digital forensics is only performed by law enforcement agencies.</span></label></li>
+            <li><label><input type="radio" name="sc-w1" value="d"><span>Digital forensics focuses exclusively on recovering deleted files.</span></label></li>
+          </ul>
+          <button class="sc-btn" onclick="checkSC('w1','b',this)" aria-label="Check Week 1 self-check answer">Check Answer</button>
+          <div class="sc-feedback" id="sc-w1-fb" role="alert" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEEK 2 -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="w2-panel" id="w2-btn">
+        <span class="week-badge week-badge--cslo1">W2</span>
+        <span>Digital Forensics Investigation Process</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="w2-panel" role="region" aria-labelledby="w2-btn">
+        <h4>Most Testable Concepts</h4>
+        <ul>
+          <li><strong>Six investigation phases:</strong> Identification → Preservation → Collection/Acquisition → Examination → Analysis → Presentation. Know each phase's purpose and key actions.</li>
+          <li><strong>Forensic readiness:</strong> Proactive organizational capability to maximize evidence quality while minimizing investigation costs. Includes logging strategies, trained staff, and evidence handling procedures.</li>
+          <li><strong>Chain of custody:</strong> Chronological documentation of who handled evidence, when, where, and how. Required for evidence admissibility. Every transfer must be documented.</li>
+          <li><strong>Order of volatility:</strong> CPU/cache → RAM → Network connections → Running processes → Temporary files → Disk → Remote logs. Always collect most volatile evidence first.</li>
+          <li><strong>Documentation standards:</strong> Contemporaneous, objective, complete. Notes may become evidence themselves. Never erase — cross out and initial corrections.</li>
+        </ul>
+        <div class="self-check" role="region" aria-label="Week 2 self-check question">
+          <p class="self-check__label">🔎 Self-Check — Week 2</p>
+          <p class="self-check__stem" id="sc-w2-stem">An investigator arrives at a scene and discovers a running workstation suspected of involvement in a data breach. Following the order of volatility, what should be captured FIRST?</p>
+          <ul class="sc-options" role="radiogroup" aria-labelledby="sc-w2-stem">
+            <li><label><input type="radio" name="sc-w2" value="a"><span>A forensic disk image using FTK Imager.</span></label></li>
+            <li><label><input type="radio" name="sc-w2" value="b"><span>The contents of RAM using a live memory acquisition tool.</span></label></li>
+            <li><label><input type="radio" name="sc-w2" value="c"><span>Log files from <code>/var/log/</code> on the system.</span></label></li>
+            <li><label><input type="radio" name="sc-w2" value="d"><span>A photograph of the physical evidence scene.</span></label></li>
+          </ul>
+          <button class="sc-btn" onclick="checkSC('w2','b',this)" aria-label="Check Week 2 self-check answer">Check Answer</button>
+          <div class="sc-feedback" id="sc-w2-fb" role="alert" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEEK 3 -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="w3-panel" id="w3-btn">
+        <span class="week-badge week-badge--cslo1">W3</span>
+        <span>Legal and Ethical Considerations</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="w3-panel" role="region" aria-labelledby="w3-btn">
+        <h4>Most Testable Concepts</h4>
+        <ul>
+          <li><strong>Federal Rules of Evidence:</strong> Digital evidence must be relevant, authentic, and not unfairly prejudicial. Authentication requires proving the evidence is what it claims to be.</li>
+          <li><strong>Daubert Standard:</strong> Federal test for admissibility of expert testimony — must be based on sufficient facts, reliable methods, and applied reliably to the case.</li>
+          <li><strong>Fourth Amendment:</strong> Protects against unreasonable government searches. Applies to government actors; private investigators are generally not bound by it. Warrants require probable cause.</li>
+          <li><strong>Code of ethics:</strong> Forensic examiners must be objective, impartial, and report findings accurately — including exculpatory evidence. Personal bias must not influence findings.</li>
+          <li><strong>Privacy laws:</strong> ECPA, GDPR, CCPA, HIPAA — each imposes restrictions on data collection and handling. Know the general scope of each.</li>
+          <li><strong>Expert witness:</strong> Must be qualified by knowledge, skill, experience, training, or education. Provides opinion testimony, not just factual testimony.</li>
+        </ul>
+        <div class="self-check" role="region" aria-label="Week 3 self-check question">
+          <p class="self-check__label">🔎 Self-Check — Week 3</p>
+          <p class="self-check__stem" id="sc-w3-stem">A corporate security investigator — not a law enforcement officer — searches an employee's company-owned laptop without a warrant. Which of the following is most accurate regarding the Fourth Amendment?</p>
+          <ul class="sc-options" role="radiogroup" aria-labelledby="sc-w3-stem">
+            <li><label><input type="radio" name="sc-w3" value="a"><span>The search violates the Fourth Amendment because no warrant was obtained.</span></label></li>
+            <li><label><input type="radio" name="sc-w3" value="b"><span>The Fourth Amendment does not apply because the investigator is a private party, not a government actor.</span></label></li>
+            <li><label><input type="radio" name="sc-w3" value="c"><span>The search is always legal because the laptop is company property.</span></label></li>
+            <li><label><input type="radio" name="sc-w3" value="d"><span>The Fourth Amendment applies to all searches regardless of who conducts them.</span></label></li>
+          </ul>
+          <button class="sc-btn" onclick="checkSC('w3','b',this)" aria-label="Check Week 3 self-check answer">Check Answer</button>
+          <div class="sc-feedback" id="sc-w3-fb" role="alert" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEEK 4 -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="w4-panel" id="w4-btn">
+        <span class="week-badge week-badge--cslo2">W4</span>
+        <span>Computer Hardware, Storage Media, and Boot Processes</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="w4-panel" role="region" aria-labelledby="w4-btn">
+        <h4>Most Testable Concepts</h4>
+        <ul>
+          <li><strong>HDD vs. SSD forensics:</strong> HDDs allow deleted data recovery from magnetic platters; SSDs use TRIM, wear leveling, and garbage collection — which can permanently destroy deleted data before imaging. SSD forensics is significantly more complex.</li>
+          <li><strong>BIOS vs. UEFI:</strong> BIOS is legacy firmware; UEFI is modern, supports GPT, Secure Boot, and larger drives. UEFI logs and Secure Boot state may be forensically relevant.</li>
+          <li><strong>MBR vs. GPT:</strong> MBR (Master Boot Record) supports up to 4 primary partitions and 2TB drives; GPT (GUID Partition Table) supports 128 partitions and very large drives. Both contain partition layout information relevant to evidence location.</li>
+          <li><strong>Storage interfaces:</strong> SATA, NVMe, USB — each has different acquisition considerations. NVMe drives may require specialized adapters for hardware write blocking.</li>
+          <li><strong>Forensic significance:</strong> Understanding hardware helps you select the right acquisition method and anticipate evidence loss risks (e.g., SSD TRIM during power-on).</li>
+        </ul>
+        <div class="self-check" role="region" aria-label="Week 4 self-check question">
+          <p class="self-check__label">🔎 Self-Check — Week 4</p>
+          <p class="self-check__stem" id="sc-w4-stem">Why is recovering deleted files from a solid-state drive (SSD) more challenging than from a traditional hard disk drive (HDD)?</p>
+          <ul class="sc-options" role="radiogroup" aria-labelledby="sc-w4-stem">
+            <li><label><input type="radio" name="sc-w4" value="a"><span>SSDs encrypt all data by default, preventing forensic tools from reading the raw sectors.</span></label></li>
+            <li><label><input type="radio" name="sc-w4" value="b"><span>SSDs use TRIM and garbage collection, which can permanently erase deleted data blocks before imaging occurs.</span></label></li>
+            <li><label><input type="radio" name="sc-w4" value="c"><span>SSDs do not support standard forensic imaging formats like E01 or raw DD.</span></label></li>
+            <li><label><input type="radio" name="sc-w4" value="d"><span>SSDs store data magnetically, making it harder to read with standard tools.</span></label></li>
+          </ul>
+          <button class="sc-btn" onclick="checkSC('w4','b',this)" aria-label="Check Week 4 self-check answer">Check Answer</button>
+          <div class="sc-feedback" id="sc-w4-fb" role="alert" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEEK 5 -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="w5-panel" id="w5-btn">
+        <span class="week-badge week-badge--cslo2">W5</span>
+        <span>File Systems and Data Structures</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="w5-panel" role="region" aria-labelledby="w5-btn">
+        <h4>Most Testable Concepts</h4>
+        <ul>
+          <li><strong>File system types:</strong> FAT32 (no journaling, simple), NTFS (journaling, MFT, permissions, VSS), ext4 (Linux journaling), APFS (macOS, copy-on-write). Know which OS uses which.</li>
+          <li><strong>How deletion works:</strong> Deleting a file typically marks the directory entry and allocation table entry as available — the data remains in unallocated space until overwritten. This is the basis for deleted file recovery.</li>
+          <li><strong>File carving:</strong> Recovering files from unallocated space using file header/footer signatures (magic bytes) — does not rely on file system metadata. Used when metadata is corrupted or overwritten.</li>
+          <li><strong>MFT (Master File Table):</strong> NTFS structure that stores metadata for every file and directory. Each MFT entry contains timestamps, file size, permissions, and data runs (pointers to data on disk). Critical for timeline analysis.</li>
+          <li><strong>Timestamps:</strong> On NTFS — Created, Modified, Accessed, MFT-Modified ($STANDARD_INFORMATION vs. $FILE_NAME). On ext4 — mtime (modified), atime (accessed), ctime (metadata changed, not created). Know the difference.</li>
+          <li><strong>Unallocated space:</strong> Disk space not currently assigned to any file. Contains remnants of deleted files. Examined using tools like Autopsy or The Sleuth Kit.</li>
+        </ul>
+        <div class="self-check" role="region" aria-label="Week 5 self-check question">
+          <p class="self-check__label">🔎 Self-Check — Week 5</p>
+          <p class="self-check__stem" id="sc-w5-stem">A forensic examiner is attempting to recover deleted image files from a damaged NTFS volume where the Master File Table (MFT) is corrupted. Which technique is most appropriate?</p>
+          <ul class="sc-options" role="radiogroup" aria-labelledby="sc-w5-stem">
+            <li><label><input type="radio" name="sc-w5" value="a"><span>Parse the MFT using Autopsy to locate deleted file entries.</span></label></li>
+            <li><label><input type="radio" name="sc-w5" value="b"><span>File carving — search unallocated space for JPEG/PNG header and footer signatures without relying on file system metadata.</span></label></li>
+            <li><label><input type="radio" name="sc-w5" value="c"><span>Use the Windows Recycle Bin to restore deleted files.</span></label></li>
+            <li><label><input type="radio" name="sc-w5" value="d"><span>Reconstruct the MFT from the $LogFile journal before attempting recovery.</span></label></li>
+          </ul>
+          <button class="sc-btn" onclick="checkSC('w5','b',this)" aria-label="Check Week 5 self-check answer">Check Answer</button>
+          <div class="sc-feedback" id="sc-w5-fb" role="alert" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEEK 6 -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="w6-panel" id="w6-btn">
+        <span class="week-badge week-badge--cslo3">W6</span>
+        <span>Data Acquisition and Preservation</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="w6-panel" role="region" aria-labelledby="w6-btn">
+        <h4>Most Testable Concepts</h4>
+        <ul>
+          <li><strong>Forensic imaging vs. logical copy:</strong> A forensic image is a bit-for-bit copy of the entire storage medium (including unallocated space, slack space, and deleted data). A logical copy copies only active files — insufficient for forensic purposes.</li>
+          <li><strong>Write blockers:</strong> Hardware or software devices that prevent any writes to the evidence drive during acquisition. Hardware write blockers are preferred for court-admissible evidence.</li>
+          <li><strong>Acquisition tools:</strong> <code>dd</code> (Linux command-line), <code>dcfldd</code> (dd with hashing), FTK Imager (GUI, supports E01 format), Guymager (Linux GUI). Know the basic purpose of each.</li>
+          <li><strong>Hash verification:</strong> Compute MD5 or SHA-256 hash of the source drive and the forensic image — hashes must match to confirm integrity. SHA-256 is preferred; MD5 is considered cryptographically weak but still widely used in forensics for speed.</li>
+          <li><strong>Image formats:</strong> Raw/DD (simple bit stream), E01/EWF (Expert Witness Format — includes metadata, compression, hash verification), AFF (Advanced Forensic Format).</li>
+          <li><strong>Evidence preservation:</strong> Photograph evidence before collection, use anti-static bags for electronic media, maintain proper temperature/humidity, document all handling.</li>
+        </ul>
+        <div class="self-check" role="region" aria-label="Week 6 self-check question">
+          <p class="self-check__label">🔎 Self-Check — Week 6</p>
+          <p class="self-check__stem" id="sc-w6-stem">After creating a forensic image of a suspect hard drive, an examiner computes the SHA-256 hash of the image file and finds it does NOT match the hash recorded during acquisition. What does this indicate?</p>
+          <ul class="sc-options" role="radiogroup" aria-labelledby="sc-w6-stem">
+            <li><label><input type="radio" name="sc-w6" value="a"><span>The image was created correctly; hash mismatches are normal and expected.</span></label></li>
+            <li><label><input type="radio" name="sc-w6" value="b"><span>The image has been altered or corrupted since acquisition — its integrity cannot be confirmed and its chain of custody is compromised.</span></label></li>
+            <li><label><input type="radio" name="sc-w6" value="c"><span>SHA-256 is not a reliable hash algorithm for forensic verification.</span></label></li>
+            <li><label><input type="radio" name="sc-w6" value="d"><span>The original drive must have changed — the image is still valid.</span></label></li>
+          </ul>
+          <button class="sc-btn" onclick="checkSC('w6','b',this)" aria-label="Check Week 6 self-check answer">Check Answer</button>
+          <div class="sc-feedback" id="sc-w6-fb" role="alert" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEEK 7 -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="w7-panel" id="w7-btn">
+        <span class="week-badge week-badge--cslo2">W7</span>
+        <span>Windows Forensics I — Registry and User Artifacts</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="w7-panel" role="region" aria-labelledby="w7-btn">
+        <h4>Most Testable Concepts</h4>
+        <ul>
+          <li><strong>Registry hives:</strong> SYSTEM, SOFTWARE, SAM, SECURITY (in <code>C:\Windows\System32\config\</code>), NTUSER.DAT (per-user, in user profile). Each stores different categories of configuration and artifact data.</li>
+          <li><strong>SAM hive:</strong> Stores local user account information and password hashes. Critical for user account analysis and password recovery.</li>
+          <li><strong>NTUSER.DAT:</strong> Per-user Registry hive. Contains RecentDocs, UserAssist (program execution with timestamps), MRU (most recently used) lists, and typed URLs.</li>
+          <li><strong>UserAssist:</strong> Registry key tracking programs executed via Windows Explorer. Values are ROT-13 encoded. Provides execution timestamps and run counts.</li>
+          <li><strong>RecentDocs / Jump Lists:</strong> Track recently accessed files and applications. Jump Lists are stored as LNK files and include timestamps, file paths, and volume serial numbers.</li>
+          <li><strong>Shellbags:</strong> Registry keys recording folder navigation history — even for folders that no longer exist or were on removable media. Valuable for proving a user accessed specific locations.</li>
+          <li><strong>RegRipper:</strong> Tool for automated extraction of forensic artifacts from Registry hives. Produces human-readable output from binary hive files.</li>
+        </ul>
+        <div class="self-check" role="region" aria-label="Week 7 self-check question">
+          <p class="self-check__label">🔎 Self-Check — Week 7</p>
+          <p class="self-check__stem" id="sc-w7-stem">An investigator wants to determine whether a specific executable was run on a Windows system, and when. Which Windows Registry artifact is most directly useful for this purpose?</p>
+          <ul class="sc-options" role="radiogroup" aria-labelledby="sc-w7-stem">
+            <li><label><input type="radio" name="sc-w7" value="a"><span>The SAM hive — it records all program execution events with timestamps.</span></label></li>
+            <li><label><input type="radio" name="sc-w7" value="b"><span>UserAssist keys in NTUSER.DAT — they track programs launched via Windows Explorer, including execution timestamps and run counts.</span></label></li>
+            <li><label><input type="radio" name="sc-w7" value="c"><span>Shellbags — they record all program execution events system-wide.</span></label></li>
+            <li><label><input type="radio" name="sc-w7" value="d"><span>The SYSTEM hive — it logs all executed processes with full command-line arguments.</span></label></li>
+          </ul>
+          <button class="sc-btn" onclick="checkSC('w7','b',this)" aria-label="Check Week 7 self-check answer">Check Answer</button>
+          <div class="sc-feedback" id="sc-w7-fb" role="alert" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEEK 8 -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="w8-panel" id="w8-btn">
+        <span class="week-badge week-badge--cslo2">W8</span>
+        <span>Windows Forensics II — Event Logs and System Artifacts</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="w8-panel" role="region" aria-labelledby="w8-btn">
+        <h4>Most Testable Concepts</h4>
+        <ul>
+          <li><strong>Windows Event Log format:</strong> Binary EVTX files stored in <code>C:\Windows\System32\winevt\Logs\</code>. Three primary logs: Security (logon events, privilege use), System (service starts/stops, hardware), Application (application errors and events).</li>
+          <li><strong>Key Security Event IDs:</strong> 4624 (successful logon), 4625 (failed logon), 4648 (logon with explicit credentials), 4672 (special privileges assigned), 4688 (process creation — requires audit policy), 4698/4702 (scheduled task created/modified).</li>
+          <li><strong>Prefetch files:</strong> Located in <code>C:\Windows\Prefetch\</code>. Store evidence of program execution — file name, run count, last run timestamps (up to 8), and files/directories accessed. Enabled by default on workstations; often disabled on servers.</li>
+          <li><strong>LNK files:</strong> Windows shortcut files automatically created when a file is opened. Contain the target file path, timestamps, volume serial number, and MAC address of the system — even if the target file is deleted.</li>
+          <li><strong>Volume Shadow Copies (VSS):</strong> Point-in-time snapshots of volumes. Can be used to recover earlier versions of files or Registry hives — forensically valuable and also used by ransomware attackers (who delete them).</li>
+          <li><strong>NTFS artifacts:</strong> <code>$MFT</code> (file metadata), <code>$LogFile</code> (NTFS journal — recent metadata changes), <code>$UsnJrnl</code> (change journal — file creation, deletion, rename events with timestamps).</li>
+          <li><strong>Timestomping:</strong> Anti-forensic technique where an attacker modifies file timestamps to hide activity. <code>$STANDARD_INFORMATION</code> timestamps can be altered; <code>$FILE_NAME</code> timestamps are harder to modify — discrepancies between the two indicate tampering.</li>
+        </ul>
+        <div class="self-check" role="region" aria-label="Week 8 self-check question">
+          <p class="self-check__label">🔎 Self-Check — Week 8</p>
+          <p class="self-check__stem" id="sc-w8-stem">During a Windows investigation, an examiner notices that a file's <code>$STANDARD_INFORMATION</code> timestamps show it was created two years ago, but the <code>$FILE_NAME</code> timestamps show it was created last week. What does this discrepancy most likely indicate?</p>
+          <ul class="sc-options" role="radiogroup" aria-labelledby="sc-w8-stem">
+            <li><label><input type="radio" name="sc-w8" value="a"><span>The file system has a known bug that causes random timestamp inconsistencies.</span></label></li>
+            <li><label><input type="radio" name="sc-w8" value="b"><span>Timestomping — an attacker likely modified the <code>$STANDARD_INFORMATION</code> timestamps to make the file appear older than it actually is.</span></label></li>
+            <li><label><input type="radio" name="sc-w8" value="c"><span>The file was copied from another system, which always causes this discrepancy.</span></label></li>
+            <li><label><input type="radio" name="sc-w8" value="d"><span>The <code>$FILE_NAME</code> timestamps are unreliable and should be ignored.</span></label></li>
+          </ul>
+          <button class="sc-btn" onclick="checkSC('w8','b',this)" aria-label="Check Week 8 self-check answer">Check Answer</button>
+          <div class="sc-feedback" id="sc-w8-fb" role="alert" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 3 — CSLO REVIEW CHECKLIST
+  ════════════════════════════════════════════════════════════ -->
+  <section class="section" id="cslo-checklist" aria-labelledby="cslo-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">🎯</div>
+      <h2 id="cslo-heading">CSLO Review Checklist</h2>
+    </div>
+
+    <div class="callout callout--info">
+      <p class="callout__label">📋 Instructions</p>
+      <p>Check each competency you feel confident about. Use unchecked items to guide your final review before the exam. This checklist is for self-assessment only — it does not submit to Canvas and resets when you close or refresh the page.</p>
+    </div>
+
+    <!-- CSLO 1 -->
+    <div class="cslo-block" role="region" aria-labelledby="cslo1-title">
+      <div class="cslo-block__header">
+        <div class="cslo-num cslo-num--1" aria-hidden="true">1</div>
+        <div>
+          <div class="cslo-block__title" id="cslo1-title">CSLO 1</div>
+          <div class="cslo-block__stmt">Describe the fundamental concepts of incident response and forensic investigation.</div>
+        </div>
+      </div>
+      <ul class="checklist" aria-label="CSLO 1 competency checklist" id="cslo1-list">
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="1" onchange="updateCSLOProgress(1)"><span>I can define digital forensics and explain its role in incident response (Week 1).</span></label></li>
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="1" onchange="updateCSLOProgress(1)"><span>I can list and describe all six phases of the forensic investigation process (Week 2).</span></label></li>
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="1" onchange="updateCSLOProgress(1)"><span>I can explain the purpose and components of chain of custody documentation (Week 2).</span></label></li>
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="1" onchange="updateCSLOProgress(1)"><span>I can describe the order of volatility and explain why it matters (Week 2).</span></label></li>
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="1" onchange="updateCSLOProgress(1)"><span>I can explain the Fourth Amendment's application (and limits) in digital investigations (Week 3).</span></label></li>
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="1" onchange="updateCSLOProgress(1)"><span>I can describe the code of ethics for forensic examiners and why objectivity is essential (Week 3).</span></label></li>
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="1" onchange="updateCSLOProgress(1)"><span>I can identify the key professional certifications (CFCE, GCFE, GCFA, CHFI) and their focus areas (Week 1).</span></label></li>
+      </ul>
+      <div class="cslo-progress-bar-wrap" aria-hidden="true">
+        <div class="cslo-progress-bar" id="cslo1-bar" style="width:0%"></div>
+      </div>
+      <p class="cslo-progress-label" id="cslo1-label">0 of 7 items checked</p>
+    </div>
+
+    <!-- CSLO 2 -->
+    <div class="cslo-block" role="region" aria-labelledby="cslo2-title">
+      <div class="cslo-block__header">
+        <div class="cslo-num cslo-num--2" aria-hidden="true">2</div>
+        <div>
+          <div class="cslo-block__title" id="cslo2-title">CSLO 2</div>
+          <div class="cslo-block__stmt">Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data.</div>
+        </div>
+      </div>
+      <ul class="checklist" aria-label="CSLO 2 competency checklist" id="cslo2-list">
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="2" onchange="updateCSLOProgress(2)"><span>I can explain the forensic differences between HDDs and SSDs, including the impact of TRIM (Week 4).</span></label></li>
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="2" onchange="updateCSLOProgress(2)"><span>I can describe MBR vs. GPT partition structures and their forensic significance (Week 4).</span></label></li>
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="2" onchange="updateCSLOProgress(2)"><span>I can explain how common file systems (NTFS, ext4, FAT32) store and delete files (Week 5).</span></label></li>
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="2" onchange="updateCSLOProgress(2)"><span>I can describe file carving and explain when it is used instead of metadata-based recovery (Week 5).</span></label></li>
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="2" onchange="updateCSLOProgress(2)"><span>I can identify and interpret NTFS timestamp types ($SI vs. $FN) and detect timestomping (Week 8).</span></label></li>
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="2" onchange="updateCSLOProgress(2)"><span>I can analyze Windows Registry hives for user activity artifacts (Week 7).</span></label></li>
+        <li><label><input type="checkbox" name="cslo2-cb" class="cslo-cb" data-cslo="2" onchange="updateCSLOProgress(2)"><span>I can interpret Windows Event Log entries and identify key Security Event IDs (Week 8).</span></label></li>
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="2" onchange="updateCSLOProgress(2)"><span>I can explain the forensic value of Prefetch files, LNK files, and Volume Shadow Copies (Week 8).</span></label></li>
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="2" onchange="updateCSLOProgress(2)"><span>I can identify high-value forensic directories on a Linux system (Week 9, Modules 9.1–9.4).</span></label></li>
+      </ul>
+      <div class="cslo-progress-bar-wrap" aria-hidden="true">
+        <div class="cslo-progress-bar" id="cslo2-bar" style="width:0%"></div>
+      </div>
+      <p class="cslo-progress-label" id="cslo2-label">0 of 9 items checked</p>
+    </div>
+
+    <!-- CSLO 3 -->
+    <div class="cslo-block" role="region" aria-labelledby="cslo3-title">
+      <div class="cslo-block__header">
+        <div class="cslo-num cslo-num--3" aria-hidden="true">3</div>
+        <div>
+          <div class="cslo-block__title" id="cslo3-title">CSLO 3</div>
+          <div class="cslo-block__stmt">Perform data collection using forensic technology methods in accordance with evidence handling procedures.</div>
+        </div>
+      </div>
+      <ul class="checklist" aria-label="CSLO 3 competency checklist" id="cslo3-list">
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="3" onchange="updateCSLOProgress(3)"><span>I can explain the difference between a forensic image and a logical copy (Week 6).</span></label></li>
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="3" onchange="updateCSLOProgress(3)"><span>I can describe how hardware write blockers work and why they are required (Week 6).</span></label></li>
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="3" onchange="updateCSLOProgress(3)"><span>I can explain hash verification using MD5 and SHA-256 and interpret a hash mismatch (Week 6).</span></label></li>
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="3" onchange="updateCSLOProgress(3)"><span>I can identify the appropriate acquisition tool for a given scenario (dd, FTK Imager, Guymager) (Week 6).</span></label></li>
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="3" onchange="updateCSLOProgress(3)"><span>I can explain the dead-box vs. live acquisition decision and when each is appropriate (Weeks 2, 9).</span></label></li>
+        <li><label><input type="checkbox" class="cslo-cb" data-cslo="3" onchange="updateCSLOProgress(3)"><span>I can describe the correct flags for mounting a forensic image read-only on Linux (Week 9, Module 9.1).</span></label></li>
+      </ul>
+      <div class="cslo-progress-bar-wrap" aria-hidden="true">
+        <div class="cslo-progress-bar" id="cslo3-bar" style="width:0%"></div>
+      </div>
+      <p class="cslo-progress-label" id="cslo3-label">0 of 6 items checked</p>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 4 — QUICK REFERENCE
+  ════════════════════════════════════════════════════════════ -->
+  <section class="section" id="quick-reference" aria-labelledby="qr-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">🗂️</div>
+      <h2 id="qr-heading">Key Tools and Artifacts Quick Reference</h2>
+    </div>
+
+    <p>Use this condensed reference card to review the most important tools, artifact locations, and their forensic values from Weeks 1–8. This is not exhaustive — focus on understanding <em>why</em> each item matters, not just memorizing names.</p>
+
+    <h3>Forensic Tools</h3>
+    <div class="table-wrap">
+      <table class="ref-table" aria-label="Forensic tools quick reference">
+        <thead>
+          <tr>
+            <th scope="col">Tool</th>
+            <th scope="col">Primary Purpose</th>
+            <th scope="col">Key Forensic Value</th>
+            <th scope="col">Week</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>FTK Imager</td>
+            <td>Disk imaging and preview</td>
+            <td>Creates E01/raw images; previews evidence without full analysis; computes acquisition hashes</td>
+            <td>W6</td>
+          </tr>
+          <tr>
+            <td><code>dd</code> / <code>dcfldd</code></td>
+            <td>Command-line disk imaging</td>
+            <td><code>dd</code>: raw bit-stream copy; <code>dcfldd</code>: adds on-the-fly hashing and progress output</td>
+            <td>W6</td>
+          </tr>
+          <tr>
+            <td>Guymager</td>
+            <td>Linux GUI disk imaging</td>
+            <td>Graphical acquisition with hash verification; supports E01 and AFF formats</td>
+            <td>W6</td>
+          </tr>
+          <tr>
+            <td>Autopsy / Sleuth Kit</td>
+            <td>File system and disk analysis</td>
+            <td>MFT parsing, deleted file recovery, timeline generation, keyword search, hash filtering</td>
+            <td>W5, W7, W8</td>
+          </tr>
+          <tr>
+            <td>RegRipper</td>
+            <td>Windows Registry analysis</td>
+            <td>Automated extraction of forensic artifacts from Registry hives; human-readable output</td>
+            <td>W7</td>
+          </tr>
+          <tr>
+            <td>Eric Zimmerman Tools</td>
+            <td>Windows artifact parsing suite</td>
+            <td>MFTECmd (MFT), PECmd (Prefetch), LECmd (LNK), JLECmd (Jump Lists), MFTExplorer</td>
+            <td>W7, W8</td>
+          </tr>
+          <tr>
+            <td>Write Blocker (hardware)</td>
+            <td>Evidence integrity</td>
+            <td>Physically prevents writes to evidence drive during acquisition; required for court-admissible imaging</td>
+            <td>W6</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="mt-md">Windows Artifact Locations</h3>
+    <div class="table-wrap">
+      <table class="ref-table" aria-label="Windows artifact locations quick reference">
+        <thead>
+          <tr>
+            <th scope="col">Artifact</th>
+            <th scope="col">Location</th>
+            <th scope="col">Forensic Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Registry Hives</td>
+            <td><code>C:\Windows\System32\config\</code> (SYSTEM, SOFTWARE, SAM, SECURITY)</td>
+            <td>System config, installed software, user accounts, services, persistence</td>
+          </tr>
+          <tr>
+            <td>NTUSER.DAT</td>
+            <td><code>C:\Users\[username]\NTUSER.DAT</code></td>
+            <td>Per-user activity: RecentDocs, UserAssist, MRU lists, typed URLs</td>
+          </tr>
+          <tr>
+            <td>Event Logs</td>
+            <td><code>C:\Windows\System32\winevt\Logs\</code></td>
+            <td>Logon events, process creation, service changes, privilege use</td>
+          </tr>
+          <tr>
+            <td>Prefetch Files</td>
+            <td><code>C:\Windows\Prefetch\</code></td>
+            <td>Program execution evidence: run count, last 8 run timestamps, accessed files</td>
+          </tr>
+          <tr>
+            <td>LNK / Shortcut Files</td>
+            <td><code>C:\Users\[username]\AppData\Roaming\Microsoft\Windows\Recent\</code></td>
+            <td>Recently accessed files; target path, timestamps, volume serial number, MAC address</td>
+          </tr>
+          <tr>
+            <td>Jump Lists</td>
+            <td><code>C:\Users\[username]\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations\</code></td>
+            <td>Per-application recently used files; AppID maps to specific applications</td>
+          </tr>
+          <tr>
+            <td>Shellbags</td>
+            <td>NTUSER.DAT → <code>Software\Microsoft\Windows\Shell\BagMRU</code></td>
+            <td>Folder navigation history — proves user accessed locations, even deleted/removed ones</td>
+          </tr>
+          <tr>
+            <td>$MFT</td>
+            <td>Root of NTFS volume (hidden system file)</td>
+            <td>Metadata for every file: timestamps, size, permissions, data locations</td>
+          </tr>
+          <tr>
+            <td>$UsnJrnl</td>
+            <td>NTFS system file (<code>$Extend\$UsnJrnl</code>)</td>
+            <td>Change journal: file create, delete, rename events with timestamps</td>
+          </tr>
+          <tr>
+            <td>Volume Shadow Copies</td>
+            <td><code>\\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy[N]</code></td>
+            <td>Historical snapshots of volume state; recover earlier file/Registry versions</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="mt-md">Linux Artifact Locations</h3>
+    <div class="table-wrap">
+      <table class="ref-table" aria-label="Linux artifact locations quick reference">
+        <thead>
+          <tr>
+            <th scope="col">Artifact</th>
+            <th scope="col">Location</th>
+            <th scope="col">Forensic Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>User Accounts</td>
+            <td><code>/etc/passwd</code>, <code>/etc/shadow</code>, <code>/etc/group</code></td>
+            <td>All user accounts, password hashes, group memberships — check for unauthorized accounts</td>
+          </tr>
+          <tr>
+            <td>Auth Logs</td>
+            <td><code>/var/log/auth.log</code> (Debian/Ubuntu) or <code>/var/log/secure</code> (RHEL)</td>
+            <td>SSH logins, sudo usage, su attempts, failed authentication — critical for intrusion analysis</td>
+          </tr>
+          <tr>
+            <td>System Logs</td>
+            <td><code>/var/log/syslog</code>, <code>/var/log/messages</code></td>
+            <td>General system events, daemon activity, kernel messages</td>
+          </tr>
+          <tr>
+            <td>Shell History</td>
+            <td><code>~/.bash_history</code>, <code>/root/.bash_history</code></td>
+            <td>Commands executed by user; easily deleted — check filesystem timestamps for evidence of clearing</td>
+          </tr>
+          <tr>
+            <td>SSH Authorized Keys</td>
+            <td><code>~/.ssh/authorized_keys</code>, <code>/root/.ssh/authorized_keys</code></td>
+            <td>Attacker-added keys are a primary persistence mechanism — examine immediately</td>
+          </tr>
+          <tr>
+            <td>Cron Jobs</td>
+            <td><code>/etc/cron*</code>, <code>/var/spool/cron/crontabs/</code></td>
+            <td>Scheduled tasks — common attacker persistence location</td>
+          </tr>
+          <tr>
+            <td>Sudoers</td>
+            <td><code>/etc/sudoers</code>, <code>/etc/sudoers.d/</code></td>
+            <td>Privilege escalation configuration — attackers modify to gain persistent root access</td>
+          </tr>
+          <tr>
+            <td>Temp Directories</td>
+            <td><code>/tmp/</code>, <code>/var/tmp/</code>, <code>/dev/shm/</code></td>
+            <td>World-writable staging areas for malware and exploit tools</td>
+          </tr>
+          <tr>
+            <td>Login Records</td>
+            <td><code>/var/log/wtmp</code> (all logins), <code>/var/log/btmp</code> (failed logins)</td>
+            <td>Parse with <code>last</code> and <code>lastb</code>; binary format — shows login history and failed attempts</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="mt-md">Key Windows Security Event IDs</h3>
+    <div class="table-wrap">
+      <table class="ref-table" aria-label="Key Windows Security Event IDs">
+        <thead>
+          <tr>
+            <th scope="col">Event ID</th>
+            <th scope="col">Description</th>
+            <th scope="col">Investigative Significance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>4624</td><td>Successful logon</td><td>Who logged on, when, from where, and logon type (interactive, network, remote)</td></tr>
+          <tr><td>4625</td><td>Failed logon</td><td>Brute-force indicators; source IP; account targeted</td></tr>
+          <tr><td>4648</td><td>Logon with explicit credentials</td><td>Pass-the-hash, lateral movement, RunAs usage</td></tr>
+          <tr><td>4672</td><td>Special privileges assigned</td><td>Privilege escalation — admin-level rights granted at logon</td></tr>
+          <tr><td>4688</td><td>Process creation</td><td>Command-line execution evidence (requires audit policy enabled)</td></tr>
+          <tr><td>4698/4702</td><td>Scheduled task created/modified</td><td>Persistence mechanism — attacker-created tasks</td></tr>
+          <tr><td>7045</td><td>New service installed (System log)</td><td>Malware installing as a service for persistence</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 5 — EXAM STRATEGY
+  ════════════════════════════════════════════════════════════ -->
+  <section class="section" id="exam-strategy" aria-labelledby="strategy-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">💡</div>
+      <h2 id="strategy-heading">Exam Strategy and Tips</h2>
+    </div>
+
+    <div class="tips-grid" role="list" aria-label="Exam strategy tips">
+
+      <div class="tip-card" role="listitem">
+        <span class="tip-card__icon" aria-hidden="true">📖</span>
+        <h4>Reading Scenario Questions</h4>
+        <ul>
+          <li>Read the entire scenario before looking at answer choices.</li>
+          <li>Identify the <em>role</em> (examiner, IR analyst, legal counsel) and the <em>goal</em> (preserve evidence, identify attacker, prove execution).</li>
+          <li>Eliminate answers that would compromise evidence integrity first.</li>
+          <li>When two answers seem correct, choose the one that best preserves forensic soundness.</li>
+          <li>Watch for key words: "first," "most appropriate," "primary reason" — these change the correct answer.</li>
+        </ul>
+      </div>
+
+      <div class="tip-card" role="listitem">
+        <span class="tip-card__icon" aria-hidden="true">✍️</span>
+        <h4>Short-Answer Format</h4>
+        <ul>
+          <li>Answer the specific question asked — do not write everything you know about a topic.</li>
+          <li>Use precise forensic terminology (e.g., "chain of custody," "write blocker," "unallocated space").</li>
+          <li>Structure answers: state the concept, explain why it matters, give a brief example if helpful.</li>
+          <li>For "explain why" questions, always connect your answer to evidence integrity or legal admissibility.</li>
+          <li>Partial credit is typically awarded — write something for every question.</li>
+        </ul>
+      </div>
+
+      <div class="tip-card" role="listitem">
+        <span class="tip-card__icon" aria-hidden="true">🗂️</span>
+        <h4>Using Lab Reports as Study Material</h4>
+        <ul>
+          <li>Review your Lab 1–8 reports before the exam — the procedures you documented are the procedures being tested.</li>
+          <li>Pay attention to any instructor feedback on your reports — corrected errors are likely exam topics.</li>
+          <li>Re-read your chain of custody forms from Lab 2 — the fields and their purposes are testable.</li>
+          <li>Your Lab 6 imaging workflow directly maps to acquisition questions on the exam.</li>
+        </ul>
+      </div>
+
+      <div class="tip-card" role="listitem">
+        <span class="tip-card__icon" aria-hidden="true">⏱️</span>
+        <h4>Time Management During the Exam</h4>
+        <ul>
+          <li>Skim all questions first to gauge difficulty distribution.</li>
+          <li>Answer multiple-choice questions you are confident about first.</li>
+          <li>Flag uncertain questions and return to them — do not get stuck.</li>
+          <li>Allocate more time to scenario-based questions; they require careful reading.</li>
+          <li>Leave 5–10 minutes at the end to review flagged questions.</li>
+        </ul>
+      </div>
+
+      <div class="tip-card" role="listitem">
+        <span class="tip-card__icon" aria-hidden="true">🔗</span>
+        <h4>Connecting Concepts Across Weeks</h4>
+        <ul>
+          <li>Chain of custody (W2) + hash verification (W6) = evidence integrity — these topics appear together on the exam.</li>
+          <li>Order of volatility (W2) + dead vs. live acquisition (W6, W9) = acquisition decision framework.</li>
+          <li>File deletion (W5) + unallocated space recovery (W5) + file carving (W5) = one connected workflow.</li>
+          <li>Registry artifacts (W7) + Event Logs (W8) = Windows activity reconstruction — expect combined scenarios.</li>
+          <li>Linux directories (W9) + authentication logs (W9) = Linux intrusion analysis — connects to W2 investigation process.</li>
+        </ul>
+      </div>
+
+      <div class="tip-card" role="listitem">
+        <span class="tip-card__icon" aria-hidden="true">⚠️</span>
+        <h4>Common Exam Mistakes to Avoid</h4>
+        <ul>
+          <li>Confusing <code>ctime</code> on Linux (metadata <em>change</em> time) with file <em>creation</em> time.</li>
+          <li>Stating that the Fourth Amendment applies to private investigators — it does not.</li>
+          <li>Recommending read-write mounting of forensic images — always read-only.</li>
+          <li>Forgetting that Prefetch is often disabled on Windows Server — it is a workstation artifact.</li>
+          <li>Mixing up which hive stores what: SAM = local accounts; NTUSER.DAT = per-user activity.</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="callout callout--exam mt-md">
+      <p class="callout__label">📍 Accessing the Exam</p>
+      <p>When you are ready to take the Midterm Exam, navigate to the <strong>Week 9 module in Canvas</strong> and open the <strong>Midterm Exam</strong> assessment. The exam is not accessible from this review page. Ensure you have a stable internet connection and sufficient uninterrupted time before starting.</p>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 6 — CUMULATIVE KNOWLEDGE CHECK
+  ════════════════════════════════════════════════════════════ -->
+  <section class="section" id="knowledge-check" aria-labelledby="kc-heading">
+    <div class="kc-section" role="region" aria-label="Cumulative ungraded knowledge check">
+      <div class="kc-header">
+        <div class="kc-header__icon" aria-hidden="true">✅</div>
+        <div>
+          <h2 id="kc-heading">Cumulative Knowledge Check</h2>
+          <p style="font-size:.85rem; color:var(--clr-text-muted); margin:0;">Ungraded · Immediate feedback · 5 questions spanning Weeks 1–8</p>
+        </div>
+      </div>
+
+      <div class="callout callout--info" style="margin-bottom:1.4rem;">
+        <p class="callout__label">📋 Instructions</p>
+        <p>These five questions span multiple weeks and are representative of the scenario-based and conceptual questions you will encounter on the Midterm Exam. Select the best answer for each, then click <strong>Check Answer</strong> for immediate explanatory feedback. Not graded — does not submit to Canvas.</p>
+      </div>
+
+      <!-- KC Q1 — spans W2 + W6 -->
+      <div class="kc-question" id="kc1-block">
+        <p class="kc-question__stem" id="kc1-stem">
+          <span class="kc-question__num" aria-hidden="true">1</span>
+          <em>(Weeks 2 &amp; 6)</em> An incident responder is called to a scene where a server is actively being used for a ransomware attack. The server is still running and the attacker may be connected via an active remote session. Applying the order of volatility, which sequence of evidence collection is most appropriate?
+        </p>
+        <ul class="kc-options" role="radiogroup" aria-labelledby="kc1-stem">
+          <li><label><input type="radio" name="kc1" value="a"><span>Disk image → RAM capture → Network connection documentation → Running process list</span></label></li>
+          <li><label><input type="radio" name="kc1" value="b"><span>RAM capture → Active network connections → Running processes → Disk image</span></label></li>
+          <li><label><input type="radio" name="kc1" value="c"><span>Immediately power off the system, then create a disk image using FTK Imager.</span></label></li>
+          <li><label><input type="radio" name="kc1" value="d"><span>Document the screen, then power off and image the disk — volatile data is not relevant to ransomware cases.</span></label></li>
+        </ul>
+        <button class="kc-btn" onclick="checkKC(1,'b',this)" aria-label="Check answer for knowledge check question 1">Check Answer</button>
+        <div class="kc-feedback" id="kc1-fb" role="alert" aria-live="polite"></div>
+      </div>
+
+      <!-- KC Q2 — spans W3 + W2 -->
+      <div class="kc-question" id="kc2-block">
+        <p class="kc-question__stem" id="kc2-stem">
+          <span class="kc-question__num" aria-hidden="true">2</span>
+          <em>(Weeks 2 &amp; 3)</em> A forensic examiner discovers evidence that clearly exonerates the suspect currently under investigation. The examiner's supervisor — under pressure to close the case — tells the examiner to omit this finding from the report. What should the examiner do, and why?
+        </p>
+        <ul class="kc-options" role="radiogroup" aria-labelledby="kc2-stem">
+          <li><label><input type="radio" name="kc2" value="a"><span>Omit the finding as instructed — the supervisor has authority over the report's content.</span></label></li>
+          <li><label><input type="radio" name="kc2" value="b"><span>Include the exculpatory evidence in the report — forensic examiners have an ethical and professional obligation to report all findings objectively, regardless of which party they favor.</span></label></li>
+          <li><label><input type="radio" name="kc2" value="c"><span>Include the finding only if the defense attorney specifically requests it.</span></label></li>
+          <li><label><input type="radio" name="kc2" value="d"><span>Document the finding privately but exclude it from the official report to avoid conflict.</span></label></li>
+        </ul>
+        <button class="kc-btn" onclick="checkKC(2,'b',this)" aria-label="Check answer for knowledge check question 2">Check Answer</button>
+        <div class="kc-feedback" id="kc2-fb" role="alert" aria-live="polite"></div>
+      </div>
+
+      <!-- KC Q3 — spans W5 + W6 -->
+      <div class="kc-question" id="kc3-block">
+        <p class="kc-question__stem" id="kc3-stem">
+          <span class="kc-question__num" aria-hidden="true">3</span>
+          <em>(Weeks 5 &amp; 6)</em> An examiner creates a forensic image of a USB drive suspected of containing contraband images. The suspect claims the files were deleted months ago. Which combination of techniques gives the examiner the best chance of recovering those files?
+        </p>
+        <ul class="kc-options" role="radiogroup" aria-labelledby="kc3-stem">
+          <li><label><input type="radio" name="kc3" value="a"><span>Examine only the active file system — deleted files are unrecoverable once removed from the Recycle Bin.</span></label></li>
+          <li><label><input type="radio" name="kc3" value="b"><span>Analyze unallocated space for file remnants using metadata recovery, and apply file carving using image header/footer signatures if metadata is overwritten.</span></label></li>
+          <li><label><input type="radio" name="kc3" value="c"><span>Use a logical copy of the drive — it captures all deleted files automatically.</span></label></li>
+          <li><label><input type="radio" name="kc3" value="d"><span>Run a keyword search on the active file system only — file carving is only useful for text files.</span></label></li>
+        </ul>
+        <button class="kc-btn" onclick="checkKC(3,'b',this)" aria-label="Check answer for knowledge check question 3">Check Answer</button>
+        <div class="kc-feedback" id="kc3-fb" role="alert" aria-live="polite"></div>
+      </div>
+
+      <!-- KC Q4 — spans W7 + W8 -->
+      <div class="kc-question" id="kc4-block">
+        <p class="kc-question__stem" id="kc4-stem">
+          <span class="kc-question__num" aria-hidden="true">4</span>
+          <em>(Weeks 7 &amp; 8)</em> During a Windows investigation, an examiner needs to determine: (a) whether a specific program was ever executed on the system, and (b) whether a specific file was recently opened by the user. Which pair of artifact sources best answers both questions?
+        </p>
+        <ul class="kc-options" role="radiogroup" aria-labelledby="kc4-stem">
+          <li><label><input type="radio" name="kc4" value="a"><span>(a) Windows Event Log Security events; (b) the SAM hive</span></label></li>
+          <li><label><input type="radio" name="kc4" value="b"><span>(a) Prefetch files for execution evidence; (b) RecentDocs in NTUSER.DAT or LNK files for recently opened files</span></label></li>
+          <li><label><input type="radio" name="kc4" value="c"><span>(a) The $UsnJrnl change journal; (b) Volume Shadow Copies</span></label></li>
+          <li><label><input type="radio" name="kc4" value="d"><span>(a) The SYSTEM Registry hive; (b) Shellbags in NTUSER.DAT</span></label></li>
+        </ul>
+        <button class="kc-btn" onclick="checkKC(4,'b',this)" aria-label="Check answer for knowledge check question 4">Check Answer</button>
+        <div class="kc-feedback" id="kc4-fb" role="alert" aria-live="polite"></div>
+      </div>
+
+      <!-- KC Q5 — spans W6 + W9 -->
+      <div class="kc-question" id="kc5-block">
+        <p class="kc-question__stem" id="kc5-stem">
+          <span class="kc-question__num" aria-hidden="true">5</span>
+          <em>(Weeks 6 &amp; 9)</em> A forensic examiner receives a Linux disk image file and is about to begin examination. Before opening any files, the examiner mounts the image with the command: <code>mount -o rw /path/to/image.img /mnt/evidence</code>. What critical error has the examiner made, and what is the likely consequence?
+        </p>
+        <ul class="kc-options" role="radiogroup" aria-labelledby="kc5-stem">
+          <li><label><input type="radio" name="kc5" value="a"><span>The examiner used the wrong mount point directory — <code>/mnt/evidence</code> must be created first.</span></label></li>
+          <li><label><input type="radio" name="kc5" value="b"><span>The examiner mounted the image read-write (<code>rw</code>) instead of read-only (<code>ro</code>). Any file access or system operation could modify the evidence image, altering timestamps, writing temporary files, and potentially invalidating the hash verification — compromising chain of custody.</span></label></li>
+          <li><label><input type="radio" name="kc5" value="c"><span>The examiner forgot to specify the filesystem type with <code>-t ext4</code> — the image will not mount correctly.</span></label></li>
+          <li><label><input type="radio" name="kc5" value="d"><span>No error was made — read-write mounting is standard practice for forensic examination on Linux.</span></label></li>
+        </ul>
+        <button class="kc-btn" onclick="checkKC(5,'b',this)" aria-label="Check answer for knowledge check question 5">Check Answer</button>
+        <div class="kc-feedback" id="kc5-fb" role="alert" aria-live="polite"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CLOSING NOTE -->
+  <section class="section" aria-labelledby="closing-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">🏁</div>
+      <h2 id="closing-heading">You're Ready — Final Reminders</h2>
+    </div>
+    <div class="callout callout--success">
+      <p class="callout__label">✅ Before You Start the Exam</p>
+      <ul>
+        <li>Complete this entire review module — all eight week sections and the cumulative knowledge check.</li>
+        <li>Review your lab reports from Labs 1–8, especially any instructor feedback.</li>
+        <li>Use the CSLO checklist above to identify any remaining gaps and review those topics.</li>
+        <li>Ensure you have a stable internet connection and sufficient uninterrupted time.</li>
+        <li>Access the <strong>Midterm Exam</strong> in Canvas under the Week 9 module when you are ready to begin.</li>
+      </ul>
+    </div>
+    <div class="callout callout--info">
+      <p class="callout__label">📌 What Comes Next</p>
+      <p>After the Midterm Exam, the course shifts into the second half — beginning with <strong>Week 10: Memory (RAM) Forensics</strong>. The investigation process, evidence handling, and file system knowledge you have built in Weeks 1–8 will continue to underpin everything that follows.</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="page-footer" role="contentinfo">
+  <p><strong>CSC 156 – Digital Forensics Fundamentals</strong> &nbsp;|&nbsp; Week 9, Module 9.5 – Midterm Review &nbsp;|&nbsp; Spring 2026</p>
+  <p style="margin-top:.3rem;">This page is for instructional use only. All self-check and knowledge-check questions are ungraded. Access the Midterm Exam in Canvas.</p>
+</footer>
+
+<script>
+/* ── ACCORDION ─────────────────────────────────────────────── */
+(function () {
+  document.querySelectorAll('.accordion__trigger').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var expanded = this.getAttribute('aria-expanded') === 'true';
+      var panel = document.getElementById(this.getAttribute('aria-controls'));
+      if (!panel) return;
+      this.setAttribute('aria-expanded', String(!expanded));
+      panel.classList.toggle('is-open', !expanded);
+    });
+    btn.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.click(); }
+    });
+  });
+})();
+
+/* ── CSLO CHECKLIST PROGRESS ───────────────────────────────── */
+var csloTotals = { 1: 7, 2: 9, 3: 6 };
+function updateCSLOProgress(csloNum) {
+  var total = csloTotals[csloNum];
+  var checked = document.querySelectorAll('.cslo-cb[data-cslo="' + csloNum + '"]:checked').length;
+  var pct = Math.round((checked / total) * 100);
+  document.getElementById('cslo' + csloNum + '-bar').style.width = pct + '%';
+  document.getElementById('cslo' + csloNum + '-label').textContent = checked + ' of ' + total + ' items checked';
+  /* style strikethrough on checked labels */
+  document.querySelectorAll('.cslo-cb[data-cslo="' + csloNum + '"]').forEach(function (cb) {
+    var lbl = cb.closest('label');
+    if (lbl) lbl.classList.toggle('checked-item', cb.checked);
+  });
+}
+
+/* ── SELF-CHECK (per-week accordion questions) ─────────────── */
+var scData = {
+  w1: {
+    correct: 'b',
+    b: { verdict: '✅ Correct!', text: 'The defining characteristic of digital forensics — distinguishing it from general IT work — is the legal defensibility requirement. Every action must be documented, evidence must be preserved without alteration, and chain of custody must be maintained so that findings can withstand scrutiny in legal or administrative proceedings. IT troubleshooting prioritizes restoring functionality; forensics prioritizes preserving evidence integrity.' },
+    a: { verdict: '❌ Incorrect.', text: 'Tool sophistication is not the primary distinction. A forensic examiner might use the same tools as an IT administrator (e.g., disk utilities, log viewers) — the critical difference is the <em>methodology</em>: legal defensibility, chain of custody, and objective documentation of findings.' },
+    c: { verdict: '❌ Incorrect.', text: 'Digital forensics is performed by corporate security teams, private investigators, attorneys, and consultants — not only law enforcement. The legal standards and admissibility requirements apply regardless of who conducts the investigation.' },
+    d: { verdict: '❌ Incorrect.', text: 'Digital forensics encompasses much more than deleted file recovery — it includes log analysis, network forensics, memory analysis, malware analysis, and report writing. Deleted file recovery is one technique within a much broader discipline.' }
+  },
+  w2: {
+    correct: 'b',
+    b: { verdict: '✅ Correct!', text: 'RAM is the most volatile evidence — it exists only while the system is running and is completely lost on power-off. Following the order of volatility, RAM must be captured first. Tools like LiME (Linux), WinPmem (Windows), or DumpIt are used for live memory acquisition. After RAM, document active network connections and running processes, then proceed to disk imaging.' },
+    a: { verdict: '❌ Incorrect.', text: 'Disk imaging should occur <em>after</em> volatile evidence is captured. A disk image preserves non-volatile data that will survive a shutdown — so it is lower priority than RAM. Starting with disk imaging would allow the most volatile evidence (RAM contents, active connections, running processes) to be lost if the system is powered down during or after imaging.' },
+    c: { verdict: '❌ Incorrect.', text: 'Log files stored on disk (<code>/var/log/</code>) are non-volatile — they survive a shutdown and can be collected after RAM and network state are preserved. They are important evidence, but they are not at risk of being lost if the system remains powered on during initial collection.' },
+    d: { verdict: '❌ Partially correct, but insufficient.', text: 'Photographing the physical scene is good documentation practice and should be done — but it does not capture digital evidence. The question asks about evidence collection sequence. Photographing the screen captures a moment-in-time snapshot but does not preserve RAM contents, active connections, or running process details. Follow the order of volatility: RAM first.' }
+  },
+  w3: {
+    correct: 'b',
+    b: { verdict: '✅ Correct!', text: 'The Fourth Amendment protects individuals against unreasonable <em>government</em> searches and seizures. A corporate security investigator is a private party — not a government actor — and is therefore not bound by Fourth Amendment requirements. However, other legal constraints still apply: the investigator must have proper authorization to access the device (e.g., employment policy, consent), and privacy laws (ECPA, state laws) may impose separate restrictions.' },
+    a: { verdict: '❌ Incorrect.', text: 'The Fourth Amendment does not apply here because the investigator is not a government actor. Fourth Amendment protections constrain law enforcement and other government agents — not private individuals or corporate security personnel. Note: if a private investigator is acting as an agent of law enforcement (at their direction), Fourth Amendment implications may arise.' },
+    c: { verdict: '❌ Incorrect — this overstates the legal protection.', text: 'Company ownership of the device provides the legal basis for the search under corporate policy, but it does not make the search "always legal." Other laws may apply — for example, if the employee had a reasonable expectation of privacy based on how the company communicated its monitoring policies, or if the search violates ECPA. The key point for this question is the Fourth Amendment analysis: it does not apply to private parties.' },
+    d: { verdict: '❌ Incorrect.', text: 'The Fourth Amendment does <em>not</em> apply to all searches regardless of who conducts them. It specifically constrains government actors (law enforcement, government agencies). Private parties conducting searches are not subject to Fourth Amendment requirements, though other legal frameworks (contract law, privacy statutes, labor law) may apply.' }
+  },
+  w4: {
+    correct: 'b',
+    b: { verdict: '✅ Correct!', text: 'SSDs present unique forensic challenges because of three interrelated mechanisms: <strong>TRIM</strong> (operating system command that tells the SSD to zero out blocks marked as deleted — can happen immediately or asynchronously), <strong>wear leveling</strong> (distributes writes across cells, making data location unpredictable), and <strong>garbage collection</strong> (internal SSD process that consolidates and erases blocks independent of OS commands). Together, these can permanently destroy deleted data before or during forensic acquisition — especially if the SSD is powered on after deletion.' },
+    a: { verdict: '❌ Incorrect.', text: 'SSDs do not encrypt all data by default. While some SSDs support hardware-based encryption (self-encrypting drives, or SEDs), this is not a universal feature. The primary forensic challenge with SSDs is data destruction through TRIM and garbage collection, not encryption.' },
+    c: { verdict: '❌ Incorrect.', text: 'SSDs can be imaged using standard forensic formats (raw/DD, E01) with the same tools used for HDDs (FTK Imager, <code>dd</code>, Guymager). The challenge is not format compatibility — it is the potential for data destruction through TRIM and garbage collection before or during imaging.' },
+    d: { verdict: '❌ Incorrect.', text: 'SSDs store data electrically in NAND flash memory cells — not magnetically. HDDs use magnetic platters. The magnetic storage of HDDs is actually what makes deleted data recovery easier: when a file is deleted, the magnetic signature of the data often remains in the sectors until physically overwritten. SSDs actively erase deleted data blocks through TRIM and garbage collection.' }
+  },
+  w5: {
+    correct: 'b',
+    b: { verdict: '✅ Correct!', text: 'When the MFT is corrupted, metadata-based recovery (which relies on MFT entries to locate deleted files) is not reliable. <strong>File carving</strong> bypasses the file system entirely — it scans the raw binary data of unallocated space searching for known file header signatures (e.g., JPEG files begin with <code>FF D8 FF</code>) and footer signatures (e.g., JPEG ends with <code>FF D9</code>). This technique can recover files even when all metadata is destroyed, as long as the data blocks have not been overwritten.' },
+    a: { verdict: '❌ Incorrect.', text: 'The MFT is corrupted — Autopsy\'s MFT parsing would fail or produce unreliable results. You cannot rely on corrupted metadata to locate deleted files. File carving is the appropriate fallback when metadata-based recovery is not possible.' },
+    c: { verdict: '❌ Incorrect.', text: 'The Windows Recycle Bin only contains files that were "deleted" through the Windows Explorer interface and not yet permanently removed. It does not recover files from damaged or corrupted volumes, and it certainly does not work on forensic images being examined on a separate workstation.' },
+    d: { verdict: '❌ Partially correct approach, wrong sequence.', text: 'Attempting to reconstruct the MFT from the <code>$LogFile</code> journal is a valid advanced technique — but it is not the most straightforward or reliable first approach when the MFT is corrupted. File carving is more direct and does not depend on journal integrity. In practice, an examiner would likely attempt file carving first, then consider journal-based reconstruction as a supplementary technique.' }
+  },
+  w6: {
+    correct: 'b',
+    b: { verdict: '✅ Correct!', text: 'A hash mismatch means the image file and the original evidence no longer have the same cryptographic fingerprint — the image has been altered or corrupted since it was created. This has serious consequences: (1) the image\'s integrity cannot be confirmed, (2) chain of custody is broken, (3) the evidence may be inadmissible in legal proceedings, and (4) any analysis performed on the altered image may not accurately reflect the original evidence. The examiner must investigate why the hash changed and, if possible, re-image from the original source.' },
+    a: { verdict: '❌ Incorrect.', text: 'Hash mismatches are never "normal and expected" in forensic imaging. The entire purpose of hash verification is to confirm that the image is an exact, unaltered copy of the source. A mismatch always indicates a problem — either the image was corrupted during creation, it has been modified since acquisition, or there was an error in the hashing process itself.' },
+    c: { verdict: '❌ Incorrect.', text: 'SHA-256 is a highly reliable cryptographic hash algorithm — it is actually the <em>preferred</em> algorithm for forensic verification because it is more collision-resistant than MD5. A mismatch in SHA-256 is a definitive indicator that the two files are different. SHA-256 is not the problem here.' },
+    d: { verdict: '❌ Incorrect.', text: 'The original drive cannot change after acquisition (assuming it was properly write-blocked and stored securely). If the drive\'s hash was correctly recorded at acquisition time and the image now has a different hash, the image has changed — not the drive. This is precisely why we hash both the source and the image at acquisition: to detect any subsequent alteration of the image.' }
+  },
+  w7: {
+    correct: 'b',
+    b: { verdict: '✅ Correct!', text: '<strong>UserAssist</strong> keys in NTUSER.DAT track applications launched via Windows Explorer (double-clicking executables, shortcuts, etc.). Each entry records the application path (ROT-13 encoded), a run count, and the last execution timestamp. This makes UserAssist one of the most direct sources of program execution evidence on Windows. Note: UserAssist does not capture programs run from the command line — for that, you would also check Prefetch files and Event ID 4688 (if process auditing is enabled).' },
+    a: { verdict: '❌ Incorrect.', text: 'The SAM hive stores local user account information and password hashes — it does not record program execution events. SAM is used for user account analysis, not execution history.' },
+    c: { verdict: '❌ Incorrect.', text: 'Shellbags record <em>folder navigation history</em> — directories the user browsed using Windows Explorer. They do not record program execution. Shellbags are valuable for proving a user accessed specific folders, but they are not the right artifact for execution evidence.' },
+    d: { verdict: '❌ Incorrect.', text: 'The SYSTEM hive stores hardware configuration, services, and system-level settings. It does not log executed processes with command-line arguments. Process creation logging (Event ID 4688) in the Security Event Log provides command-line arguments — but only if the audit policy is configured to capture them.' }
+  },
+  w8: {
+    correct: 'b',
+    b: { verdict: '✅ Correct!', text: 'This is a classic indicator of <strong>timestomping</strong> — an anti-forensic technique used by attackers to make malicious files appear older than they actually are. In NTFS, <code>$STANDARD_INFORMATION</code> (SI) timestamps can be modified using standard Windows API calls (e.g., <code>SetFileTime()</code> or tools like Timestomp). However, <code>$FILE_NAME</code> (FN) timestamps are updated by the NTFS kernel driver and are much harder to modify without specialized tools. When SI timestamps predate FN timestamps significantly, it strongly suggests the SI timestamps were manually altered.' },
+    a: { verdict: '❌ Incorrect.', text: 'NTFS does not have a "known bug" that causes random timestamp inconsistencies of this nature. While minor timestamp discrepancies can occur in legitimate scenarios (e.g., file copy operations), a two-year discrepancy between $SI and $FN timestamps is not a normal system behavior and is a strong indicator of intentional manipulation.' },
+    c: { verdict: '❌ Incorrect.', text: 'Copying a file from another system does create certain timestamp patterns — for example, the $SI "Created" timestamp resets to the copy time on the destination, while $FN timestamps also update. However, a copy operation would not produce a scenario where $SI shows a date two years <em>older</em> than $FN. Timestomping specifically involves setting $SI timestamps to an artificially early date to disguise when the file was actually placed on the system.' },
+    d: { verdict: '❌ Incorrect.', text: 'While $FILE_NAME timestamps can have their own nuances (e.g., they are not updated on every file access), they are not "unreliable" — they are actually <em>more trustworthy</em> than $STANDARD_INFORMATION timestamps in cases of suspected tampering, because they are harder to modify. Discrepancies between $SI and $FN are a well-documented forensic indicator of timestomping and should not be ignored.' }
+  }
+};
+
+function checkSC(weekKey, correctVal, btn) {
+  var sel = document.querySelector('input[name="sc-' + weekKey + '"]:checked');
+  var fb  = document.getElementById('sc-' + weekKey + '-fb');
+  if (!sel) {
+    fb.className = 'sc-feedback sc-feedback--incorrect show';
+    fb.innerHTML = '<p class="sc-feedback__verdict">⚠️ Please select an answer first.</p>';
+    return;
+  }
+  var val = sel.value;
+  var data = scData[weekKey][val];
+  var correct = (val === correctVal);
+  fb.className = 'sc-feedback ' + (correct ? 'sc-feedback--correct' : 'sc-feedback--incorrect') + ' show';
+  fb.innerHTML = '<p class="sc-feedback__verdict">' + data.verdict + '</p><p>' + data.text + '</p>';
+  document.querySelectorAll('input[name="sc-' + weekKey + '"]').forEach(function(r){ r.disabled = true; });
+  btn.textContent = correct ? '✅ Answered' : '🔄 Answered';
+  btn.disabled = true;
+  btn.style.background = correct ? 'var(--clr-success)' : '#8b1a1a';
+  fb.setAttribute('tabindex', '-1');
+  fb.focus();
+}
+
+/* ── CUMULATIVE KNOWLEDGE CHECK ────────────────────────────── */
+var kcData = {
+  1: {
+    correct: 'b',
+    b: { verdict: '✅ Correct!', text: 'Following the <strong>order of volatility</strong>, you must collect the most transient evidence first: (1) RAM — contains encryption keys, active attacker session data, running malware in memory, and network socket information; (2) active network connections — document current connections before they change; (3) running processes — capture the process list before any processes terminate; (4) disk image — the least volatile of these, as disk data survives a shutdown. Powering off immediately (options C or D) would destroy RAM contents and potentially lose critical evidence about the active attacker session.' },
+    a: { verdict: '❌ Incorrect — wrong order.', text: 'This sequence starts with disk imaging — the <em>least</em> volatile evidence in this scenario. By the time you finish disk imaging, the attacker\'s active session data, encryption keys in RAM, and network connection details may be lost or changed. The order of volatility principle requires capturing the most transient evidence first: RAM → network connections → processes → disk.' },
+    c: { verdict: '❌ Incorrect.', text: 'Immediately powering off destroys all volatile evidence: RAM contents (which may contain the attacker\'s session keys, injected malware code, and active connection details), running processes, and network state. While a disk image is valuable, you would lose the volatile evidence that could identify the attacker\'s tools, techniques, and active session. In a live attack scenario, live acquisition of volatile data is the priority.' },
+    d: { verdict: '❌ Incorrect.', text: 'Volatile data is <em>highly</em> relevant to ransomware cases. RAM may contain: the ransomware\'s encryption keys (potentially allowing decryption of victim files), the attacker\'s command-and-control (C2) server address, injected code that does not exist on disk (fileless malware), and active network session details. Dismissing volatile data as irrelevant to ransomware investigations is a serious forensic error.' }
+  },
+  2: {
+    correct: 'b',
+    b: { verdict: '✅ Correct!', text: 'Forensic examiners have a fundamental ethical and professional obligation to <strong>report all findings objectively and completely</strong> — including exculpatory evidence. This principle is central to the code of ethics of every major forensic organization (IACIS, SWGDE, ASCLD). Omitting exculpatory evidence could result in a wrongful conviction, constitutes professional misconduct, may violate legal disclosure requirements (Brady material in criminal cases), and exposes the examiner to personal legal liability. The examiner\'s duty is to the truth and the evidence — not to any party\'s preferred outcome.' },
+    a: { verdict: '❌ Incorrect — and ethically impermissible.', text: 'Supervisory authority does not override a forensic examiner\'s ethical obligations. A forensic examiner is not an advocate for the prosecution or the employer — they are an objective finder of fact. Following an instruction to omit exculpatory evidence constitutes professional misconduct and potentially obstruction of justice. The examiner should escalate this to higher management, legal counsel, or appropriate oversight bodies if necessary.' },
+    c: { verdict: '❌ Incorrect.', text: 'Exculpatory evidence must be reported in the forensic report regardless of whether the defense requests it. In criminal proceedings, exculpatory evidence is subject to Brady disclosure requirements — the prosecution must disclose it to the defense. But even outside of formal legal proceedings, the examiner\'s ethical obligation to objectivity requires reporting all relevant findings, not just those that support one side.' },
+    d: { verdict: '❌ Incorrect.', text: 'Private documentation without inclusion in the official report does not fulfill the examiner\'s ethical obligations. If the examiner knows about exculpatory evidence and does not report it, they are participating in the suppression of that evidence — even if it is documented privately. The official report must be complete and accurate.' }
+  },
+  3: {
+    correct: 'b',
+    b: { verdict: '✅ Correct!', text: 'This is the correct two-stage approach to deleted file recovery: (1) <strong>Metadata-based recovery</strong> — examine the file system\'s directory entries and allocation tables (FAT, MFT) for entries marked as deleted but not yet overwritten. These entries still contain file names, timestamps, and cluster locations. (2) <strong>File carving</strong> — when metadata is overwritten or unavailable, scan unallocated space for file type signatures (magic bytes). JPEG files, for example, always begin with <code>FF D8 FF</code> — a carving tool can find these patterns even without any metadata. Both techniques require a <em>forensic image</em> (not a logical copy) that captures unallocated space.' },
+    a: { verdict: '❌ Incorrect.', text: 'This statement is factually wrong. Deleted files are often recoverable from unallocated space even after being "permanently deleted" from the Recycle Bin, as long as the sectors have not been overwritten. The entire field of deleted file recovery is built on this principle. The suspect\'s claim that files were deleted months ago does not mean they are unrecoverable — it means overwriting is more likely, but not certain.' },
+    c: { verdict: '❌ Incorrect.', text: 'A logical copy only captures active (allocated) files — it does not include unallocated space where deleted file remnants reside. A <strong>forensic image</strong> (bit-for-bit copy of the entire medium) is required to examine unallocated space and attempt deleted file recovery. This is a fundamental reason why forensic imaging is required instead of logical copying.' },
+    d: { verdict: '❌ Incorrect.', text: 'File carving is not limited to text files — it is used extensively for image files (JPEG, PNG, GIF), video files, documents (PDF, DOCX), and virtually any file type with identifiable header/footer signatures. Image file recovery (JPEG carving) is actually one of the most common uses of file carving in digital forensics. Keyword searching on the active file system would not find deleted files at all.' }
+  },
+  4: {
+    correct: 'b',
+    b: { verdict: '✅ Correct!', text: '<strong>Prefetch files</strong> (<code>C:\\Windows\\Prefetch\\</code>) are the primary Windows artifact for program execution evidence — each file records the executable name, run count, last 8 run timestamps, and files/directories accessed during execution. They provide strong evidence that a program was run even if the executable itself has been deleted. <strong>RecentDocs</strong> (in NTUSER.DAT) and <strong>LNK files</strong> (<code>Recent</code> folder) are the primary artifacts for recently opened files — LNK files are particularly valuable because they persist even after the target file is deleted and contain the target path, timestamps, and volume information.' },
+    a: { verdict: '❌ Incorrect.', text: 'Security Event Logs can show process creation (Event ID 4688) — but only if the audit policy was configured to capture process creation events, which is not enabled by default. The SAM hive stores user account data, not recently opened files. This combination is not the most reliable or direct answer.' },
+    c: { verdict: '❌ Incorrect.', text: 'The $UsnJrnl change journal records file system changes (create, delete, rename) but does not directly prove a program was <em>executed</em> — only that its file existed and was modified. Volume Shadow Copies can provide historical file versions but are not specifically designed to answer "was this file recently opened by the user." The option B combination is more directly targeted to the two specific questions asked.' },
+    d: { verdict: '❌ Incorrect.', text: 'The SYSTEM hive stores hardware configuration and service information — it does not directly record program execution. Shellbags record <em>folder navigation</em> history, not recently opened files. While shellbags can show that a user browsed to a folder containing a file, they do not specifically record which individual files were opened.' }
+  },
+  5: {
+    correct: 'b',
+    b: { verdict: '✅ Correct!', text: 'Mounting with <code>rw</code> (read-write) instead of <code>ro</code> (read-only) is a <strong>critical forensic error</strong>. With read-write access, the operating system may write to the image during normal operation — updating access timestamps (<code>atime</code>), writing journal entries, creating temporary files, or updating directory metadata. These writes modify the evidence image, causing its SHA-256 hash to no longer match the acquisition hash. This breaks hash verification, compromises chain of custody, and may render the evidence inadmissible. The correct command should include <code>-o ro,noexec,nosuid,noatime</code>.' },
+    a: { verdict: '❌ Incorrect.', text: 'While the mount point directory must exist before mounting (created with <code>mkdir -p /mnt/evidence</code>), the question states the examiner is "about to begin examination" — implying the mount point exists. The critical error in the command shown is <code>rw</code> (read-write), not the mount point path.' },
+    c: { verdict: '❌ Incorrect.', text: 'Omitting <code>-t ext4</code> is not ideal — specifying the filesystem type explicitly is good practice. However, Linux can often auto-detect the filesystem type. The <em>critical</em> error is the <code>rw</code> flag, which allows writes to the evidence image. A missing <code>-t</code> flag might cause a mount failure but would not corrupt the evidence; <code>rw</code> actively risks modifying it.' },
+    d: { verdict: '❌ Incorrect.', text: 'Read-write mounting is <em>never</em> standard forensic practice for evidence examination. This is one of the most fundamental rules in digital forensics: evidence must always be examined in a read-only manner to preserve its integrity. Any examiner who mounts evidence read-write without documented justification (e.g., working on a verified copy) is violating basic forensic principles and risks evidence contamination.' }
+  }
+};
+
+function checkKC(qNum, correctVal, btn) {
+  var sel = document.querySelector('input[name="kc' + qNum + '"]:checked');
+  var fb  = document.getElementById('kc' + qNum + '-fb');
+  if (!sel) {
+    fb.className = 'kc-feedback kc-feedback--incorrect show';
+    fb.innerHTML = '<p class="kc-feedback__verdict">⚠️ Please select an answer first.</p>';
+    return;
+  }
+  var val = sel.value;
+  var data = kcData[qNum][val];
+  var correct = (val === correctVal);
+  fb.className = 'kc-feedback ' + (correct ? 'kc-feedback--correct' : 'kc-feedback--incorrect') + ' show';
+  fb.innerHTML = '<p class="kc-feedback__verdict">' + data.verdict + '</p><p>' + data.text + '</p>';
+  document.querySelectorAll('input[name="kc' + qNum + '"]').forEach(function(r){ r.disabled = true; });
+  btn.textContent = correct ? '✅ Answered' : '🔄 Answered';
+  btn.disabled = true;
+  btn.style.background = correct ? 'var(--clr-success)' : '#8b1a1a';
+  fb.setAttribute('tabindex', '-1');
+  fb.focus();
+}
+</script>
+</body>
+</html>
