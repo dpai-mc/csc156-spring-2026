@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CSC 156 – Week 9 Overview | Linux Forensics &amp; Midterm Exam Week</title>
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #1a1a2e;
+    background: #f4f6fb;
+  }
+  a { color: #1a5fa8; }
+  a:focus-visible {
+    outline: 3px solid #f5a623;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* ── Skip Link ── */
+  .skip-link {
+    position: absolute;
+    top: -100%;
+    left: 1rem;
+    background: #1a5fa8;
+    color: #fff;
+    padding: .4rem .9rem;
+    border-radius: 0 0 6px 6px;
+    font-weight: 700;
+    z-index: 9999;
+    text-decoration: none;
+  }
+  .skip-link:focus { top: 0; }
+
+  /* ── Top Nav ── */
+  nav#topnav {
+    background: #1a2a4a;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 6px rgba(0,0,0,.35);
+  }
+  nav#topnav .nav-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .25rem;
+    padding: .55rem 1rem;
+  }
+  nav#topnav .nav-label {
+    color: #a8c4e8;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-right: .5rem;
+    white-space: nowrap;
+  }
+  nav#topnav a {
+    color: #d6e8ff;
+    text-decoration: none;
+    font-size: .82rem;
+    padding: .28rem .65rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    transition: background .18s;
+  }
+  nav#topnav a:hover { background: #2e4a7a; color: #fff; }
+  nav#topnav a:focus-visible { outline: 3px solid #f5a623; outline-offset: 2px; }
+
+  /* ── Page Shell ── */
+  .page-wrap {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+  }
+
+  /* ── Header Banner ── */
+  header.hero {
+    background: linear-gradient(135deg, #1a2a4a 0%, #1a5fa8 100%);
+    color: #fff;
+    border-radius: 10px;
+    padding: 2.2rem 2rem 1.8rem;
+    margin-bottom: 2rem;
+  }
+  header.hero .week-tag {
+    display: inline-block;
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.3);
+    border-radius: 20px;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: .2rem .75rem;
+    margin-bottom: .75rem;
+  }
+  header.hero h1 {
+    font-size: clamp(1.45rem, 3vw, 2rem);
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: .6rem;
+  }
+  header.hero p.subtitle {
+    font-size: 1rem;
+    color: #c8dcf5;
+    max-width: 680px;
+  }
+  .badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-top: 1.1rem;
+  }
+  .badge {
+    background: rgba(255,255,255,.18);
+    border: 1px solid rgba(255,255,255,.28);
+    border-radius: 20px;
+    font-size: .78rem;
+    font-weight: 600;
+    padding: .22rem .8rem;
+    color: #e8f2ff;
+  }
+  .badge.accent { background: #f5a623; border-color: #f5a623; color: #1a1a2e; }
+
+  /* ── Section Titles ── */
+  .section-title {
+    font-size: 1.22rem;
+    font-weight: 800;
+    color: #1a2a4a;
+    border-left: 5px solid #1a5fa8;
+    padding-left: .75rem;
+    margin-bottom: 1rem;
+  }
+  .section-title .icon { margin-right: .4rem; }
+
+  /* ── Cards ── */
+  .card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 1.5rem 1.6rem;
+    margin-bottom: 1.6rem;
+    box-shadow: 0 1px 6px rgba(0,0,0,.08);
+  }
+
+  /* ── Course Arc Collapsible ── */
+  details.arc-details {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.08);
+    margin-bottom: 1.6rem;
+    overflow: hidden;
+  }
+  details.arc-details summary {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: 1.1rem 1.6rem;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #1a2a4a;
+    list-style: none;
+    user-select: none;
+    border-left: 5px solid #1a5fa8;
+  }
+  details.arc-details summary::-webkit-details-marker { display: none; }
+  details.arc-details summary .toggle-icon {
+    margin-left: auto;
+    font-size: .9rem;
+    color: #1a5fa8;
+    transition: transform .25s;
+  }
+  details.arc-details[open] summary .toggle-icon { transform: rotate(180deg); }
+  details.arc-details summary:focus-visible {
+    outline: 3px solid #f5a623;
+    outline-offset: -3px;
+  }
+  .arc-body { padding: 0 1.6rem 1.4rem; }
+
+  /* ── Arc Timeline ── */
+  .arc-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    margin-top: .75rem;
+  }
+  .arc-segment {
+    display: flex;
+    align-items: stretch;
+    gap: .75rem;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #dde3ef;
+  }
+  .arc-segment .seg-bar {
+    width: 8px;
+    flex-shrink: 0;
+  }
+  .arc-segment.past   .seg-bar { background: #6c8ebf; }
+  .arc-segment.now    .seg-bar { background: #f5a623; }
+  .arc-segment.future .seg-bar { background: #3ab87a; }
+  .arc-segment .seg-content { padding: .65rem .9rem; }
+  .arc-segment .seg-label {
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-bottom: .15rem;
+  }
+  .arc-segment.past   .seg-label { color: #4a6fa5; }
+  .arc-segment.now    .seg-label { color: #b87200; }
+  .arc-segment.future .seg-label { color: #1e7a50; }
+  .arc-segment .seg-text { font-size: .88rem; color: #333; }
+
+  /* ── Learning Goals ── */
+  .goals-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: .55rem;
+    margin-top: .25rem;
+  }
+  .goals-list li {
+    display: flex;
+    gap: .7rem;
+    align-items: flex-start;
+    font-size: .93rem;
+  }
+  .goals-list li .goal-num {
+    flex-shrink: 0;
+    width: 1.7rem;
+    height: 1.7rem;
+    background: #1a5fa8;
+    color: #fff;
+    border-radius: 50%;
+    font-size: .75rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: .1rem;
+  }
+
+  /* ── Activity Checklist ── */
+  .checklist {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: .55rem;
+    margin-top: .25rem;
+  }
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    background: #f8fafd;
+    border: 1px solid #dde3ef;
+    border-radius: 6px;
+    padding: .7rem 1rem;
+  }
+  .checklist li .chk-box {
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid #1a5fa8;
+    border-radius: 4px;
+    margin-top: .18rem;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .18s, border-color .18s;
+  }
+  .checklist li.checked .chk-box {
+    background: #1a5fa8;
+    border-color: #1a5fa8;
+  }
+  .checklist li.checked .chk-box::after {
+    content: "";
+    display: block;
+    width: .45rem;
+    height: .25rem;
+    border-left: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    transform: rotate(-45deg) translateY(-1px);
+  }
+  .checklist li.checked .chk-text { opacity: .55; text-decoration: line-through; }
+  .chk-text { flex: 1; font-size: .9rem; }
+  .chk-text strong { display: block; font-size: .95rem; color: #1a2a4a; }
+  .chk-text span { font-size: .83rem; color: #555; }
+  .chk-badge {
+    flex-shrink: 0;
+    font-size: .72rem;
+    font-weight: 700;
+    padding: .15rem .55rem;
+    border-radius: 12px;
+    align-self: flex-start;
+    margin-top: .15rem;
+    white-space: nowrap;
+  }
+  .chk-badge.module  { background: #e3edf8; color: #1a5fa8; }
+  .chk-badge.lab     { background: #e6f4ec; color: #1e7a50; }
+  .chk-badge.discuss { background: #fdf3e3; color: #9a5700; }
+  .chk-badge.exam    { background: #fde8e8; color: #a00; font-size: .75rem; }
+  .chk-badge.quiz    { background: #f0e8fd; color: #5a1a8a; }
+
+  /* ── Key Concepts Grid ── */
+  .concepts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: .75rem;
+    margin-top: .5rem;
+  }
+  .concept-card {
+    background: #f0f5ff;
+    border: 1px solid #c5d5ee;
+    border-radius: 7px;
+    padding: .8rem 1rem;
+  }
+  .concept-card .cc-icon { font-size: 1.3rem; margin-bottom: .3rem; }
+  .concept-card .cc-title { font-size: .88rem; font-weight: 700; color: #1a2a4a; margin-bottom: .2rem; }
+  .concept-card .cc-desc  { font-size: .8rem; color: #444; line-height: 1.5; }
+
+  /* ── Looking Ahead ── */
+  .ahead-box {
+    background: linear-gradient(135deg, #e8f5ee 0%, #d4edda 100%);
+    border: 1px solid #a8d5b5;
+    border-left: 5px solid #3ab87a;
+    border-radius: 8px;
+    padding: 1.3rem 1.5rem;
+    margin-bottom: 1.6rem;
+  }
+  .ahead-box .ahead-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #1a4a2e;
+    margin-bottom: .5rem;
+  }
+  .ahead-box p { font-size: .9rem; color: #1e3d28; line-height: 1.65; }
+
+  /* ── Midterm Alert ── */
+  .midterm-alert {
+    background: #fff8e8;
+    border: 1px solid #f5c96a;
+    border-left: 5px solid #f5a623;
+    border-radius: 8px;
+    padding: 1.1rem 1.4rem;
+    margin-bottom: 1.6rem;
+    display: flex;
+    gap: .8rem;
+    align-items: flex-start;
+  }
+  .midterm-alert .alert-icon { font-size: 1.5rem; flex-shrink: 0; margin-top: .05rem; }
+  .midterm-alert .alert-body { flex: 1; }
+  .midterm-alert .alert-title { font-weight: 800; color: #7a4a00; margin-bottom: .3rem; font-size: .97rem; }
+  .midterm-alert p { font-size: .88rem; color: #5a3800; line-height: 1.6; }
+
+  /* ── Checklist Reset Note ── */
+  .checklist-note {
+    font-size: .78rem;
+    color: #666;
+    margin-top: .5rem;
+    font-style: italic;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    header.hero { padding: 1.5rem 1.2rem; }
+    .card { padding: 1.1rem 1.1rem; }
+    nav#topnav .nav-label { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Skip Navigation -->
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<!-- Top Navigation -->
+<nav id="topnav" aria-label="Page sections">
+  <div class="nav-inner">
+    <span class="nav-label">Week 9</span>
+    <a href="#welcome">Welcome</a>
+    <a href="#course-arc">Course Arc</a>
+    <a href="#learning-goals">Goals</a>
+    <a href="#activities">Activities</a>
+    <a href="#key-concepts">Concepts</a>
+    <a href="#looking-ahead">Looking Ahead</a>
+  </div>
+</nav>
+
+<div class="page-wrap" id="main-content">
+
+  <!-- ── Hero Header ── -->
+  <header class="hero" id="welcome" aria-labelledby="page-title">
+    <div class="week-tag">CSC 156 &nbsp;·&nbsp; Week 9</div>
+    <h1 id="page-title">Linux Forensics &amp; Midterm Exam Week</h1>
+    <p class="subtitle">
+      This week closes the host-based forensics arc with a deep dive into Linux
+      system investigation, artifact analysis, and log examination — then you
+      demonstrate everything you have learned in the Midterm Exam.
+    </p>
+    <div class="badge-row" aria-label="Week highlights">
+      <span class="badge">Host-Based Forensics Capstone</span>
+      <span class="badge accent">⚑ Midterm Exam — 120 pts</span>
+      <span class="badge">Linux File Systems &amp; Logs</span>
+      <span class="badge">5 Modules · 1 Lab · 1 Discussion · 1 Quiz</span>
+    </div>
+  </header>
+
+  <!-- ── Midterm Alert ── -->
+  <div class="midterm-alert" role="note" aria-label="Midterm exam notice">
+    <div class="alert-icon" aria-hidden="true">📋</div>
+    <div class="alert-body">
+      <div class="alert-title">Midterm Exam — 120 Points</div>
+      <p>
+        The Midterm Exam covers all material from Weeks 1–8 and is worth
+        120 points toward your final grade. It is accessed through Canvas.
+        Check Canvas for the exact availability window and time limit.
+        Complete the new Week 9 learning modules before sitting for the exam
+        so your overall understanding is as strong as possible.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── Course Arc ── -->
+  <section id="course-arc" aria-labelledby="arc-heading">
+    <details class="arc-details">
+      <summary id="arc-heading">
+        <span aria-hidden="true">🗺️</span>
+        Where Week 9 Fits in the Course Arc
+        <span class="toggle-icon" aria-hidden="true">▼</span>
+      </summary>
+      <div class="arc-body">
+        <p style="font-size:.9rem;color:#444;margin-bottom:.75rem;">
+          CSC 156 is organized in three major arcs. Week 9 marks the end of the
+          first arc and the gateway to the second. Expand each segment below to
+          see how the course builds.
+        </p>
+        <div class="arc-timeline" role="list" aria-label="Course arc timeline">
+
+          <div class="arc-segment past" role="listitem">
+            <div class="seg-bar" aria-hidden="true"></div>
+            <div class="seg-content">
+              <div class="seg-label">Completed — Weeks 1–8</div>
+              <div class="seg-text">
+                <strong>Host-Based Forensics Foundation</strong><br>
+                Forensic methodology, legal and ethical frameworks, Windows
+                artifacts, registry analysis, browser and email forensics,
+                mobile device evidence, and file system internals (NTFS, FAT,
+                ext4). These weeks established the investigative mindset and
+                hands-on toolchain you carry forward.
+              </div>
+            </div>
+          </div>
+
+          <div class="arc-segment now" role="listitem">
+            <div class="seg-bar" aria-hidden="true"></div>
+            <div class="seg-content">
+              <div class="seg-label">Current — Week 9 ★</div>
+              <div class="seg-text">
+                <strong>Linux Forensics &amp; Midterm Exam</strong><br>
+                Linux file system structures, user and group artifacts, shell
+                history, system logs (syslog, auth.log, journald), scheduled
+                tasks, and live vs. post-mortem acquisition strategies. You
+                also sit the Midterm Exam, which validates your mastery of
+                Weeks 1–8.
+              </div>
+            </div>
+          </div>
+
+          <div class="arc-segment future" role="listitem">
+            <div class="seg-bar" aria-hidden="true"></div>
+            <div class="seg-content">
+              <div class="seg-label">Upcoming — Weeks 10–13</div>
+              <div class="seg-text">
+                <strong>Memory &amp; Network Forensics</strong><br>
+                Volatile memory acquisition and analysis (Volatility framework),
+                process and network artifact extraction from RAM, packet capture
+                analysis, network log correlation, and intrusion evidence
+                reconstruction.
+              </div>
+            </div>
+          </div>
+
+          <div class="arc-segment future" role="listitem">
+            <div class="seg-bar" aria-hidden="true"></div>
+            <div class="seg-content">
+              <div class="seg-label">Upcoming — Weeks 14–17</div>
+              <div class="seg-text">
+                <strong>Specialized Domains &amp; Capstone</strong><br>
+                Cloud and container forensics, anti-forensics and obfuscation
+                techniques, report writing and expert testimony, and the final
+                capstone investigation project.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ── Learning Goals ── -->
+  <section id="learning-goals" aria-labelledby="goals-heading">
+    <div class="card">
+      <h2 class="section-title" id="goals-heading">
+        <span class="icon" aria-hidden="true">🎯</span>Learning Goals for Week 9
+      </h2>
+      <p style="font-size:.9rem;color:#444;margin-bottom:.9rem;">
+        By the end of this week you should be able to:
+      </p>
+      <ol class="goals-list" aria-label="Weekly learning goals">
+        <li>
+          <span class="goal-num" aria-hidden="true">1</span>
+          <span>Explain the structure and forensic significance of Linux file systems,
+          including directory hierarchies, inode metadata, and the
+          <code>/proc</code> and <code>/sys</code> virtual file systems.</span>
+        </li>
+        <li>
+          <span class="goal-num" aria-hidden="true">2</span>
+          <span>Identify and extract user and group account artifacts from
+          <code>/etc/passwd</code>, <code>/etc/shadow</code>, and
+          <code>/etc/group</code> to establish account timelines and privilege
+          assignments.</span>
+        </li>
+        <li>
+          <span class="goal-num" aria-hidden="true">3</span>
+          <span>Recover and interpret shell history files, recently accessed files,
+          and user-level configuration artifacts to reconstruct user activity.</span>
+        </li>
+        <li>
+          <span class="goal-num" aria-hidden="true">4</span>
+          <span>Analyze Linux system logs — including syslog, auth.log, and the
+          systemd journal — to correlate events, identify authentication
+          anomalies, and build an incident timeline.</span>
+        </li>
+        <li>
+          <span class="goal-num" aria-hidden="true">5</span>
+          <span>Examine scheduled task artifacts (cron jobs, systemd timers, at jobs)
+          for evidence of persistence mechanisms and unauthorized automation.</span>
+        </li>
+        <li>
+          <span class="goal-num" aria-hidden="true">6</span>
+          <span>Compare Linux and Windows forensic methodologies, articulating key
+          differences in artifact locations, tool sets, and investigative
+          strategies.</span>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ── Required Activities ── -->
+  <section id="activities" aria-labelledby="activities-heading">
+    <div class="card">
+      <h2 class="section-title" id="activities-heading">
+        <span class="icon" aria-hidden="true">✅</span>Required Activities This Week
+      </h2>
+      <p style="font-size:.9rem;color:#444;margin-bottom:.9rem;">
+        Click any item to mark it complete. Your progress is saved in this
+        browser session only.
+      </p>
+
+      <ul class="checklist" id="activity-checklist" aria-label="Weekly activity checklist">
+
+        <li id="item-91" tabindex="0" role="checkbox" aria-checked="false"
+            aria-label="Module 9.1 — Linux File System Structure and Forensic Significance">
+          <div class="chk-box" aria-hidden="true"></div>
+          <div class="chk-text">
+            <strong>Module 9.1 — Linux File System Structure and Forensic Significance</strong>
+            <span>Covers the Linux directory hierarchy, inode metadata, file
+            permissions, and the forensic value of the <code>/proc</code> and
+            <code>/sys</code> virtual file systems.</span>
+          </div>
+          <span class="chk-badge module">Module</span>
+        </li>
+
+        <li id="item-92" tabindex="0" role="checkbox" aria-checked="false"
+            aria-label="Module 9.2 — User Accounts, Groups, and Authentication Artifacts">
+          <div class="chk-box" aria-hidden="true"></div>
+          <div class="chk-text">
+            <strong>Module 9.2 — User Accounts, Groups, and Authentication Artifacts</strong>
+            <span>Examines <code>/etc/passwd</code>, <code>/etc/shadow</code>,
+            <code>/etc/group</code>, and login record files
+            (<code>wtmp</code>, <code>lastlog</code>, <code>btmp</code>) as
+            forensic evidence sources.</span>
+          </div>
+          <span class="chk-badge module">Module</span>
+        </li>
+
+        <li id="item-93" tabindex="0" role="checkbox" aria-checked="false"
+            aria-label="Module 9.3 — Shell History and User Activity Artifacts">
+          <div class="chk-box" aria-hidden="true"></div>
+          <div class="chk-text">
+            <strong>Module 9.3 — Shell History and User Activity Artifacts</strong>
+            <span>Explores Bash and other shell history files, recently used
+            file lists, thumbnail caches, and home-directory configuration
+            files as indicators of user behavior.</span>
+          </div>
+          <span class="chk-badge module">Module</span>
+        </li>
+
+        <li id="item-94" tabindex="0" role="checkbox" aria-checked="false"
+            aria-label="Module 9.4 — Linux System Logs and the systemd Journal">
+          <div class="chk-box" aria-hidden="true"></div>
+          <div class="chk-text">
+            <strong>Module 9.4 — Linux System Logs and the systemd Journal</strong>
+            <span>Introduces syslog, auth.log, kern.log, and the binary
+            systemd journal. Covers <code>journalctl</code> queries and
+            log-based timeline construction for incident analysis.</span>
+          </div>
+          <span class="chk-badge module">Module</span>
+        </li>
+
+        <li id="item-95" tabindex="0" role="checkbox" aria-checked="false"
+            aria-label="Module 9.5 — Scheduled Tasks, Persistence Mechanisms, and Acquisition Strategies">
+          <div class="chk-box" aria-hidden="true"></div>
+          <div class="chk-text">
+            <strong>Module 9.5 — Scheduled Tasks, Persistence Mechanisms, and Acquisition Strategies</strong>
+            <span>Analyzes cron jobs, systemd timers, and at-job artifacts as
+            persistence indicators. Compares live-system triage against
+            post-mortem disk image acquisition for Linux targets.</span>
+          </div>
+          <span class="chk-badge module">Module</span>
+        </li>
+
+        <li id="item-lab" tabindex="0" role="checkbox" aria-checked="false"
+            aria-label="Lab Activity 9 — Linux System Investigation and Log Analysis">
+          <div class="chk-box" aria-hidden="true"></div>
+          <div class="chk-text">
+            <strong>Lab Activity 9 — Linux System Investigation and Log Analysis</strong>
+            <span>Hands-on investigation of a Linux disk image. You will
+            extract user artifacts, parse log files, identify suspicious
+            scheduled tasks, and produce a structured findings report.</span>
+          </div>
+          <span class="chk-badge lab">Lab</span>
+        </li>
+
+        <li id="item-disc" tabindex="0" role="checkbox" aria-checked="false"
+            aria-label="Discussion Post 9 — Linux vs. Windows Forensic Approaches">
+          <div class="chk-box" aria-hidden="true"></div>
+          <div class="chk-text">
+            <strong>Discussion Post 9 — Linux vs. Windows Forensic Approaches</strong>
+            <span>Reflect on the key methodological and artifact-level
+            differences between Linux and Windows investigations. Respond
+            substantively to at least two classmates.</span>
+          </div>
+          <span class="chk-badge discuss">Discussion</span>
+        </li>
+
+        <li id="item-exam" tabindex="0" role="checkbox" aria-checked="false"
+            aria-label="Midterm Exam — Weeks 1–8 Coverage">
+          <div class="chk-box" aria-hidden="true"></div>
+          <div class="chk-text">
+            <strong>Midterm Exam — Weeks 1–8 Coverage (120 Points)</strong>
+            <span>Comprehensive exam covering forensic methodology, legal
+            frameworks, Windows artifacts, file systems, mobile forensics,
+            and all host-based topics through Week 8. Accessed through
+            Canvas. Review the exam guidelines in Canvas before you begin.</span>
+          </div>
+          <span class="chk-badge exam">Exam · 120 pts</span>
+        </li>
+
+        <li id="item-quiz" tabindex="0" role="checkbox" aria-checked="false"
+            aria-label="Quiz 9 — Linux Forensics">
+          <div class="chk-box" aria-hidden="true"></div>
+          <div class="chk-text">
+            <strong>Quiz 9 — Linux Forensics</strong>
+            <span>Short knowledge-check quiz on Week 9 module content.
+            Covers Linux file system structures, log analysis, user artifacts,
+            and persistence mechanisms.</span>
+          </div>
+          <span class="chk-badge quiz">Quiz</span>
+        </li>
+
+      </ul>
+      <p class="checklist-note" aria-live="polite" id="checklist-status">
+        Tip: Check off items as you complete them. Progress resets if you
+        clear your browser data.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Key Concepts ── -->
+  <section id="key-concepts" aria-labelledby="concepts-heading">
+    <div class="card">
+      <h2 class="section-title" id="concepts-heading">
+        <span class="icon" aria-hidden="true">🔍</span>Key Concepts and Themes
+      </h2>
+      <p style="font-size:.9rem;color:#444;margin-bottom:.85rem;">
+        Keep these ideas at the forefront as you work through the modules and lab:
+      </p>
+      <div class="concepts-grid" role="list" aria-label="Key concepts for Week 9">
+
+        <div class="concept-card" role="listitem">
+          <div class="cc-icon" aria-hidden="true">🗂️</div>
+          <div class="cc-title">Inode Metadata</div>
+          <div class="cc-desc">Inodes store access, modification, and change
+          timestamps (atime, mtime, ctime) that are central to timeline
+          reconstruction on Linux systems.</div>
+        </div>
+
+        <div class="concept-card" role="listitem">
+          <div class="cc-icon" aria-hidden="true">👤</div>
+          <div class="cc-title">User Account Artifacts</div>
+          <div class="cc-desc">The passwd, shadow, and group files — combined
+          with login records — reveal account creation, privilege escalation,
+          and unauthorized access patterns.</div>
+        </div>
+
+        <div class="concept-card" role="listitem">
+          <div class="cc-icon" aria-hidden="true">💻</div>
+          <div class="cc-title">Shell History as Evidence</div>
+          <div class="cc-desc">Shell history files provide a near-chronological
+          record of commands executed by a user, including potential attacker
+          commands if history was not cleared.</div>
+        </div>
+
+        <div class="concept-card" role="listitem">
+          <div class="cc-icon" aria-hidden="true">📄</div>
+          <div class="cc-title">Log Correlation</div>
+          <div class="cc-desc">Combining syslog, auth.log, and the systemd
+          journal entries across time allows investigators to reconstruct
+          event sequences and identify anomalies.</div>
+        </div>
+
+        <div class="concept-card" role="listitem">
+          <div class="cc-icon" aria-hidden="true">⏰</div>
+          <div class="cc-title">Persistence via Scheduling</div>
+          <div class="cc-desc">Cron jobs and systemd timers are common attacker
+          persistence mechanisms. Knowing where to look — and what normal
+          looks like — is critical for detection.</div>
+        </div>
+
+        <div class="concept-card" role="listitem">
+          <div class="cc-icon" aria-hidden="true">⚖️</div>
+          <div class="cc-title">Live vs. Post-Mortem</div>
+          <div class="cc-desc">Choosing between live triage (volatile data
+          capture on a running system) and post-mortem imaging (offline disk
+          analysis) affects what evidence is available and how it is collected.</div>
+        </div>
+
+        <div class="concept-card" role="listitem">
+          <div class="cc-icon" aria-hidden="true">🪟</div>
+          <div class="cc-title">Linux vs. Windows Differences</div>
+          <div class="cc-desc">Artifact locations, log formats, file system
+          structures, and tool sets differ substantially between platforms.
+          A skilled investigator adapts methodology to the operating system.</div>
+        </div>
+
+        <div class="concept-card" role="listitem">
+          <div class="cc-icon" aria-hidden="true">🔗</div>
+          <div class="cc-title">Chain of Custody</div>
+          <div class="cc-desc">All Linux acquisition actions — just like
+          Windows — must be documented with hash verification to maintain
+          evidence integrity and legal admissibility.</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Looking Ahead ── -->
+  <section id="looking-ahead" aria-labelledby="ahead-heading">
+    <div class="ahead-box">
+      <div class="ahead-title" id="ahead-heading">
+        <span aria-hidden="true">🚀</span> Looking Ahead — Week 10: Memory Forensics
+      </div>
+      <p>
+        With the host-based arc complete, Week 10 shifts the investigation
+        from persistent disk artifacts to <strong>volatile memory</strong>.
+        You will be introduced to the principles of RAM acquisition and
+        analysis, and you will begin working with the
+        <strong>Volatility framework</strong> — the industry-standard tool
+        for memory forensics. The Linux knowledge you built this week pays
+        off immediately: Volatility profiles are OS-specific, and understanding
+        Linux process structures, user-space memory layout, and kernel objects
+        will help you interpret memory dumps from Linux targets. Come to
+        Week 10 with a solid grasp of Linux processes and the
+        <code>/proc</code> file system — it is the conceptual bridge between
+        disk forensics and memory forensics.
+      </p>
+    </div>
+  </section>
+
+</div><!-- /.page-wrap -->
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "csc156-w9-checklist";
+
+  // Load saved state
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+
+  // Save state
+  function saveState(state) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch (e) { /* storage unavailable — silent fail */ }
+  }
+
+  // Toggle a checklist item
+  function toggleItem(li, state) {
+    var id = li.id;
+    var checked = li.classList.toggle("checked");
+    li.setAttribute("aria-checked", checked ? "true" : "false");
+    state[id] = checked;
+    saveState(state);
+    updateStatus(state);
+  }
+
+  // Update the status note
+  function updateStatus(state) {
+    var total = document.querySelectorAll("#activity-checklist li").length;
+    var done  = Object.values(state).filter(Boolean).length;
+    var el    = document.getElementById("checklist-status");
+    if (el) {
+      if (done === 0) {
+        el.textContent = "Tip: Check off items as you complete them. Progress resets if you clear your browser data.";
+      } else if (done === total) {
+        el.textContent = "✓ All " + total + " activities marked complete. Great work this week!";
+      } else {
+        el.textContent = done + " of " + total + " activities marked complete.";
+      }
+    }
+  }
+
+  // Initialise
+  var state = loadState();
+  var items = document.querySelectorAll("#activity-checklist li");
+
+  items.forEach(function (li) {
+    // Restore saved state
+    if (state[li.id]) {
+      li.classList.add("checked");
+      li.setAttribute("aria-checked", "true");
+    }
+
+    // Click handler
+    li.addEventListener("click", function () { toggleItem(li, state); });
+
+    // Keyboard handler (Space / Enter)
+    li.addEventListener("keydown", function (e) {
+      if (e.key === " " || e.key === "Enter") {
+        e.preventDefault();
+        toggleItem(li, state);
+      }
+    });
+  });
+
+  updateStatus(state);
+})();
+</script>
+
+</body>
+</html>

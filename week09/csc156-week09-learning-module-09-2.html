@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 9.2 – Linux File System Forensics | CSC 156</title>
+<style>
+  /* ── DESIGN TOKENS ─────────────────────────────────────────── */
+  :root {
+    --clr-primary:       #1a3a5c;
+    --clr-primary-light: #2563a8;
+    --clr-accent:        #e07b2a;
+    --clr-accent-light:  #fdf0e0;
+    --clr-success:       #1a6b3c;
+    --clr-success-bg:    #eaf5ee;
+    --clr-error:         #8b1a1a;
+    --clr-error-bg:      #fdeaea;
+    --clr-info:          #1a4a6b;
+    --clr-info-bg:       #e6f0f8;
+    --clr-warn:          #7a4f00;
+    --clr-warn-bg:       #fff8e6;
+    --clr-surface:       #f7f9fc;
+    --clr-border:        #ccd6e0;
+    --clr-text:          #1a1a2e;
+    --clr-text-muted:    #4a5568;
+    --clr-white:         #ffffff;
+    --clr-code-bg:       #1e2a38;
+    --clr-code-text:     #a8d8a8;
+    --radius-sm:  4px;
+    --radius-md:  8px;
+    --radius-lg:  12px;
+    --shadow-sm:  0 1px 3px rgba(0,0,0,.12);
+    --shadow-md:  0 4px 12px rgba(0,0,0,.14);
+    --font-sans:  system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono:  "Fira Code", "Cascadia Code", Consolas, "Courier New", monospace;
+    --max-w:      860px;
+    --nav-h:      3.25rem;
+  }
+
+  /* ── RESET / BASE ───────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--clr-text);
+    background: var(--clr-surface);
+  }
+  h1,h2,h3,h4 { line-height: 1.3; color: var(--clr-primary); }
+  h2 { font-size: 1.55rem; margin-bottom: .5rem; }
+  h3 { font-size: 1.2rem;  margin-bottom: .4rem; }
+  h4 { font-size: 1rem;    margin-bottom: .3rem; }
+  p  { margin-bottom: .9rem; }
+  ul, ol { padding-left: 1.4rem; margin-bottom: .9rem; }
+  li { margin-bottom: .3rem; }
+  strong { color: var(--clr-primary); }
+  code {
+    font-family: var(--font-mono);
+    font-size: .88em;
+    background: #e8eef4;
+    padding: .1em .35em;
+    border-radius: var(--radius-sm);
+    color: #1a3a5c;
+  }
+  a { color: var(--clr-primary-light); }
+  a:focus-visible {
+    outline: 3px solid var(--clr-accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* ── SKIP LINK ──────────────────────────────────────────────── */
+  .skip-link {
+    position: absolute;
+    top: -60px; left: 0;
+    background: var(--clr-accent);
+    color: var(--clr-white);
+    padding: .5rem 1rem;
+    font-weight: 700;
+    z-index: 9999;
+    border-radius: 0 0 var(--radius-md) 0;
+    transition: top .2s;
+  }
+  .skip-link:focus { top: 0; }
+
+  /* ── TOP NAV ────────────────────────────────────────────────── */
+  .top-nav {
+    background: var(--clr-primary);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-md);
+  }
+  .top-nav__inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .25rem;
+  }
+  .top-nav__brand {
+    color: var(--clr-accent);
+    font-weight: 700;
+    font-size: .9rem;
+    padding: .6rem .5rem .6rem 0;
+    margin-right: .5rem;
+    white-space: nowrap;
+    border-right: 1px solid rgba(255,255,255,.2);
+  }
+  .top-nav__links {
+    display: flex;
+    flex-wrap: wrap;
+    list-style: none;
+    padding: 0; margin: 0;
+    gap: .1rem;
+  }
+  .top-nav__links a {
+    display: block;
+    color: rgba(255,255,255,.88);
+    text-decoration: none;
+    font-size: .82rem;
+    font-weight: 700;
+    padding: .55rem .7rem;
+    border-radius: var(--radius-sm);
+    transition: background .15s, color .15s;
+    white-space: nowrap;
+    min-width: 1.8rem;
+    text-align: center;
+  }
+  .top-nav__links a:hover { background: rgba(255,255,255,.12); color: var(--clr-white); }
+  .top-nav__links a:focus-visible { outline: 3px solid var(--clr-accent); outline-offset: 2px; }
+
+  /* ── PAGE HEADER ────────────────────────────────────────────── */
+  .page-header {
+    background: linear-gradient(135deg, var(--clr-primary) 0%, #0f2540 100%);
+    color: var(--clr-white);
+    padding: 2.8rem 1.5rem 2.2rem;
+  }
+  .page-header__inner { max-width: var(--max-w); margin: 0 auto; }
+  .page-header__eyebrow {
+    font-size: .8rem; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: var(--clr-accent); margin-bottom: .5rem;
+  }
+  .page-header h1 { color: var(--clr-white); font-size: 1.9rem; margin-bottom: .6rem; }
+  .page-header__sub { font-size: 1rem; color: rgba(255,255,255,.78); max-width: 640px; margin-bottom: 1.2rem; }
+  .badge-row { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .badge {
+    display: inline-flex; align-items: center; gap: .3rem;
+    font-size: .75rem; font-weight: 600;
+    padding: .25rem .7rem; border-radius: 999px;
+    background: rgba(255,255,255,.12); color: rgba(255,255,255,.9);
+    border: 1px solid rgba(255,255,255,.2);
+  }
+  .badge--accent { background: var(--clr-accent); color: var(--clr-white); border-color: transparent; }
+
+  /* ── MAIN ───────────────────────────────────────────────────── */
+  .main { max-width: var(--max-w); margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+
+  /* ── SECTION ────────────────────────────────────────────────── */
+  .section { margin-bottom: 2.8rem; scroll-margin-top: var(--nav-h); }
+  .section-header {
+    display: flex; align-items: center; gap: .65rem;
+    margin-bottom: 1rem; padding-bottom: .5rem;
+    border-bottom: 3px solid var(--clr-primary-light);
+  }
+  .section-icon {
+    width: 2rem; height: 2rem;
+    background: var(--clr-primary); border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--clr-white); font-size: 1rem; flex-shrink: 0;
+  }
+
+  /* ── CALLOUTS ───────────────────────────────────────────────── */
+  .callout {
+    border-left: 4px solid;
+    padding: .9rem 1.1rem;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    margin-bottom: 1rem;
+  }
+  .callout__label {
+    font-size: .72rem; font-weight: 700;
+    letter-spacing: .09em; text-transform: uppercase;
+    margin-bottom: .3rem;
+  }
+  .callout--info  { background: var(--clr-info-bg);    border-color: var(--clr-info); }
+  .callout--info  .callout__label { color: var(--clr-info); }
+  .callout--info  p, .callout--info li { color: var(--clr-text); }
+  .callout--warn  { background: var(--clr-warn-bg);    border-color: #c07000; }
+  .callout--warn  .callout__label { color: var(--clr-warn); }
+  .callout--warn  p, .callout--warn li { color: var(--clr-text); }
+  .callout--success { background: var(--clr-success-bg); border-color: var(--clr-success); }
+  .callout--success .callout__label { color: var(--clr-success); }
+  .callout--success p, .callout--success li { color: var(--clr-text); }
+  .callout--bridge {
+    background: #f0f4ff; border-color: #3a5bbf; border-left-width: 5px;
+  }
+  .callout--bridge .callout__label { color: #3a5bbf; }
+  .callout--bridge p, .callout--bridge li { color: var(--clr-text); }
+  .callout--scenario {
+    background: #f0f4ff; border-color: #3a5bbf; border-left-width: 5px;
+  }
+  .callout--scenario .callout__label { color: #3a5bbf; }
+  .callout--scenario p { color: var(--clr-text); }
+
+  /* ── SCENARIO CARD ──────────────────────────────────────────── */
+  .scenario-card {
+    background: linear-gradient(135deg, #1a2e4a 0%, #0f1e32 100%);
+    border-radius: var(--radius-lg);
+    padding: 1.8rem; color: var(--clr-white);
+    margin-bottom: 1.5rem; box-shadow: var(--shadow-md);
+    position: relative; overflow: hidden;
+  }
+  .scenario-card::before {
+    content: ''; position: absolute;
+    top: -30px; right: -30px;
+    width: 120px; height: 120px;
+    background: rgba(224,123,42,.15); border-radius: 50%;
+  }
+  .scenario-card__label {
+    font-size: .72rem; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: var(--clr-accent); margin-bottom: .6rem;
+  }
+  .scenario-card h3 { color: var(--clr-white); font-size: 1.15rem; margin-bottom: .7rem; }
+  .scenario-card p { color: rgba(255,255,255,.85); margin-bottom: .6rem; }
+  .scenario-card p:last-child { margin-bottom: 0; }
+  .scenario-card strong { color: var(--clr-accent); }
+
+  /* ── TABS ───────────────────────────────────────────────────── */
+  .tabs { margin-bottom: 1.2rem; }
+  .tabs__list {
+    display: flex; flex-wrap: wrap; gap: .3rem;
+    list-style: none; padding: 0; margin: 0 0 0 0;
+    border-bottom: 2px solid var(--clr-border);
+  }
+  .tabs__btn {
+    background: none; border: none;
+    padding: .55rem 1rem;
+    font-family: var(--font-sans); font-size: .88rem; font-weight: 600;
+    color: var(--clr-text-muted); cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    transition: color .15s, border-color .15s, background .15s;
+  }
+  .tabs__btn:hover { background: #eef3f9; color: var(--clr-primary); }
+  .tabs__btn[aria-selected="true"] {
+    color: var(--clr-primary); border-bottom-color: var(--clr-primary-light);
+    background: var(--clr-white);
+  }
+  .tabs__btn:focus-visible { outline: 3px solid var(--clr-accent); outline-offset: 2px; }
+  .tabs__panel { display: none; padding: 1rem 0 0; }
+  .tabs__panel.is-active { display: block; }
+
+  /* ── ACCORDION ──────────────────────────────────────────────── */
+  .accordion { border: 1px solid var(--clr-border); border-radius: var(--radius-md); overflow: hidden; margin-bottom: .6rem; }
+  .accordion__trigger {
+    width: 100%; background: var(--clr-white); border: none;
+    padding: .85rem 1.1rem; text-align: left; cursor: pointer;
+    display: flex; align-items: center; gap: .7rem;
+    font-family: var(--font-sans); font-size: .95rem; font-weight: 600;
+    color: var(--clr-primary); transition: background .15s;
+  }
+  .accordion__trigger:hover { background: #eef3f9; }
+  .accordion__trigger:focus-visible { outline: 3px solid var(--clr-accent); outline-offset: -3px; }
+  .accordion__icon { margin-left: auto; font-size: .8rem; transition: transform .25s; color: var(--clr-text-muted); flex-shrink: 0; }
+  .accordion__trigger[aria-expanded="true"] .accordion__icon { transform: rotate(180deg); }
+  .accordion__trigger[aria-expanded="true"] { background: #eef3f9; border-bottom: 1px solid var(--clr-border); }
+  .accordion__panel { display: none; padding: .9rem 1.1rem; background: var(--clr-white); font-size: .93rem; }
+  .accordion__panel.is-open { display: block; }
+
+  /* ── CODE BLOCK ─────────────────────────────────────────────── */
+  .code-block {
+    background: var(--clr-code-bg); color: var(--clr-code-text);
+    font-family: var(--font-mono); font-size: .83rem;
+    padding: 1rem 1.2rem; border-radius: var(--radius-md);
+    overflow-x: auto; margin: .7rem 0; line-height: 1.6;
+  }
+  .code-block .comment { color: #7a9ab8; font-style: italic; }
+  .code-block .flag    { color: #f9c74f; }
+  .code-block .path    { color: #90e0ef; }
+  .code-block .cmd     { color: #a8d8a8; }
+  .code-block .out     { color: #d4b8ff; }
+
+  /* ── COMPARISON TABLE ───────────────────────────────────────── */
+  .compare-table-wrap { overflow-x: auto; margin-bottom: 1.2rem; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
+  .compare-table {
+    width: 100%; border-collapse: collapse;
+    font-size: .91rem; background: var(--clr-white);
+  }
+  .compare-table thead tr { background: var(--clr-primary); color: var(--clr-white); }
+  .compare-table thead th {
+    padding: .75rem 1rem; text-align: left;
+    font-weight: 600; font-size: .85rem; letter-spacing: .04em;
+  }
+  .compare-table thead th:first-child { border-radius: var(--radius-md) 0 0 0; }
+  .compare-table thead th:last-child  { border-radius: 0 var(--radius-md) 0 0; }
+  .compare-table tbody tr { border-bottom: 1px solid var(--clr-border); }
+  .compare-table tbody tr:nth-child(even) { background: #f4f7fb; }
+  .compare-table tbody tr:hover { background: #eaf0f8; }
+  .compare-table td { padding: .65rem 1rem; vertical-align: top; }
+  .compare-table td:first-child { font-weight: 600; color: var(--clr-text-muted); font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+  .tag {
+    display: inline-block; font-size: .7rem; font-weight: 700;
+    padding: .1em .5em; border-radius: 999px; margin-left: .3rem; vertical-align: middle;
+  }
+  .tag--yes  { background: #d4edda; color: #155724; }
+  .tag--no   { background: #fde8e8; color: #8b1a1a; }
+  .tag--part { background: #fff3e0; color: #7a4f00; }
+  .tag--key  { background: var(--clr-accent-light); color: var(--clr-warn); }
+
+  /* ── DIAGRAM: BLOCK GROUP ───────────────────────────────────── */
+  .fs-diagram {
+    background: var(--clr-white); border: 1px solid var(--clr-border);
+    border-radius: var(--radius-md); padding: 1.2rem;
+    margin: 1rem 0; overflow-x: auto;
+  }
+  .fs-diagram__title {
+    font-size: .78rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--clr-text-muted); margin-bottom: .8rem;
+  }
+  .block-row {
+    display: flex; gap: 3px; min-width: 540px;
+  }
+  .block-cell {
+    flex: 1; min-width: 60px;
+    border: 2px solid; border-radius: var(--radius-sm);
+    padding: .5rem .3rem; text-align: center; font-size: .72rem; font-weight: 600;
+    line-height: 1.3;
+  }
+  .bc--sb  { border-color: #c07000; background: #fff8e6; color: #7a4f00; }
+  .bc--gdt { border-color: #2563a8; background: #e6f0f8; color: #1a3a5c; }
+  .bc--bm  { border-color: #1a6b3c; background: #eaf5ee; color: #1a6b3c; }
+  .bc--im  { border-color: #6b1a6b; background: #f5eaf5; color: #6b1a6b; }
+  .bc--it  { border-color: #c07000; background: #fff3e0; color: #7a4f00; }
+  .bc--db  { border-color: #1a3a5c; background: #e8eef4; color: #1a3a5c; }
+  .block-legend {
+    display: flex; flex-wrap: wrap; gap: .5rem;
+    margin-top: .8rem; font-size: .75rem;
+  }
+  .bl-item { display: flex; align-items: center; gap: .3rem; }
+  .bl-dot {
+    width: .75rem; height: .75rem; border-radius: 2px; flex-shrink: 0;
+  }
+
+  /* ── INODE FIELD TABLE ──────────────────────────────────────── */
+  .inode-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: .5rem; margin: .8rem 0;
+  }
+  @media (max-width: 560px) { .inode-grid { grid-template-columns: 1fr; } }
+  .inode-field {
+    background: var(--clr-white); border: 1px solid var(--clr-border);
+    border-left: 4px solid var(--clr-primary-light);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: .6rem .8rem; font-size: .88rem;
+  }
+  .inode-field__name { font-weight: 700; color: var(--clr-primary); font-size: .82rem; }
+  .inode-field__desc { color: var(--clr-text-muted); font-size: .8rem; margin-top: .15rem; }
+  .inode-field--ts { border-left-color: var(--clr-accent); }
+  .inode-field--ts .inode-field__name { color: #b85c00; }
+
+  /* ── TIMESTAMP CARD ─────────────────────────────────────────── */
+  .ts-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: .8rem; margin: .8rem 0 1rem;
+  }
+  .ts-card {
+    background: var(--clr-white); border: 1px solid var(--clr-border);
+    border-top: 4px solid; border-radius: var(--radius-md);
+    padding: .9rem 1rem; box-shadow: var(--shadow-sm);
+  }
+  .ts-card--atime { border-top-color: #2563a8; }
+  .ts-card--mtime { border-top-color: #1a6b3c; }
+  .ts-card--ctime { border-top-color: #c07000; }
+  .ts-card--crtime{ border-top-color: #6b1a6b; }
+  .ts-card__abbr { font-size: 1.4rem; font-weight: 800; margin-bottom: .2rem; }
+  .ts-card--atime  .ts-card__abbr { color: #2563a8; }
+  .ts-card--mtime  .ts-card__abbr { color: #1a6b3c; }
+  .ts-card--ctime  .ts-card__abbr { color: #c07000; }
+  .ts-card--crtime .ts-card__abbr { color: #6b1a6b; }
+  .ts-card__name  { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--clr-text-muted); margin-bottom: .4rem; }
+  .ts-card__def   { font-size: .85rem; color: var(--clr-text); margin-bottom: .4rem; }
+  .ts-card__use   { font-size: .8rem; color: var(--clr-text-muted); font-style: italic; }
+
+  /* ── WORKFLOW STEPS ─────────────────────────────────────────── */
+  .workflow { margin: .8rem 0 1.2rem; }
+  .workflow__step {
+    display: flex; gap: .8rem; margin-bottom: .7rem; align-items: flex-start;
+  }
+  .workflow__num {
+    width: 2rem; height: 2rem; flex-shrink: 0;
+    background: var(--clr-primary); color: var(--clr-white);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: .82rem; font-weight: 700; margin-top: .1rem;
+  }
+  .workflow__body { flex: 1; }
+  .workflow__title { font-weight: 700; color: var(--clr-primary); font-size: .95rem; }
+  .workflow__desc  { font-size: .88rem; color: var(--clr-text); margin-top: .15rem; }
+
+  /* ── PROGRESS STRIP ─────────────────────────────────────────── */
+  .module-progress {
+    background: var(--clr-white); border: 1px solid var(--clr-border);
+    border-radius: var(--radius-md); padding: .8rem 1.1rem;
+    margin-bottom: 2rem; display: flex; align-items: center;
+    gap: .8rem; flex-wrap: wrap; font-size: .82rem;
+  }
+  .module-progress__label { font-weight: 600; color: var(--clr-text-muted); white-space: nowrap; }
+  .module-dots { display: flex; gap: .4rem; }
+  .module-dot {
+    width: .85rem; height: .85rem; border-radius: 50%;
+    border: 2px solid var(--clr-border); background: var(--clr-surface);
+    position: relative;
+  }
+  .module-dot--done    { background: var(--clr-success); border-color: var(--clr-success); }
+  .module-dot--current { background: var(--clr-primary); border-color: var(--clr-primary); }
+  .module-dot--current::after {
+    content: ''; position: absolute; inset: -4px;
+    border-radius: 50%; border: 2px solid var(--clr-primary-light);
+  }
+  .module-dot__tooltip {
+    position: absolute; bottom: calc(100% + 6px); left: 50%;
+    transform: translateX(-50%);
+    background: var(--clr-primary); color: var(--clr-white);
+    font-size: .7rem; padding: .2em .5em; border-radius: var(--radius-sm);
+    white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .15s;
+  }
+  .module-dot:hover .module-dot__tooltip { opacity: 1; }
+  .module-progress__note { color: var(--clr-text-muted); font-style: italic; }
+
+  /* ── KNOWLEDGE CHECK ────────────────────────────────────────── */
+  .kc-section {
+    background: var(--clr-white); border: 2px solid var(--clr-primary-light);
+    border-radius: var(--radius-lg); padding: 1.6rem; box-shadow: var(--shadow-sm);
+  }
+  .kc-header { display: flex; align-items: center; gap: .6rem; margin-bottom: 1.2rem; }
+  .kc-header__icon {
+    width: 2.2rem; height: 2.2rem; background: var(--clr-primary);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    color: var(--clr-white); font-size: 1rem; flex-shrink: 0;
+  }
+  .kc-header h2 { border-bottom: none; padding-bottom: 0; margin-bottom: 0; font-size: 1.3rem; }
+  .kc-question { margin-bottom: 1.6rem; }
+  .kc-question__stem { font-weight: 600; margin-bottom: .75rem; font-size: .97rem; }
+  .kc-question__num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.6rem; height: 1.6rem;
+    background: var(--clr-primary); color: var(--clr-white);
+    border-radius: 50%; font-size: .75rem; font-weight: 700;
+    margin-right: .5rem; flex-shrink: 0; vertical-align: middle;
+  }
+  .kc-options { list-style: none; padding: 0; }
+  .kc-options li { margin-bottom: .45rem; }
+  .kc-options label {
+    display: flex; align-items: flex-start; gap: .6rem; cursor: pointer;
+    padding: .55rem .8rem; border-radius: var(--radius-md);
+    border: 1px solid var(--clr-border); background: var(--clr-surface);
+    font-size: .93rem; transition: background .15s, border-color .15s;
+  }
+  .kc-options label:hover { background: #eef3f9; border-color: var(--clr-primary-light); }
+  .kc-options input[type="radio"] { margin-top: .2rem; accent-color: var(--clr-primary-light); flex-shrink: 0; }
+  .kc-options input:focus-visible + span { outline: 2px solid var(--clr-accent); border-radius: 2px; }
+  .kc-btn {
+    background: var(--clr-primary); color: var(--clr-white);
+    border: none; padding: .55rem 1.3rem; border-radius: var(--radius-md);
+    font-size: .9rem; font-weight: 600; cursor: pointer;
+    font-family: var(--font-sans); transition: background .15s; margin-top: .4rem;
+  }
+  .kc-btn:hover { background: var(--clr-primary-light); }
+  .kc-btn:focus-visible { outline: 3px solid var(--clr-accent); outline-offset: 3px; }
+  .kc-feedback {
+    display: none; margin-top: .8rem; padding: .8rem 1rem;
+    border-radius: var(--radius-md); font-size: .91rem; line-height: 1.6;
+  }
+  .kc-feedback.show { display: block; }
+  .kc-feedback--correct  { background: var(--clr-success-bg); border-left: 4px solid var(--clr-success); color: var(--clr-text); }
+  .kc-feedback--incorrect{ background: var(--clr-error-bg);   border-left: 4px solid var(--clr-error);   color: var(--clr-text); }
+  .kc-feedback__verdict  { font-weight: 700; margin-bottom: .3rem; }
+  .kc-feedback--correct  .kc-feedback__verdict { color: var(--clr-success); }
+  .kc-feedback--incorrect .kc-feedback__verdict { color: var(--clr-error); }
+
+  /* ── FOOTER ─────────────────────────────────────────────────── */
+  .page-footer {
+    background: var(--clr-primary); color: rgba(255,255,255,.7);
+    text-align: center; padding: 1.2rem; font-size: .8rem; margin-top: 2rem;
+  }
+  .page-footer strong { color: var(--clr-accent); }
+
+  /* ── UTILITY ────────────────────────────────────────────────── */
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+  .mt-sm { margin-top: .5rem; }
+  .mt-md { margin-top: 1rem; }
+  .divider { border: none; border-top: 1px solid var(--clr-border); margin: 1.5rem 0; }
+
+  @media (max-width: 600px) {
+    .page-header h1 { font-size: 1.45rem; }
+    h2 { font-size: 1.3rem; }
+    .compare-table { font-size: .82rem; }
+    .kc-options label { font-size: .88rem; }
+    .block-row { min-width: 420px; }
+  }
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<!-- TOP NAV -->
+<nav class="top-nav" aria-label="Module section navigation">
+  <div class="top-nav__inner">
+    <div class="top-nav__brand">CSC 156 · Mod 9.2</div>
+    <ul class="top-nav__links">
+      <li><a href="#bridge"     title="Week 5 Bridge">1</a></li>
+      <li><a href="#ext-arch"   title="ext2/3/4 Architecture">2</a></li>
+      <li><a href="#xfs"        title="XFS Basics">3</a></li>
+      <li><a href="#timestamps" title="Linux Timestamps Deep Dive">4</a></li>
+      <li><a href="#recovery"   title="Deleted File Recovery">5</a></li>
+      <li><a href="#knowledge-check" title="Knowledge Check">6</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<header class="page-header" role="banner">
+  <div class="page-header__inner">
+    <p class="page-header__eyebrow">Week 9 · Module 9.2 · Day 1 — Second Activity</p>
+    <h1>Linux File System Forensics</h1>
+    <p class="page-header__sub">ext4 Architecture, Inodes, Linux Timestamps, and Deleted File Recovery — the file-system foundation for every artifact you will examine on a Linux image.</p>
+    <div class="badge-row">
+      <span class="badge badge--accent">💾 Day 1 – Second Activity</span>
+      <span class="badge">📖 Concepts &amp; Techniques</span>
+      <span class="badge">✅ Ungraded Knowledge Check</span>
+      <span class="badge">⏱ ~50 min</span>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main id="main-content" class="main">
+
+  <!-- MODULE PROGRESS STRIP -->
+  <div class="module-progress" role="region" aria-label="Week 9 module progress">
+    <span class="module-progress__label">Week 9 Modules:</span>
+    <div class="module-dots" aria-label="5 modules; module 1 complete, currently on module 2">
+      <div class="module-dot module-dot--done" role="img" aria-label="Module 9.1 – complete">
+        <span class="module-dot__tooltip">9.1 – Orientation ✓</span>
+      </div>
+      <div class="module-dot module-dot--current" role="img" aria-label="Module 9.2 – current">
+        <span class="module-dot__tooltip">9.2 – File Systems</span>
+      </div>
+      <div class="module-dot" role="img" aria-label="Module 9.3 – upcoming">
+        <span class="module-dot__tooltip">9.3 – User Artifacts</span>
+      </div>
+      <div class="module-dot" role="img" aria-label="Module 9.4 – upcoming">
+        <span class="module-dot__tooltip">9.4 – Log Analysis</span>
+      </div>
+      <div class="module-dot" role="img" aria-label="Module 9.5 – upcoming">
+        <span class="module-dot__tooltip">9.5 – Triage Lab</span>
+      </div>
+    </div>
+    <span class="module-progress__note">Complete Module 9.1 before starting this module.</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       SECTION 1 — WEEK 5 BRIDGE
+  ════════════════════════════════════════════════════ -->
+  <section class="section" id="bridge" aria-labelledby="bridge-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">🔗</div>
+      <h2 id="bridge-heading">Week 5 Bridge — Building on What You Already Know</h2>
+    </div>
+
+    <div class="callout callout--bridge">
+      <p class="callout__label">🔗 Connection to Module 5.4 — Linux &amp; macOS File Systems</p>
+      <p>In <strong>Module 5.4 (Week 5)</strong> you were introduced to the ext file system family: how ext2 established the inode-based architecture, how ext3 added journaling, and how ext4 extended that with larger volume support, extents, and nanosecond timestamps. You also learned the distinction between <strong>ctime</strong> (inode change time, not creation time) and <strong>crtime</strong> (true creation time, stored only in ext4). That foundational knowledge is the prerequisite for everything in this module.</p>
+      <p>Here, you apply that knowledge in a <strong>Linux investigative context</strong> — examining how an actual forensic examiner uses ext4 structures to locate evidence, interpret timestamps on a compromised server, and recover files that an attacker deleted. If any of the terms below feel unfamiliar, revisit Module 5.4 before continuing.</p>
+      <ul>
+        <li><strong>Inode</strong> — the metadata structure that describes a file (permissions, size, timestamps, block pointers); does <em>not</em> contain the filename</li>
+        <li><strong>Block group</strong> — a subdivision of the ext4 volume containing its own superblock backup, bitmaps, inode table, and data blocks</li>
+        <li><strong>Journaling</strong> — a write-ahead log that records pending changes before committing them, enabling crash recovery and leaving forensic traces</li>
+        <li><strong>Extent</strong> — ext4's efficient method of mapping a file to a contiguous range of blocks (replaces the older indirect-block chain)</li>
+        <li><strong>File carving</strong> — recovering file content from unallocated space using file-header and footer signatures, without relying on metadata</li>
+      </ul>
+    </div>
+
+    <div class="scenario-card" role="region" aria-label="Module scenario connection">
+      <p class="scenario-card__label">📋 Scenario Connection — web-prod-03</p>
+      <h3>The image is mounted. Now what does the file system tell you?</h3>
+      <p>You have verified the SHA-256 hash of <code>web-prod-03.img</code> and mounted it read-only (as covered in Module 9.1). The image contains an <strong>ext4 file system</strong>. Before you can meaningfully interpret any artifact — a log file, a script, a deleted binary — you need to understand how ext4 organizes data, what the timestamps on each file actually mean, and how to recover files the attacker deleted using <code>unlink()</code>.</p>
+      <p>This module gives you those tools. By the end, you will be able to use <strong>The Sleuth Kit</strong> commands (<code>fls</code>, <code>icat</code>, <code>ils</code>) and file carving tools (<strong>Scalpel</strong> / <strong>Foremost</strong>) directly against the image to find and recover evidence.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       SECTION 2 — ext2/3/4 ARCHITECTURE
+  ════════════════════════════════════════════════════ -->
+  <section class="section" id="ext-arch" aria-labelledby="ext-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">🗂️</div>
+      <h2 id="ext-heading">ext2/3/4 File System Architecture</h2>
+    </div>
+
+    <p>The extended file system family is the standard for Linux. Understanding its internal structure is essential because forensic tools like The Sleuth Kit operate directly on these structures — and knowing what each component contains tells you <em>where</em> evidence lives and <em>why</em> it survives deletion.</p>
+
+    <!-- TABS: ext2 / ext3 / ext4 -->
+    <div class="tabs" role="region" aria-label="ext file system versions">
+      <ul class="tabs__list" role="tablist" aria-label="ext file system versions">
+        <li role="presentation">
+          <button class="tabs__btn" role="tab" aria-selected="true"  aria-controls="tab-ext2"  id="tbtn-ext2">ext2</button>
+        </li>
+        <li role="presentation">
+          <button class="tabs__btn" role="tab" aria-selected="false" aria-controls="tab-ext3"  id="tbtn-ext3">ext3</button>
+        </li>
+        <li role="presentation">
+          <button class="tabs__btn" role="tab" aria-selected="false" aria-controls="tab-ext4"  id="tbtn-ext4">ext4 (current)</button>
+        </li>
+      </ul>
+
+      <div class="tabs__panel is-active" id="tab-ext2" role="tabpanel" aria-labelledby="tbtn-ext2">
+        <h3>ext2 — Second Extended File System (1993)</h3>
+        <p>ext2 established the core architecture that ext3 and ext4 still use today. It introduced the inode-based metadata model and block-group layout that remain the foundation of Linux file systems.</p>
+        <ul>
+          <li><strong>No journaling</strong> — changes are written directly to disk; an unclean shutdown can leave the file system in an inconsistent state requiring <code>fsck</code></li>
+          <li><strong>Fixed inode count</strong> — set at format time; running out of inodes (even with free space) prevents new file creation</li>
+          <li><strong>Maximum volume:</strong> 32 TiB; maximum file size: 2 TiB</li>
+          <li><strong>Timestamps:</strong> mtime, atime, ctime stored at 1-second resolution; <em>no creation time (crtime)</em></li>
+          <li><strong>Forensic note:</strong> Still encountered on older embedded Linux systems, legacy servers, and some USB drives; the lack of journaling means fewer metadata traces but also fewer recovery aids</li>
+        </ul>
+        <div class="callout callout--warn" style="margin-bottom:0;">
+          <p class="callout__label">⚠️ No Journal = Fewer Traces</p>
+          <p>On ext2, there is no journal to examine for recently written or partially committed data. Deleted file recovery relies entirely on inode and block bitmap analysis. If bitmaps have been overwritten, recovery becomes significantly harder.</p>
+        </div>
+      </div>
+
+      <div class="tabs__panel" id="tab-ext3" role="tabpanel" aria-labelledby="tbtn-ext3">
+        <h3>ext3 — Third Extended File System (2001)</h3>
+        <p>ext3 added journaling to the ext2 architecture — the single most significant change for both system reliability and forensic analysis. It is backward-compatible with ext2; an ext3 volume can be mounted as ext2 (disabling journaling).</p>
+        <ul>
+          <li><strong>Three journaling modes:</strong>
+            <ul>
+              <li><code>journal</code> — both metadata <em>and</em> data blocks are written to the journal before the main filesystem; maximum protection and maximum forensic value, but slowest</li>
+              <li><code>ordered</code> — only metadata is journaled; data blocks are flushed to disk before the metadata journal entry is committed; the <strong>default mode</strong> on most Linux distributions</li>
+              <li><code>writeback</code> — only metadata is journaled; data blocks may be written at any time relative to metadata; fastest, least safe</li>
+            </ul>
+          </li>
+          <li><strong>Journal location:</strong> stored as a hidden file (inode 8) at <code>.journal</code> in the root of the volume; accessible with <code>debugfs</code></li>
+          <li><strong>Timestamps:</strong> same as ext2 — 1-second resolution; no crtime</li>
+          <li><strong>Forensic note:</strong> The journal is a circular buffer. In <code>journal</code> mode, recently deleted or overwritten data may still exist in the journal for a short time after deletion — a valuable recovery source</li>
+        </ul>
+        <div class="callout callout--info" style="margin-bottom:0;">
+          <p class="callout__label">💡 Journal as Evidence</p>
+          <p>The ext3/ext4 journal records pending metadata operations. Even after a file is deleted and its inode is marked free, the journal may still contain the inode's previous state, including block pointers to the file's data. Examining the journal with <code>debugfs</code> can reveal recently deleted file metadata before it is overwritten.</p>
+        </div>
+      </div>
+
+      <div class="tabs__panel" id="tab-ext4" role="tabpanel" aria-labelledby="tbtn-ext4">
+        <h3>ext4 — Fourth Extended File System (2008–present)</h3>
+        <p>ext4 is the default file system for most modern Linux distributions (Ubuntu, Debian, RHEL, CentOS, Rocky Linux). It is the file system you will most frequently encounter in Linux forensic investigations.</p>
+        <ul>
+          <li><strong>Extents:</strong> replaces the old indirect-block chain with extent trees — a file maps to one or more contiguous block ranges; reduces fragmentation and speeds up large-file access</li>
+          <li><strong>Nanosecond timestamps:</strong> mtime, atime, ctime, and <strong>crtime</strong> are all stored at nanosecond resolution — a significant improvement over ext3's 1-second granularity</li>
+          <li><strong>crtime (creation time):</strong> ext4 is the first member of the ext family to store a true file creation time in the inode; accessible via <code>debugfs</code> or <code>istat</code> (TSK)</li>
+          <li><strong>Larger volumes:</strong> maximum volume size 1 EiB; maximum file size 16 TiB</li>
+          <li><strong>Inline data:</strong> very small files (&lt; ~60 bytes) may be stored directly inside the inode, leaving no separate data blocks</li>
+          <li><strong>Journaling:</strong> same three modes as ext3; <code>ordered</code> remains the default</li>
+          <li><strong>Delayed allocation:</strong> blocks are not allocated until data is actually flushed; can complicate recovery of partially written files</li>
+        </ul>
+        <div class="callout callout--success" style="margin-bottom:0;">
+          <p class="callout__label">✅ Why ext4 Matters Most for This Course</p>
+          <p>The Ubuntu 22.04 server image (<code>web-prod-03.img</code>) uses ext4. All The Sleuth Kit commands and timestamp analysis techniques in this module apply directly to that image. ext4's nanosecond crtime is particularly valuable: it can definitively establish when a file was created, even if an attacker modified its mtime.</p>
+        </div>
+      </div>
+    </div><!-- /.tabs -->
+
+    <h3 class="mt-md">Block Group Layout</h3>
+    <p>ext4 divides the volume into <strong>block groups</strong> of equal size. Each block group is a self-contained unit with its own metadata structures. This design means metadata is distributed across the disk rather than concentrated at the beginning — reducing seek times and providing redundancy through superblock backups.</p>
+
+    <div class="fs-diagram" role="img" aria-label="ext4 block group layout diagram showing superblock, group descriptor table, block bitmap, inode bitmap, inode table, and data blocks">
+      <p class="fs-diagram__title">ext4 Block Group Internal Layout (one block group shown)</p>
+      <div class="block-row">
+        <div class="block-cell bc--sb">Super­block<br><small>(backup)</small></div>
+        <div class="block-cell bc--gdt">Group<br>Descriptor<br>Table</div>
+        <div class="block-cell bc--bm">Block<br>Bitmap</div>
+        <div class="block-cell bc--im">Inode<br>Bitmap</div>
+        <div class="block-cell bc--it">Inode<br>Table</div>
+        <div class="block-cell bc--db" style="flex:3;">Data Blocks</div>
+      </div>
+      <div class="block-legend">
+        <div class="bl-item"><div class="bl-dot" style="background:#fff8e6;border:2px solid #c07000;"></div><span>Superblock — global FS metadata</span></div>
+        <div class="bl-item"><div class="bl-dot" style="background:#e6f0f8;border:2px solid #2563a8;"></div><span>Group Descriptor Table — per-group stats</span></div>
+        <div class="bl-item"><div class="bl-dot" style="background:#eaf5ee;border:2px solid #1a6b3c;"></div><span>Block Bitmap — which data blocks are allocated</span></div>
+        <div class="bl-item"><div class="bl-dot" style="background:#f5eaf5;border:2px solid #6b1a6b;"></div><span>Inode Bitmap — which inodes are in use</span></div>
+        <div class="bl-item"><div class="bl-dot" style="background:#fff3e0;border:2px solid #c07000;"></div><span>Inode Table — array of inode structures</span></div>
+        <div class="bl-item"><div class="bl-dot" style="background:#e8eef4;border:2px solid #1a3a5c;"></div><span>Data Blocks — actual file and directory content</span></div>
+      </div>
+    </div>
+
+    <!-- Superblock accordion -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="acc-sb" id="btn-sb">
+        <span aria-hidden="true">📋</span>
+        <span>Superblock — Global File System Metadata</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="acc-sb" role="region" aria-labelledby="btn-sb">
+        <p>The <strong>superblock</strong> is the master record of the file system. It is located at byte offset 1024 from the start of the volume (block group 0) and is backed up at the beginning of selected block groups (typically groups 1, 3, 5, 7, and powers of 3 and 5).</p>
+        <p><strong>Key forensic fields in the superblock:</strong></p>
+        <ul>
+          <li><code>s_magic</code> — magic number <code>0xEF53</code> identifies this as an ext2/3/4 volume</li>
+          <li><code>s_blocks_count</code> — total block count; used to calculate volume size</li>
+          <li><code>s_inodes_count</code> — total inode count (fixed at format time)</li>
+          <li><code>s_free_blocks_count</code> / <code>s_free_inodes_count</code> — current free counts; a sudden drop may indicate bulk file creation (e.g., malware unpacking)</li>
+          <li><code>s_mtime</code> — last mount time; <code>s_wtime</code> — last write time; <code>s_lastcheck</code> — last fsck time</li>
+          <li><code>s_uuid</code> — volume UUID; useful for correlating images to system logs that reference the UUID</li>
+          <li><code>s_last_mounted</code> — path where the volume was last mounted (e.g., <code>/</code>)</li>
+          <li><code>s_feature_compat</code>, <code>s_feature_incompat</code> — feature flags indicating which ext4 features are enabled (extents, large files, etc.)</li>
+        </ul>
+        <div class="code-block" role="region" aria-label="Reading superblock with tune2fs">
+          <span class="comment"># Read superblock information from an image file</span><br>
+          <span class="cmd">sudo tune2fs -l</span> <span class="path">/path/to/web-prod-03.img</span><br><br>
+          <span class="comment"># Or use debugfs for interactive exploration</span><br>
+          <span class="cmd">sudo debugfs -R "show_super_stats"</span> <span class="path">/path/to/web-prod-03.img</span>
+        </div>
+        <div class="callout callout--info" style="margin-bottom:0;">
+          <p class="callout__label">🔍 Forensic Significance</p>
+          <p>The superblock's <code>s_mtime</code> and <code>s_wtime</code> fields record the last time the volume was mounted and written. On a dead-box image, these timestamps reflect the state at acquisition — they can help confirm or challenge the system owner's account of when the server was last active.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inode accordion -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="acc-inode" id="btn-inode">
+        <span aria-hidden="true">🔢</span>
+        <span>Inodes — The Metadata Heart of ext4</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="acc-inode" role="region" aria-labelledby="btn-inode">
+        <p>An <strong>inode</strong> (index node) is a fixed-size data structure that stores all metadata about a file or directory — <em>except its name</em>. Filenames are stored in directory entries, which point to inode numbers. This separation is what makes deleted file recovery possible: when a file is deleted, the directory entry is removed but the inode (and its block pointers) may remain readable until overwritten.</p>
+
+        <p><strong>Key fields stored in an ext4 inode:</strong></p>
+        <div class="inode-grid" role="list" aria-label="ext4 inode fields">
+          <div class="inode-field" role="listitem">
+            <div class="inode-field__name">i_mode</div>
+            <div class="inode-field__desc">File type (regular, directory, symlink, device) and permission bits (rwxrwxrwx)</div>
+          </div>
+          <div class="inode-field" role="listitem">
+            <div class="inode-field__name">i_uid / i_gid</div>
+            <div class="inode-field__desc">Owner user ID and group ID — maps to /etc/passwd and /etc/group</div>
+          </div>
+          <div class="inode-field" role="listitem">
+            <div class="inode-field__name">i_size</div>
+            <div class="inode-field__desc">File size in bytes; for deleted files this field may still hold the original size</div>
+          </div>
+          <div class="inode-field" role="listitem">
+            <div class="inode-field__name">i_links_count</div>
+            <div class="inode-field__desc">Number of hard links pointing to this inode; 0 means the file has been unlinked (deleted)</div>
+          </div>
+          <div class="inode-field" role="listitem">
+            <div class="inode-field__name">i_block / extent tree</div>
+            <div class="inode-field__desc">Block pointers (ext2/3) or extent tree root (ext4) — maps inode to data blocks on disk</div>
+          </div>
+          <div class="inode-field" role="listitem">
+            <div class="inode-field__name">i_flags</div>
+            <div class="inode-field__desc">Flags: extents flag (0x80000), immutable (0x10), append-only (0x20) — immutable/append-only are attacker-used anti-forensic techniques</div>
+          </div>
+          <div class="inode-field inode-field--ts" role="listitem">
+            <div class="inode-field__name">i_atime</div>
+            <div class="inode-field__desc">Last access time — when the file was last read</div>
+          </div>
+          <div class="inode-field inode-field--ts" role="listitem">
+            <div class="inode-field__name">i_mtime</div>
+            <div class="inode-field__desc">Last modification time — when file content was last changed</div>
+          </div>
+          <div class="inode-field inode-field--ts" role="listitem">
+            <div class="inode-field__name">i_ctime</div>
+            <div class="inode-field__desc">Inode change time — when inode metadata last changed (NOT creation time)</div>
+          </div>
+          <div class="inode-field inode-field--ts" role="listitem">
+            <div class="inode-field__name">i_crtime (ext4 only)</div>
+            <div class="inode-field__desc">True creation time — when the file was first created; stored in extra inode space</div>
+          </div>
+        </div>
+
+        <div class="callout callout--warn" style="margin-bottom:0;">
+          <p class="callout__label">⚠️ Critical Distinction: ctime ≠ Creation Time</p>
+          <p>This is one of the most common mistakes in Linux forensics. <strong>ctime is inode <em>change</em> time</strong> — it updates whenever the inode metadata changes (permissions, ownership, link count, timestamps). It is <em>not</em> the file creation time. On ext2 and ext3, there is no creation time at all. On ext4, the true creation time is <strong>crtime</strong>, accessible only through <code>debugfs</code> or <code>istat</code> (The Sleuth Kit). Do not report ctime as "file created" in your forensic report.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Journaling accordion -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="acc-journal" id="btn-journal">
+        <span aria-hidden="true">📓</span>
+        <span>Journaling — Forensic Significance of the ext3/ext4 Journal</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="acc-journal" role="region" aria-labelledby="btn-journal">
+        <p>The journal is a circular write-ahead log stored as a special file within the ext3/ext4 volume. Before any metadata (or data, in <code>journal</code> mode) is written to its final location, a transaction is written to the journal. After the write completes successfully, the transaction is marked committed and the journal space is eventually reused.</p>
+        <p><strong>Forensic value of the journal:</strong></p>
+        <ul>
+          <li><strong>Deleted file metadata recovery:</strong> After a file is deleted, its inode state (including block pointers) may persist in uncommitted or recently committed journal transactions. Examining the journal can reveal block pointers that are no longer accessible through the inode table.</li>
+          <li><strong>Timeline reconstruction:</strong> Journal transactions carry timestamps, providing an independent timeline of metadata operations that can corroborate or contradict other timestamp evidence.</li>
+          <li><strong>Anti-forensic detection:</strong> If an attacker used <code>shred</code> or <code>wipe</code> on a file, the journal may contain evidence of the multiple overwrite passes as successive metadata transactions.</li>
+          <li><strong>Partial write evidence:</strong> In <code>ordered</code> mode, if a system crashed mid-write, the journal may contain the partial transaction — evidence of activity at the time of the crash or shutdown.</li>
+        </ul>
+        <div class="code-block" role="region" aria-label="Examining the ext4 journal with debugfs">
+          <span class="comment"># Open image in debugfs (read-only mode)</span><br>
+          <span class="cmd">sudo debugfs -R "logdump -a"</span> <span class="path">/path/to/web-prod-03.img</span><br><br>
+          <span class="comment"># Dump journal to a file for offline analysis</span><br>
+          <span class="cmd">sudo debugfs -R "dump &lt;8&gt;</span> <span class="path">/tmp/journal.bin</span><span class="cmd">"</span> <span class="path">/path/to/web-prod-03.img</span>
+        </div>
+        <div class="callout callout--info" style="margin-bottom:0;">
+          <p class="callout__label">💡 Journal Size and Retention</p>
+          <p>The journal is a circular buffer — once it fills, old transactions are overwritten. On a busy server, the journal may only retain the last few seconds to minutes of transactions. On a server that was shut down cleanly (as <code>web-prod-03</code> was), the journal is likely in a consistent state and may retain more history than a system that crashed.</p>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       SECTION 3 — XFS BASICS
+  ════════════════════════════════════════════════════ -->
+  <section class="section" id="xfs" aria-labelledby="xfs-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">⚡</div>
+      <h2 id="xfs-heading">XFS Basics for Forensic Examiners</h2>
+    </div>
+
+    <p>While ext4 dominates Ubuntu and Debian systems, <strong>XFS</strong> is the default file system on <strong>Red Hat Enterprise Linux (RHEL) 7+, CentOS, Rocky Linux, and Fedora</strong>. As a forensic examiner you will encounter XFS on enterprise servers, database hosts, and high-performance storage systems. This section provides the orientation you need to work with XFS images without mistaking it for ext4.</p>
+
+    <div class="callout callout--info">
+      <p class="callout__label">📌 Scope Note</p>
+      <p>This module provides a working overview of XFS for forensic examiners. A full XFS deep-dive is beyond the scope of CSC 156. The goal is that you can <strong>identify XFS, understand its key differences from ext4, and apply The Sleuth Kit tools correctly</strong> when you encounter an XFS image.</p>
+    </div>
+
+    <h3>What Is XFS?</h3>
+    <p>XFS is a high-performance 64-bit journaling file system originally developed by Silicon Graphics (SGI) in 1993 and contributed to the Linux kernel in 2001. It is designed for large files and high-throughput I/O, making it popular for database servers and NAS appliances.</p>
+
+    <div class="compare-table-wrap">
+      <table class="compare-table" aria-label="XFS vs ext4 forensic comparison">
+        <thead>
+          <tr>
+            <th scope="col">Feature</th>
+            <th scope="col">ext4</th>
+            <th scope="col">XFS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Default on</td>
+            <td>Ubuntu, Debian, most consumer Linux</td>
+            <td>RHEL 7+, CentOS, Rocky Linux, Fedora</td>
+          </tr>
+          <tr>
+            <td>Metadata structure</td>
+            <td>Block groups with inode tables</td>
+            <td>Allocation groups (AGs) — similar concept, different implementation</td>
+          </tr>
+          <tr>
+            <td>Inode allocation</td>
+            <td>Fixed count at format time</td>
+            <td>Dynamic — inodes are allocated on demand from AG space</td>
+          </tr>
+          <tr>
+            <td>Journaling</td>
+            <td>Metadata journal (ordered mode default)</td>
+            <td>Metadata-only journal; data journaling not supported</td>
+          </tr>
+          <tr>
+            <td>Creation time (crtime)</td>
+            <td><span class="tag tag--yes">✓ Yes</span> — stored in extra inode space</td>
+            <td><span class="tag tag--no">✗ No</span> — XFS does not store crtime</td>
+          </tr>
+          <tr>
+            <td>Timestamp resolution</td>
+            <td>Nanosecond (ext4)</td>
+            <td>Nanosecond</td>
+          </tr>
+          <tr>
+            <td>Timestamp range</td>
+            <td>1901–2446 (ext4 with extra bits)</td>
+            <td>1901–2038 (original); XFS v5: extended range</td>
+          </tr>
+          <tr>
+            <td>TSK support</td>
+            <td>Full support</td>
+            <td>Read support via <code>xfs</code> file system type in TSK</td>
+          </tr>
+          <tr>
+            <td>Shrinking</td>
+            <td>Supported (with e2fsck)</td>
+            <td>Cannot shrink an XFS volume — only grow</td>
+          </tr>
+          <tr>
+            <td>Magic bytes</td>
+            <td><code>0xEF53</code> at offset 1080</td>
+            <td><code>XFSB</code> (0x58465342) at offset 0</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout--warn">
+      <p class="callout__label">⚠️ XFS Has No crtime — Critical for Forensic Reports</p>
+      <p>Unlike ext4, <strong>XFS does not store a file creation time (crtime)</strong>. On an XFS volume, you have only atime, mtime, and ctime. This means you <strong>cannot definitively establish when a file was created</strong> from the file system metadata alone on an XFS system. You must rely on other evidence sources — log entries, journal transactions, or application-level timestamps — to establish file creation timelines. Always note this limitation explicitly in your forensic report when examining XFS volumes.</p>
+    </div>
+
+    <h3>Identifying XFS in the Field</h3>
+    <p>Before mounting or running TSK tools, confirm the file system type. Using the wrong type specification will produce errors or incorrect results.</p>
+    <div class="code-block" role="region" aria-label="Identifying file system type with blkid and file commands">
+      <span class="comment"># Identify file system type from an image file</span><br>
+      <span class="cmd">sudo blkid</span> <span class="path">/path/to/image.img</span><br>
+      <span class="out"># Output example: /path/to/image.img: UUID="..." TYPE="xfs"</span><br><br>
+      <span class="comment"># Alternative: use the file command on the raw image</span><br>
+      <span class="cmd">file</span> <span class="path">/path/to/image.img</span><br>
+      <span class="out"># Output: SGI XFS filesystem data (blksz 4096, ...)</span><br><br>
+      <span class="comment"># Mount XFS image read-only for examination</span><br>
+      <span class="cmd">sudo mount</span> <span class="flag">-o ro,noexec,nosuid,noatime</span> <span class="flag">-t xfs</span> <span class="path">/path/to/image.img</span> <span class="path">/mnt/evidence</span>
+    </div>
+
+    <div class="callout callout--success">
+      <p class="callout__label">🔗 TSK Works on Both ext4 and XFS</p>
+      <p>The Sleuth Kit commands (<code>fls</code>, <code>icat</code>, <code>ils</code>, <code>istat</code>) work on XFS images. Specify the file system type explicitly with the <code>-f xfs</code> flag. The output format and field meanings are consistent across file system types, making it straightforward to apply the same workflow you learn for ext4 to XFS volumes.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       SECTION 4 — LINUX TIMESTAMPS
+  ════════════════════════════════════════════════════ -->
+  <section class="section" id="timestamps" aria-labelledby="ts-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">🕐</div>
+      <h2 id="ts-heading">Linux Timestamps Deep Dive</h2>
+    </div>
+
+    <p>Timestamps are among the most powerful — and most misunderstood — pieces of evidence in Linux forensics. Every file on an ext4 volume carries up to four timestamps in its inode. Understanding precisely what each one records, what updates it, and how it can be manipulated is essential before you draw any timeline conclusions.</p>
+
+    <!-- Four timestamp cards -->
+    <div class="ts-grid" role="list" aria-label="Linux file timestamp types">
+      <div class="ts-card ts-card--atime" role="listitem">
+        <div class="ts-card__abbr">atime</div>
+        <div class="ts-card__name">Access Time</div>
+        <div class="ts-card__def">Records the last time the file's <strong>content was read</strong>. Updated when a process opens and reads the file.</div>
+        <div class="ts-card__use">Forensic use: Indicates when a file was last accessed — but reliability is severely compromised by <code>noatime</code> mount option and <code>relatime</code> kernel default.</div>
+      </div>
+      <div class="ts-card ts-card--mtime" role="listitem">
+        <div class="ts-card__abbr">mtime</div>
+        <div class="ts-card__name">Modification Time</div>
+        <div class="ts-card__def">Records the last time the file's <strong>content was modified</strong>. Updated when data is written to the file.</div>
+        <div class="ts-card__use">Forensic use: Most reliable indicator of when a file was last written. Attackers may manipulate with <code>touch -m</code> (timestomping).</div>
+      </div>
+      <div class="ts-card ts-card--ctime" role="listitem">
+        <div class="ts-card__abbr">ctime</div>
+        <div class="ts-card__name">Change Time</div>
+        <div class="ts-card__def">Records the last time the <strong>inode metadata changed</strong>: permissions, ownership, link count, or any timestamp update.</div>
+        <div class="ts-card__use">Forensic use: Cannot be set by a normal user with <code>touch</code> — only the kernel updates ctime. Harder to fake than mtime; often reveals when an attacker modified file attributes.</div>
+      </div>
+      <div class="ts-card ts-card--crtime" role="listitem">
+        <div class="ts-card__abbr">crtime</div>
+        <div class="ts-card__name">Creation Time</div>
+        <div class="ts-card__def"><strong>ext4 only.</strong> Records when the file was <strong>first created</strong>. Stored in extra inode space; not exposed by standard <code>stat</code>.</div>
+        <div class="ts-card__use">Forensic use: Definitive creation evidence. Access via <code>debugfs</code> or <code>istat</code> (TSK). Not available on ext2, ext3, or XFS.</div>
+      </div>
+    </div>
+
+    <h3>Accessing Timestamps — Command Reference</h3>
+
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="acc-stat" id="btn-stat">
+        <span aria-hidden="true">💻</span>
+        <span><code>stat</code> — Standard Timestamp View (atime, mtime, ctime)</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="acc-stat" role="region" aria-labelledby="btn-stat">
+        <p>The <code>stat</code> command displays the standard POSIX timestamps for any file. It does <em>not</em> show crtime — for that you need <code>debugfs</code> or <code>istat</code>.</p>
+        <div class="code-block" role="region" aria-label="stat command example">
+          <span class="cmd">stat</span> <span class="path">/var/www/html/index.php</span><br><br>
+          <span class="out">  File: /var/www/html/index.php</span><br>
+          <span class="out">  Size: 4821      Blocks: 16         IO Block: 4096   regular file</span><br>
+          <span class="out">Device: fd01h/64769d  Inode: 2883591     Links: 1</span><br>
+          <span class="out">Access: (0644/-rw-r--r--)  Uid: ( 33/www-data)   Gid: ( 33/www-data)</span><br>
+          <span class="out">Access: 2026-03-10 14:22:07.483921000 +0000</span><br>
+          <span class="out">Modify: 2026-03-08 03:17:44.112038000 +0000</span><br>
+          <span class="out">Change: 2026-03-08 03:17:44.112038000 +0000</span><br>
+          <span class="out"> Birth: -</span><br><br>
+          <span class="comment"># "Birth" shows "-" on ext3 or when crtime is not exposed by the OS</span><br>
+          <span class="comment"># Use debugfs or istat to retrieve crtime on ext4</span>
+        </div>
+        <div class="callout callout--scenario" style="margin-bottom:0;">
+          <p class="callout__label">🔍 Scenario Analysis</p>
+          <p>The <code>index.php</code> above has a <strong>Modify time of 2026-03-08 03:17 UTC</strong> — in the middle of the night, well after normal deployment hours. The Change time matches, suggesting the inode was updated at the same moment (consistent with a new file write). The Access time is two days later, suggesting the file was read (served to a browser, or accessed by an attacker). This pattern is consistent with a web shell being planted and later accessed. You would next use <code>debugfs</code> to retrieve the crtime to confirm when the file was created.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="acc-debugfs" id="btn-debugfs">
+        <span aria-hidden="true">🔬</span>
+        <span><code>debugfs</code> — Retrieving crtime and Raw Inode Data</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="acc-debugfs" role="region" aria-labelledby="btn-debugfs">
+        <p><code>debugfs</code> is the ext2/3/4 file system debugger included in the <code>e2fsprogs</code> package. It provides direct access to on-disk structures, including the extra inode fields where crtime is stored. Always use the <code>-R</code> flag for non-interactive mode and open the image read-only.</p>
+        <div class="code-block" role="region" aria-label="debugfs inode stat command showing crtime">
+          <span class="comment"># Retrieve full inode information including crtime (read-only mode)</span><br>
+          <span class="cmd">sudo debugfs -R "stat</span> <span class="path">&lt;2883591&gt;</span><span class="cmd">"</span> <span class="path">/path/to/web-prod-03.img</span><br><br>
+          <span class="out">Inode: 2883591   Type: regular    Mode:  0644   Flags: 0x80000</span><br>
+          <span class="out">Generation: 3921847291    Version: 0x00000000:00000001</span><br>
+          <span class="out">User:    33   Group:    33   Project:     0   Size: 4821</span><br>
+          <span class="out">File ACL: 0</span><br>
+          <span class="out">Links: 1   Blockcount: 16</span><br>
+          <span class="out">Fragment:  Address: 0    Number: 0    Size: 0</span><br>
+          <span class="out"> ctime: 0x67cc8e18:1aabc000 -- Sun Mar  8 03:17:44 2026</span><br>
+          <span class="out"> atime: 0x67d1a22f:2de00000 -- Tue Mar 10 14:22:07 2026</span><br>
+          <span class="out"> mtime: 0x67cc8e18:1aabc000 -- Sun Mar  8 03:17:44 2026</span><br>
+          <span class="out"><strong>crtime: 0x67cc8e18:1aabc000 -- Sun Mar  8 03:17:44 2026</strong></span><br>
+          <span class="out">Size of extra inode fields: 28</span><br>
+          <span class="out">EXTENTS:</span><br>
+          <span class="out">(0-11): 7340112-7340123</span>
+        </div>
+        <p class="mt-sm">In this example, crtime confirms the file was created on <strong>2026-03-08 at 03:17 UTC</strong> — the same moment as mtime and ctime, which is normal for a newly created file. The <code>Flags: 0x80000</code> indicates extents are in use (normal for ext4). The <code>EXTENTS</code> line shows the file occupies blocks 7340112–7340123 — you could use <code>icat</code> to extract those blocks.</p>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="acc-istat" id="btn-istat">
+        <span aria-hidden="true">🔍</span>
+        <span><code>istat</code> (TSK) — Inode Information from a Forensic Image</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="acc-istat" role="region" aria-labelledby="btn-istat">
+        <p><code>istat</code> is part of The Sleuth Kit and displays inode details directly from a forensic image file — without mounting it. This is the preferred method in a forensic workflow because it avoids any risk of modifying the image.</p>
+        <div class="code-block" role="region" aria-label="istat command from The Sleuth Kit">
+          <span class="comment"># Display inode 2883591 from the image (ext4 file system)</span><br>
+          <span class="cmd">istat</span> <span class="flag">-f ext4</span> <span class="path">/path/to/web-prod-03.img</span> <span class="flag">2883591</span><br><br>
+          <span class="out">inode: 2883591</span><br>
+          <span class="out">Not Allocated</span><br>
+          <span class="out">uid / gid: 33 / 33</span><br>
+          <span class="out">mode: rrw-r--r--</span><br>
+          <span class="out">size: 4821</span><br>
+          <span class="out">num of links: 0</span><br><br>
+          <span class="out">Inode Times:</span><br>
+          <span class="out">Accessed:       2026-03-10 14:22:07 (UTC)</span><br>
+          <span class="out">File Modified:  2026-03-08 03:17:44 (UTC)</span><br>
+          <span class="out">Inode Modified: 2026-03-08 03:17:44 (UTC)</span><br>
+          <span class="out">File Created:   2026-03-08 03:17:44 (UTC)</span><br><br>
+          <span class="out">Direct Blocks:</span><br>
+          <span class="out">7340112 7340113 7340114 ...</span><br><br>
+          <span class="comment"># "Not Allocated" means the file has been deleted (link count = 0)</span><br>
+          <span class="comment"># Block pointers are still present — use icat to recover content</span>
+        </div>
+        <div class="callout callout--info" style="margin-bottom:0;">
+          <p class="callout__label">💡 "Not Allocated" is Good News for Recovery</p>
+          <p>When <code>istat</code> reports <strong>Not Allocated</strong> and <strong>num of links: 0</strong>, the file has been deleted — but the inode still contains block pointers. As long as those blocks have not been overwritten by new data, you can recover the file's content with <code>icat</code>. This is the foundation of metadata-based deleted file recovery.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="mt-md">The noatime Mount Option — Impact on Forensic Evidence</h3>
+    <p>By default, Linux updates a file's <strong>atime</strong> every time it is read. On a busy server, this creates enormous write overhead (a read becomes a write to update the inode). For this reason, most production Linux servers are mounted with <code>noatime</code> or <code>relatime</code>.</p>
+
+    <div class="compare-table-wrap">
+      <table class="compare-table" aria-label="atime mount option comparison">
+        <thead>
+          <tr>
+            <th scope="col">Mount Option</th>
+            <th scope="col">Behavior</th>
+            <th scope="col">Forensic Impact</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>atime</code> (default)</td>
+            <td>atime updated on every file read</td>
+            <td>atime is reliable evidence of last access — but rarely used in production due to performance cost</td>
+          </tr>
+          <tr>
+            <td><code>noatime</code></td>
+            <td>atime is never updated</td>
+            <td>atime is frozen at the time of last write — <strong>completely unreliable as access evidence</strong>; common on servers and SSDs</td>
+          </tr>
+          <tr>
+            <td><code>relatime</code></td>
+            <td>atime updated only if it is older than mtime or ctime, or more than 24 hours old</td>
+            <td>atime provides approximate access evidence (within ~24 hours); the <strong>Linux kernel default since 2.6.30</strong></td>
+          </tr>
+          <tr>
+            <td><code>strictatime</code></td>
+            <td>atime updated on every read (explicit override)</td>
+            <td>atime is fully reliable — but almost never used in production</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout--warn">
+      <p class="callout__label">⚠️ Always Check Mount Options Before Interpreting atime</p>
+      <p>Before drawing any conclusions from atime evidence, verify the mount options used on the target system. Check <code>/etc/fstab</code> on the image and look for <code>noatime</code> or <code>relatime</code> in the options column. On <strong>web-prod-03</strong>, you should check <code>/etc/fstab</code> early in your examination. If <code>noatime</code> is present, discard atime as access evidence entirely and focus on mtime, ctime, and crtime for your timeline.</p>
+    </div>
+
+    <!-- Timestamp scenario self-check -->
+    <div class="callout callout--scenario mt-md">
+      <p class="callout__label">🧠 Timestamp Scenario — Think It Through</p>
+      <p>You find a file <code>/tmp/.x11-unix/proc</code> on the <code>web-prod-03</code> image with these timestamps:</p>
+      <ul>
+        <li><strong>crtime:</strong> 2026-03-08 03:19:02 UTC</li>
+        <li><strong>mtime:</strong> 2026-02-14 09:00:00 UTC</li>
+        <li><strong>ctime:</strong> 2026-03-08 03:19:02 UTC</li>
+        <li><strong>atime:</strong> 2026-02-14 09:00:00 UTC</li>
+      </ul>
+      <p>The mtime and atime match a date <em>before</em> the crtime. The ctime matches the crtime. What does this pattern suggest?</p>
+      <p><strong>Analysis:</strong> The file was <em>created</em> on 2026-03-08 (crtime), but its mtime was set to 2026-02-14 — a date in the past. This is a classic <strong>timestomping</strong> pattern: an attacker used <code>touch -m -t 202602140900 /tmp/.x11-unix/proc</code> to make the file appear older than it is. The ctime, however, cannot be set by a normal user — it reflects the true moment the inode was last changed (2026-03-08), which matches crtime and exposes the manipulation. This file warrants immediate investigation.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       SECTION 5 — DELETED FILE RECOVERY
+  ════════════════════════════════════════════════════ -->
+  <section class="section" id="recovery" aria-labelledby="recovery-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">♻️</div>
+      <h2 id="recovery-heading">Deleted File Recovery</h2>
+    </div>
+
+    <p>When an attacker deletes a file on Linux, they typically call <code>rm</code>, which invokes the <code>unlink()</code> system call. Understanding exactly what <code>unlink()</code> does — and does <em>not</em> do — is the foundation of deleted file recovery on ext4.</p>
+
+    <h3>What unlink() Actually Does</h3>
+
+    <div class="workflow" aria-label="unlink() deletion process steps">
+      <div class="workflow__step">
+        <div class="workflow__num" aria-hidden="true">1</div>
+        <div class="workflow__body">
+          <div class="workflow__title">Directory entry is removed</div>
+          <div class="workflow__desc">The filename-to-inode mapping in the parent directory is deleted. The filename is gone. The inode number it pointed to is no longer reachable through normal directory traversal.</div>
+        </div>
+      </div>
+      <div class="workflow__step">
+        <div class="workflow__num" aria-hidden="true">2</div>
+        <div class="workflow__body">
+          <div class="workflow__title">Inode link count is decremented</div>
+          <div class="workflow__desc">The <code>i_links_count</code> field in the inode is reduced by 1. If it reaches 0 (no remaining hard links), the inode is marked as free in the inode bitmap — but the inode structure itself is not immediately zeroed.</div>
+        </div>
+      </div>
+      <div class="workflow__step">
+        <div class="workflow__num" aria-hidden="true">3</div>
+        <div class="workflow__body">
+          <div class="workflow__title">Data blocks are marked free in the block bitmap</div>
+          <div class="workflow__desc">The blocks that held the file's content are marked as available for reuse in the block group's block bitmap. The actual data in those blocks is <strong>not overwritten</strong> — it remains on disk until another file is written to those blocks.</div>
+        </div>
+      </div>
+      <div class="workflow__step">
+        <div class="workflow__num" aria-hidden="true">4</div>
+        <div class="workflow__body">
+          <div class="workflow__title">Inode block pointers may be cleared (ext4 behavior)</div>
+          <div class="workflow__desc">On ext4, the kernel may zero the block pointers in the inode at deletion time (unlike ext3, which left them intact). This means <strong>metadata-based recovery is harder on ext4</strong> — you may need to fall back to file carving if block pointers have been cleared.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout--warn">
+      <p class="callout__label">⚠️ ext4 Block Pointer Clearing</p>
+      <p>This is a critical difference from ext3. On ext3, deleted inodes typically retained their block pointers, making metadata-based recovery straightforward. On ext4, the kernel often zeroes the extent tree or block pointers upon deletion. If <code>istat</code> shows an unallocated inode with <strong>no block pointers</strong>, the inode's pointers have been cleared and you must use file carving to recover the content from unallocated space. Always attempt <code>istat</code> first — if block pointers remain, use <code>icat</code>; if not, use Scalpel or Foremost.</p>
+    </div>
+
+    <h3 class="mt-md">The Sleuth Kit Workflow: fls → istat → icat</h3>
+    <p>The Sleuth Kit (TSK) provides a command-line toolkit for analyzing forensic images at the file system layer. The three commands you will use most for deleted file recovery are <code>fls</code>, <code>istat</code>, and <code>icat</code>. They are designed to work together in a pipeline.</p>
+
+    <!-- fls accordion -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="true" aria-controls="acc-fls" id="btn-fls">
+        <span aria-hidden="true">📂</span>
+        <span><code>fls</code> — List Files Including Deleted Entries</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel is-open" id="acc-fls" role="region" aria-labelledby="btn-fls">
+        <p><code>fls</code> (file listing) lists directory contents from a forensic image, including files that have been deleted but whose directory entries or inode records remain. Deleted entries are prefixed with an asterisk (<code>*</code>).</p>
+        <div class="code-block" role="region" aria-label="fls command examples">
+          <span class="comment"># List all files (including deleted) in /var/www/html (inode 786433)</span><br>
+          <span class="cmd">fls</span> <span class="flag">-f ext4</span> <span class="flag">-r</span> <span class="flag">-d</span> <span class="path">/path/to/web-prod-03.img</span> <span class="flag">786433</span><br><br>
+          <span class="out">r/r 2883591:    index.php</span><br>
+          <span class="out">r/r 2883592:    config.php</span><br>
+          <span class="out">* r/r 2883600:  .cache.php</span><br>
+          <span class="out">* r/r 2883601:  update.sh</span><br><br>
+          <span class="comment"># Lines starting with * are deleted files</span><br>
+          <span class="comment"># The number after r/r is the inode number — use with istat and icat</span><br><br>
+          <span class="comment"># Common flags:</span><br>
+          <span class="comment">#   -r  recursive (traverse subdirectories)</span><br>
+          <span class="comment">#   -d  show only deleted files</span><br>
+          <span class="comment">#   -l  long format (includes timestamps)</span><br>
+          <span class="comment">#   -p  display full path</span>
+        </div>
+        <p class="mt-sm">In this example, <code>.cache.php</code> and <code>update.sh</code> were deleted from the web root. Their inode numbers (2883600 and 2883601) are still visible. You would next use <code>istat</code> to examine their metadata and <code>icat</code> to recover their content.</p>
+      </div>
+    </div>
+
+    <!-- ils accordion -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="acc-ils" id="btn-ils">
+        <span aria-hidden="true">📋</span>
+        <span><code>ils</code> — List Unallocated Inodes Directly</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="acc-ils" role="region" aria-labelledby="btn-ils">
+        <p><code>ils</code> (inode listing) lists inodes that are currently unallocated (freed) in the file system. Unlike <code>fls</code>, which traverses directory trees, <code>ils</code> works directly from the inode bitmap — it can find deleted files even when the parent directory entry has been overwritten.</p>
+        <div class="code-block" role="region" aria-label="ils command examples">
+          <span class="comment"># List all unallocated inodes in the image</span><br>
+          <span class="cmd">ils</span> <span class="flag">-f ext4</span> <span class="path">/path/to/web-prod-03.img</span><br><br>
+          <span class="out">class|host|device|start|end</span><br>
+          <span class="out">ils|forensic-ws||0|0</span><br>
+          <span class="out">st_ino|st_alloc|st_uid|st_gid|st_mtime|st_atime|st_ctime|st_mode|st_nlink|st_size|st_block0|st_block1</span><br>
+          <span class="out">2883600|f|33|33|1741399064|1741399064|1741399064|0100644|0|1842|0|0</span><br>
+          <span class="out">2883601|f|0|0|1741399080|1741399080|1741399080|0100755|0|512|0|0</span><br><br>
+          <span class="comment"># st_alloc "f" = free (deleted); "a" = allocated</span><br>
+          <span class="comment"># st_block0/1 = 0 means block pointers were cleared (ext4 behavior)</span><br>
+          <span class="comment"># Timestamps are Unix epoch — convert with: date -d @1741399064</span><br><br>
+          <span class="comment"># Pipe to mactime for timeline integration</span><br>
+          <span class="cmd">ils</span> <span class="flag">-f ext4 -m</span> <span class="path">/path/to/web-prod-03.img</span> <span class="cmd">|</span> <span class="cmd">mactime</span> <span class="flag">-b -</span> <span class="flag">2026-03-01</span>
+        </div>
+        <div class="callout callout--info" style="margin-bottom:0;">
+          <p class="callout__label">💡 ils vs fls — When to Use Each</p>
+          <p>Use <code>fls</code> when you want to browse a specific directory and find deleted entries within it. Use <code>ils</code> when you want a comprehensive list of all unallocated inodes across the entire volume — useful for large-scale deleted file surveys or when directory entries have been destroyed. Both outputs can be fed into TSK's <code>mactime</code> tool for timeline creation.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- icat accordion -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="acc-icat" id="btn-icat">
+        <span aria-hidden="true">💾</span>
+        <span><code>icat</code> — Extract File Content by Inode Number</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="acc-icat" role="region" aria-labelledby="btn-icat">
+        <p><code>icat</code> (inode cat) extracts the data content of a file identified by its inode number, writing it to stdout. It works on both allocated and unallocated inodes — as long as the inode still contains valid block pointers.</p>
+        <div class="code-block" role="region" aria-label="icat command examples for deleted file recovery">
+          <span class="comment"># Recover deleted file .cache.php (inode 2883600) to a file</span><br>
+          <span class="cmd">icat</span> <span class="flag">-f ext4</span> <span class="path">/path/to/web-prod-03.img</span> <span class="flag">2883600</span> <span class="cmd">&gt;</span> <span class="path">/evidence/recovered/.cache.php</span><br><br>
+          <span class="comment"># Verify the recovered file is not empty</span><br>
+          <span class="cmd">file</span> <span class="path">/evidence/recovered/.cache.php</span><br>
+          <span class="out">recovered/.cache.php: PHP script, ASCII text</span><br><br>
+          <span class="comment"># Compute hash of recovered file for chain of custody</span><br>
+          <span class="cmd">sha256sum</span> <span class="path">/evidence/recovered/.cache.php</span><br><br>
+          <span class="comment"># If icat returns empty output, block pointers were cleared</span><br>
+          <span class="comment"># → fall back to file carving with Scalpel or Foremost</span>
+        </div>
+        <div class="callout callout--success" style="margin-bottom:0;">
+          <p class="callout__label">✅ Always Hash Recovered Files</p>
+          <p>Every file you recover with <code>icat</code> should be immediately hashed with <code>sha256sum</code> and the hash recorded in your case notes. This documents the integrity of the recovered file at the moment of extraction and is essential for chain of custody if the evidence is used in legal proceedings.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="mt-md">File Carving — When Metadata Is Gone</h3>
+    <p>When inode block pointers have been cleared (common on ext4) or when directory entries have been overwritten, metadata-based recovery fails. <strong>File carving</strong> is the fallback technique: it scans raw disk data looking for known file-type signatures (headers and footers) and extracts matching byte sequences from unallocated space — without relying on any file system metadata.</p>
+
+    <div class="callout callout--info">
+      <p class="callout__label">📌 File Carving Reviewed from Module 5.5</p>
+      <p>You covered the principles of file carving in <strong>Module 5.5 (Week 5)</strong>: file signatures (magic bytes), header/footer carving, and the challenges posed by fragmented files. This section focuses on applying those principles specifically to Linux images using <strong>Scalpel</strong> and <strong>Foremost</strong>.</p>
+    </div>
+
+    <!-- Scalpel accordion -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="acc-scalpel" id="btn-scalpel">
+        <span aria-hidden="true">🔪</span>
+        <span>Scalpel — Header/Footer File Carving</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="acc-scalpel" role="region" aria-labelledby="btn-scalpel">
+        <p><strong>Scalpel</strong> is a fast, open-source file carver based on the original Foremost design. It reads a configuration file (<code>scalpel.conf</code>) that defines file types by their header and footer byte sequences, then carves matching sequences from the raw image.</p>
+        <p><strong>Key configuration concepts:</strong></p>
+        <ul>
+          <li>Each line in <code>scalpel.conf</code> defines: <code>extension  case-sensitivity  max-size  header  footer</code></li>
+          <li>Uncomment the file types you want to carve; comment out those you do not need (reduces noise and processing time)</li>
+          <li>Set <code>max-size</code> conservatively — too large wastes time and disk space on false positives</li>
+        </ul>
+        <div class="code-block" role="region" aria-label="Scalpel configuration and usage example">
+          <span class="comment"># Example scalpel.conf entries (uncommented = active)</span><br>
+          <span class="out">php   y   500000  \x3c\x3f\x70\x68\x70  \x3f\x3e</span><br>
+          <span class="out">sh    y   100000  \x23\x21\x2f\x62\x69\x6e  \x0a</span><br>
+          <span class="out">jpg   y  10000000  \xff\xd8\xff\xe0  \xff\xd9</span><br><br>
+          <span class="comment"># Run Scalpel against the image</span><br>
+          <span class="cmd">scalpel</span> <span class="flag">-c /etc/scalpel/scalpel.conf</span> <span class="flag">-o</span> <span class="path">/evidence/scalpel-output/</span> <span class="path">/path/to/web-prod-03.img</span><br><br>
+          <span class="comment"># Output directory will contain subdirectories per file type</span><br>
+          <span class="comment"># e.g., /evidence/scalpel-output/php-0-y-500000/ contains carved PHP files</span><br>
+          <span class="comment"># Review audit.txt in output directory for carving statistics</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Foremost accordion -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="acc-foremost" id="btn-foremost">
+        <span aria-hidden="true">🔦</span>
+        <span>Foremost — Alternative File Carver</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="acc-foremost" role="region" aria-labelledby="btn-foremost">
+        <p><strong>Foremost</strong> was developed by the U.S. Air Force Office of Special Investigations and is the predecessor to Scalpel. It uses the same header/footer carving approach and is available in most Linux forensic distributions. Foremost and Scalpel are functionally similar; the choice between them is largely one of preference and configuration flexibility.</p>
+        <div class="code-block" role="region" aria-label="Foremost usage example">
+          <span class="comment"># Carve common file types from the image using built-in signatures</span><br>
+          <span class="cmd">foremost</span> <span class="flag">-t php,jpg,pdf,zip</span> <span class="flag">-i</span> <span class="path">/path/to/web-prod-03.img</span> <span class="flag">-o</span> <span class="path">/evidence/foremost-output/</span><br><br>
+          <span class="comment"># Carve all supported types (slower, more output)</span><br>
+          <span class="cmd">foremost</span> <span class="flag">-t all</span> <span class="flag">-i</span> <span class="path">/path/to/web-prod-03.img</span> <span class="flag">-o</span> <span class="path">/evidence/foremost-output-all/</span><br><br>
+          <span class="comment"># Review output/audit.txt for carving results and statistics</span>
+        </div>
+        <div class="callout callout--warn" style="margin-bottom:0;">
+          <p class="callout__label">⚠️ File Carving Limitations</p>
+          <p>File carving recovers content but <strong>no metadata</strong> — recovered files will have no original filename, timestamp, permissions, or ownership. Fragmented files (split across non-contiguous blocks) may be partially recovered or corrupted. Always verify carved files: check that they open correctly, compute their hash, and document them as "carved from unallocated space" in your report — not as files with verified provenance.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full workflow summary -->
+    <div class="callout callout--success mt-md">
+      <p class="callout__label">✅ Complete Deleted File Recovery Decision Workflow</p>
+      <ol>
+        <li><strong>Run <code>fls -d</code></strong> on the target directory to find deleted file entries and their inode numbers.</li>
+        <li><strong>Run <code>istat</code></strong> on each deleted inode to check: Is it unallocated? Does it have block pointers? What are its timestamps?</li>
+        <li><strong>If block pointers exist → use <code>icat</code></strong> to extract the file content. Hash the output immediately.</li>
+        <li><strong>If block pointers are cleared → use <code>ils</code></strong> to survey all unallocated inodes for any with surviving pointers, then fall back to Scalpel or Foremost for carving from unallocated space.</li>
+        <li><strong>Run Scalpel or Foremost</strong> against the full image (or extracted unallocated space) to recover files by signature.</li>
+        <li><strong>Document everything:</strong> inode numbers, recovery method, output hashes, and any limitations noted (e.g., partial recovery, no metadata).</li>
+      </ol>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════════════════════
+       SECTION 6 — KNOWLEDGE CHECK
+  ════════════════════════════════════════════════════ -->
+  <section class="section" id="knowledge-check" aria-labelledby="kc-heading">
+    <div class="kc-section" role="region" aria-label="Ungraded knowledge check">
+      <div class="kc-header">
+        <div class="kc-header__icon" aria-hidden="true">✅</div>
+        <div>
+          <h2 id="kc-heading">Knowledge Check</h2>
+          <p style="font-size:.85rem; color:var(--clr-text-muted); margin:0;">Ungraded · Immediate feedback · 3 questions</p>
+        </div>
+      </div>
+
+      <div class="callout callout--info" style="margin-bottom:1.4rem;">
+        <p class="callout__label">📋 Instructions</p>
+        <p>Select the best answer for each question, then click <strong>Check Answer</strong>. You will receive immediate explanatory feedback. These questions are not graded and do not submit to Canvas.</p>
+      </div>
+
+      <!-- Q1 -->
+      <div class="kc-question" id="q1-block">
+        <p class="kc-question__stem" id="q1-stem">
+          <span class="kc-question__num" aria-hidden="true">1</span>
+          You are examining an ext4 forensic image and use <code>stat</code> to view timestamps on a suspicious PHP file. The output shows: <strong>mtime = 2025-11-15</strong>, <strong>ctime = 2026-03-08</strong>. You then run <code>debugfs</code> and find <strong>crtime = 2026-03-08</strong>. What is the most likely forensic interpretation of this timestamp pattern?
+        </p>
+        <ul class="kc-options" role="radiogroup" aria-labelledby="q1-stem">
+          <li>
+            <label>
+              <input type="radio" name="q1" value="a">
+              <span>The file was legitimately created on 2025-11-15 and its metadata was updated on 2026-03-08 by a routine system process.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q1" value="b">
+              <span>The file was created on 2026-03-08 (crtime) but its mtime was backdated to 2025-11-15 — a timestomping technique used to make the file appear older than it is.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q1" value="c">
+              <span>The ctime of 2026-03-08 indicates the file was created on that date; the mtime of 2025-11-15 shows when the file content was last modified before creation.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q1" value="d">
+              <span>The timestamps are inconsistent due to a file system error; the image should be re-acquired before drawing any conclusions.</span>
+            </label>
+          </li>
+        </ul>
+        <button class="kc-btn" onclick="checkAnswer(1,'b',this)" aria-label="Check answer for question 1">Check Answer</button>
+        <div class="kc-feedback" id="q1-feedback" role="alert" aria-live="polite"></div>
+      </div>
+
+      <!-- Q2 -->
+      <div class="kc-question" id="q2-block">
+        <p class="kc-question__stem" id="q2-stem">
+          <span class="kc-question__num" aria-hidden="true">2</span>
+          You run <code>fls -f ext4 -d /evidence/web-prod-03.img 786433</code> and find a deleted entry: <code>* r/r 2994010: update.sh</code>. You then run <code>istat -f ext4 /evidence/web-prod-03.img 2994010</code> and see: <code>Not Allocated</code>, <code>num of links: 0</code>, and <strong>no block pointers listed</strong>. What is your next best step to attempt recovery of this file?
+        </p>
+        <ul class="kc-options" role="radiogroup" aria-labelledby="q2-stem">
+          <li>
+            <label>
+              <input type="radio" name="q2" value="a">
+              <span>Run <code>icat -f ext4 /evidence/web-prod-03.img 2994010 &gt; update.sh</code> — icat can recover the file even without block pointers.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q2" value="b">
+              <span>The file is unrecoverable — once block pointers are cleared on ext4, the file content is permanently lost.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q2" value="c">
+              <span>Use Scalpel or Foremost to carve the image for shell script signatures in unallocated space — the data blocks may still be on disk even though the inode pointers are gone.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q2" value="d">
+              <span>Re-run <code>fls</code> with the <code>-r</code> flag — this will rebuild the block pointers from the directory tree.</span>
+            </label>
+          </li>
+        </ul>
+        <button class="kc-btn" onclick="checkAnswer(2,'c',this)" aria-label="Check answer for question 2">Check Answer</button>
+        <div class="kc-feedback" id="q2-feedback" role="alert" aria-live="polite"></div>
+      </div>
+
+      <!-- Q3 -->
+      <div class="kc-question" id="q3-block">
+        <p class="kc-question__stem" id="q3-stem">
+          <span class="kc-question__num" aria-hidden="true">3</span>
+          A colleague hands you a forensic image of a compromised RHEL 8 server and says: "I checked the file creation times — the malware dropper was created on January 3rd." You run <code>blkid</code> on the image and confirm it is an XFS file system. What is the most important correction you need to make?
+        </p>
+        <ul class="kc-options" role="radiogroup" aria-labelledby="q3-stem">
+          <li>
+            <label>
+              <input type="radio" name="q3" value="a">
+              <span>XFS uses a different inode format — your colleague should have used <code>xfs_db</code> instead of <code>debugfs</code> to retrieve timestamps, but the creation time is still valid.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q3" value="b">
+              <span>XFS does not store a file creation time (crtime). Your colleague likely misread the ctime (inode change time) as a creation time. The January 3rd date reflects when the inode metadata last changed, not when the file was created.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q3" value="c">
+              <span>XFS timestamps are stored in local time, not UTC — the January 3rd date needs to be adjusted for the server's time zone before it is meaningful.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q3" value="d">
+              <span>The Sleuth Kit does not support XFS, so all timestamp data from that image is unreliable and should be discarded.</span>
+            </label>
+          </li>
+        </ul>
+        <button class="kc-btn" onclick="checkAnswer(3,'b',this)" aria-label="Check answer for question 3">Check Answer</button>
+        <div class="kc-feedback" id="q3-feedback" role="alert" aria-live="polite"></div>
+      </div>
+
+    </div><!-- /.kc-section -->
+  </section>
+
+  <!-- MODULE SUMMARY -->
+  <section class="section" aria-labelledby="summary-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">📌</div>
+      <h2 id="summary-heading">Module 9.2 Summary</h2>
+    </div>
+    <p>You have completed the Linux file system forensics module. Here is what you should now be able to explain and apply:</p>
+    <ul>
+      <li><strong>ext2/3/4 architecture</strong> — superblock, block groups, inode tables, block bitmaps, and the forensic significance of each component</li>
+      <li><strong>Journaling modes</strong> — journal, ordered, and writeback; why the journal is a source of deleted file metadata and timeline evidence</li>
+      <li><strong>XFS vs. ext4</strong> — key structural differences; why XFS lacks crtime and what that means for your forensic report</li>
+      <li><strong>The four Linux timestamps</strong> — atime, mtime, ctime, crtime — what each records, what updates it, and how to access crtime via <code>debugfs</code> or <code>istat</code></li>
+      <li><strong>noatime and relatime</strong> — why atime is unreliable on most production servers and how to verify mount options before interpreting access times</li>
+      <li><strong>Timestomping detection</strong> — how the crtime/ctime vs. mtime pattern exposes backdated files</li>
+      <li><strong>The unlink() process</strong> — what deletion actually does and does not do to inode and block data</li>
+      <li><strong>TSK workflow</strong> — <code>fls</code> to find deleted entries → <code>istat</code> to examine inode state → <code>icat</code> to extract content when block pointers survive</li>
+      <li><strong>File carving fallback</strong> — using Scalpel or Foremost when ext4 block pointers have been cleared</li>
+    </ul>
+    <div class="callout callout--success">
+      <p class="callout__label">▶ What's Next</p>
+      <p><strong>Module 9.3 – Linux User Artifacts</strong> builds directly on this foundation: you will use the file system knowledge and TSK skills from this module to examine shell history files, SSH authorized keys, and <code>.bashrc</code> persistence — all artifacts that live within the ext4 structures you now understand. Ensure you have completed both Module 9.1 and this module before proceeding.</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="page-footer" role="contentinfo">
+  <p><strong>CSC 156 – Digital Forensics Fundamentals</strong> &nbsp;|&nbsp; Week 9, Module 9.2 &nbsp;|&nbsp; Spring 2026</p>
+  <p style="margin-top:.3rem;">This page is for instructional use only. Content is ungraded unless otherwise noted in the course gradebook.</p>
+</footer>
+
+<script>
+/* ── TABS ──────────────────────────────────────────────────── */
+(function () {
+  var tabGroups = document.querySelectorAll('.tabs');
+  tabGroups.forEach(function (group) {
+    var btns   = group.querySelectorAll('.tabs__btn');
+    var panels = group.querySelectorAll('.tabs__panel');
+
+    btns.forEach(function (btn, i) {
+      btn.addEventListener('click', function () {
+        btns.forEach(function (b) { b.setAttribute('aria-selected', 'false'); });
+        panels.forEach(function (p) { p.classList.remove('is-active'); });
+        btn.setAttribute('aria-selected', 'true');
+        panels[i].classList.add('is-active');
+      });
+      btn.addEventListener('keydown', function (e) {
+        var idx = Array.prototype.indexOf.call(btns, btn);
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          btns[(idx + 1) % btns.length].click();
+          btns[(idx + 1) % btns.length].focus();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          btns[(idx - 1 + btns.length) % btns.length].click();
+          btns[(idx - 1 + btns.length) % btns.length].focus();
+        }
+      });
+    });
+  });
+})();
+
+/* ── ACCORDION ─────────────────────────────────────────────── */
+(function () {
+  document.querySelectorAll('.accordion__trigger').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var expanded = this.getAttribute('aria-expanded') === 'true';
+      var panel    = document.getElementById(this.getAttribute('aria-controls'));
+      if (!panel) return;
+      this.setAttribute('aria-expanded', String(!expanded));
+      panel.classList.toggle('is-open', !expanded);
+    });
+    btn.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.click(); }
+    });
+  });
+})();
+
+/* ── KNOWLEDGE CHECK ───────────────────────────────────────── */
+var kcFeedback = {
+  1: {
+    b: {
+      correct: true,
+      verdict: '✅ Correct!',
+      text: 'This is a textbook <strong>timestomping</strong> pattern. The crtime (2026-03-08) is the authoritative creation time on ext4 — it cannot be changed by a normal user after the file is created. The mtime (2025-11-15) was almost certainly backdated using <code>touch -m</code> to make the file appear to predate the compromise. The ctime (2026-03-08) matches crtime because the inode was last changed when the file was created — and ctime cannot be set manually by a regular user, only by the kernel. The mtime/crtime discrepancy is the red flag. Always compare mtime against crtime on ext4 to detect backdating.'
+    },
+    a: {
+      correct: false,
+      verdict: '❌ Incorrect.',
+      text: 'If a routine system process had legitimately updated the file on 2026-03-08, you would expect ctime to update (which it did) but you would also expect crtime to reflect the original creation date — not 2026-03-08. Since crtime is 2026-03-08 and equals ctime, the file was <em>created</em> on that date. The mtime predating the crtime is only possible if someone deliberately set it backward after creation. This is not a routine system behavior.'
+    },
+    c: {
+      correct: false,
+      verdict: '❌ Incorrect — this reflects a critical misunderstanding of ctime.',
+      text: 'ctime is the inode <strong>change</strong> time, not the creation time. It records when the inode metadata was last modified — it does not indicate when the file was created. On ext4, the creation time is <strong>crtime</strong>. A mtime that is older than the crtime is physically impossible under normal circumstances (you cannot modify content before the file exists) and is a strong indicator of timestamp manipulation. Never report ctime as "file created" in a forensic report.'
+    },
+    d: {
+      correct: false,
+      verdict: '❌ Incorrect.',
+      text: 'This timestamp pattern is not a file system error — it is a recognizable and meaningful forensic artifact. Inconsistency between mtime and crtime (where mtime predates crtime) is a well-documented indicator of timestomping. File system errors produce different symptoms (checksum failures, unreadable blocks, fsck errors). The correct response is to document and investigate the anomaly, not to re-acquire the image.'
+    }
+  },
+  2: {
+    c: {
+      correct: true,
+      verdict: '✅ Correct!',
+      text: 'When ext4 clears inode block pointers at deletion time, <code>icat</code> has nothing to follow — it cannot recover content without block pointers. However, <strong>the data blocks themselves may still be on disk</strong>, unmarked but not yet overwritten. File carving tools like Scalpel and Foremost scan the raw image for known file signatures (in this case, shell script headers like <code>#!/bin/</code>) in unallocated space and can extract matching byte sequences without needing inode metadata. This is exactly the scenario where carving is the correct fallback. Configure Scalpel with shell script signatures and run it against the image or extracted unallocated space.'
+    },
+    a: {
+      correct: false,
+      verdict: '❌ Incorrect.',
+      text: '<code>icat</code> works by following the block pointers stored in the inode. If those pointers have been cleared (as indicated by no block pointers in the <code>istat</code> output), <code>icat</code> will return empty output — it has no information about where the file\'s data was stored. This is one of the key differences between ext4 and ext3 deleted file recovery. On ext3, icat would likely succeed here; on ext4, you must fall back to carving.'
+    },
+    b: {
+      correct: false,
+      verdict: '❌ Incorrect — do not give up yet.',
+      text: 'While metadata-based recovery (via icat) is no longer possible once block pointers are cleared, the <strong>data blocks themselves are not erased</strong> by the deletion process. They are simply marked as available for reuse in the block bitmap. Unless those blocks have been overwritten by subsequent writes, the content of <code>update.sh</code> is still physically present on the disk. File carving can recover it by searching for shell script signatures in unallocated space.'
+    },
+    d: {
+      correct: false,
+      verdict: '❌ Incorrect.',
+      text: 'The <code>-r</code> flag in <code>fls</code> means recursive directory traversal — it does not rebuild or restore block pointers. Block pointers are stored in the inode structure on disk; they cannot be reconstructed from the directory tree. Once an ext4 inode\'s block pointers are cleared, they are gone from the metadata layer. The correct recovery path is file carving from unallocated space.'
+    }
+  },
+  3: {
+    b: {
+      correct: true,
+      verdict: '✅ Correct!',
+      text: '<strong>XFS does not store a file creation time (crtime).</strong> This is one of the most important XFS-specific forensic limitations. On an XFS volume, the available timestamps are atime, mtime, and ctime — and ctime is the inode <em>change</em> time, not the creation time. Your colleague almost certainly looked at ctime and reported it as a creation time, which is a significant error. The January 3rd date tells you when the inode metadata was last changed — which could be the date of creation, but could also be the date of a permission change, ownership modification, or any other metadata update. This limitation must be explicitly noted in any forensic report involving XFS volumes.'
+    },
+    a: {
+      correct: false,
+      verdict: '❌ Partially correct reasoning, but the conclusion is wrong.',
+      text: 'You are right that <code>xfs_db</code> is the native XFS tool (analogous to <code>debugfs</code> for ext4) and that The Sleuth Kit\'s <code>istat</code> also supports XFS. However, the conclusion — that a creation time is "still valid" — is incorrect. <strong>XFS does not store crtime regardless of which tool you use.</strong> No tool can retrieve a timestamp that was never recorded. The correct tool choice is a secondary concern; the primary issue is that XFS fundamentally lacks creation time storage.'
+    },
+    c: {
+      correct: false,
+      verdict: '❌ Incorrect.',
+      text: 'Linux timestamps, including those on XFS, are stored as UTC Unix epoch values in the inode. They are not stored in local time. While you should always confirm the server\'s time zone when building a timeline (to correlate timestamps with local events), the raw timestamp values themselves are UTC and do not require time zone adjustment to be technically valid. The real problem here is not time zone conversion — it is that XFS does not store crtime at all.'
+    },
+    d: {
+      correct: false,
+      verdict: '❌ Incorrect.',
+      text: 'The Sleuth Kit does support XFS — use the <code>-f xfs</code> flag with <code>fls</code>, <code>istat</code>, <code>icat</code>, and other TSK commands. TSK timestamp data from XFS images is reliable. The issue is not tool support — it is that XFS simply does not have a crtime field in its inode structure. The timestamps TSK returns (atime, mtime, ctime) are valid; the limitation is that none of them is a guaranteed file creation time.'
+    }
+  }
+};
+
+function checkAnswer(qNum, correctVal, btn) {
+  var selected   = document.querySelector('input[name="q' + qNum + '"]:checked');
+  var feedbackEl = document.getElementById('q' + qNum + '-feedback');
+
+  if (!selected) {
+    feedbackEl.className = 'kc-feedback kc-feedback--incorrect show';
+    feedbackEl.innerHTML = '<p class="kc-feedback__verdict">⚠️ Please select an answer first.</p>';
+    return;
+  }
+
+  var val       = selected.value;
+  var data      = kcFeedback[qNum][val];
+  var isCorrect = (val === correctVal);
+
+  feedbackEl.className = 'kc-feedback ' + (isCorrect ? 'kc-feedback--correct' : 'kc-feedback--incorrect') + ' show';
+  feedbackEl.innerHTML = '<p class="kc-feedback__verdict">' + data.verdict + '</p><p>' + data.text + '</p>';
+
+  document.querySelectorAll('input[name="q' + qNum + '"]').forEach(function (r) { r.disabled = true; });
+
+  btn.textContent = isCorrect ? '✅ Answered' : '🔄 Answered';
+  btn.disabled    = true;
+  btn.style.background = isCorrect ? 'var(--clr-success)' : '#8b1a1a';
+
+  feedbackEl.setAttribute('tabindex', '-1');
+  feedbackEl.focus();
+}
+</script>
+</body>
+</html>

