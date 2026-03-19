@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CSC 156 – Lab Activity 9: Linux Forensic Investigation</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      line-height: 1.7;
+      font-size: 15px;
+    }
+    a { color: #58a6ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* HEADER */
+    header {
+      background: linear-gradient(135deg, #161b22 0%, #1f2d3d 100%);
+      border-bottom: 3px solid #238636;
+      padding: 28px 40px 22px;
+    }
+    .course-tag {
+      font-size: 11px; font-weight: 700; letter-spacing: 2px;
+      color: #3fb950; text-transform: uppercase; margin-bottom: 6px;
+    }
+    header h1 {
+      font-size: 1.75rem; color: #e6edf3;
+      font-weight: 700; margin-bottom: 8px;
+    }
+    .meta {
+      font-size: 12px; color: #8b949e;
+      display: flex; flex-wrap: wrap; gap: 18px;
+    }
+
+    /* NAV */
+    nav#phase-nav {
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      display: flex; flex-wrap: wrap;
+      padding: 0 40px; gap: 2px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    nav#phase-nav button {
+      background: transparent; border: none; color: #8b949e;
+      padding: 12px 14px; font-size: 13px; font-weight: 600;
+      cursor: pointer; border-bottom: 3px solid transparent;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    nav#phase-nav button:hover { color: #c9d1d9; }
+    nav#phase-nav button.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+
+    /* MAIN */
+    main { max-width: 1000px; margin: 0 auto; padding: 30px 40px 60px; }
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* CARDS */
+    .card {
+      background: #161b22; border: 1px solid #30363d;
+      border-radius: 8px; padding: 22px 26px; margin-bottom: 20px;
+    }
+    .card h2 {
+      font-size: 1.05rem; color: #e6edf3; margin-bottom: 14px;
+      padding-bottom: 10px; border-bottom: 1px solid #30363d;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card h3 { font-size: 0.95rem; color: #58a6ff; margin: 16px 0 8px; }
+    .card p { margin-bottom: 10px; color: #c9d1d9; }
+    .card ul, .card ol { padding-left: 22px; margin-bottom: 10px; }
+    .card li { margin-bottom: 6px; }
+
+    /* CALLOUTS */
+    .callout {
+      border-radius: 6px; padding: 14px 18px; margin: 14px 0;
+      font-size: 13.5px; border-left: 4px solid;
+    }
+    .callout-blue  { background: #0d1f36; border-color: #58a6ff; color: #aecbf5; }
+    .callout-green { background: #0d2618; border-color: #3fb950; color: #7ee787; }
+    .callout-amber { background: #2d1e00; border-color: #d29922; color: #e3b341; }
+    .callout-red   { background: #2a0d0d; border-color: #f85149; color: #ff7b72; }
+
+    /* CODE */
+    pre {
+      background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
+      padding: 14px 18px; overflow-x: auto; margin: 12px 0;
+      font-size: 13px; line-height: 1.6;
+    }
+    code { font-family: 'Consolas', 'Courier New', monospace; color: #e6edf3; }
+    .cmd     { color: #79c0ff; }
+    .comment { color: #6e7681; font-style: italic; }
+    .hi      { color: #ffa657; }
+    .path    { color: #7ee787; }
+
+    /* TABLES */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+    th {
+      background: #21262d; color: #8b949e; text-align: left;
+      padding: 8px 12px; border: 1px solid #30363d;
+      font-weight: 600; font-size: 11px;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    td { padding: 8px 12px; border: 1px solid #30363d; color: #c9d1d9; word-break: break-all; }
+    tr:nth-child(even) td { background: #0d1117; }
+    .pts { color: #3fb950; font-weight: 700; text-align: center; }
+
+    /* PHASE HEADER */
+    .phase-header {
+      background: linear-gradient(90deg, #1f2d3d, #161b22);
+      border: 1px solid #30363d; border-radius: 8px;
+      padding: 18px 24px; margin-bottom: 22px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .phase-badge {
+      background: #238636; color: #fff; font-size: 11px; font-weight: 700;
+      padding: 4px 12px; border-radius: 20px; white-space: nowrap;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .phase-title { font-size: 1.15rem; font-weight: 700; color: #e6edf3; }
+
+    /* TASK LIST */
+    .task-list { list-style: none; padding: 0; }
+    .task-list li {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid #21262d; font-size: 14px;
+    }
+    .task-list li:last-child { border-bottom: none; }
+    .task-num {
+      background: #21262d; color: #58a6ff; font-size: 11px; font-weight: 700;
+      min-width: 26px; height: 26px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+
+    /* QUESTION BLOCKS */
+    .question-block {
+      background: #0d1f36; border: 1px solid #1f3f6e;
+      border-radius: 6px; padding: 14px 18px; margin: 12px 0;
+    }
+    .q-label {
+      font-size: 11px; font-weight: 700; color: #388bfd;
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
+    }
+    .question-block p { color: #aecbf5; margin: 0; }
+
+    /* OBJECTIVES GRID */
+    .obj-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px; margin: 14px 0;
+    }
+    .obj-item {
+      background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
+      padding: 12px 16px; font-size: 13.5px;
+      display: flex; align-items: flex-start; gap: 10px;
+    }
+    .obj-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+
+    /* FINDINGS BOX */
+    .findings-box {
+      background: #0d1117; border: 1px dashed #30363d; border-radius: 6px;
+      padding: 16px 20px; margin: 12px 0; min-height: 70px;
+      color: #484f58; font-style: italic; font-size: 13px;
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center; padding: 24px; font-size: 11px;
+      color: #484f58; border-top: 1px solid #21262d;
+    }
+
+    @media (max-width: 640px) {
+      header { padding: 18px 18px 14px; }
+      main { padding: 20px 16px 40px; }
+      nav#phase-nav { padding: 0 8px; }
+      nav#phase-nav button { padding: 10px 9px; font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="course-tag">CSC 156 &mdash; Digital Forensics</div>
+  <h1>Lab Activity 9: Linux Forensic Investigation &amp; Log Analysis</h1>
+  <div class="meta">
+    <span>&#128203; Honeynet Project &ndash; Forensic Challenge 7</span>
+    <span>&#128190; Image: victoria-v8.sda1.img</span>
+    <span>&#9881; Tools: Autopsy &bull; Sleuth Kit &bull; Linux CLI</span>
+    <span>&#127891; Skill Level: Beginner / Intermediate</span>
+  </div>
+</header>
+
+<!-- NAV TABS -->
+<nav id="phase-nav">
+  <button class="active" onclick="showSection('overview')">&#127968; Overview</button>
+  <button onclick="showSection('phase1')">&#128190; Phase 1 &ndash; Image &amp; Mount</button>
+  <button onclick="showSection('phase2')">&#128100; Phase 2 &ndash; Users &amp; Accounts</button>
+  <button onclick="showSection('phase3')">&#128196; Phase 3 &ndash; Shell History</button>
+  <button onclick="showSection('phase4')">&#128202; Phase 4 &ndash; Log Analysis</button>
+  <button onclick="showSection('phase5')">&#128274; Phase 5 &ndash; Persistence</button>
+  <button onclick="showSection('findings')">&#128221; Findings &amp; Report</button>
+  <button onclick="showSection('rubric')">&#9989; Rubric</button>
+</nav>
+
+<main>
+
+<!-- ══════════════════════════════════════════════
+     OVERVIEW
+══════════════════════════════════════════════ -->
+<section id="overview" class="section active">
+
+  <div class="card">
+    <h2>&#128203; Investigative Scenario</h2>
+    <p>
+      A Linux server known internally as <strong>victoria-v8</strong> was flagged by network
+      monitoring as potentially compromised. The system was a publicly accessible server. After
+      the alert was raised, the machine was taken offline and a forensic image of its primary
+      partition (de>victoria-v8.sda1.img</code>) was captured using de>dd</code> for
+      offline analysis.
+    </p>
+    <p>
+      You have been assigned as the forensic analyst on this case. Your task is to mount the
+      disk image read-only, verify its integrity, and conduct a structured investigation to
+      determine: how the attacker gained access, what they did once inside, what tools or files
+      they introduced, and what evidence of persistence or anti-forensics exists. All findings
+      must be supported by specific artifacts — file paths, log excerpts, and timestamps.
+    </p>
+    <div class="callout callout-amber">
+      <strong>&#9888; Scope Note:</strong> Two memory dump files also exist for this case
+      (de>victoria-v8.kcore.img</code> and de>victoria-v8.memdump.img</code>). Memory
+      forensics is covered in a later unit. This lab focuses exclusively on the disk partition
+      image de>victoria-v8.sda1.img</code>.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#127760; Image Source &amp; Attribution</h2>
+    <p>
+      This lab uses a real-world forensic dataset provided by the <strong>Honeynet Project</strong>
+      as part of their publicly available Forensic Challenge 7 (2011). The challenge was contributed
+      by Guillaume Arcas (French Honeynet Chapter), Hugo Gonzalez (Mexican Honeynet Chapter),
+      and Julia Cheng (Taiwan Honeynet Chapter).
+    </p>
+    <p>
+      Challenge page:
+      <a href="https://www.honeynet.org/challenges/forensic-challenge-7-analysis-of-a-compromised-server/"
+         target="_blank">honeynet.org &mdash; Forensic Challenge 7</a>
+    </p>
+    <h3>Download</h3>
+    <p>Download only <strong>victoria-v8.sda1.img.zip</strong> for this lab. Verify hashes before use:</p>
+    <table>
+      <tr><th>File</th><th>MD5</th><th>SHA1</th></tr>
+      <tr>
+        <td>victoria-v8.sda1.img.zip</td>
+        <td>cba614f59020ce8910346cc43056692f</td>
+        <td>cddc70ca67db4f3cfca4d48c755c43bb286738c3</td>
+      </tr>
+    </table>
+    <div class="callout callout-blue">
+      <strong>&#128161; Tip:</strong> Verify the ZIP hash before extracting. After extraction,
+      also record the hash of the raw de>.img</code> file — that becomes your Phase 1 evidence hash.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#127919; Learning Objectives</h2>
+    <div class="obj-grid">
+      <div class="obj-item"><span class="obj-icon">&#128190;</span>Mount a Linux forensic disk image read-only and verify integrity using MD5 and SHA1.</div>
+      <div class="obj-item"><span class="obj-icon">&#128100;</span>Enumerate user accounts and identify suspicious accounts, UIDs, and shell assignments.</div>
+      <div class="obj-item"><span class="obj-icon">&#128196;</span>Recover and interpret shell history files to reconstruct attacker commands and intent.</div>
+      <div class="obj-item"><span class="obj-icon">&#128202;</span>Parse authentication and service logs to identify brute-force attempts and successful logins.</div>
+      <div class="obj-item"><span class="obj-icon">&#128274;</span>Identify attacker persistence mechanisms including cron jobs, SSH keys, and modified binaries.</div>
+      <div class="obj-item"><span class="obj-icon">&#128221;</span>Produce a written incident narrative supported by specific artifact evidence and timestamps.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#9881; Required Tools</h2>
+    <ul>
+      ><strong>Autopsy</strong> (v4.x) — primary GUI forensic browser for navigating the image</li>
+      ><strong>Sleuth Kit</strong> (de>mmls</code>, de>fsstat</code>, de>fls</code>, de>icat</code>) — command-line image analysis</li>
+      ><strong>Linux CLI</strong> — de>mount</code>, de>md5sum</code>, de>sha1sum</code>, de>strings</code>, de>grep</code>, de>last</code>, de>lastb</code></li>
+      ><strong>Text editor</strong> — for documenting findings as you work</li>
+    </ul>
+    <div class="callout callout-green">
+      <strong>&#128161; Workflow tip:</strong> Open Autopsy for visual browsing and file recovery,
+      and keep a terminal open alongside it for targeted CLI commands. Document every artifact
+      as you find it — do not rely on memory at report-writing time.
+    </div>
+  </div>
+
+</section><!-- end overview -->
+
+
+<!-- ══════════════════════════════════════════════
+     PHASE 1 — IMAGE ACQUISITION & MOUNT
+══════════════════════════════════════════════ -->
+<section id="phase1" class="section">
+
+  <div class="phase-header">
+    <span class="phase-badge">Phase 1</span>
+    <span class="phase-title">Image Acquisition, Integrity Verification &amp; Mount</span>
+  </div>
+
+  <div class="card">
+    <h2>&#128203; Objective</h2>
+    <p>
+      Before any analysis begins, you must establish the integrity of the forensic evidence.
+      This phase covers downloading the image, verifying its cryptographic hashes, examining
+      the partition structure, and mounting the filesystem read-only so that no accidental
+      writes can occur.
+    </p>
+    <div class="callout callout-red">
+      <strong>&#128683; Evidence Integrity Rule:</strong> Never mount a forensic image
+      read-write. Always use the de>ro</code> (read-only) flag. If you accidentally mount
+      read-write, the image is considered potentially contaminated and must be re-downloaded.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128290; Step 1 — Verify the ZIP Hash</h2>
+    <p>Before extracting, confirm the ZIP file matches the published hash:</p>
+<pre>de><span class="comment"># On Linux / WSL</span>
+<span class="cmd">md5sum</span>    victoria-v8.sda1.img.zip
+<span class="cmd">sha1sum</span>   victoria-v8.sda1.img.zip
+
+<span class="comment"># On Windows PowerShell</span>
+<span class="cmd">Get-FileHash</span> victoria-v8.sda1.img.zip -Algorithm MD5
+<span class="cmd">Get-FileHash</span> victoria-v8.sda1.img.zip -Algorithm SHA1</code></pre>
+    <p>Expected values:</p>
+    <table>
+      <tr><th>Algorithm</th><th>Expected Hash</th></tr>
+      <tr><td>MD5</td><td>cba614f59020ce8910346cc43056692f</td></tr>
+      <tr><td>SHA1</td><td>cddc70ca67db4f3cfca4d48c755c43bb286738c3</td></tr>
+    </table>
+    <div class="callout callout-amber">
+      <strong>&#9888; If hashes do not match:</strong> Do not proceed. Re-download the file.
+      A hash mismatch means the file is corrupt or has been altered.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128190; Step 2 — Extract and Hash the Raw Image</h2>
+    <p>After confirming the ZIP hash, extract the image and record the hash of the raw de>.img</code> file:</p>
+<pre>de><span class="cmd">unzip</span> victoria-v8.sda1.img.zip
+<span class="cmd">md5sum</span>  victoria-v8.sda1.img
+<span class="cmd">sha1sum</span> victoria-v8.sda1.img</code></pre>
+    <p>
+      Record both hash values in your lab report. These become the <strong>evidence hashes</strong>
+      you will reference throughout the investigation to prove the image was not modified
+      during analysis.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>&#128269; Step 3 — Examine Partition Structure</h2>
+    <p>Use Sleuth Kit's de>mmls</code> to view the partition layout:</p>
+<pre>de><span class="cmd">mmls</span> victoria-v8.sda1.img</code></pre>
+    <p>
+      Note the partition start offset (in sectors), partition type, and size. You will need the
+      start offset to mount the correct filesystem. Also run de>fsstat</code> to identify
+      the filesystem type:
+    </p>
+<pre>de><span class="cmd">fsstat</span> victoria-v8.sda1.img</code></pre>
+    <div class="question-block">
+      <div class="q-label">&#128203; Document &amp; Answer</div>
+      <p>What is the partition layout? What filesystem type is present? What OS and distribution
+      does de>fsstat</code> or the image metadata suggest?</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128274; Step 4 — Mount the Image Read-Only</h2>
+    <p>Create a mount point and mount the image read-only with no execution permissions:</p>
+<pre>de><span class="cmd">sudo mkdir</span> /mnt/victoria
+<span class="cmd">sudo mount</span> -o ro,loop,nodev,noexec victoria-v8.sda1.img /mnt/victoria</code></pre>
+    <p>Confirm the mount is read-only:</p>
+<pre>de><span class="cmd">mount</span> | grep victoria
+<span class="comment"># Should show: ro (read-only)</span></code></pre>
+    <div class="callout callout-green">
+      <strong>&#10003; Alternatively in Autopsy:</strong> Add the image as a new Data Source
+      in Autopsy. Autopsy always accesses images read-only. Use Autopsy for browsing the
+      directory tree and extracting files, and the CLI mount for running commands like
+      de>last</code>, de>grep</code>, and log parsing.
+    </div>
+    <div class="question-block">
+      <div class="q-label">&#128203; Document &amp; Answer</div>
+      <p>Provide a screenshot or terminal output confirming the image is mounted read-only.
+      Record the mount path you will use for all subsequent phases.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#9989; Phase 1 Checklist</h2>
+    <ul class="task-list">
+      ><span class="task-num">1</span>ZIP file MD5 and SHA1 verified and match published values.</li>
+      ><span class="task-num">2</span>Raw de>.img</code> file MD5 and SHA1 recorded as evidence hashes.</li>
+      ><span class="task-num">3</span>Partition structure documented using de>mmls</code>.</li>
+      ><span class="task-num">4</span>Filesystem type and OS identified using de>fsstat</code>.</li>
+      ><span class="task-num">5</span>Image mounted read-only (or loaded in Autopsy) and confirmed.</li>
+    </ul>
+  </div>
+
+</section><!-- end phase1 -->
+<!-- ══════════════════════════════════════════════
+     PHASE 2 — USER ACCOUNTS & AUTHENTICATION
+══════════════════════════════════════════════ -->
+<section id="phase2" class="section">
+
+  <div class="phase-header">
+    <span class="phase-badge">Phase 2</span>
+    <span class="phase-title">User Accounts &amp; Authentication Files</span>
+  </div>
+
+  <div class="card">
+    <h2>&#128203; Objective</h2>
+    <p>
+      Examine all user account-related files on the compromised server. Identify which accounts
+      exist, which are suspicious, which service or account triggered the initial alert, and
+      whether any accounts show signs of attacker creation or modification. Document every
+      non-system account with supporting evidence.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>&#128100; Step 1 — Enumerate /etc/passwd</h2>
+    <p>View all user accounts defined on the system:</p>
+<pre>de><span class="cmd">cat</span> /mnt/victoria/etc/passwd</code></pre>
+    <p>Each entry follows this format:</p>
+<pre>de><span class="hi">username</span>:x:<span class="hi">UID</span>:<span class="hi">GID</span>:comment:<span class="path">/home/dir</span>:<span class="cmd">/bin/shell</span></code></pre>
+    <p>Flag any account where:</p>
+    <ul>
+      >UID is 0 (root-level privilege) but the username is not de>root</code></li>
+      >Shell is de>/bin/bash</code> or de>/bin/sh</code> for a non-human account</li>
+      >Home directory is unusual (e.g., de>/tmp</code>, de>/var/tmp</code>)</li>
+      >Username looks generic, random, or out of place for the server role</li>
+    </ul>
+    <div class="question-block">
+      <div class="q-label">&#128203; Document &amp; Answer</div>
+      <p>List all non-system accounts (UID &ge; 1000 or any with de>/bin/bash</code> shell).
+      Flag any that appear suspicious and explain why.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128274; Step 2 — Examine /etc/shadow</h2>
+    <p>Check password hashes and account status:</p>
+<pre>de><span class="cmd">cat</span> /mnt/victoria/etc/shadow</code></pre>
+    <p>Look for:</p>
+    <ul>
+      >Accounts with a valid password hash (not de>*</code> or de>!</code>) that should be service accounts</li>
+      >Recently changed passwords — the third field is days since Jan 1, 1970</li>
+      >Accounts with no password expiry configured</li>
+    </ul>
+    <div class="question-block">
+      <div class="q-label">&#128203; Document &amp; Answer</div>
+      <p>Are there accounts in de>/etc/shadow</code> with active password hashes that should
+      not have them? Note password change dates for all flagged accounts.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128101; Step 3 — Check /etc/group and /etc/sudoers</h2>
+    <p>Identify group memberships and sudo privileges:</p>
+<pre>de><span class="cmd">cat</span> /mnt/victoria/etc/group
+<span class="cmd">cat</span> /mnt/victoria/etc/sudoers
+<span class="cmd">ls -la</span> /mnt/victoria/etc/sudoers.d/</code></pre>
+    <p>Look for unexpected accounts added to de>wheel</code>, de>sudo</code>,
+    or de>admin</code> groups.</p>
+    <div class="question-block">
+      <div class="q-label">&#128203; Document &amp; Answer</div>
+      <p>Which accounts have sudo or elevated group membership? Were any unexpected accounts
+      added to privileged groups?</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128272; Step 4 — Review SSH Authorized Keys</h2>
+    <p>Check all user home directories for planted SSH keys:</p>
+<pre>de><span class="cmd">find</span> /mnt/victoria/home /mnt/victoria/root \
+  -name "authorized_keys" 2>/dev/null | \
+  <span class="cmd">xargs</span> -I{} sh -c 'echo "=== {} ===" &amp;&amp; cat {}'</code></pre>
+    <div class="question-block">
+      <div class="q-label">&#128203; Document &amp; Answer</div>
+      <p>Were any SSH authorized keys found? Record the key type, comment field, and which
+      user account they belong to. Could these be attacker-planted backdoor keys?</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#9989; Phase 2 Checklist</h2>
+    <ul class="task-list">
+      ><span class="task-num">1</span>All accounts in de>/etc/passwd</code> enumerated; suspicious ones flagged with reasoning.</li>
+      ><span class="task-num">2</span>de>/etc/shadow</code> reviewed for active hashes on unexpected accounts.</li>
+      ><span class="task-num">3</span>Group memberships and sudo privileges reviewed and documented.</li>
+      ><span class="task-num">4</span>All de>authorized_keys</code> files located and contents recorded.</li>
+    </ul>
+  </div>
+
+</section><!-- end phase2 -->
+
+
+<!-- ══════════════════════════════════════════════
+     PHASE 3 — SHELL HISTORY & USER ACTIVITY
+══════════════════════════════════════════════ -->
+<section id="phase3" class="section">
+
+  <div class="phase-header">
+    <span class="phase-badge">Phase 3</span>
+    <span class="phase-title">Shell History &amp; User Activity Artifacts</span>
+  </div>
+
+  <div class="card">
+    <h2>&#128203; Objective</h2>
+    <p>
+      Shell history files are among the most valuable artifacts in a Linux compromise investigation.
+      They record commands typed by users and attackers, revealing tools downloaded, reconnaissance
+      performed, files modified, and anti-forensic activity. This phase examines bash history and
+      related shell startup files for all relevant accounts.
+    </p>
+    <div class="callout callout-amber">
+      <strong>&#9888; Anti-Forensics Awareness:</strong> Sophisticated attackers sometimes clear
+      history with de>history -c</code>, set de>HISTSIZE=0</code>, or redirect history to
+      de>/dev/null</code>. The absence of history is itself a finding worth documenting.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128196; Step 1 — Locate All History Files</h2>
+    <p>Find all shell history files on the system:</p>
+<pre>de><span class="cmd">find</span> /mnt/victoria -name ".*history" -type f 2>/dev/null
+<span class="cmd">cat</span>  /mnt/victoria/root/.bash_history
+<span class="cmd">ls -la</span> /mnt/victoria/root/
+<span class="cmd">ls -la</span> /mnt/victoria/home/
+<span class="cmd">cat</span>  /mnt/victoria/home/<span class="hi">[username]</span>/.bash_history</code></pre>
+    <div class="question-block">
+      <div class="q-label">&#128203; Document &amp; Answer</div>
+      <p>List every history file found, its path, owner, size, and last-modified timestamp.
+      If a history file is missing, empty, or symlinked to de>/dev/null</code>,
+      document that as a potential anti-forensic indicator.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128270; Step 2 — Analyze Command History</h2>
+    <p>Carefully review the contents of each history file. Look for evidence of:</p>
+    <ul>
+      ><strong>Reconnaissance:</strong> de>uname -a</code>, de>id</code>, de>whoami</code>, de>cat /etc/passwd</code>, network scans</li>
+      ><strong>Privilege escalation:</strong> de>sudo su</code>, de>su -</code>, exploit execution</li>
+      ><strong>File downloads:</strong> de>wget</code>, de>curl</code>, de>ftp</code> — note full URLs</li>
+      ><strong>Tool installation:</strong> de>gcc</code> compile commands, de>chmod +x</code>, package installs</li>
+      ><strong>Anti-forensics:</strong> de>rm -rf</code> on log files, de>history -c</code>, log tampering</li>
+      ><strong>Persistence setup:</strong> crontab edits, service installs, SSH key additions</li>
+    </ul>
+    <div class="question-block">
+      <div class="q-label">&#128203; Document &amp; Answer</div>
+      <p>List every significant command found. Group by category: reconnaissance, escalation,
+      downloads, persistence, anti-forensics. What tools did the attacker use? Were any
+      files downloaded — if so, record the full URLs or filenames.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128196; Step 3 — Review Shell Startup Files</h2>
+    <p>Check shell startup and profile files for injected commands:</p>
+<pre>de><span class="cmd">cat</span> /mnt/victoria/root/.bashrc
+<span class="cmd">cat</span> /mnt/victoria/root/.bash_profile
+<span class="cmd">cat</span> /mnt/victoria/root/.profile
+<span class="cmd">cat</span> /mnt/victoria/home/<span class="hi">[username]</span>/.bashrc</code></pre>
+    <p>Look for unusual de>PATH</code> modifications, aliases that shadow system commands,
+    or commands that execute automatically on login.</p>
+    <div class="question-block">
+      <div class="q-label">&#128203; Document &amp; Answer</div>
+      <p>Were any shell startup files modified? Document any unusual aliases, PATH changes,
+      or auto-executed commands found.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128269; Step 4 — Check for Dropped Files</h2>
+    <p>Based on history findings, look for files the attacker may have left behind:</p>
+<pre>de><span class="cmd">ls -la</span> /mnt/victoria/tmp/
+<span class="cmd">ls -la</span> /mnt/victoria/var/tmp/
+<span class="cmd">ls -la</span> /mnt/victoria/dev/shm/ 2>/dev/null
+<span class="comment"># Recently modified files</span>
+<span class="cmd">find</span> /mnt/victoria -newer /mnt/victoria/etc/passwd \
+  -not -path "*/proc/*" -type f 2>/dev/null | head -40</code></pre>
+    <div class="question-block">
+      <div class="q-label">&#128203; Document &amp; Answer</div>
+      <p>Were any attacker-dropped files found? For each: record full path, size, permissions,
+      timestamps. Use de>file</code> or de>strings</code> to identify what each file is.
+      What do these files suggest about the attacker's goals or capabilities?</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#9989; Phase 3 Checklist</h2>
+    <ul class="task-list">
+      ><span class="task-num">1</span>All shell history files located; paths, sizes, and timestamps recorded.</li>
+      ><span class="task-num">2</span>History contents analyzed and commands categorized by type.</li>
+      ><span class="task-num">3</span>Shell startup files reviewed for injected commands or PATH manipulation.</li>
+      ><span class="task-num">4</span>Attacker-dropped files in staging directories identified and analyzed.</li>
+      ><span class="task-num">5</span>Anti-forensic indicators (missing/cleared history, deleted logs) documented.</li>
+    </ul>
+  </div>
+
+</section><!-- end phase3 -->
+<!-- ══════════════════════════════════════════════
+     PHASE 4 — LOG ANALYSIS
+══════════════════════════════════════════════ -->
+<section id="phase4" class="section">
+
+  <div class="phase-header">
+    <span class="phase-badge">Phase 4</span>
+    <span class="phase-title">Log Analysis &amp; Attack Timeline Reconstruction</span>
+  </div>
+
+  <div class="card">
+    <h2>&#128203; Objective</h2>
+    <p>
+      System logs are the primary record of what happened on the server and when. This phase
+      examines authentication logs, service logs, and login records to reconstruct the attack
+      timeline — identifying brute-force attempts, successful logins, privilege escalation,
+      and any evidence of log tampering or deletion.
+    </p>
+    <div class="callout callout-blue">
+      <strong>&#128161; Log Location Note:</strong> Debian/Ubuntu systems store authentication
+      events in de>/var/log/auth.log</code>. Red Hat/CentOS systems use
+      de>/var/log/secure</code>. Check which file exists on this image and adapt your
+      commands accordingly.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128202; Step 1 — Survey Available Logs</h2>
+    <p>First inventory what logs exist, their sizes, and modification timestamps:</p>
+<pre>de><span class="cmd">ls -lah</span> /mnt/victoria/var/log/
+<span class="comment"># Check for web server logs</span>
+<span class="cmd">ls -lah</span> /mnt/victoria/var/log/apache2/ 2>/dev/null
+<span class="cmd">ls -lah</span> /mnt/victoria/var/log/httpd/    2>/dev/null</code></pre>
+    <p>Pay close attention to:</p>
+    <ul>
+      >Log files with a size of <strong>0 bytes</strong> — may indicate deliberate truncation</li>
+      >Log files with <strong>unexpectedly recent</strong> modification times</li>
+      >Missing log files that should normally be present (e.g., no de>auth.log</code> at all)</li>
+      >Rotated logs (de>auth.log.1</code>, de>auth.log.2.gz</code>) that may predate tampering</li>
+    </ul>
+    <div class="question-block">
+      <div class="q-label">&#128203; Document &amp; Answer</div>
+      <p>List all log files found in de>/var/log/</code> with their sizes and timestamps.
+      Are any logs missing, empty, or suspiciously small? Document this as a potential
+      anti-forensic finding.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128272; Step 2 — Authentication Log Analysis</h2>
+    <p>Examine the primary authentication log for failed and successful login events:</p>
+<pre>de><span class="comment"># View the full auth log</span>
+<span class="cmd">cat</span> /mnt/victoria/var/log/auth.log
+
+<span class="comment"># Filter for failed SSH attempts (brute force)</span>
+<span class="cmd">grep</span> "Failed password" /mnt/victoria/var/log/auth.log | head -30
+
+<span class="comment"># Filter for successful logins</span>
+<span class="cmd">grep</span> "Accepted" /mnt/victoria/var/log/auth.log
+
+<span class="comment"># Check for invalid user attempts</span>
+<span class="cmd">grep</span> "Invalid user" /mnt/victoria/var/log/auth.log | head -20
+
+<span class="comment"># Count failed attempts per source IP</span>
+<span class="cmd">grep</span> "Failed password" /mnt/victoria/var/log/auth.log | \
+  <span class="cmd">awk</span> '{print $11}' | <span class="cmd">sort</span> | <span class="cmd">uniq -c</span> | <span class="cmd">sort -rn</span></code></pre>
+    <div class="question-block">
+      <div class="q-label">&#128203; Document &amp; Answer</div>
+      <p>What IP addresses attempted logins? How many failed attempts occurred and from
+      which IPs? Which accounts were targeted? Were any login attempts successful —
+      if so, record the username, source IP, and timestamp of the first successful login.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128100; Step 3 — Login Record Analysis (wtmp / btmp / lastlog)</h2>
+    <p>Use binary login record files to reconstruct who logged in and when:</p>
+<pre>de><span class="comment"># Successful logins (wtmp)</span>
+<span class="cmd">last</span> -f /mnt/victoria/var/log/wtmp
+
+<span class="comment"># Failed login attempts (btmp)</span>
+<span class="cmd">lastb</span> -f /mnt/victoria/var/log/btmp 2>/dev/null | head -30
+
+<span class="comment"># Last login per user (lastlog)</span>
+<span class="cmd">lastlog</span> --root /mnt/victoria</code></pre>
+    <div class="callout callout-amber">
+      <strong>&#9888; Compatibility Note:</strong> The de>last</code> and de>lastb</code>
+      commands may need to be run on a Linux system with a compatible de>utmp</code> format.
+      If you get garbled output, try running on a similar-vintage Linux VM or use Autopsy to
+      browse the raw file.
+    </div>
+    <div class="question-block">
+      <div class="q-label">&#128203; Document &amp; Answer</div>
+      <p>List all successful logins from de>wtmp</code>: username, source IP, login time,
+      and session duration. Cross-reference with de>auth.log</code> findings. Do the
+      records agree, or are there discrepancies that suggest log tampering?</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#127760; Step 4 — Service and Web Server Logs</h2>
+    <p>If a web server (Apache, nginx, or other) is installed, examine its access and error logs:</p>
+<pre>de><span class="comment"># Apache access log</span>
+<span class="cmd">cat</span> /mnt/victoria/var/log/apache2/access.log 2>/dev/null
+<span class="cmd">cat</span> /mnt/victoria/var/log/httpd/access_log   2>/dev/null
+
+<span class="comment"># Look for scanning, exploit attempts, or webshell activity</span>
+<span class="cmd">grep</span> -iE "(cmd=|exec|passthru|shell|wget|curl|base64)" \
+  /mnt/victoria/var/log/apache2/access.log 2>/dev/null
+
+<span class="comment"># Check installed services</span>
+<span class="cmd">ls</span> /mnt/victoria/etc/init.d/
+<span class="cmd">ls</span> /mnt/victoria/etc/xinetd.d/ 2>/dev/null</code></pre>
+    <div class="question-block">
+      <div class="q-label">&#128203; Document &amp; Answer</div>
+      <p>What services were running on the server? Are there web server logs present?
+      If so, do they show scanning, exploit attempts, or webshell requests?
+      What service was ultimately attacked?</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128197; Step 5 — Build the Attack Timeline</h2>
+    <p>
+      Using all log sources examined in this phase, construct a chronological timeline
+      of the attack. Your timeline should answer:
+    </p>
+    <ul>
+      >When did the first suspicious activity appear in logs?</li>
+      >When did the first successful unauthorized login occur?</li>
+      >What did the attacker do immediately after gaining access?</li>
+      >Were there multiple phases of the attack (initial access, escalation, persistence)?</li>
+      >When was the last recorded attacker activity?</li>
+    </ul>
+    <div class="question-block">
+      <div class="q-label">&#128203; Document &amp; Answer</div>
+      <p>Present your attack timeline as a table or numbered list with: timestamp, log source,
+      event description, and significance. Include at least 5 distinct timestamped events
+      that together tell the story of the compromise from first probe to last known activity.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#9989; Phase 4 Checklist</h2>
+    <ul class="task-list">
+      ><span class="task-num">1</span>All log files in de>/var/log/</code> inventoried with sizes and timestamps.</li>
+      ><span class="task-num">2</span>Auth log analyzed for failed attempts; source IPs and targeted accounts documented.</li>
+      ><span class="task-num">3</span>Successful logins identified with username, source IP, and timestamp.</li>
+      ><span class="task-num">4</span>de>wtmp</code> and de>btmp</code> records analyzed and cross-referenced with auth log.</li>
+      ><span class="task-num">5</span>Service and web server logs examined for exploit attempts.</li>
+      ><span class="task-num">6</span>Chronological attack timeline constructed with at least 5 timestamped events.</li>
+    </ul>
+  </div>
+
+</section><!-- end phase4 -->
+<!-- ══════════════════════════════════════════════
+     PHASE 5 — PERSISTENCE & ATTACKER FOOTPRINT
+══════════════════════════════════════════════ -->
+<section id="phase5" class="section">
+
+  <div class="phase-header">
+    <span class="phase-badge">Phase 5</span>
+    <span class="phase-title">Persistence Mechanisms &amp; Attacker Footprint</span>
+  </div>
+
+  <div class="card">
+    <h2>&#128203; Objective</h2>
+    <p>
+      After gaining access, attackers typically install persistence mechanisms to ensure
+      they can return even if the initial vulnerability is patched or the compromised
+      account's password is changed. This phase identifies what the attacker installed,
+      modified, or exploited to maintain long-term access, and assesses the overall
+      attacker footprint on the system.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>&#128197; Step 1 — Cron Jobs</h2>
+    <p>Check all cron directories and per-user crontabs for attacker-added scheduled tasks:</p>
+<pre>de><span class="comment"># System-wide cron</span>
+<span class="cmd">cat</span>  /mnt/victoria/etc/crontab
+<span class="cmd">ls -la</span> /mnt/victoria/etc/cron.d/
+<span class="cmd">ls -la</span> /mnt/victoria/etc/cron.daily/
+<span class="cmd">ls -la</span> /mnt/victoria/etc/cron.hourly/
+<span class="cmd">ls -la</span> /mnt/victoria/etc/cron.weekly/
+<span class="cmd">ls -la</span> /mnt/victoria/etc/cron.monthly/
+
+<span class="comment"># Per-user crontabs (stored in /var/spool/cron)</span>
+<span class="cmd">ls -la</span> /mnt/victoria/var/spool/cron/
+<span class="cmd">ls -la</span> /mnt/victoria/var/spool/cron/crontabs/ 2>/dev/null</code></pre>
+    <div class="question-block">
+      <div class="q-label">&#128203; Document &amp; Answer</div>
+      <p>Were any cron jobs found that were not part of the base OS installation? For each
+      suspicious entry: record the schedule, the command, and which user it runs as.
+      What would the cron job accomplish?</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#9881; Step 2 — Startup Services and Init Scripts</h2>
+    <p>Check for attacker-added services or modified init scripts:</p>
+<pre>de><span class="comment"># SysV init scripts</span>
+<span class="cmd">ls -la</span> /mnt/victoria/etc/init.d/
+<span class="cmd">ls -la</span> /mnt/victoria/etc/rc.local 2>/dev/null
+<span class="cmd">cat</span>  /mnt/victoria/etc/rc.local 2>/dev/null
+
+<span class="comment"># Check rc directories for enabled services</span>
+<span class="cmd">ls -la</span> /mnt/victoria/etc/rc2.d/
+<span class="cmd">ls -la</span> /mnt/victoria/etc/rc3.d/
+
+<span class="comment"># Systemd (if present)</span>
+<span class="cmd">ls -la</span> /mnt/victoria/etc/systemd/system/ 2>/dev/null
+<span class="cmd">ls -la</span> /mnt/victoria/lib/systemd/system/ 2>/dev/null</code></pre>
+    <div class="question-block">
+      <div class="q-label">&#128203; Document &amp; Answer</div>
+      <p>Are there any startup scripts or services that appear attacker-added or modified?
+      Document the script name, content summary, and what it would do at boot.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128272; Step 3 — SUID/SGID Binaries and Modified System Files</h2>
+    <p>Look for SUID binaries that could provide persistent privilege escalation:</p>
+<pre>de><span class="comment"># Find all SUID binaries</span>
+<span class="cmd">find</span> /mnt/victoria -perm -4000 -type f 2>/dev/null
+
+<span class="comment"># Find all SGID binaries</span>
+<span class="cmd">find</span> /mnt/victoria -perm -2000 -type f 2>/dev/null
+
+<span class="comment"># Look for world-writable files in sensitive locations</span>
+<span class="cmd">find</span> /mnt/victoria/etc /mnt/victoria/bin /mnt/victoria/sbin \
+  -perm -o+w -type f 2>/dev/null</code></pre>
+    <div class="question-block">
+      <div class="q-label">&#128203; Document &amp; Answer</div>
+      <p>List any SUID/SGID binaries that appear unusual or were not part of the standard
+      OS install. Were any system binaries replaced or modified? How would an attacker
+      use these for persistence or privilege escalation?</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128268; Step 4 — Rootkit and Trojanized Binary Indicators</h2>
+    <p>Check for signs that core system binaries may have been replaced:</p>
+<pre>de><span class="comment"># Check file sizes of common binaries against expected values</span>
+<span class="cmd">ls -la</span> /mnt/victoria/bin/ls
+<span class="cmd">ls -la</span> /mnt/victoria/bin/ps
+<span class="cmd">ls -la</span> /mnt/victoria/bin/netstat 2>/dev/null
+<span class="cmd">ls -la</span> /mnt/victoria/usr/bin/find
+<span class="cmd">ls -la</span> /mnt/victoria/sbin/ifconfig 2>/dev/null
+
+<span class="comment"># Look for hidden directories (names starting with . or spaces)</span>
+<span class="cmd">find</span> /mnt/victoria -maxdepth 4 -name ".*" -type d 2>/dev/null | \
+  grep -v "^/mnt/victoria/proc"
+
+<span class="comment"># Check /dev for unusual files (rootkits sometimes hide here)</span>
+<span class="cmd">find</span> /mnt/victoria/dev -type f 2>/dev/null</code></pre>
+    <div class="callout callout-red">
+      <strong>&#9888; Rootkit Warning:</strong> If system binaries like de>ps</code>,
+      de>ls</code>, or de>netstat</code> have been replaced by a rootkit, running
+      them on the live system would hide attacker processes. This is why offline forensic
+      analysis from a clean system is critical.
+    </div>
+    <div class="question-block">
+      <div class="q-label">&#128203; Document &amp; Answer</div>
+      <p>Were any signs of rootkit installation found — unusual files in de>/dev</code>,
+      hidden directories, or system binaries with unexpected sizes or timestamps?
+      Document all indicators found.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128161; Step 5 — Overall Attacker Assessment</h2>
+    <p>Based on all evidence gathered across Phases 1–5, answer the following:</p>
+    <div class="question-block">
+      <div class="q-label">&#128203; Document &amp; Answer</div>
+      <p><strong>a)</strong> What vulnerabilities or weaknesses did the attacker exploit to gain initial access?<br><br>
+         <strong>b)</strong> Were the attacks successful? Which succeeded and which (if any) failed?<br><br>
+         <strong>c)</strong> What did the attacker obtain or accomplish on this system?<br><br>
+         <strong>d)</strong> Based on the tools used, commands run, and methods employed — does the
+         attack appear automated (e.g., scripted brute-force, bot) or manual? Explain your reasoning.<br><br>
+         <strong>e)</strong> What could have prevented this compromise? List at least three
+         specific security controls.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#9989; Phase 5 Checklist</h2>
+    <ul class="task-list">
+      ><span class="task-num">1</span>All cron locations checked; any attacker-added jobs documented.</li>
+      ><span class="task-num">2</span>Init scripts and startup services reviewed for unauthorized entries.</li>
+      ><span class="task-num">3</span>SUID/SGID binaries enumerated; unusual ones flagged and explained.</li>
+      ><span class="task-num">4</span>Core system binaries checked for signs of replacement or tampering.</li>
+      ><span class="task-num">5</span>Hidden directories and unusual files in de>/dev</code> investigated.</li>
+      ><span class="task-num">6</span>Attacker assessment questions (a–e) answered with supporting evidence.</li>
+    </ul>
+  </div>
+
+</section><!-- end phase5 -->
+
+
+<!-- ══════════════════════════════════════════════
+     FINDINGS & REPORT
+══════════════════════════════════════════════ -->
+<section id="findings" class="section">
+
+  <div class="phase-header">
+    <span class="phase-badge">Findings</span>
+    <span class="phase-title">Incident Narrative &amp; Final Report</span>
+  </div>
+
+  <div class="card">
+    <h2>&#128221; Overview</h2>
+    <p>
+      Your final deliverable for this lab is a written incident narrative that synthesizes
+      all findings from Phases 1–5 into a coherent, evidence-backed account of what happened
+      on the <strong>victoria-v8</strong> server. This is the kind of report a forensic analyst
+      would deliver to management, legal counsel, or a security operations team.
+    </p>
+    <div class="callout callout-blue">
+      <strong>&#128161; Key Principle:</strong> Every conclusion in your report must be tied
+      to a specific artifact — a file path, a log entry, a timestamp, a command from history.
+      Unsupported assertions are not findings; they are speculation.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128196; Report Structure</h2>
+    <p>Your report should include the following sections. There is no strict length requirement —
+    focus on accuracy, clarity, and evidence. A thorough report will typically run 3–6 paragraphs
+    plus supporting tables or artifact excerpts.</p>
+
+    <h3>1. Case Summary</h3>
+    <p>One short paragraph: what system, what image, when it was acquired, and what tools you used.</p>
+
+    <h3>2. System Identification</h3>
+    <p>OS and distribution, kernel version, hostname, installed services. Cite the artifacts
+    (e.g., de>/etc/os-release</code>, de>/etc/hostname</code>, de>fsstat</code> output).</p>
+
+    <h3>3. Account Analysis Summary</h3>
+    <p>List all flagged accounts, their UIDs, and why they are suspicious. Include any
+    planted SSH keys or unauthorized sudo access found in Phase 2.</p>
+
+    <h3>4. Attack Narrative</h3>
+    <p>A chronological account of the attack from first probe to last known activity.
+    Use your Phase 4 timeline as the backbone. Incorporate relevant findings from
+    Phases 3 and 5 to fill in what the attacker did during the session.</p>
+
+    <h3>5. Persistence and Impact</h3>
+    <p>What did the attacker leave behind? What access would they retain after a reboot?
+    What data or capabilities did they gain? What is the overall impact to the system
+    and its users?</p>
+
+    <h3>6. Conclusions and Recommendations</h3>
+    <p>Was the attack automated or manual? What vulnerabilities were exploited?
+    What three or more specific controls would have prevented or detected this attack?</p>
+  </div>
+
+  <div class="card">
+    <h2>&#128202; Evidence Summary Table</h2>
+    <p>Complete this table as part of your submission. Add rows as needed.</p>
+    <table>
+      <tr>
+        <th>Phase</th>
+        <th>Artifact / File Path</th>
+        <th>Finding</th>
+        <th>Significance</th>
+      </tr>
+      <tr><td>1</td><td>de>victoria-v8.sda1.img</code></td><td>Hash verified</td><td>Image integrity confirmed</td></tr>
+      <tr><td>2</td><td>de>/etc/passwd</code></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>2</td><td>de>/etc/shadow</code></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>2</td><td>de>authorized_keys</code></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>3</td><td>de>.bash_history</code></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>3</td><td>Dropped files / de>/tmp</code></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>4</td><td>de>/var/log/auth.log</code></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>4</td><td>de>wtmp / btmp</code></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>5</td><td>Cron / init scripts</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>5</td><td>SUID binaries</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>&#128270; Attack Timeline Table</h2>
+    <p>Document your reconstructed timeline here. Add rows as needed.</p>
+    <table>
+      <tr>
+        <th>Timestamp</th>
+        <th>Log / Artifact Source</th>
+        <th>Event Description</th>
+        <th>Significance</th>
+      </tr>
+      <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr
+    </table>
+    </div>
+      <div class="card">
+    <h2>&#128270; Attack Timeline Table</h2>
+    <p>Document your reconstructed timeline here. Add rows as needed.</p>
+    <table>
+      <tr>
+        <th>Timestamp</th>
+        <th>Log / Artifact Source</th>
+        <th>Event Description</th>
+        <th>Significance</th>
+      </tr>
+      <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>&#128221; Written Incident Narrative</h2>
+    <p>
+      Write your full incident narrative below using the structure described above
+      (Case Summary, System Identification, Account Analysis, Attack Narrative,
+      Persistence and Impact, Conclusions and Recommendations). Your narrative
+      should stand alone as a professional forensic report — someone who did not
+      perform the analysis should be able to read it and understand exactly what
+      happened on this server.
+    </p>
+    <div class="callout callout-green">
+      <strong>&#128161; Writing Tips:</strong> Use past tense. Reference specific artifacts
+      in parentheses, e.g., "(auth.log, 2011-03-14 02:31:07)". Avoid vague language
+      like "possibly" or "maybe" — if the evidence supports a conclusion, state it
+      directly and cite the artifact. If evidence is ambiguous, say so explicitly
+      and explain both interpretations.
+    </div>
+    <div class="findings-box">
+      [ Write your incident narrative here. Replace this placeholder with your
+      completed report text before submission. ]
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>&#128203; Submission Checklist</h2>
+    <ul class="task-list">
+      ><span class="task-num">1</span>Phase 1–5 question responses completed with specific artifact citations.</li>
+      ><span class="task-num">2</span>Evidence Summary Table fully populated.</li>
+      ><span class="task-num">3</span>Attack Timeline Table contains at least 5 timestamped events.</li>
+      ><span class="task-num">4</span>Written incident narrative covers all 6 required sections.</li>
+      ><span class="task-num">5</span>All conclusions are tied to named artifacts with file paths or log excerpts.</li>
+      ><span class="task-num">6</span>At least 3 prevention recommendations provided with explanation.</li>
+    </ul>
+  </div>
+
+</section><!-- end findings -->
+
+
+<!-- ══════════════════════════════════════════════
+     RUBRIC
+══════════════════════════════════════════════ -->
+<section id="rubric" class="section">
+
+  <div class="phase-header">
+    <span class="phase-badge">Rubric</span>
+    <span class="phase-title">Grading Rubric &amp; Assessment Criteria</span>
+  </div>
+
+  <div class="card">
+    <h2>&#128202; Point Distribution Overview</h2>
+    <table>
+      <tr><th>Phase / Section</th><th>Description</th><th class="pts">Points</th></tr>
+      <tr><td>Phase 1 – Image &amp; Mount</td><td>Hash verification, partition structure, read-only mount confirmed</td><td class="pts">10</td></tr>
+      <tr><td>Phase 2 – Users &amp; Accounts</td><td>Account enumeration, suspicious accounts identified, SSH keys, sudo review</td><td class="pts">20</td></tr>
+      <tr><td>Phase 3 – Shell History</td><td>History files located, commands categorized, dropped files analyzed</td><td class="pts">20</td></tr>
+      <tr><td>Phase 4 – Log Analysis</td><td>Auth logs parsed, attack IPs identified, timeline with 5+ events</td><td class="pts">25</td></tr>
+      <tr><td>Phase 5 – Persistence</td><td>Cron, init, SUID, rootkit indicators; attacker assessment questions</td><td class="pts">15</td></tr>
+      <tr><td>Findings &amp; Report</td><td>Written narrative quality, evidence citations, recommendations</td><td class="pts">10</td></tr>
+      <tr><td colspan="2"><strong>Total</strong></td><td class="pts">100</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>&#128203; Phase 1 — Image &amp; Mount (10 pts)</h2>
+    <table>
+      <tr><th>Criteria</th><th class="pts">Points</th></tr>
+      <tr><td>ZIP file MD5 and SHA1 both verified and match published values; discrepancy handling explained</td><td class="pts">3</td></tr>
+      <tr><td>Raw de>.img</code> file hashes recorded and documented as evidence hashes</td><td class="pts">2</td></tr>
+      <tr><td>Partition structure documented using de>mmls</code> with correct interpretation</td><td class="pts">2</td></tr>
+      <tr><td>Filesystem type and OS identified; image confirmed mounted or loaded read-only</td><td class="pts">3</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>&#128100; Phase 2 — Users &amp; Accounts (20 pts)</h2>
+    <table>
+      <tr><th>Criteria</th><th class="pts">Points</th></tr>
+      <tr><td>All non-system accounts listed from de>/etc/passwd</code> with UIDs and shells</td><td class="pts">5</td></tr>
+      <tr><td>Suspicious accounts correctly identified with clear reasoning (UID anomalies, shell, home dir)</td><td class="pts">5</td></tr>
+      <tr><td>de>/etc/shadow</code> reviewed; unexpected active password hashes flagged with dates</td><td class="pts">4</td></tr>
+      <tr><td>Group memberships and sudo privileges reviewed; unauthorized elevated access documented</td><td class="pts">3</td></tr>
+      <tr><td>All de>authorized_keys</code> files located; contents recorded and assessed</td><td class="pts">3</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>&#128196; Phase 3 — Shell History (20 pts)</h2>
+    <table>
+      <tr><th>Criteria</th><th class="pts">Points</th></tr>
+      <tr><td>All history files located with path, owner, size, and timestamp documented</td><td class="pts">4</td></tr>
+      <tr><td>Commands correctly categorized (recon, escalation, downloads, persistence, anti-forensics)</td><td class="pts">6</td></tr>
+      <tr><td>Downloaded file URLs/names identified and files analyzed with de>file</code> or de>strings</code></td><td class="pts">5</td></tr>
+      <tr><td>Shell startup files reviewed; any injected commands or PATH manipulation documented</td><td class="pts">3</td></tr>
+      <tr><td>Anti-forensic indicators (absent/cleared history, deleted logs) identified and documented</td><td class="pts">2</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>&#128202; Phase 4 — Log Analysis (25 pts)</h2>
+    <table>
+      <tr><th>Criteria</th><th class="pts">Points</th></tr>
+      <tr><td>All log files inventoried with sizes and timestamps; missing/truncated logs flagged</td><td class="pts">4</td></tr>
+      <tr><td>Attacker source IP(s) and targeted accounts correctly identified from auth log</td><td class="pts">5</td></tr>
+      <tr><td>Successful login events identified with username, IP, and timestamp</td><td class="pts">5</td></tr>
+      <tr><td>de>wtmp</code>/de>btmp</code> analyzed; cross-referenced with auth log for consistency</td><td class="pts">4</td></tr>
+      <tr><td>Service/web server logs examined for exploit or scanning activity</td><td class="pts">3</td></tr>
+      <tr><td>Attack timeline constructed with at least 5 distinct timestamped events and clear narrative</td><td class="pts">4</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>&#128274; Phase 5 — Persistence (15 pts)</h2>
+    <table>
+      <tr><th>Criteria</th><th class="pts">Points</th></tr>
+      <tr><td>Cron directories and per-user crontabs fully checked; attacker jobs documented</td><td class="pts">3</td></tr>
+      <tr><td>Init scripts and startup services reviewed; unauthorized entries documented</td><td class="pts">3</td></tr>
+      <tr><td>SUID/SGID binaries enumerated; unusual ones explained in context of persistence</td><td class="pts">3</td></tr>
+      <tr><td>Rootkit/trojanized binary indicators investigated; findings documented</td><td class="pts">3</td></tr>
+      <tr><td>Attacker assessment questions (a–e) answered with specific evidence citations</td><td class="pts">3</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>&#128221; Findings &amp; Report (10 pts)</h2>
+    <table>
+      <tr><th>Criteria</th><th class="pts">Points</th></tr>
+      <tr><td>Narrative covers all 6 required sections with accurate, evidence-backed content</td><td class="pts">4</td></tr>
+      <tr><td>Every conclusion tied to a named artifact (file path, log excerpt, timestamp)</td><td class="pts">3</td></tr>
+      <tr><td>At least 3 specific, well-explained prevention recommendations provided</td><td class="pts">2</td></tr>
+      <tr><td>Report is clearly written, professionally structured, and free of unsupported assertions</td><td class="pts">1</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>&#128203; Grading Notes</h2>
+    <ul>
+      >Partial credit is awarded for incomplete but substantively correct work.</li>
+      >A finding documented without an artifact citation receives at most half credit.</li>
+      >Screenshots may supplement but do not replace written documentation of findings.</li>
+      >Labs submitted without the written incident narrative will have the Findings section
+      scored as zero regardless of phase work quality.</li>
+    </ul>
+    <div class="callout callout-green">
+      <strong>&#128161; Reminder:</strong> This is a real forensic dataset with published
+      community solutions available online. Your analysis should be your own work. Copying
+      a published solution without performing the analysis yourself defeats the learning
+      objective and constitutes academic dishonesty.
+    </div>
+  </div>
+
+</section><!-- end rubric -->
+
+</main><!-- end main -->
+<!-- FOOTER -->
+<footer>
+  <p>CSC 156 &mdash; Digital Forensics &bull; Lab Activity 9</p>
+  <p style="margin-top:6px;">Based on Honeynet Project Forensic Challenge 7 (2011) &bull; Image: victoria-v8.sda1.img</p>
+  <p style="margin-top:6px; color:#30363d;">&#169; Honeynet Project &mdash; Challenge dataset used for educational purposes under public research license.</p>
+</footer>
+
+<!-- JAVASCRIPT -->
+<script>
+  function showSection(id) {
+    // Hide all sections
+    document.querySelectorAll('.section').forEach(function(sec) {
+      sec.classList.remove('active');
+    });
+    // Deactivate all nav buttons
+    document.querySelectorAll('#phase-nav button').forEach(function(btn) {
+      btn.classList.remove('active');
+    });
+    // Show the target section
+    var target = document.getElementById(id);
+    if (target) {
+      target.classList.add('active');
+    }
+    // Activate the matching nav button
+    document.querySelectorAll('#phase-nav button').forEach(function(btn) {
+      var oc = btn.getAttribute('onclick');
+      if (oc && oc.indexOf("'" + id + "'") !== -1) {
+        btn.classList.add('active');
+      }
+    });
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>
