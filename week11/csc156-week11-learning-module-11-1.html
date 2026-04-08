@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module 11.1 – Volatile Memory Foundations | CSC 156</title>
+  <style>
+    /* ================================================================
+       CSC 156 · Week 11 Design System — TEMPLATE ANCHOR (Module 11.1)
+       Modules 11.2–11.4 inherit this CSS block without modification.
+       All design values are defined as CSS custom properties in :root.
+       ================================================================ */
+
+    /* ── Design Tokens ─────────────────────────────────────────────── */
+    :root {
+      /* Navigation */
+      --nav-h:             52px;
+      --c-nav-bg:          #0f2044;
+      --c-nav-text:        #ffffff;
+      --c-nav-hover-bg:    rgba(255,255,255,0.13);
+      --c-nav-hover-fg:    #93c5fd;
+      --c-nav-focus:       #f59e0b;
+
+      /* Page surfaces */
+      --c-bg-page:         #f3f5f9;
+      --c-bg-card:         #ffffff;
+      --c-bg-code:         #1e293b;
+
+      /* Typography */
+      --c-text-body:       #1a202c;
+      --c-text-secondary:  #4a5568;
+      --c-text-muted:      #718096;
+      --c-text-code:       #e2e8f0;
+      --c-heading:         #1e3a5f;
+
+      /* Accent */
+      --c-accent:          #1d4ed8;
+      --c-accent-dk:       #1e3a8a;
+      --c-accent-lt:       #dbeafe;
+      --c-accent-border:   #bfdbfe;
+
+      /* Inline code */
+      --c-icode-bg:        #e8edf5;
+      --c-icode-text:      #1e3a5f;
+
+      /* Callout — Info (blue) */
+      --c-info-bg:         #eff6ff;
+      --c-info-border:     #2563eb;
+      --c-info-title:      #1e40af;
+      --c-info-text:       #1e3a8a;
+
+      /* Callout — Warning (amber) */
+      --c-warn-bg:         #fffbeb;
+      --c-warn-border:     #d97706;
+      --c-warn-title:      #92400e;
+      --c-warn-text:       #78350f;
+
+      /* Callout — Forensic Tip (green) */
+      --c-tip-bg:          #f0fdf4;
+      --c-tip-border:      #16a34a;
+      --c-tip-title:       #14532d;
+      --c-tip-text:        #166534;
+
+      /* Callout — Prior-Week Bridge (purple) */
+      --c-bridge-bg:       #faf5ff;
+      --c-bridge-border:   #7c3aed;
+      --c-bridge-title:    #4c1d95;
+      --c-bridge-text:     #5b21b6;
+
+      /* Scenario card */
+      --c-scene-bg:        #1e3a5f;
+      --c-scene-text:      #e8f1ff;
+      --c-scene-dim:       #93c5fd;
+      --c-scene-hl:        #fcd34d;
+
+      /* Tables */
+      --c-th-bg:           #1e3a5f;
+      --c-th-text:         #ffffff;
+      --c-row-alt:         #f1f5fb;
+      --c-row-hover:       #ebf4ff;
+      --c-border-table:    #cbd5e0;
+
+      /* Surfaces */
+      --r-card:   8px;
+      --r-sm:     5px;
+      --shadow-sm:   0 1px 4px rgba(0,0,0,0.07);
+      --shadow-md:   0 3px 12px rgba(0,0,0,0.10);
+
+      /* Fonts */
+      --f-sans: system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+      --f-mono: 'Consolas','Cascadia Code','Monaco','Courier New',monospace;
+    }
+
+    /* ── Reset ──────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--f-sans);
+      background: var(--c-bg-page);
+      color: var(--c-text-body);
+      line-height: 1.7;
+      font-size: 1rem;
+    }
+
+    /* ── Skip Link ──────────────────────────────────────────────────── */
+    .skip-link {
+      position: absolute;
+      top: -120%;
+      left: 0;
+      z-index: 9999;
+      background: var(--c-nav-bg);
+      color: #fff;
+      padding: 0.5rem 1.25rem;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      border-radius: 0 0 4px 0;
+    }
+    .skip-link:focus {
+      top: 0;
+      outline: 3px solid var(--c-nav-focus);
+      outline-offset: 2px;
+    }
+
+    /* ── Sticky Navigation Bar ──────────────────────────────────────── */
+    .site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      background: var(--c-nav-bg);
+      height: var(--nav-h);
+      display: flex;
+      align-items: center;
+      padding: 0 1rem;
+      gap: 0.85rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    }
+
+    .nav-badge {
+      flex-shrink: 0;
+      color: var(--c-nav-text);
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      background: rgba(255,255,255,0.1);
+      padding: 0.22rem 0.6rem;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .nav-links {
+      list-style: none;
+      display: flex;
+      gap: 0.15rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+    .nav-links::-webkit-scrollbar { display: none; }
+
+    .nav-links a {
+      color: var(--c-nav-text);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 0.3rem 0.55rem;
+      min-width: 2rem;
+      text-align: center;
+      border-radius: 4px;
+      white-space: nowrap;
+      display: block;
+      transition: background 0.14s, color 0.14s;
+    }
+    .nav-links a:hover {
+      background: var(--c-nav-hover-bg);
+      color: var(--c-nav-hover-fg);
+    }
+    .nav-links a:focus-visible {
+      outline: 2px solid var(--c-nav-focus);
+      outline-offset: 2px;
+    }
+
+    /* ── Scroll offset for sticky nav ──────────────────────────────── */
+    .scroll-target { scroll-margin-top: calc(var(--nav-h) + 8px); }
+
+    /* ── Main Layout ────────────────────────────────────────────────── */
+    main {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 1.75rem 1.25rem 3rem;
+    }
+
+    /* ── Page Header ────────────────────────────────────────────────── */
+    .page-header {
+      background: var(--c-bg-card);
+      border-radius: var(--r-card);
+      padding: 1.75rem 2rem 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-md);
+      border-top: 5px solid var(--c-accent);
+    }
+    .mod-badge {
+      display: inline-block;
+      background: var(--c-accent-lt);
+      color: var(--c-accent-dk);
+      font-size: 0.71rem;
+      font-weight: 800;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      padding: 0.18rem 0.55rem;
+      border-radius: 4px;
+      margin-bottom: 0.65rem;
+    }
+    h1 {
+      font-size: 1.58rem;
+      font-weight: 800;
+      color: var(--c-heading);
+      line-height: 1.27;
+      margin-bottom: 0.4rem;
+    }
+    .page-sub {
+      color: var(--c-text-secondary);
+      font-size: 0.9rem;
+    }
+    .page-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e2e8f0;
+      font-size: 0.79rem;
+      color: var(--c-text-muted);
+    }
+    .page-meta span { display: flex; align-items: center; gap: 0.3rem; }
+
+    /* ── Section Cards ──────────────────────────────────────────────── */
+    .section-card {
+      background: var(--c-bg-card);
+      border-radius: var(--r-card);
+      padding: 1.75rem 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    h2 {
+      font-size: 1.18rem;
+      font-weight: 700;
+      color: var(--c-heading);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--c-accent-lt);
+    }
+    h3 {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--c-heading);
+      margin: 1.25rem 0 0.55rem;
+    }
+    p { margin-bottom: 0.8rem; }
+    p:last-child { margin-bottom: 0; }
+    ul, ol { padding-left: 1.45rem; margin-bottom: 0.8rem; }
+    li { margin-bottom: 0.3rem; }
+    strong { color: var(--c-heading); }
+
+    /* ── Callout Boxes ──────────────────────────────────────────────── */
+    .callout {
+      border-left: 4px solid;
+      border-radius: 0 var(--r-sm) var(--r-sm) 0;
+      padding: 0.9rem 1.1rem;
+      margin: 1.1rem 0;
+    }
+    .callout-title {
+      font-size: 0.77rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+    .callout p { font-size: 0.885rem; margin-bottom: 0.4rem; }
+    .callout p:last-child { margin-bottom: 0; }
+
+    .callout-info   { background:var(--c-info-bg);   border-color:var(--c-info-border);   color:var(--c-info-text);   }
+    .callout-info   .callout-title { color:var(--c-info-title);   }
+    .callout-warning   { background:var(--c-warn-bg);   border-color:var(--c-warn-border);   color:var(--c-warn-text);   }
+    .callout-warning   .callout-title { color:var(--c-warn-title);   }
+    .callout-forensic-tip    { background:var(--c-tip-bg);    border-color:var(--c-tip-border);    color:var(--c-tip-text);    }
+    .callout-forensic-tip    .callout-title { color:var(--c-tip-title);    }
+    .callout-prior-week-bridge { background:var(--c-bridge-bg); border-color:var(--c-bridge-border); color:var(--c-bridge-text); }
+    .callout-prior-week-bridge .callout-title { color:var(--c-bridge-title); }
+
+    /* ── Scenario Card ──────────────────────────────────────────────── */
+    .scenario-card {
+      background: var(--c-scene-bg);
+      border-radius: var(--r-card);
+      padding: 1.6rem 1.75rem;
+      margin-bottom: 1rem;
+    }
+    .scene-label {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--c-scene-dim);
+      margin-bottom: 0.7rem;
+    }
+    .scenario-card blockquote {
+      font-size: 1.01rem;
+      line-height: 1.78;
+      font-style: italic;
+      color: var(--c-scene-text);
+      margin: 0 0 0.95rem;
+    }
+    .scene-q {
+      background: rgba(255,255,255,0.1);
+      border-radius: var(--r-sm);
+      padding: 0.7rem 1rem;
+      font-weight: 600;
+      font-size: 0.92rem;
+      color: var(--c-scene-hl);
+    }
+
+    /* ── Tables ─────────────────────────────────────────────────────── */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 1rem 0;
+      border-radius: var(--r-card);
+      box-shadow: var(--shadow-sm);
+    }
+    caption {
+      caption-side: top;
+      text-align: left;
+      font-size: 0.81rem;
+      color: var(--c-text-secondary);
+      padding: 0 0 0.45rem;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    thead th {
+      background: var(--c-th-bg);
+      color: var(--c-th-text);
+      padding: 0.7rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    thead th:first-child { border-radius: var(--r-card) 0 0 0; }
+    thead th:last-child  { border-radius: 0 var(--r-card) 0 0; }
+    tbody td {
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--c-border-table);
+      vertical-align: top;
+    }
+    tbody tr:nth-child(even) td { background: var(--c-row-alt); }
+    tbody tr:hover td { background: var(--c-row-hover); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* ── Code ───────────────────────────────────────────────────────── */
+    pre {
+      background: var(--c-bg-code);
+      border-radius: var(--r-card);
+      padding: 1.1rem 1.25rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+    pre code {
+      font-family: var(--f-mono);
+      font-size: 0.84rem;
+      color: var(--c-text-code);
+      white-space: pre-wrap;
+      background: none;
+      padding: 0;
+      border-radius: 0;
+    }
+    code {
+      font-family: var(--f-mono);
+      font-size: 0.855em;
+      background: var(--c-icode-bg);
+      color: var(--c-icode-text);
+      padding: 0.1em 0.35em;
+      border-radius: 3px;
+      white-space: pre-wrap;
+    }
+
+    /* ── Accordion ──────────────────────────────────────────────────── */
+    .accordion-group { margin: 0.75rem 0; }
+    .accordion-item {
+      border: 1px solid #dde3ec;
+      border-radius: var(--r-card);
+      overflow: hidden;
+      margin-bottom: 0.45rem;
+    }
+    .accordion-btn {
+      width: 100%;
+      background: #f8fafc;
+      border: none;
+      padding: 0.85rem 1.1rem;
+      text-align: left;
+      font-family: var(--f-sans);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--c-heading);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background 0.14s;
+    }
+    .accordion-btn:hover { background: var(--c-accent-lt); }
+    .accordion-btn:focus-visible { outline: 2px solid var(--c-accent); outline-offset: -2px; }
+    .accordion-btn[aria-expanded="true"] {
+      background: var(--c-accent-lt);
+      color: var(--c-accent-dk);
+    }
+    .acc-icon {
+      font-size: 0.7rem;
+      color: var(--c-accent);
+      transition: transform 0.2s ease;
+      flex-shrink: 0;
+    }
+    .accordion-btn[aria-expanded="true"] .acc-icon { transform: rotate(180deg); }
+    .accordion-body {
+      padding: 1rem 1.1rem;
+      font-size: 0.875rem;
+      border-top: 1px solid #dde3ec;
+      background: #fff;
+    }
+    .accordion-body[hidden] { display: none; }
+    .accordion-body p:last-child,
+    .accordion-body ul:last-child { margin-bottom: 0; }
+
+    /* ── Order of Volatility Visual ─────────────────────────────────── */
+    .ov-stack { display: flex; flex-direction: column; gap: 0.32rem; margin: 1.1rem 0; }
+
+    .ov-item {
+      display: grid;
+      grid-template-columns: 34px 1fr auto;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.68rem 1rem;
+      border-radius: 6px;
+      border-left: 5px solid;
+    }
+    .ov-num {
+      font-size: 0.95rem;
+      font-weight: 800;
+      text-align: center;
+      border-radius: 4px;
+      padding: 0.2rem 0;
+      line-height: 1;
+      color: #fff;
+    }
+    .ov-info strong { display: block; font-size: 0.875rem; }
+    .ov-info span   { font-size: 0.775rem; opacity: 0.88; }
+    .ov-tag {
+      font-size: 0.67rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 0.17rem 0.48rem;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.11);
+      white-space: nowrap;
+    }
+
+    /* Per-rank colors — background / border / text */
+    .ov-r1 { background:#fee2e2; border-color:#dc2626; color:#7f1d1d; }
+    .ov-r1 .ov-num { background:#b91c1c; }
+
+    .ov-r2 { background:#ffedd5; border-color:#ea580c; color:#7c2d12; }
+    .ov-r2 .ov-num { background:#c2410c; }
+
+    .ov-r3 { background:#fef9c3; border-color:#ca8a04; color:#713f12; }
+    .ov-r3 .ov-num { background:#a16207; }
+
+    .ov-r4 { background:#dcfce7; border-color:#16a34a; color:#14532d; }
+    .ov-r4 .ov-num { background:#15803d; }
+
+    .ov-r5 { background:#d1fae5; border-color:#059669; color:#064e3b; }
+    .ov-r5 .ov-num { background:#047857; }
+
+    .ov-r6 { background:#e0f2fe; border-color:#0284c7; color:#0c4a6e; }
+    .ov-r6 .ov-num { background:#0369a1; }
+
+    .ov-r7 { background:#ede9fe; border-color:#7c3aed; color:#2e1065; }
+    .ov-r7 .ov-num { background:#6d28d9; }
+
+    /* Highlight for the RAM acquisition row */
+    .ov-ram-row {
+      box-shadow: 0 0 0 2.5px var(--c-accent),
+                  0 2px 10px rgba(29,78,216,0.2);
+    }
+
+    /* ── RAM Category Grid ───────────────────────────────────────────── */
+    .ram-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 0.75rem;
+      margin: 1rem 0;
+    }
+    .ram-card {
+      background: var(--c-accent-lt);
+      border: 1px solid var(--c-accent-border);
+      border-radius: var(--r-sm);
+      padding: 0.85rem 1rem;
+    }
+    .ram-card .rc-icon { font-size: 1.2rem; display: block; margin-bottom: 0.2rem; }
+    .ram-card strong   { display: block; font-size: 0.875rem; color: var(--c-heading); margin-bottom: 0.2rem; }
+    .ram-card p        { font-size: 0.775rem; color: var(--c-text-secondary); margin: 0; line-height: 1.5; }
+
+    /* ── Knowledge Check ─────────────────────────────────────────────── */
+    .quiz-section {
+      background: var(--c-bg-card);
+      border-radius: var(--r-card);
+      padding: 1.75rem 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      border-top: 4px solid var(--c-accent);
+    }
+    .quiz-intro {
+      font-size: 0.885rem;
+      color: var(--c-text-secondary);
+      margin-bottom: 1.2rem;
+    }
+
+    .q-block {
+      background: #f8fafc;
+      border: 1px solid #dde3ec;
+      border-radius: var(--r-sm);
+      padding: 1.1rem 1.2rem;
+      margin-bottom: 1rem;
+    }
+    .q-block:last-of-type { margin-bottom: 0; }
+
+    .q-label {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--c-heading);
+      margin-bottom: 0.8rem;
+    }
+    .q-num {
+      display: inline-block;
+      background: var(--c-accent);
+      color: #fff;
+      font-size: 0.69rem;
+      font-weight: 800;
+      padding: 0.1rem 0.42rem;
+      border-radius: 3px;
+      margin-right: 0.35rem;
+      vertical-align: middle;
+    }
+
+    .q-opts { list-style: none; padding: 0; margin: 0 0 0.75rem; }
+    .q-opts li { margin-bottom: 0.32rem; }
+    .q-opts label {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.55rem;
+      padding: 0.5rem 0.85rem;
+      border: 1px solid #dde3ec;
+      border-radius: var(--r-sm);
+      background: #fff;
+      cursor: pointer;
+      font-size: 0.858rem;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .q-opts label:hover { background: var(--c-accent-lt); border-color: var(--c-accent); }
+    .q-opts input[type="radio"] {
+      margin-top: 3px;
+      flex-shrink: 0;
+      accent-color: var(--c-accent);
+    }
+    .q-opts label.opt-correct { background: #dcfce7; border-color: #16a34a; }
+    .q-opts label.opt-wrong   { background: #fee2e2; border-color: #dc2626; }
+
+    .q-submit {
+      background: var(--c-accent);
+      color: #fff;
+      border: none;
+      padding: 0.46rem 1.1rem;
+      border-radius: var(--r-sm);
+      font-family: var(--f-sans);
+      font-size: 0.845rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.14s;
+    }
+    .q-submit:hover { background: var(--c-accent-dk); }
+    .q-submit:focus-visible { outline: 2px solid var(--c-nav-focus); outline-offset: 2px; }
+    .q-submit:disabled { background: #94a3b8; cursor: default; }
+
+    .q-feedback {
+      display: none;
+      margin-top: 0.7rem;
+      padding: 0.78rem 1rem;
+      border-radius: var(--r-sm);
+      font-size: 0.845rem;
+      line-height: 1.55;
+    }
+    .q-feedback.show { display: block; }
+    .q-feedback.fb-ok    { background:var(--c-tip-bg);  border:1px solid var(--c-tip-border);  color:var(--c-tip-title);  }
+    .q-feedback.fb-err   { background:var(--c-warn-bg); border:1px solid var(--c-warn-border); color:var(--c-warn-title); }
+    .q-feedback.fb-nosel { background:#f1f5f9; border:1px solid #94a3b8; color:#475569; }
+
+    .score-bar {
+      display: none;
+      margin-top: 1.15rem;
+      padding: 0.72rem 1.1rem;
+      background: var(--c-accent-lt);
+      border: 1px solid var(--c-accent-border);
+      border-radius: var(--r-sm);
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--c-accent-dk);
+      text-align: center;
+    }
+
+    /* ── Summary ─────────────────────────────────────────────────────── */
+    .verdict-card {
+      background: linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 100%);
+      border-radius: var(--r-card);
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1.15rem;
+    }
+    .verdict-card h3  { color: #93c5fd; margin-top: 0; font-size: 1rem; }
+    .verdict-card p   { color: #dbeafe; font-size: 0.885rem; margin-bottom: 0.5rem; }
+    .verdict-quote {
+      background: rgba(255,255,255,0.11);
+      border-radius: var(--r-sm);
+      padding: 0.75rem 1rem;
+      font-style: italic;
+      font-size: 0.885rem;
+      color: var(--c-scene-hl);
+      font-weight: 500;
+      margin-top: 0.75rem;
+    }
+
+    .look-ahead {
+      background: var(--c-bridge-bg);
+      border: 1px solid var(--c-bridge-border);
+      border-radius: var(--r-sm);
+      padding: 1rem 1.1rem;
+      font-size: 0.885rem;
+    }
+    .look-ahead strong { color: var(--c-bridge-title); }
+    .look-ahead p { color: var(--c-bridge-text); margin-bottom: 0.4rem; }
+    .look-ahead p:last-child { margin-bottom: 0; }
+
+    /* ── Footer ──────────────────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      font-size: 0.76rem;
+      color: var(--c-text-muted);
+      padding: 1.5rem 1rem 2rem;
+      border-top: 1px solid #dde3ec;
+    }
+    footer p { margin-bottom: 0.22rem; }
+
+    /* ── Responsive ──────────────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      main { padding: 1rem 0.85rem 2rem; }
+      .page-header, .section-card, .quiz-section { padding: 1.15rem; }
+      h1 { font-size: 1.28rem; }
+      h2 { font-size: 1.04rem; }
+      .nav-badge { display: none; }
+      .ov-item   { grid-template-columns: 28px 1fr; }
+      .ov-tag    { display: none; }
+      .ram-grid  { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 380px) {
+      .ram-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<!-- ═══════════════════════════════════════════
+     STICKY NAVIGATION
+════════════════════════════════════════════ -->
+<nav class="site-nav" aria-label="Module 11.1 section navigation">
+  <span class="nav-badge" aria-hidden="true">Mod 11.1</span>
+  <ul class="nav-links" role="list">
+    <li><a href="#hook"           title="Section 1: Opening Scenario"                  aria-label="Section 1: Opening Scenario">1</a></li>
+    <li><a href="#volatile"       title="Section 2: Volatile vs. Non-Volatile Data"    aria-label="Section 2: Volatile vs. Non-Volatile Data">2</a></li>
+    <li><a href="#ram-inventory"  title="Section 3: The Forensic Inventory of RAM"     aria-label="Section 3: The Forensic Inventory of RAM">3</a></li>
+    <li><a href="#rfc3227"        title="Section 4: RFC 3227 — The Order of Volatility" aria-label="Section 4: RFC 3227 — The Order of Volatility">4</a></li>
+    <li><a href="#ram-medium"     title="Section 5: RAM as a Forensic Medium"          aria-label="Section 5: RAM as a Forensic Medium">5</a></li>
+    <li><a href="#knowledge-check" title="Section 6: Knowledge Check"                 aria-label="Section 6: Knowledge Check">6</a></li>
+    <li><a href="#summary"        title="Section 7: Summary and Look Ahead"            aria-label="Section 7: Summary and Look Ahead">7</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     MAIN CONTENT
+════════════════════════════════════════════ -->
+<main id="main-content">
+
+  <!-- ── Page Header ── -->
+  <header class="page-header">
+    <div class="mod-badge">Week 11 · Module 11.1</div>
+    <h1>Why RAM? Volatile Memory, the Order of Volatility, and the Forensic Inventory of a Running System</h1>
+    <p class="page-sub">CSC 156 – Digital Forensic Fundamentals</p>
+    <div class="page-meta">
+      <span>⏱ Estimated time: 1.5–2.0 hours</span>
+      <span>🎯 Objective: Week 11 Obj. 1</span>
+      <span>📋 Supports: Lab Activity 10 · Quiz 3</span>
+    </div>
+  </header>
+
+
+  <!-- ══════════════════════════════════════════
+       SECTION 1 — Opening Hook
+  ══════════════════════════════════════════ -->
+  <section class="section-card scroll-target" id="hook" aria-labelledby="h2-hook">
+    <h2 id="h2-hook">🔍 Opening Scenario</h2>
+
+    <div class="scenario-card" role="region" aria-label="First-responder decision scenario">
+      <div class="scene-label" aria-hidden="true">📡 Active Scene — First Responder Decision Point</div>
+      <blockquote>
+        "You arrive at a suspect's active workstation. The screen is on, the system is
+        running, and you can see what appears to be an encrypted file manager open on
+        the desktop. Your supervisor says, 'Pull the power and bag the machine.'"
+      </blockquote>
+      <div class="scene-q" role="note">
+        ❓ Do you follow that instruction? What evidence might you lose forever if you do?
+      </div>
+    </div>
+
+    <p>
+      Hold that question. By the end of this module you will have a principled,
+      standards-backed answer. Every concept introduced below feeds directly into
+      the decision you must make at that workstation. We return to this scenario
+      in the <a href="#summary">Summary</a>.
+    </p>
+
+    <div class="callout callout-prior-week-bridge">
+      <div class="callout-title">🔗 Prior-Week Bridge — Week 6: Forensic Acquisition</div>
+      <p>
+        In Week 6 you imaged non-volatile storage using hardware write-blockers,
+        verified integrity with MD5/SHA-256 hashes, and documented chain of custody.
+        This week extends that same discipline to a fundamentally different artifact:
+        the <em>live system's RAM</em>. The acquisition window is measured in minutes,
+        not hours — and there is no write-blocker equivalent for memory.
+        Tool integrity verification (SHA-256 of the acquisition tool binary) replaces
+        the write-blocker's role for volatile media.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SECTION 2 — Volatile vs. Non-Volatile
+  ══════════════════════════════════════════ -->
+  <section class="section-card scroll-target" id="volatile" aria-labelledby="h2-volatile">
+    <h2 id="h2-volatile">⚡ Volatile vs. Non-Volatile Data</h2>
+
+    <p>
+      Digital evidence divides into two categories based on a single property:
+      <strong>does the data survive a power cycle?</strong> This distinction
+      determines <em>when</em> you collect, <em>what</em> you collect first, and
+      what you can never recover once a machine is powered off.
+    </p>
+
+    <div class="table-wrap" role="region" aria-label="Volatile vs. non-volatile comparison table">
+      <table>
+        <caption>Table 1 — Key properties and forensic examples of volatile and non-volatile data</caption>
+        <thead>
+          <tr>
+            <th scope="col">Property</th>
+            <th scope="col">⚡ Volatile (RAM)</th>
+            <th scope="col">💾 Non-Volatile (Disk / Flash)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Survives power loss?</strong></td>
+            <td>❌ No — lost immediately on shutdown</td>
+            <td>✅ Yes — persists indefinitely</td>
+          </tr>
+          <tr>
+            <td><strong>Storage medium</strong></td>
+            <td>DRAM chips (charge-based capacitors)</td>
+            <td>HDD platters, SSD NAND, optical, removable flash</td>
+          </tr>
+          <tr>
+            <td><strong>Acquisition window</strong></td>
+            <td>Live system only; window closes on shutdown</td>
+            <td>After power-off, using hardware write-blockers</td>
+          </tr>
+          <tr>
+            <td><strong>Forensic examples</strong></td>
+            <td>Running processes, encryption keys, network connections, clipboard, injected code</td>
+            <td>Files, registry hives on disk, browser history, event logs, MFT entries</td>
+          </tr>
+          <tr>
+            <td><strong>Modification risk</strong></td>
+            <td>Every second the OS runs overwrites content</td>
+            <td>Stable with write-blockers; low risk post power-off</td>
+          </tr>
+          <tr>
+            <td><strong>Standard acquisition tools</strong></td>
+            <td>WinPmem, DumpIt, LiME (Linux)</td>
+            <td>dd, FTK Imager, dcfldd</td>
+          </tr>
+          <tr>
+            <td><strong>Integrity verification</strong></td>
+            <td>Hash the dump file; document tool artifacts</td>
+            <td>Hash before and after; log write-blocker use</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout-forensic-tip">
+      <div class="callout-title">🔎 Forensic Tip — The Power-Off Decision</div>
+      <p>
+        Powering off a live system <em>before</em> capturing RAM is the single most
+        common first-responder mistake in computer investigations. The encrypted file
+        manager in our opening scenario almost certainly holds its decryption key in
+        RAM at this moment. Cutting the power destroys that key permanently. A RAM
+        acquisition with WinPmem or DumpIt takes under five minutes. The disk will
+        wait; RAM will not.
+      </p>
+    </div>
+
+    <h3>Why Volatile Evidence Is Uniquely Valuable</h3>
+    <p>
+      Sophisticated adversaries know how to defeat disk-based forensics: encrypted
+      volumes, secure-deletion tools, fileless malware, and anti-forensic utilities
+      all target the persistent layer. <strong>RAM does not lie in the same way.</strong>
+      To execute, code must be loaded into memory — and memory does not honor disk
+      encryption. Running processes, decrypted strings, live network connections, and
+      injected shellcode all exist in RAM in an accessible form as long as the system
+      has power.
+    </p>
+
+    <div class="callout callout-warning">
+      <div class="callout-title">⚠️ Warning — Investigator Contamination of Memory</div>
+      <p>
+        Every action taken on a live system — opening a file, running a command,
+        moving the mouse — writes data into RAM and may overwrite evidence. Run
+        acquisition tools exclusively from write-protected external media. Document
+        every command executed and every tool launched in your case notes.
+        Contamination is unavoidable; concealing it is not acceptable.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SECTION 3 — The Forensic Inventory of RAM
+  ══════════════════════════════════════════ -->
+  <section class="section-card scroll-target" id="ram-inventory" aria-labelledby="h2-ram">
+    <h2 id="h2-ram">🧠 The Forensic Inventory of RAM</h2>
+
+    <p>
+      A live system's RAM is not a passive buffer — it is a
+      <strong>real-time snapshot of everything the operating system is doing</strong>.
+      A forensically sound memory dump can yield the artifact categories below, most
+      of which cannot be recovered from disk alone.
+    </p>
+
+    <div class="ram-grid" role="list" aria-label="Categories of forensic evidence found in RAM">
+
+      <div class="ram-card" role="listitem">
+        <span class="rc-icon" aria-hidden="true">⚙️</span>
+        <strong>Running Processes</strong>
+        <p>Process name, PID, PPID, start time, virtual address space, and loaded DLLs for every active executable.</p>
+      </div>
+
+      <div class="ram-card" role="listitem">
+        <span class="rc-icon" aria-hidden="true">🔑</span>
+        <strong>Encryption Keys &amp; Credentials</strong>
+        <p>Active encryption keys, plaintext passwords cached by applications, session tokens, BitLocker VMK, and LSASS credential caches.</p>
+      </div>
+
+      <div class="ram-card" role="listitem">
+        <span class="rc-icon" aria-hidden="true">🌐</span>
+        <strong>Network Connections</strong>
+        <p>Active and recently closed TCP/UDP connections with IP addresses, ports, states, and owning process — including connections absent from any log file.</p>
+      </div>
+
+      <div class="ram-card" role="listitem">
+        <span class="rc-icon" aria-hidden="true">📋</span>
+        <strong>Clipboard Contents</strong>
+        <p>The most recently copied data — passwords, PII, command output — persists in RAM until the clipboard is overwritten.</p>
+      </div>
+
+      <div class="ram-card" role="listitem">
+        <span class="rc-icon" aria-hidden="true">💬</span>
+        <strong>Command History (In-Memory)</strong>
+        <p>Recent shell commands (cmd.exe, PowerShell, bash) held in process memory before or instead of being flushed to a history file on disk.</p>
+      </div>
+
+      <div class="ram-card" role="listitem">
+        <span class="rc-icon" aria-hidden="true">🗂️</span>
+        <strong>Volatile Registry Keys</strong>
+        <p><code>HKCU</code> and <code>HKLM</code> segments loaded in RAM, including volatile keys under <code>HKLM\SYSTEM\CurrentControlSet</code> that are never written back to disk in their live form.</p>
+      </div>
+
+      <div class="ram-card" role="listitem">
+        <span class="rc-icon" aria-hidden="true">🕸️</span>
+        <strong>Injected Code &amp; Malware Artifacts</strong>
+        <p>Code injected into legitimate processes via DLL injection or process hollowing — leaving no trace on disk and detectable only through memory analysis.</p>
+      </div>
+
+      <div class="ram-card" role="listitem">
+        <span class="rc-icon" aria-hidden="true">📄</span>
+        <strong>Open File &amp; Object Handles</strong>
+        <p>Files, sockets, and registry keys currently open — including handles to files that have been deleted from disk while still in use by a process.</p>
+      </div>
+
+      <div class="ram-card" role="listitem">
+        <span class="rc-icon" aria-hidden="true">🔄</span>
+        <strong>Kernel Structures &amp; Drivers</strong>
+        <p>Loaded kernel modules, device drivers, and system call tables. Rootkits that manipulate these structures are often detectable only in RAM.</p>
+      </div>
+
+    </div>
+
+    <div class="callout callout-info">
+      <div class="callout-title">ℹ️ The "Ghost File" Scenario</div>
+      <p>
+        Malware executes, completes its payload, and deletes its own binary from disk —
+        all within seconds. A disk image finds nothing. But RAM still contains the
+        process's allocated memory pages including code and strings, and the kernel's
+        process list may still have an entry before the OS cleans it up.
+        Memory forensics can reconstruct the malware binary from process memory even
+        when disk analysis is entirely negative.
+      </p>
+    </div>
+
+    <h3>Deeper Dive — Select a Category</h3>
+    <p>The expandable sections below provide forensic detail for three categories that appear directly in Modules 11.3 and 11.4 and in Lab Activity 10.</p>
+
+    <div class="accordion-group">
+
+      <div class="accordion-item">
+        <button class="accordion-btn" aria-expanded="false" aria-controls="acc-proc" id="abtn-proc">
+          ⚙️ Running Processes — EPROCESS Structures and DKOM
+          <span class="acc-icon" aria-hidden="true">▼</span>
+        </button>
+        <div class="accordion-body" id="acc-proc" hidden>
+          <p>The Windows kernel maintains a doubly-linked list of <code>EPROCESS</code> structures, one per running process. Key fields include:</p>
+          <ul>
+            <li><strong>ImageFileName</strong> — truncated process name (15 characters)</li>
+            <li><strong>UniqueProcessId</strong> — the PID</li>
+            <li><strong>InheritedFromUniqueProcessId</strong> — PPID, enabling parent-child relationship analysis</li>
+            <li><strong>CreateTime</strong> — kernel timestamp of process creation</li>
+            <li><strong>VadRoot</strong> — the root of the Virtual Address Descriptor tree for this process's memory map</li>
+          </ul>
+          <p>
+            Volatility's <code>pslist</code> plugin walks this linked list. Malware
+            authors sometimes <strong>unlink</strong> their EPROCESS node — a technique
+            called <strong>Direct Kernel Object Manipulation (DKOM)</strong> — to hide
+            from list-walking tools. Volatility's <code>psscan</code> counters this by
+            scanning raw memory for EPROCESS pool tag signatures, independent of list
+            integrity.
+          </p>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <button class="accordion-btn" aria-expanded="false" aria-controls="acc-net" id="abtn-net">
+          🌐 Network Connections — tcpip.sys Endpoint Structures
+          <span class="acc-icon" aria-hidden="true">▼</span>
+        </button>
+        <div class="accordion-body" id="acc-net" hidden>
+          <p>
+            On Windows 7+, connection state is maintained by <code>tcpip.sys</code> using
+            <code>_TCP_ENDPOINT</code> and <code>_UDP_ENDPOINT</code> structures. Each records:
+          </p>
+          <ul>
+            <li>Local and remote IPv4/IPv6 addresses and port numbers</li>
+            <li>Connection state: LISTENING, ESTABLISHED, CLOSE_WAIT, TIME_WAIT, etc.</li>
+            <li>A pointer to the owning <code>EPROCESS</code> — directly linking the connection to a process</li>
+            <li>Connection creation timestamp</li>
+          </ul>
+          <p>
+            <strong>Key forensic value:</strong> connections that have closed but not yet
+            been garbage-collected by the kernel still appear in a memory dump, providing
+            evidence of communication that would not appear in a live <code>netstat</code>
+            run after the fact. The Volatility plugin for this is <code>netscan</code>.
+          </p>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <button class="accordion-btn" aria-expanded="false" aria-controls="acc-reg" id="abtn-reg">
+          🗂️ Volatile Registry Keys — In-Memory Hive Structures
+          <span class="acc-icon" aria-hidden="true">▼</span>
+        </button>
+        <div class="accordion-body" id="acc-reg" hidden>
+          <p>
+            Windows loads registry hives from disk into memory at boot and on user login.
+            The live <code>HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet</code> is constructed
+            from multiple backing hives and is <strong>never written back to disk as-is</strong>.
+            Values modified since boot exist only in the in-memory form until a flush occurs.
+          </p>
+          <p>
+            <code>HKEY_CURRENT_USER</code> is the in-memory loaded form of the user's
+            <code>NTUSER.DAT</code>. Pending writes not yet flushed to disk are visible only
+            in a memory dump.
+          </p>
+          <p>
+            Volatility's <code>hivelist</code> locates all loaded hive structures;
+            <code>printkey</code> and <code>dumpregistry</code> extract key data directly
+            from RAM without touching the disk hive files at all.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SECTION 4 — RFC 3227: Order of Volatility
+  ══════════════════════════════════════════ -->
+  <section class="section-card scroll-target" id="rfc3227" aria-labelledby="h2-rfc">
+    <h2 id="h2-rfc">📜 RFC 3227: The Order of Volatility</h2>
+
+    <p>
+      In 2002, the IETF published <strong>RFC 3227</strong> —
+      <em>"Guidelines for Evidence Collection and Archiving."</em>
+      While not a law or a certification requirement, it is the
+      <strong>universally cited forensic reference</strong> for evidence collection
+      sequencing in incident response and digital forensics engagements worldwide.
+      Its core mandate:
+    </p>
+
+    <div class="callout callout-info">
+      <div class="callout-title">ℹ️ RFC 3227 Core Principle</div>
+      <p>
+        <em>"In general, order the collection of evidence from the most volatile to
+        the least volatile."</em> Collect what will disappear soonest, first. Stable
+        evidence can wait.
+      </p>
+    </div>
+
+    <h3>Priority Sequence — Most to Least Volatile</h3>
+    <p>
+      The visual below runs <strong>collect first (top) → collect last (bottom)</strong>.
+      Rank numbers indicate collection priority under RFC 3227. Note carefully where the
+      full RAM acquisition falls relative to disk — the blue-outlined row marks this
+      acquisition target.
+    </p>
+
+    <div class="ov-stack" role="list" aria-label="RFC 3227 Order of Volatility: most volatile first at rank 1, least volatile last at rank 7">
+
+      <div class="ov-item ov-r1" role="listitem">
+        <div class="ov-num" aria-label="Collect first, Priority 1">1</div>
+        <div class="ov-info">
+          <strong>CPU Registers &amp; Cache</strong>
+          <span>L1/L2/L3 cache and CPU register state — lost within microseconds of power-off or context switch</span>
+        </div>
+        <span class="ov-tag" aria-label="Volatility: Extreme">Extreme</span>
+      </div>
+
+      <div class="ov-item ov-r2" role="listitem">
+        <div class="ov-num" aria-label="Priority 2">2</div>
+        <div class="ov-info">
+          <strong>Routing Table, ARP Cache, Process Table, Kernel Stats</strong>
+          <span>In-memory OS data structures: active routes, ARP mappings, open sockets, kernel counters — captured with live-response commands</span>
+        </div>
+        <span class="ov-tag" aria-label="Volatility: Very High">Very High</span>
+      </div>
+
+      <div class="ov-item ov-r3 ov-ram-row" role="listitem" aria-label="Priority 3 — full RAM acquisition target">
+        <div class="ov-num" aria-label="Priority 3">3</div>
+        <div class="ov-info">
+          <strong>Memory (RAM) ← Full Acquisition Target</strong>
+          <span>Physical memory image — contains processes, encryption keys, injected code, connections, and all Rank 1–2 items in accessible form</span>
+        </div>
+        <span class="ov-tag" aria-label="Volatility: High — this is the RAM acquisition point">High ★</span>
+      </div>
+
+      <div class="ov-item ov-r4" role="listitem">
+        <div class="ov-num" aria-label="Priority 4">4</div>
+        <div class="ov-info">
+          <strong>Temporary File Systems</strong>
+          <span>RAM disks, Linux tmpfs (/tmp), Windows %TEMP% — partially memory-backed and lost on reboot</span>
+        </div>
+        <span class="ov-tag" aria-label="Volatility: Medium">Medium</span>
+      </div>
+
+      <div class="ov-item ov-r5" role="listitem">
+        <div class="ov-num" aria-label="Priority 5">5</div>
+        <div class="ov-info">
+          <strong>Disk (HDD / SSD / Removable Media)</strong>
+          <span>Persistent storage — files, event logs, registry hives on disk. Acquired with write-blockers after RAM collection</span>
+        </div>
+        <span class="ov-tag" aria-label="Volatility: Low">Low</span>
+      </div>
+
+      <div class="ov-item ov-r6" role="listitem">
+        <div class="ov-num" aria-label="Priority 6">6</div>
+        <div class="ov-info">
+          <strong>Remote Logging &amp; Monitoring Data</strong>
+          <span>SIEM, syslog servers, IDS/IPS alerts, cloud audit trails — offsite and unaffected by the local system's power state</span>
+        </div>
+        <span class="ov-tag" aria-label="Volatility: Very Low">Very Low</span>
+      </div>
+
+      <div class="ov-item ov-r7" role="listitem">
+        <div class="ov-num" aria-label="Priority 7 — collect last">7</div>
+        <div class="ov-info">
+          <strong>Physical Configuration &amp; Archival Media</strong>
+          <span>Network topology diagrams, hardware config records, backup tapes, optical discs — most stable; collected last</span>
+        </div>
+        <span class="ov-tag" aria-label="Volatility: Archive">Archive</span>
+      </div>
+
+    </div>
+
+    <h3>Forensic Implications of the Order</h3>
+    <ul>
+      <li>
+        <strong>RAM before disk, always.</strong> If you image the disk first and the
+        system shuts down before memory capture, all RAM evidence is destroyed.
+        The reverse is not true — with a write-blocker, a disk image taken after a RAM
+        dump is byte-for-byte identical to one taken before it.
+      </li>
+      <li>
+        <strong>Live-response commands before the full dump.</strong>
+        Documenting ARP cache, routing table, and running process list with individual
+        commands is your Rank 2 collection step before launching a full acquisition tool.
+      </li>
+      <li>
+        <strong>The acquisition tool itself contaminates memory.</strong>
+        Running WinPmem or DumpIt writes the tool's own EPROCESS entry into RAM and
+        modifies kernel structures. This is unavoidable, acceptable, and
+        <em>must be disclosed</em> in case notes — not hidden.
+      </li>
+      <li>
+        <strong>Time is the adversary.</strong>
+        Malware, user activity, and OS background processes continuously overwrite RAM.
+        Every minute of hesitation is a minute of potential evidence loss.
+      </li>
+    </ul>
+
+    <div class="callout callout-forensic-tip">
+      <div class="callout-title">🔎 Forensic Tip — The Question You Will See on Quiz 3</div>
+      <p>
+        <em>"From a live Windows system, should you acquire disk or RAM first?"</em>
+        The answer is unambiguous under RFC 3227: <strong>RAM first.</strong> Disk is
+        non-volatile and can wait. A disk image taken five minutes after a RAM dump is
+        byte-for-byte identical to one taken five hours later (with a write-blocker).
+        RAM will not be.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SECTION 5 — RAM as a Forensic Medium
+  ══════════════════════════════════════════ -->
+  <section class="section-card scroll-target" id="ram-medium" aria-labelledby="h2-medium">
+    <h2 id="h2-medium">🔬 RAM as a Forensic Medium</h2>
+
+    <p>
+      Understanding <em>how</em> RAM is structured explains both what a memory dump
+      contains and why some artifacts require specialized tooling to locate.
+    </p>
+
+    <h3>Physical Memory and Page Frames</h3>
+    <p>
+      The operating system presents each process with its own contiguous
+      <strong>virtual address space</strong> — an abstraction. Underneath, physical
+      RAM is divided into fixed-size <strong>page frames</strong>, typically
+      <strong>4 KB</strong> on x86/x64 systems. The Memory Management Unit (MMU)
+      translates virtual addresses to physical addresses using
+      <strong>page tables</strong> that are themselves stored in RAM.
+    </p>
+    <p>
+      A forensic memory dump captures <em>physical</em> memory — the raw page frames
+      on the DRAM chips. Reconstructing the virtual address space of any given process
+      requires walking that process's page table structures, which Volatility handles
+      automatically once given a matching OS profile.
+    </p>
+
+    <div class="callout callout-info">
+      <div class="callout-title">ℹ️ Page Size Quick Reference</div>
+      <p>
+        Standard page size on x64 Windows and Linux: <strong>4,096 bytes (4 KB)</strong>.
+        Large pages (2 MB) are also used for certain kernel structures. An 8 GB RAM
+        system has approximately 2,097,152 standard page frames. Volatility processes
+        these frames to reconstruct per-process memory maps during analysis.
+      </p>
+    </div>
+
+    <h3>Address Space Layout Randomization (ASLR)</h3>
+    <p>
+      Modern operating systems randomize the base addresses of the kernel, libraries,
+      heap, and stack at each boot — a security mechanism called <strong>ASLR</strong>.
+      Forensic implications:
+    </p>
+    <ul>
+      <li>Fixed-address assumptions are invalid; analysis tools must locate structures by scanning for pool tag signatures or following kernel data structure chains from known anchor points.</li>
+      <li>Volatility's profile system handles ASLR automatically for supported OS versions — it locates EPROCESS lists, pool allocations, and network endpoint structures regardless of boot-time randomization.</li>
+      <li>ASLR does not prevent memory forensics; it requires tools that are address-agnostic by design. This is exactly what Volatility provides.</li>
+    </ul>
+
+    <h3>The Pagefile as a Supplement</h3>
+    <p>
+      When physical RAM fills up, the OS moves infrequently-used pages to the
+      <strong>pagefile</strong> (<code>pagefile.sys</code> on Windows; swap partitions
+      on Linux). Pages swapped out at the moment of capture will appear as
+      <em>not present</em> in the memory dump. However:
+    </p>
+    <ul>
+      <li>The pagefile is a non-volatile artifact on disk and can be imaged with standard acquisition tools alongside the disk image.</li>
+      <li>Some Volatility 3 builds can incorporate a pagefile alongside a RAM image, reconstructing pages that were swapped out at capture time.</li>
+      <li>Encryption keys and active malware code are rarely paged out because the OS prioritizes keeping frequently-accessed pages in physical RAM — but this is not guaranteed.</li>
+    </ul>
+
+    <div class="callout callout-forensic-tip">
+      <div class="callout-title">🔎 Forensic Tip — Always Image the Pagefile</div>
+      <p>
+        Best practice: acquire both the live RAM dump <em>and</em> a disk image that
+        includes <code>pagefile.sys</code>. Together they provide the most complete
+        reconstruction of system execution state. Neither artifact alone is sufficient
+        for a thorough memory investigation.
+      </p>
+    </div>
+
+    <h3>Cold Boot Attack — A Physical Edge Case</h3>
+    <p>
+      DRAM cells lose their charge <em>gradually</em> after power-off — they do not
+      clear instantly. In laboratory conditions, researchers have demonstrated that
+      <strong>cooling RAM chips with compressed air</strong> preserves charge state
+      long enough to transplant and read the modules in a separate system.
+      This is the <strong>cold boot attack</strong>. It is rarely feasible in the
+      field but illustrates an important concept: "volatile" describes a
+      <em>time-decay spectrum</em>, not an instantaneous disappearance.
+    </p>
+
+    <div class="callout callout-info">
+      <div class="callout-title">ℹ️ Connecting to Lab Activity 10</div>
+      <p>
+        The concepts in Sections 1–5 — volatile vs. non-volatile, the RAM inventory,
+        RFC 3227 order, page frames, and the pagefile — map directly to the
+        <strong>Pre-lab Questions</strong> in Lab Activity 10.
+        Read those questions before beginning the lab; if you can answer them
+        from memory, you are well prepared.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SECTION 6 — Knowledge Check
+  ══════════════════════════════════════════ -->
+  <section class="quiz-section scroll-target" id="knowledge-check" aria-labelledby="h2-quiz">
+    <h2 id="h2-quiz">✅ Knowledge Check</h2>
+    <p class="quiz-intro">
+      Answer each question to verify your understanding of Module 11.1 concepts.
+      Explanatory feedback appears immediately after you submit each answer.
+      <strong>This activity is ungraded.</strong>
+    </p>
+
+    <!-- ── Q1 ── -->
+    <div class="q-block" id="qb1">
+      <p class="q-label" id="ql1">
+        <span class="q-num" aria-hidden="true">Q1</span>
+        A first responder arrives at a live Windows workstation suspected in a data
+        exfiltration incident. Following RFC 3227, which collection sequence is correct?
+      </p>
+      <ul class="q-opts" role="group" aria-labelledby="ql1">
+        <li>
+          <label>
+            <input type="radio" name="q1" value="a">
+            (A) Disk image → RAM dump → ARP cache / routing table
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q1" value="b">
+            (B) ARP cache / routing table → RAM dump → Disk image
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q1" value="c">
+            (C) RAM dump → Disk image → ARP cache / routing table
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q1" value="d">
+            (D) Power off the machine immediately, then image the disk
+          </label>
+        </li>
+      </ul>
+      <button class="q-submit" data-q="1" data-correct="b" aria-label="Submit answer for question 1">
+        Submit Answer
+      </button>
+      <div class="q-feedback" id="fb1" aria-live="polite"></div>
+    </div>
+
+    <!-- ── Q2 ── -->
+    <div class="q-block" id="qb2">
+      <p class="q-label" id="ql2">
+        <span class="q-num" aria-hidden="true">Q2</span>
+        Which artifact would be found in a RAM dump but <strong>not</strong> in a
+        standard disk image of the same system?
+      </p>
+      <ul class="q-opts" role="group" aria-labelledby="ql2">
+        <li>
+          <label>
+            <input type="radio" name="q2" value="a">
+            (A) NTFS file system metadata for a deleted file
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q2" value="b">
+            (B) A BitLocker Volume Master Key (VMK) currently in use to decrypt a mounted drive
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q2" value="c">
+            (C) Browser history stored in a SQLite database
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q2" value="d">
+            (D) Windows Event Log entries from the previous 30 days
+          </label>
+        </li>
+      </ul>
+      <button class="q-submit" data-q="2" data-correct="b" aria-label="Submit answer for question 2">
+        Submit Answer
+      </button>
+      <div class="q-feedback" id="fb2" aria-live="polite"></div>
+    </div>
+
+    <!-- ── Q3 ── -->
+    <div class="q-block" id="qb3">
+      <p class="q-label" id="ql3">
+        <span class="q-num" aria-hidden="true">Q3</span>
+        Malware executes on a Windows system, completes its payload, and deletes its
+        own binary from disk — all within 10 seconds. A memory dump is captured
+        2 minutes later while the system is still running. Which Volatility plugin
+        is <em>most</em> likely to reveal evidence of the malware's execution?
+      </p>
+      <ul class="q-opts" role="group" aria-labelledby="ql3">
+        <li>
+          <label>
+            <input type="radio" name="q3" value="a">
+            (A) <code>imageinfo</code> — identifies the OS profile for the dump
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q3" value="b">
+            (B) <code>filescan</code> — scans for FILE_OBJECT structures in memory
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q3" value="c">
+            (C) <code>psscan</code> — scans raw memory for EPROCESS pool tag signatures
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q3" value="d">
+            (D) <code>dumpregistry</code> — extracts registry hives from memory
+          </label>
+        </li>
+      </ul>
+      <button class="q-submit" data-q="3" data-correct="c" aria-label="Submit answer for question 3">
+        Submit Answer
+      </button>
+      <div class="q-feedback" id="fb3" aria-live="polite"></div>
+    </div>
+
+    <!-- ── Q4 ── -->
+    <div class="q-block" id="qb4">
+      <p class="q-label" id="ql4">
+        <span class="q-num" aria-hidden="true">Q4</span>
+        A Volatility <code>netscan</code> output shows a <code>CLOSE_WAIT</code>
+        connection to an external IP address. Running <code>netstat</code> live on
+        the same system shows no such connection. What is the most forensically
+        significant explanation?
+      </p>
+      <ul class="q-opts" role="group" aria-labelledby="ql4">
+        <li>
+          <label>
+            <input type="radio" name="q4" value="a">
+            (A) The memory dump is corrupt; the entry is an artifact of analysis error
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q4" value="b">
+            (B) The connection closed between dump time and when <code>netstat</code> ran;
+                memory preserved the closed-state record that the kernel had since discarded
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q4" value="c">
+            (C) <code>netscan</code> shows only IPv6 connections; <code>netstat</code> shows only IPv4
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="radio" name="q4" value="d">
+            (D) The connection belongs to the memory acquisition tool itself
+          </label>
+        </li>
+      </ul>
+      <button class="q-submit" data-q="4" data-correct="b" aria-label="Submit answer for question 4">
+        Submit Answer
+      </button>
+      <div class="q-feedback" id="fb4" aria-live="polite"></div>
+    </div>
+
+    <div class="score-bar" id="score-bar" role="status" aria-live="polite"></div>
+
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SECTION 7 — Summary and Look Ahead
+  ══════════════════════════════════════════ -->
+  <section class="section-card scroll-target" id="summary" aria-labelledby="h2-summary">
+    <h2 id="h2-summary">📌 Summary and Look Ahead</h2>
+
+    <div class="verdict-card" role="region" aria-label="Opening scenario resolution">
+      <h3>Returning to the Opening Scenario</h3>
+      <p>Your supervisor says: <em>"Pull the power and bag the machine."</em></p>
+      <p>You now have a principled, standards-backed reason to respond professionally:</p>
+      <div class="verdict-quote">
+        "Under RFC 3227's Order of Volatility, we need to capture volatile memory before
+        we power off. That encrypted file manager almost certainly holds its decryption key
+        in RAM right now. Pull the power and that key — and everything it unlocks — is gone
+        forever. I can run a memory acquisition tool from write-protected media in under five
+        minutes. Then we image the disk with a write-blocker. We lose nothing, and we gain
+        everything that's in RAM."
+      </div>
+    </div>
+
+    <h3>Module 11.1 Key Takeaways</h3>
+    <ul>
+      <li><strong>Volatile data</strong> exists only while the system has power and is uniquely valuable because it cannot be hidden by encryption at rest.</li>
+      <li>A live system's RAM holds a rich forensic inventory: running processes, encryption keys, network connections, clipboard contents, volatile registry data, injected code, and open file handles.</li>
+      <li><strong>RFC 3227</strong> mandates collecting evidence from most to least volatile. Volatile OS data structures (Rank 2) and full RAM (Rank 3) must be acquired before disk (Rank 5) on any live system.</li>
+      <li>Physical RAM is organized as <strong>page frames</strong> (typically 4 KB each). Forensic tools reconstruct virtual process spaces by walking the page tables in the raw physical dump.</li>
+      <li><strong>ASLR</strong> randomizes memory addresses at every boot but does not prevent forensics — it requires address-agnostic tools like Volatility, which handle this automatically via OS profiles.</li>
+      <li>The <strong>pagefile</strong> is a non-volatile supplement to a RAM dump; acquiring both provides the most complete picture of execution state.</li>
+    </ul>
+
+    <div class="look-ahead" role="region" aria-label="Preview of Module 11.2">
+      <p><strong>Coming Up — Module 11.2: Memory Acquisition</strong></p>
+      <p>
+        Now that you understand <em>why</em> RAM matters and what it contains,
+        Module 11.2 covers the <em>how</em>: the tools, image formats, and forensic
+        documentation required to capture a live memory dump correctly. You will compare
+        WinPmem, DumpIt, and LiME; examine raw, crash-dump, and hibernation file formats;
+        and learn how to document an acquisition chain of custody — the prerequisite
+        knowledge for Lab Activity 10.
+      </p>
+    </div>
+
+    <div class="callout callout-info" style="margin-top:1.1rem;">
+      <div class="callout-title">ℹ️ Connections to Graded Work</div>
+      <p>
+        <strong>Lab Activity 10</strong> (30 pts, due end of Week 11): The volatile vs.
+        non-volatile distinction and RFC 3227 order map directly to the Pre-lab Questions
+        section of Lab 10. Review this module before starting the lab.
+      </p>
+      <p>
+        <strong>Quiz 3</strong> (Week 12, covers Weeks 9–11 and network forensics):
+        Volatile data categories, the RFC 3227 collection sequence, and RAM artifact types
+        are high-probability question areas. Treat this module as a primary study reference
+        going into Quiz 3.
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer role="contentinfo">
+  <p>CSC 156 – Digital Forensic Fundamentals &nbsp;·&nbsp; Week 11, Module 11.1 &nbsp;·&nbsp; Spring 2026</p>
+  <p>For instructional use within this course only. Not for redistribution.</p>
+</footer>
+
+
+<!-- ══════════════════════════════════════════
+     INTERACTION SCRIPT
+     Template anchor — structure inherited by 11.2–11.4
+══════════════════════════════════════════ -->
+<script>
+(function () {
+  'use strict';
+
+  /* ── Accordion ─────────────────────────────────────────────── */
+  document.querySelectorAll('.accordion-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var open  = this.getAttribute('aria-expanded') === 'true';
+      var panel = document.getElementById(this.getAttribute('aria-controls'));
+      this.setAttribute('aria-expanded', String(!open));
+      panel.hidden = open;
+    });
+  });
+
+  /* ── Smooth scroll with focus management ───────────────────── */
+  document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      var id     = this.getAttribute('href').slice(1);
+      var target = document.getElementById(id);
+      if (!target) return;
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (!target.hasAttribute('tabindex')) {
+        target.setAttribute('tabindex', '-1');
+        target.addEventListener('blur', function onBlur() {
+          target.removeAttribute('tabindex');
+          target.removeEventListener('blur', onBlur);
+        });
+      }
+      target.focus({ preventScroll: true });
+    });
+  });
+
+  /* ── Scroll focused nav link into view on narrow screens ───── */
+  document.querySelectorAll('.nav-links a').forEach(function (a) {
+    a.addEventListener('focus', function () {
+      this.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    });
+  });
+
+  /* ── Knowledge Check ────────────────────────────────────────── */
+  var FB = {
+    q1: {
+      b: { ok: true,
+           msg: '✅ Correct. RFC 3227 orders collection most-volatile-first. Volatile OS data structures — ARP cache, routing table, process table (Rank 2) — are documented first, then a full RAM dump (Rank 3), and disk last (Rank 5). Option D destroys all volatile evidence and directly violates the Order of Volatility.' },
+      a: { ok: false,
+           msg: '❌ Incorrect. Disk is non-volatile and is collected last among these options. RFC 3227 always prioritizes volatile data first. Correct answer: B.' },
+      c: { ok: false,
+           msg: '❌ Incorrect. While a RAM dump does capture most ARP and routing data, RFC 3227 recommends first documenting OS volatile structures with individual commands (Rank 2) before running a full acquisition tool. Disk remains last. Correct answer: B.' },
+      d: { ok: false,
+           msg: '❌ Incorrect. Powering off first destroys all volatile evidence — this is the exact mistake the opening scenario illustrates. Correct answer: B.' }
+    },
+    q2: {
+      b: { ok: true,
+           msg: '✅ Correct. An active BitLocker VMK exists in RAM only while the encrypted drive is mounted and unlocked. It is never written to disk in plaintext. Options A, C, and D are all disk-resident artifacts that survive power-off and are recoverable from a standard disk image.' },
+      a: { ok: false,
+           msg: '❌ Incorrect. NTFS metadata for deleted files remains on disk in the MFT and unallocated space and is recovered through standard disk forensics, not RAM analysis. Correct answer: B.' },
+      c: { ok: false,
+           msg: '❌ Incorrect. SQLite browser history databases are written to disk and fully recoverable from a disk image. Correct answer: B.' },
+      d: { ok: false,
+           msg: '❌ Incorrect. Windows Event Logs are stored as .evtx files under %SystemRoot%\\System32\\winevt\\Logs and are fully recoverable from a disk image. Correct answer: B.' }
+    },
+    q3: {
+      c: { ok: true,
+           msg: '✅ Correct. psscan scans raw physical memory for EPROCESS pool tag signatures rather than walking the linked list. If the malware\'s process has exited but its memory pages have not been fully reclaimed, psscan may locate residual EPROCESS data. Crucially, psscan also detects processes hidden via DKOM (list unlinking) that pslist would miss entirely. The other three plugins do not target process execution history directly.' },
+      a: { ok: false,
+           msg: '❌ Incorrect. imageinfo identifies the OS version and profile for the dump — it does not enumerate processes or execution history. Correct answer: C.' },
+      b: { ok: false,
+           msg: '❌ Incorrect. filescan locates FILE_OBJECT structures in memory. Since the malware deleted its binary, its file object may already be gone. psscan targeting the EPROCESS structure is the more direct path to evidence of execution. Correct answer: C.' },
+      d: { ok: false,
+           msg: '❌ Incorrect. dumpregistry extracts registry hive data, which is valuable in other contexts but is not the most direct path to detecting past process execution. Correct answer: C.' }
+    },
+    q4: {
+      b: { ok: true,
+           msg: '✅ Correct. This is a key advantage of memory forensics over live commands. The dump captured the kernel\'s connection structures at acquisition time, including CLOSE_WAIT records for connections that were in the process of closing. By the time netstat ran, the OS had garbage-collected those entries. The memory dump provides a historical record that post-facto live commands cannot reproduce.' },
+      a: { ok: false,
+           msg: '❌ Incorrect. A single valid-state connection entry in netscan output is not evidence of corruption. Pool scanning is specifically designed to recover partially-freed or closed kernel structures. Correct answer: B.' },
+      c: { ok: false,
+           msg: '❌ Incorrect. Both netscan and netstat handle both IPv4 and IPv6. Protocol version is not the explanation here. Correct answer: B.' },
+      d: { ok: false,
+           msg: '❌ Incorrect. While memory acquisition tools do create transient connections that must be documented, a CLOSE_WAIT connection to an external IP is most forensically explained by the time gap between the dump and the netstat execution. Correct answer: B.' }
+    }
+  };
+
+  var answered = {};
+  var TOTAL    = 4;
+
+  document.querySelectorAll('.q-submit').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var qNum = this.getAttribute('data-q');
+      var qKey = 'q' + qNum;
+      if (answered.hasOwnProperty(qKey)) return;
+
+      var correct = this.getAttribute('data-correct');
+      var block   = document.getElementById('qb' + qNum);
+      var fbEl    = document.getElementById('fb'  + qNum);
+      var sel     = block.querySelector('input[name="' + qKey + '"]:checked');
+
+      if (!sel) {
+        fbEl.className   = 'q-feedback show fb-nosel';
+        fbEl.textContent = '⚠️ Please select an answer before submitting.';
+        return;
+      }
+
+      var val  = sel.value;
+      var data = FB[qKey][val];
+      answered[qKey] = (val === correct);
+
+      block.querySelectorAll('.q-opts label').forEach(function (lbl) {
+        var radio = lbl.querySelector('input');
+        radio.disabled = true;
+        if (radio.value === correct) {
+          lbl.classList.add('opt-correct');
+        } else if (radio.value === val && val !== correct) {
+          lbl.classList.add('opt-wrong');
+        }
+      });
+
+      fbEl.className   = 'q-feedback show ' + (data.ok ? 'fb-ok' : 'fb-err');
+      fbEl.textContent = data.msg;
+
+      this.disabled    = true;
+      this.textContent = 'Answered';
+
+      updateScore();
+    });
+  });
+
+  function updateScore() {
+    var done    = Object.keys(answered).length;
+    var correct = Object.values(answered).filter(Boolean).length;
+    var bar     = document.getElementById('score-bar');
+    bar.style.display = 'block';
+    if (done < TOTAL) {
+      bar.textContent = 'Progress: ' + done + ' of ' + TOTAL + ' answered — '
+                        + correct + ' correct so far.';
+    } else {
+      bar.textContent = '✅ Knowledge check complete! '
+                        + correct + ' of ' + TOTAL + ' correct. '
+                        + 'Review any missed questions above before moving to Module 11.2.';
+    }
+  }
+
+}());
+</script>
+
+</body>
+</html>

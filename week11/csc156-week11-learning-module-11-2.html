@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSC 156 – Module 11.2: Memory Acquisition</title>
+<style>
+/* ===== DESIGN SYSTEM (matches Module 11.1 template) ===== */
+:root {
+  --navy:        #1a2744;
+  --navy-mid:    #243459;
+  --blue:        #2d4a8a;
+  --blue-light:  #4a90d9;
+  --blue-pale:   #e8f0fb;
+  --amber:       #e8a020;
+  --amber-pale:  #fff8e1;
+  --green:       #2e7d32;
+  --green-pale:  #e8f5e9;
+  --red:         #c62828;
+  --red-pale:    #ffebee;
+  --teal:        #00695c;
+  --teal-pale:   #e0f2f1;
+  --purple:      #6a1b9a;
+  --purple-pale: #f3e5f5;
+  --gray-dark:   #333;
+  --gray-mid:    #555;
+  --gray-light:  #f5f7fa;
+  --gray-border: #dde2ea;
+  --code-bg:     #1e1e2e;
+  --code-text:   #cdd6f4;
+  --white:       #ffffff;
+  --nav-h:       54px;
+  --font-sans:   system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:   'Courier New', Courier, monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--gray-dark);
+  background: var(--gray-light);
+}
+
+/* ── SKIP LINK ── */
+.skip-link {
+  position: absolute; top: -100px; left: 0;
+  background: var(--amber); color: #000;
+  padding: 8px 16px; font-weight: 700;
+  z-index: 9999; transition: top .2s;
+}
+.skip-link:focus { top: 0; }
+
+/* ── STICKY NAV ── */
+nav#topnav {
+  position: sticky; top: 0; z-index: 1000;
+  background: var(--navy); height: var(--nav-h);
+  display: flex; align-items: center;
+  padding: 0 1rem; gap: 0;
+  overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: thin;
+}
+nav#topnav .nav-brand {
+  font-size: .78rem; font-weight: 700;
+  color: var(--amber); white-space: nowrap;
+  margin-right: .9rem; letter-spacing: .05em;
+  flex-shrink: 0;
+}
+nav#topnav a {
+  color: #c8d4ee; text-decoration: none;
+  font-size: .76rem; white-space: nowrap;
+  padding: 6px 9px; border-radius: 4px;
+  flex-shrink: 0; transition: background .15s, color .15s;
+}
+nav#topnav a:hover { background: var(--navy-mid); color: #fff; }
+nav#topnav a:focus-visible {
+  outline: 2px solid var(--amber); outline-offset: 2px; color: #fff;
+}
+
+/* ── LAYOUT ── */
+main { max-width: 900px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+/* ── MODULE HEADER ── */
+.mod-header {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+  color: #fff; border-radius: 8px;
+  padding: 2rem 2.5rem; margin-bottom: 2.5rem;
+}
+.mod-header .mod-tag {
+  font-size: .73rem; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--amber); margin-bottom: .5rem;
+}
+.mod-header h1 { font-size: 1.7rem; font-weight: 700; line-height: 1.25; margin-bottom: .7rem; }
+.mod-header .mod-meta {
+  font-size: .85rem; color: #a8bcdc;
+  display: flex; gap: 1.4rem; flex-wrap: wrap;
+}
+.mod-header .mod-meta span::before { content: '▸ '; color: var(--amber); }
+
+/* ── SECTIONS ── */
+section {
+  background: var(--white); border-radius: 8px;
+  padding: 2rem 2.25rem; margin-bottom: 2rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07);
+  scroll-margin-top: calc(var(--nav-h) + 10px);
+}
+section h2 {
+  font-size: 1.3rem; font-weight: 700;
+  color: var(--navy);
+  border-bottom: 3px solid var(--blue-light);
+  padding-bottom: .45rem; margin-bottom: 1.2rem;
+}
+section h3 {
+  font-size: 1.05rem; font-weight: 700;
+  color: var(--blue); margin-top: 1.5rem; margin-bottom: .55rem;
+}
+section h4 {
+  font-size: .96rem; font-weight: 700;
+  color: var(--gray-dark); margin-top: 1rem; margin-bottom: .4rem;
+}
+p { margin-bottom: .85rem; }
+ul, ol { margin: .4rem 0 .85rem 1.5rem; }
+li { margin-bottom: .32rem; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-left: 4px solid; border-radius: 0 6px 6px 0;
+  padding: .95rem 1.2rem; margin: 1.15rem 0; font-size: .91rem;
+}
+.callout .ct {
+  font-weight: 700; font-size: .78rem;
+  letter-spacing: .08em; text-transform: uppercase; margin-bottom: .35rem;
+}
+.callout-info    { border-color: var(--blue-light); background: var(--blue-pale); }
+.callout-info    .ct { color: var(--blue); }
+.callout-warning { border-color: var(--amber); background: var(--amber-pale); }
+.callout-warning .ct { color: #7a5400; }
+.callout-tip     { border-color: var(--teal); background: var(--teal-pale); }
+.callout-tip     .ct { color: var(--teal); }
+.callout-bridge  { border-color: var(--purple); background: var(--purple-pale); }
+.callout-bridge  .ct { color: var(--purple); }
+.callout-lab     { border-color: var(--green); background: var(--green-pale); }
+.callout-lab     .ct { color: var(--green); }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 6px; padding: 1rem 1.2rem;
+  overflow-x: auto; font-family: var(--font-mono);
+  font-size: .84rem; line-height: 1.6; margin: 1rem 0; tab-size: 4;
+}
+pre .cm  { color: #6c7086; font-style: italic; }
+pre .cmd { color: #89b4fa; }
+pre .fl  { color: #cba6f7; }
+pre .pth { color: #a6e3a1; }
+pre .out { color: #fab387; }
+pre .prm { color: #f38ba8; }
+code {
+  font-family: var(--font-mono); font-size: .875em;
+  background: #edf2f7; color: var(--red);
+  padding: 1px 5px; border-radius: 3px;
+}
+pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+
+/* ── TABLES ── */
+.tw { overflow-x: auto; margin: 1rem 0; }
+table { width: 100%; border-collapse: collapse; font-size: .89rem; }
+th {
+  background: var(--navy); color: #fff; text-align: left;
+  padding: .55rem .8rem; font-size: .8rem; letter-spacing: .04em;
+}
+td { padding: .55rem .8rem; border-bottom: 1px solid var(--gray-border); vertical-align: top; }
+tr:nth-child(even) td { background: var(--gray-light); }
+tr:hover td { background: var(--blue-pale); }
+
+/* ── COLLAPSIBLE ── */
+.cgroup { margin: .9rem 0; }
+.cbtn {
+  width: 100%; text-align: left;
+  background: var(--navy-mid); color: #fff;
+  border: none; border-radius: 6px;
+  padding: .75rem 1rem; font-size: .93rem; font-weight: 600;
+  cursor: pointer; display: flex; justify-content: space-between;
+  align-items: center; font-family: var(--font-sans);
+  transition: background .15s; margin-bottom: 2px;
+}
+.cbtn:hover { background: var(--blue); }
+.cbtn:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.cbtn .chev { transition: transform .25s; font-size: .78rem; }
+.cbtn[aria-expanded="true"] .chev { transform: rotate(180deg); }
+.ccontent {
+  display: none;
+  border: 1px solid var(--gray-border); border-top: none;
+  border-radius: 0 0 6px 6px; padding: 1.2rem;
+  background: var(--white); margin-bottom: .5rem;
+}
+.ccontent.open { display: block; }
+
+/* ── FORMAT CARDS ── */
+.fgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+  gap: 1rem; margin: 1rem 0;
+}
+.fcard {
+  border: 1px solid var(--gray-border); border-radius: 8px;
+  padding: 1.05rem; background: var(--white);
+  border-top: 4px solid var(--blue-light); font-size: .88rem;
+}
+.fcard h4 { color: var(--navy); font-size: .93rem; margin-top: 0; margin-bottom: .35rem; }
+.ext-badge {
+  display: inline-block; background: var(--navy);
+  color: var(--amber); font-size: .7rem;
+  font-family: var(--font-mono); padding: 1px 6px;
+  border-radius: 3px; margin-bottom: .45rem;
+}
+.fcard p { font-size: .85rem; margin-bottom: .35rem; color: var(--gray-mid); }
+
+/* ── SCENARIO BOX ── */
+.scenario-box {
+  background: var(--navy); color: #c8d4ee;
+  border-radius: 8px; padding: 1.4rem 1.7rem; margin: 1rem 0 1.4rem;
+}
+.scenario-box::before {
+  content: '🔴 LIVE INCIDENT DISPATCH';
+  display: block; font-size: .7rem; font-weight: 700;
+  letter-spacing: .12em; color: #f38ba8; margin-bottom: .7rem;
+}
+.scenario-box blockquote {
+  font-size: 1rem; line-height: 1.7;
+  font-style: italic; border: none; margin: 0; padding: 0; color: #e0e8f8;
+}
+.scenario-prompt {
+  margin-top: .9rem; font-size: .87rem;
+  color: var(--amber); font-weight: 600;
+}
+
+/* ── DECISION TREE WIDGET ── */
+#dtree {
+  border: 2px solid var(--blue); border-radius: 8px;
+  padding: 1.4rem; background: var(--blue-pale); margin: 1.2rem 0;
+}
+#dtree > h3 { color: var(--navy); margin-top: 0; margin-bottom: .6rem; font-size: 1rem; }
+.dnode { display: none; }
+.dnode.active { display: block; }
+.dquestion {
+  font-weight: 600; font-size: .98rem; color: var(--navy);
+  padding: .7rem 1rem; background: var(--white);
+  border-radius: 6px; border-left: 4px solid var(--blue-light);
+  margin-bottom: .9rem;
+}
+.dchoices { display: flex; flex-wrap: wrap; gap: .55rem; margin-bottom: .7rem; }
+.dbtn {
+  background: var(--navy); color: #fff; border: none;
+  border-radius: 5px; padding: .5rem 1rem;
+  font-size: .87rem; font-weight: 600; cursor: pointer;
+  font-family: var(--font-sans); transition: background .15s;
+}
+.dbtn:hover { background: var(--blue); }
+.dbtn:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.doutcome {
+  padding: .85rem 1rem; border-radius: 6px;
+  font-size: .9rem; margin-top: .7rem;
+}
+.do-capture  { background: var(--green-pale); border-left: 4px solid var(--green); color: #1b5e20; }
+.do-caution  { background: var(--amber-pale); border-left: 4px solid var(--amber); color: #6d4c00; }
+.do-disk     { background: var(--blue-pale);  border-left: 4px solid var(--blue-light); color: var(--navy); }
+.dreset-btn {
+  display: none; background: none;
+  border: 1px solid var(--blue); color: var(--blue);
+  border-radius: 5px; padding: .38rem .85rem;
+  font-size: .8rem; font-weight: 600;
+  cursor: pointer; font-family: var(--font-sans);
+  margin-top: .7rem; transition: background .15s, color .15s;
+}
+.dreset-btn:hover { background: var(--blue); color: #fff; }
+.dreset-btn:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.dbreadcrumb {
+  font-size: .76rem; color: var(--gray-mid);
+  font-style: italic; margin-bottom: .65rem; min-height: 1rem;
+}
+
+/* ── OBJ BADGE ── */
+.obj-badge {
+  display: inline-flex; align-items: center; gap: .3rem;
+  background: var(--blue-pale); border: 1px solid var(--blue-light);
+  color: var(--navy); font-size: .76rem; font-weight: 700;
+  padding: 2px 9px; border-radius: 12px; margin-bottom: 1rem;
+}
+
+/* ── CHECKLIST ── */
+.chklist { list-style: none; margin: .4rem 0 .9rem; padding: 0; }
+.chklist li {
+  display: flex; align-items: flex-start; gap: .55rem;
+  padding: .45rem .55rem; border-radius: 4px;
+  font-size: .9rem; margin-bottom: .28rem;
+}
+.chklist li:nth-child(odd) { background: var(--gray-light); }
+.chklist li::before { content: '☐'; font-size: .95rem; color: var(--blue); flex-shrink: 0; margin-top: 2px; }
+
+/* ── KNOWLEDGE CHECK ── */
+#knowledge-check { counter-reset: qnum; }
+.qblock {
+  border: 1px solid var(--gray-border); border-radius: 8px;
+  padding: 1.2rem; margin-bottom: 1.2rem; background: var(--gray-light);
+}
+.qtext { font-weight: 600; margin-bottom: .7rem; color: var(--navy); }
+.qtext::before {
+  counter-increment: qnum;
+  content: 'Q' counter(qnum) '. ';
+  color: var(--blue-light); font-weight: 800;
+}
+.opts { list-style: none; margin: 0; padding: 0; }
+.opts li { margin-bottom: .35rem; }
+.olabel {
+  display: flex; align-items: flex-start; gap: .55rem;
+  padding: .45rem .65rem; border-radius: 5px; cursor: pointer;
+  transition: background .12s; font-size: .91rem;
+  border: 1px solid transparent;
+}
+.olabel:hover { background: var(--blue-pale); border-color: var(--blue-light); }
+.olabel input { margin-top: 3px; flex-shrink: 0; }
+.fbk {
+  display: none; padding: .7rem .95rem;
+  border-radius: 5px; font-size: .89rem; margin-top: .7rem;
+}
+.fbk.ok  { display: block; background: var(--green-pale); color: #1b5e20; border-left: 4px solid var(--green); }
+.fbk.err { display: block; background: var(--red-pale);   color: #7f1f1f; border-left: 4px solid var(--red); }
+.ckbtn {
+  background: var(--blue); color: #fff; border: none;
+  border-radius: 5px; padding: .5rem 1.15rem;
+  font-size: .87rem; font-weight: 600; cursor: pointer;
+  font-family: var(--font-sans); margin-top: .7rem; transition: background .15s;
+}
+.ckbtn:hover { background: var(--navy); }
+.ckbtn:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.ckbtn:disabled { opacity: .5; cursor: default; }
+
+/* ── LOOK-AHEAD ── */
+.look-ahead {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+  color: #fff; border-radius: 8px; padding: 1.65rem 1.9rem; margin-top: 1rem;
+}
+.look-ahead h3 { color: var(--amber); margin-top: 0; }
+.look-ahead p  { color: #c8d4ee; margin-bottom: .55rem; }
+.look-ahead ul { color: #c8d4ee; margin-left: 1.4rem; }
+.look-ahead li { margin-bottom: .3rem; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 620px) {
+  main { padding: 1rem .75rem 3rem; }
+  .mod-header { padding: 1.4rem; }
+  .mod-header h1 { font-size: 1.3rem; }
+  section { padding: 1.2rem 1rem; }
+  .fgrid { grid-template-columns: 1fr; }
+  .dchoices { flex-direction: column; }
+}
+:focus-visible { outline: 2px solid var(--blue-light); outline-offset: 2px; }
+a:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<nav id="topnav" aria-label="Module section navigation">
+  <span class="nav-brand">CSC 156 · 11.2</span>
+  <a href="#sec-scenario">Scenario</a>
+  <a href="#sec-challenges">Challenges</a>
+  <a href="#sec-formats">Formats</a>
+  <a href="#sec-decision">Decision Framework</a>
+  <a href="#sec-tools">Tools</a>
+  <a href="#sec-integrity">Integrity Docs</a>
+  <a href="#sec-kc">Knowledge Check</a>
+  <a href="#sec-summary">Summary</a>
+</nav>
+
+<main id="main-content">
+
+<!-- ════════════════════════════════════════
+     MODULE HEADER
+═════════════════════════════════════════ -->
+<header class="mod-header" role="banner">
+  <div class="mod-tag">Week 11 · Module 11.2</div>
+  <h1>Capturing the Moment: Memory Acquisition Tools, Formats, and Forensic Documentation</h1>
+  <div class="mod-meta">
+    <span>Estimated Time: 1.5 – 2.0 hrs</span>
+    <span>Supports Week 11 Objective 2</span>
+    <span>Connects to Lab Activity 10</span>
+    <span>No graded submission in this module</span>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════
+     SECTION 1 — OPENING SCENARIO
+═════════════════════════════════════════ -->
+<section id="sec-scenario" aria-labelledby="h2-scenario">
+  <h2 id="h2-scenario">Opening Decision Scenario</h2>
+  <span class="obj-badge" aria-label="Supports Week 11 Objective 2">▸ Week 11 Objective 2</span>
+
+  <div class="scenario-box" role="region" aria-label="Live incident dispatch scenario">
+    <blockquote>
+      You are dispatched to a running Windows 10 workstation that the SOC team believes is actively communicating with a known malware C2 server. You arrive to find the monitor on, showing a terminal window with scrolling network output. You have WinPmem and DumpIt on a forensic USB drive in your pocket. Your supervisor is on the phone waiting for your status.
+    </blockquote>
+    <p class="scenario-prompt">⟶ What is your first action? And what do you document before you touch the machine?</p>
+  </div>
+
+  <p>This scenario captures the central tension in memory forensics: <strong>time is destroying evidence</strong>, but <strong>acting without a plan destroys it faster</strong>. Every second the workstation runs, volatile data — running processes, open network sockets, decrypted payload keys, injected shellcode — changes or evaporates. Every tool you run on the live machine changes it too.</p>
+
+  <p>Module 11.2 gives you the systematic framework to answer this dispatch with confidence. By the end of this module you will know which image format each acquisition method produces, which tool to reach for on Windows versus Linux, how to document the acquisition to forensic standard, and exactly how those decisions apply in Lab Activity 10.</p>
+
+  <div class="callout callout-info">
+    <div class="ct">🔍 Prerequisites</div>
+    Module 11.1 — Volatile Memory Foundations — established <em>what</em> lives in RAM and <em>why</em> capturing it matters. Module 11.2 answers <em>how</em> to capture it correctly. If you have not yet completed Module 11.1, review it first; the acquisition decisions in this module assume you understand the Order of Volatility and the categories of evidence unique to RAM.
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     SECTION 2 — ACQUISITION CHALLENGES
+═════════════════════════════════════════ -->
+<section id="sec-challenges" aria-labelledby="h2-challenges">
+  <h2 id="h2-challenges">Acquisition Challenges Unique to Volatile Media</h2>
+
+  <div class="callout callout-bridge">
+    <div class="ct">🔗 Prior-Week Bridge — Week 6: Data Acquisition and Preservation</div>
+    In Week 6 you learned the gold standard of disk acquisition: a write-blocker enforces hardware-level read-only access, and SHA-256 hashes taken before and after imaging prove bit-for-bit identity between source and copy. Memory acquisition invalidates both of those controls. This section explains why — and what replaces them.
+  </div>
+
+  <p>Disk acquisition is well-understood: attach a write-blocker, image the drive, verify the hash, move on. RAM acquisition has no equivalent safety net. The five challenges below are not academic concerns — each one directly affects the admissibility and analytical value of every memory image you produce.</p>
+
+  <h3>1. The Observer Effect — Tool Footprint</h3>
+  <p>Any tool you run on a live system <strong>modifies the system state it is trying to capture</strong>. The acquisition tool's executable is loaded into RAM. Its process appears in the process list. The system calls it issues alter kernel data structures. This is unavoidable — it is a fundamental property of live acquisition — and it is called the <em>tool footprint</em> or <em>observer effect</em>.</p>
+  <p>Minimizing footprint is therefore the primary criterion when selecting an acquisition tool:</p>
+  <ul>
+    <li>Prefer tools that <strong>run directly from removable media</strong> (USB) without installing to the target filesystem.</li>
+    <li>Prefer tools that <strong>write the image directly to external storage</strong>, not to the target drive, so the image itself does not alter the target's address space.</li>
+    <li>Always <strong>document the tool name, version, and its known footprint</strong> in your case notes — this is the compensating control that makes the observer effect forensically defensible.</li>
+  </ul>
+
+  <div class="callout callout-tip">
+    <div class="ct">⚙ Forensic Tip — The Write-Blocker Equivalent for RAM</div>
+    For disk acquisition, the write-blocker is the hardware control that proves no write occurred. RAM has no hardware equivalent. Instead, three compensating controls together replace the write-blocker for volatile media:
+    <ol style="margin-top:.6rem;margin-left:1.3rem;">
+      <li><strong>Tool selection:</strong> Known-good, minimal-footprint tool run from a forensic USB, never installed on the target.</li>
+      <li><strong>Contemporaneous documentation:</strong> Timestamped notes of every action taken before, during, and after acquisition.</li>
+      <li><strong>Transparent disclosure:</strong> Your report explicitly states which tool ran, what it changed, and why that change was minimal and necessary.</li>
+    </ol>
+    Courts and DFIR review boards have accepted memory evidence documented to this standard even with full knowledge of the observer effect.
+  </div>
+
+  <h3>2. Hashing Limitations</h3>
+  <p>For disk images, you hash the source, then hash the image, and a match proves integrity. RAM <strong>cannot be frozen</strong> the way a platter can: content changes continuously during acquisition — timers increment, kernel structures update, network buffers flush. This means:</p>
+  <ul>
+    <li>The hash of a memory image <strong>will not match</strong> a second hash of the source RAM taken moments later. This is expected and does not indicate evidence tampering.</li>
+    <li>You should still compute and record a hash of the <em>output image file</em> immediately after acquisition completes. This hash proves the <strong>file has not changed since it was captured</strong> — it is your integrity anchor for all downstream analysis.</li>
+    <li>Verify this file hash before every analysis session (Lab 10 included) and record the verification in your notes.</li>
+  </ul>
+
+  <h3>3. Anti-Forensic Risks and Active Malware</h3>
+  <p>Sophisticated malware may attempt to detect and evade memory acquisition. Known techniques include:</p>
+  <ul>
+    <li><strong>Driver detection:</strong> Malware monitors for forensic kernel drivers (such as WinPmem's driver) and wipes or migrates its evidence structures before capture completes.</li>
+    <li><strong>Memory wiping on exit:</strong> Malware that overwrites its own memory regions when it detects analysis or tool injection activity.</li>
+    <li><strong>Encrypted payloads:</strong> Payloads that exist in RAM only in a decrypted state; shutdown or hibernation causes the key to be discarded, leaving only an encrypted blob that cannot be recovered post-acquisition.</li>
+  </ul>
+  <p>These anti-forensic behaviors reinforce the priority of <strong>live acquisition over post-mortem</strong> when malware is suspected to be active — covered in detail in the Decision Framework section.</p>
+
+  <h3>4. Operating System Differences</h3>
+  <p>RAM is managed differently across operating systems, which directly affects how acquisition tools must operate:</p>
+  <div class="tw">
+    <table aria-label="OS differences in memory acquisition">
+      <thead>
+        <tr><th>Factor</th><th>Windows</th><th>Linux</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Acquisition mechanism</td>
+          <td>Kernel driver reads physical memory via <code>\\.\PhysicalMemory</code> or driver API</td>
+          <td>Loadable kernel module (LiME) or <code>/dev/mem</code> / <code>/proc/kcore</code></td>
+        </tr>
+        <tr>
+          <td>Driver / module requirements</td>
+          <td>Driver must be signed; Secure Boot / HVCI can block unsigned drivers</td>
+          <td>LKM must be compiled against the <em>exact</em> running kernel version and architecture</td>
+        </tr>
+        <tr>
+          <td>Target-system installation</td>
+          <td>WinPmem / DumpIt run from USB without installation</td>
+          <td>LiME usually requires compilation against target kernel headers — pre-stage before deployment</td>
+        </tr>
+        <tr>
+          <td>Network output</td>
+          <td>Typically local or USB only</td>
+          <td>LiME natively streams over TCP — image never touches the target disk</td>
+        </tr>
+        <tr>
+          <td>Post-shutdown RAM artifact</td>
+          <td><code>hiberfil.sys</code> — compressed full-RAM snapshot from hibernation</td>
+          <td>Swap-based hibernation; less forensically accessible without specialized tooling</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>5. Physical Address Space Gaps</h3>
+  <p>Not all physical RAM pages are addressable as a single contiguous block. Memory-mapped I/O regions, BIOS/firmware-reserved pages, and hardware-mapped addresses create <strong>gaps in the physical address space</strong>. A forensically sound acquisition tool handles these gaps either by zeroing the gap region (preserving correct offsets for later analysis) or by recording gap ranges in metadata. This is why a raw memory image may be slightly larger than installed RAM, and why Volatility must account for these gaps when reconstructing kernel structures.</p>
+</section>
+
+<!-- ════════════════════════════════════════
+     SECTION 3 — IMAGE FORMATS
+═════════════════════════════════════════ -->
+<section id="sec-formats" aria-labelledby="h2-formats">
+  <h2 id="h2-formats">Memory Image Formats</h2>
+
+  <p>Before you can analyze a memory dump, you need to identify its format. Different formats carry different metadata, different compression, and different structural assumptions that affect how analysis tools parse the image. You will encounter all five formats below in real investigations and incident response work.</p>
+
+  <div class="fgrid" role="list" aria-label="Memory image format reference cards">
+
+    <div class="fcard" role="listitem">
+      <h4>Raw / Flat Image</h4>
+      <span class="ext-badge">.raw &nbsp; .mem &nbsp; .img &nbsp; .bin &nbsp; .dd</span>
+      <p>A straight, linear, byte-for-byte copy of physical memory from address 0x00000000 to the top of installed RAM. No header, no metadata, no compression. Gaps in the physical address space are padded with zeros to preserve offset alignment.</p>
+      <p><strong>When encountered:</strong> WinPmem, DumpIt (raw mode), LiME (raw mode), and dd-style acquisition all produce raw images.</p>
+      <p><strong>Forensic relevance:</strong> Simplest to parse; Volatility 3 accepts raw images directly with no conversion. The most common format in live acquisition.</p>
+      <p><strong>Lab 10:</strong> <em>victoria-v8.memdump.img</em> (Path A) is a raw/flat image; the WinPmem dump produced in Path B is also raw.</p>
+    </div>
+
+    <div class="fcard" role="listitem">
+      <h4>Windows Crash Dump</h4>
+      <span class="ext-badge">.dmp</span>
+      <p>Generated by the Windows kernel during a BSOD or induced deliberately with tools like <code>NotMyFault</code> or <code>livekd</code>. Contains a structured <code>DUMP_HEADER</code> block with system metadata followed by memory content.</p>
+      <p><strong>Three variants:</strong> <em>Complete</em> (full RAM — forensically equivalent to raw), <em>Kernel</em> (kernel objects only — smaller, less complete), <em>Mini</em> (thread stack only — minimal forensic value).</p>
+      <p><strong>When encountered:</strong> <code>%SystemRoot%\MEMORY.DMP</code> on Windows systems that have experienced crashes; also deliberately induced for acquisition.</p>
+      <p><strong>Forensic relevance:</strong> Volatility 3 supports crash dump format natively. Complete crash dumps are as analytically rich as raw images, with the added benefit of header metadata.</p>
+    </div>
+
+    <div class="fcard" role="listitem">
+      <h4>Hibernation File</h4>
+      <span class="ext-badge">hiberfil.sys</span>
+      <p>When Windows hibernates, the entire contents of RAM are written to the root of the system drive and compressed using the Xpress (LZ77) algorithm. The machine can then be powered off with no data loss.</p>
+      <p><strong>When encountered:</strong> Powered-down Windows systems where hibernation was enabled (default on laptops). Acquired as part of the disk image — no live system needed.</p>
+      <p><strong>Forensic relevance:</strong> Represents the exact RAM state at the moment of hibernation. Must be decompressed (using <code>hibr2bin</code> or WinPmem's hiber mode) before Volatility analysis. Encryption keys, open documents, and browser sessions may survive here even on a powered-off machine.</p>
+    </div>
+
+    <div class="fcard" role="listitem">
+      <h4>VM Snapshots</h4>
+      <span class="ext-badge">.vmem &nbsp; .vmsn &nbsp; .vmss</span>
+      <p>When a VMware (or other hypervisor) virtual machine is suspended or snapshotted, guest RAM is written to a <code>.vmem</code> file by the hypervisor. The <code>.vmsn</code> / <code>.vmss</code> files contain snapshot state metadata.</p>
+      <p><strong>When encountered:</strong> Cloud forensics, corporate virtualized environments, malware sandboxes, and forensics lab exercises. The <em>victoria-v8.memdump.img</em> in Lab 10 originates from this format.</p>
+      <p><strong>Forensic relevance:</strong> Effectively a raw memory image with no observer effect — the guest was frozen externally by the hypervisor, not probed by a tool. Volatility 3 analyzes <code>.vmem</code> files directly.</p>
+    </div>
+
+    <div class="fcard" role="listitem">
+      <h4>Page File</h4>
+      <span class="ext-badge">pagefile.sys &nbsp; swapfile.sys</span>
+      <p>Windows virtual memory overflow: RAM pages not recently accessed are <em>paged out</em> to <code>pagefile.sys</code>. Modern Windows also maintains <code>swapfile.sys</code> for Store app memory. Both reside on the system drive.</p>
+      <p><strong>When encountered:</strong> Every Windows disk acquisition. Acquired as part of the disk image and analyzed separately from the RAM dump.</p>
+      <p><strong>Forensic relevance:</strong> Contains fragments of processes that were paged out — passwords, document content, URL strings — even on powered-down systems. <code>bulk_extractor</code> and <code>strings</code> can recover artifacts without a full memory framework. Standalone Volatility analysis of a pagefile is limited without the RAM image to correlate against.</p>
+    </div>
+
+  </div>
+
+  <div class="callout callout-lab">
+    <div class="ct">🧪 Lab Activity 10 — Image Format Reference</div>
+    <strong>Path A</strong> — <em>victoria-v8.memdump.img</em> is a VMware snapshot converted to raw/flat format. You will run <code>bulk_extractor</code> and string analysis against this image. Identify and record the format in your lab report's Pre-Lab section.<br><br>
+    <strong>Path B</strong> — You will produce a raw WinPmem image from your own lab machine during the lab session. Record the exact filename, file size, and SHA-256 hash in your acquisition log before beginning Volatility analysis.
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     SECTION 4 — DECISION FRAMEWORK
+═════════════════════════════════════════ -->
+<section id="sec-decision" aria-labelledby="h2-decision">
+  <h2 id="h2-decision">Live vs. Post-Mortem Acquisition — Decision Framework</h2>
+
+  <p>The single most consequential decision in memory forensics is made before you touch any tool: <strong>do you acquire memory from the running system (live acquisition) or do you power it down and rely on disk artifacts (post-mortem)?</strong> Modern best practice strongly favors live acquisition in almost all active-incident scenarios, but the framework below accounts for the legitimate exceptions.</p>
+
+  <h3>Foundational Principles</h3>
+  <ul>
+    <li><strong>Volatile data is gone forever</strong> once power is removed. There is no recovery path for running processes, open network sockets, or decryption keys from a powered-down machine.</li>
+    <li><strong>Live acquisition changes the machine</strong> — the observer effect is real, but the change is small, bounded, and forensically defensible with proper documentation.</li>
+    <li><strong>Shutting down can destroy more than it preserves</strong> in malware cases. Encrypted payloads may lock on shutdown; anti-forensic routines may fire during the Windows shutdown sequence.</li>
+    <li><strong>Post-mortem is appropriate</strong> when the volatile window has already closed (the machine was shut down before you arrived) or when a confirmed kill-switch or wiper is actively running and network isolation is not achievable.</li>
+  </ul>
+
+  <h3>Current Best Practice — NIST SP 800-86 and RFC 3227</h3>
+  <p>Both NIST SP 800-86 (<em>Guide to Integrating Forensic Techniques into Incident Response</em>) and RFC 3227 (<em>Guidelines for Evidence Collection and Archiving</em>) converge on a <strong>capture-first default</strong>: if the system is running and RAM contents are potentially relevant, capture memory before any disk examination, before any shutdown decision, and before any other investigative step. Document your reasoning either way — capture-first or post-mortem — in your case notes before touching the machine.</p>
+
+  <div class="callout callout-warning">
+    <div class="ct">⚠ Common First-Responder Mistake</div>
+    The instinct to unplug a suspected malware machine to "preserve the disk" is almost always the wrong call. Pulling the plug destroys all volatile evidence and may trigger anti-forensic shutdown routines embedded in the malware. Unless you have a specific documented safety or legal reason to power down immediately, capture memory first, then decide about the disk.
+  </div>
+
+  <!-- ── DECISION TREE WIDGET ── -->
+  <div id="dtree" role="region" aria-label="Interactive live vs. post-mortem decision tree">
+    <h3>🌲 Interactive Decision Tree — Live vs. Post-Mortem</h3>
+    <p style="font-size:.87rem;color:#444;margin-bottom:.65rem;">Work through the scenario by answering each question. All paths lead to a recommendation with a brief rationale.</p>
+    <div class="dbreadcrumb" id="dbc" aria-live="polite"></div>
+
+    <!-- Node 0 -->
+    <div class="dnode active" id="dn0" role="group" aria-labelledby="dq0">
+      <div class="dquestion" id="dq0" tabindex="-1">Is the target system currently powered on?</div>
+      <div class="dchoices">
+        <button class="dbtn" onclick="dgo(1,'System is ON')">Yes — system is running</button>
+        <button class="dbtn" onclick="dgo(5,'System is OFF')">No — system is powered off</button>
+      </div>
+    </div>
+
+    <!-- Node 1 -->
+    <div class="dnode" id="dn1" role="group" aria-labelledby="dq1">
+      <div class="dquestion" id="dq1" tabindex="-1">Is malware or an active intrusion currently suspected?</div>
+      <div class="dchoices">
+        <button class="dbtn" onclick="dgo(2,'Malware suspected')">Yes — malware / C2 activity suspected</button>
+        <button class="dbtn" onclick="dgo(3,'Routine investigation')">No — routine investigation</button>
+      </div>
+    </div>
+
+    <!-- Node 2 -->
+    <div class="dnode" id="dn2" role="group" aria-labelledby="dq2">
+      <div class="dquestion" id="dq2" tabindex="-1">Has the malware been confirmed to have wiper or self-destruct behavior?</div>
+      <div class="dchoices">
+        <button class="dbtn" onclick="dgo(4,'Wiper confirmed')">Yes — confirmed wiper / self-destruct</button>
+        <button class="dbtn" onclick="dout('cap-malware')">No — unknown or no wiper behavior</button>
+      </div>
+    </div>
+
+    <!-- Node 3 -->
+    <div class="dnode" id="dn3" role="group" aria-labelledby="dq3">
+      <div class="dquestion" id="dq3" tabindex="-1">Is there meaningful volatile data likely present — open user session, active services, logged-in user?</div>
+      <div class="dchoices">
+        <button class="dbtn" onclick="dout('cap-routine')">Yes — active session or services running</button>
+        <button class="dbtn" onclick="dout('cap-idle')">No — idle, locked, or no active sessions</button>
+      </div>
+    </div>
+
+    <!-- Node 4 -->
+    <div class="dnode" id="dn4" role="group" aria-labelledby="dq4">
+      <div class="dquestion" id="dq4" tabindex="-1">Can you achieve network isolation — pull the network cable or disable the NIC — without powering down the system?</div>
+      <div class="dchoices">
+        <button class="dbtn" onclick="dout('iso-cap')">Yes — can isolate network connection</button>
+        <button class="dbtn" onclick="dout('cap-fast')">No — cannot isolate without full shutdown</button>
+      </div>
+    </div>
+
+    <!-- Node 5 -->
+    <div class="dnode" id="dn5" role="group" aria-labelledby="dq5">
+      <div class="dquestion" id="dq5" tabindex="-1">Is there a hibernation file (hiberfil.sys) on the system drive?</div>
+      <div class="dchoices">
+        <button class="dbtn" onclick="dout('hiberfil')">Yes — system was hibernated</button>
+        <button class="dbtn" onclick="dout('disk-only')">No — clean shutdown; no hiberfil.sys</button>
+      </div>
+    </div>
+
+    <div id="dout-display" aria-live="assertive"></div>
+    <button class="dreset-btn" id="dreset" onclick="dreset()" aria-label="Restart the decision tree">↺ Start Over</button>
+  </div>
+
+  <h3>Decision Summary Table</h3>
+  <div class="tw">
+    <table aria-label="Live vs. post-mortem acquisition decision matrix">
+      <thead>
+        <tr><th>Scenario</th><th>Recommended Action</th><th>Rationale</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Active malware / C2 connection; system running</td><td><strong>Live capture immediately</strong></td><td>Encryption keys, injected shellcode, and C2 state vanish on shutdown</td></tr>
+        <tr><td>Active user session; no malware suspected</td><td><strong>Live capture, then disk</strong></td><td>Open documents, browser sessions, and credentials exist only in RAM</td></tr>
+        <tr><td>Confirmed wiper; network isolation achievable</td><td><strong>Isolate NIC → live capture</strong></td><td>C2 kill command cannot arrive over a severed connection</td></tr>
+        <tr><td>Confirmed wiper; no isolation possible</td><td><strong>Capture RAM immediately — fastest tool</strong></td><td>A partial image beats no image; accept the race condition, document it</td></tr>
+        <tr><td>System hibernated when found</td><td><strong>Acquire hiberfil.sys during disk imaging</strong></td><td>Hibernation file is a full RAM snapshot, recoverable post-mortem</td></tr>
+        <tr><td>System was powered off on arrival</td><td><strong>Disk acquisition only</strong></td><td>RAM is gone; pagefile.sys and hiberfil.sys are the only remaining RAM artifacts</td></tr>
+        <tr><td>Virtual machine snapshot available</td><td><strong>Analyze .vmem snapshot</strong></td><td>Guest was frozen externally; no observer effect; full RAM state preserved</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     SECTION 5 — ACQUISITION TOOLS
+═════════════════════════════════════════ -->
+<section id="sec-tools" aria-labelledby="h2-tools">
+  <h2 id="h2-tools">Acquisition Tools</h2>
+
+  <div class="callout callout-bridge">
+    <div class="ct">🔗 Prior-Week Bridge — Week 9: Linux Forensics and LiME</div>
+    In Week 9 you were introduced to LiME (Linux Memory Extractor) in the context of Linux forensic acquisition. Module 11.2 revisits LiME as part of the complete cross-platform tool ecosystem, comparing it to Windows-platform tools on the dimensions that matter most in practice: footprint, output format, driver requirements, and network streaming capability.
+  </div>
+
+  <p>Select the appropriate tool based on the target OS, the acquisition environment (local vs. remote), the available output destination, and whether you need a guided GUI or a command-line approach. All tools listed below produce output compatible with Volatility 3 analysis (either natively or with a brief conversion step).</p>
+
+  <!-- ── WINDOWS TOOLS ── -->
+  <h3>Windows Acquisition Tools</h3>
+  <div class="cgroup">
+
+    <button class="cbtn" aria-expanded="false" aria-controls="t-winpmem" onclick="tog(this,'t-winpmem')">
+      WinPmem <span style="font-weight:400;font-size:.8rem;color:#a8bcdc;"> — Open-source · CLI · Raw / AFF4</span>
+      <span class="chev" aria-hidden="true">▼</span>
+    </button>
+    <div class="ccontent" id="t-winpmem">
+      <ul>
+        <li><strong>Developer:</strong> Velocidex (open source; maintained by the Velociraptor team)</li>
+        <li><strong>Mechanism:</strong> Installs a temporary signed kernel driver; reads physical memory via the driver API; driver is removed automatically on completion</li>
+        <li><strong>Output format:</strong> Raw/flat (<code>.raw</code>) or AFF4 (advanced forensic format with embedded metadata)</li>
+        <li><strong>Footprint:</strong> Very low — runs entirely from USB, no persistent installation on target</li>
+        <li><strong>Driver signing:</strong> Signed; works on modern Windows 10/11 without test-signing mode under standard configurations</li>
+        <li><strong>Recommended for:</strong> Lab Activity 10 Path B; general live acquisition on modern Windows targets</li>
+      </ul>
+      <pre><span class="cm"># Run WinPmem from USB; write image directly to the USB drive
+# Replace E:\ with your actual USB drive letter</span>
+
+<span class="prm">E:\&gt;</span> <span class="cmd">winpmem_mini_x64.exe</span> <span class="pth">E:\case001_RAM_2026-04-08.raw</span>
+
+<span class="cm"># Hash the output file immediately after capture completes</span>
+<span class="prm">E:\&gt;</span> <span class="cmd">certutil</span> <span class="fl">-hashfile</span> <span class="pth">E:\case001_RAM_2026-04-08.raw</span> SHA256
+
+<span class="cm"># Convert a hibernation file to raw for Volatility analysis</span>
+<span class="prm">E:\&gt;</span> <span class="cmd">winpmem_mini_x64.exe</span> <span class="fl">--hiber</span> <span class="pth">C:\hiberfil.sys</span> <span class="pth">E:\hib_raw.raw</span></pre>
+      <div class="callout callout-warning" style="margin-top:.75rem;">
+        <div class="ct">⚠ Secure Boot and HVCI</div>
+        On Windows 11 systems with Secure Boot and HVCI (Hypervisor-Protected Code Integrity) enforced, unsigned or lightly-signed kernel drivers may be blocked at load time. If WinPmem fails to install its driver, verify the target's Secure Boot and HVCI configuration and consult the current WinPmem release notes for the applicable signing certificate status.
+      </div>
+    </div>
+
+    <button class="cbtn" aria-expanded="false" aria-controls="t-dumpit" onclick="tog(this,'t-dumpit')">
+      DumpIt <span style="font-weight:400;font-size:.8rem;color:#a8bcdc;"> — Free (Magnet Forensics) · CLI · Raw / Crash Dump</span>
+      <span class="chev" aria-hidden="true">▼</span>
+    </button>
+    <div class="ccontent" id="t-dumpit">
+      <ul>
+        <li><strong>Developer:</strong> Magnet Forensics (originated with Comae Technologies)</li>
+        <li><strong>Mechanism:</strong> Single portable executable; loads its own kernel driver at runtime; no installation required</li>
+        <li><strong>Output format:</strong> Raw/flat <code>.raw</code> or Microsoft crash dump format <code>.dmp</code></li>
+        <li><strong>Footprint:</strong> Very low — single EXE launched from USB</li>
+        <li><strong>Notable feature:</strong> Zero-argument invocation produces the fastest possible capture — useful in time-critical incidents where every second counts</li>
+      </ul>
+      <pre><span class="cm"># Zero-argument: prompts y/n, then captures immediately to current directory</span>
+<span class="prm">E:\&gt;</span> <span class="cmd">DumpIt.exe</span>
+
+<span class="cm"># Explicit output path</span>
+<span class="prm">E:\&gt;</span> <span class="cmd">DumpIt.exe</span> <span class="fl">/OUTPUT</span> <span class="pth">E:\case001_DumpIt.dmp</span>
+
+<span class="cm"># Force raw format instead of crash dump</span>
+<span class="prm">E:\&gt;</span> <span class="cmd">DumpIt.exe</span> <span class="fl">/OUTPUT</span> <span class="pth">E:\case001_DumpIt.raw</span> <span class="fl">/FORMAT</span> RAW</pre>
+    </div>
+
+    <button class="cbtn" aria-expanded="false" aria-controls="t-magnet" onclick="tog(this,'t-magnet')">
+      Magnet RAM Capture <span style="font-weight:400;font-size:.8rem;color:#a8bcdc;"> — Free · GUI · Raw</span>
+      <span class="chev" aria-hidden="true">▼</span>
+    </button>
+    <div class="ccontent" id="t-magnet">
+      <ul>
+        <li><strong>Developer:</strong> Magnet Forensics</li>
+        <li><strong>Mechanism:</strong> GUI-driven workflow; dedicated kernel driver; specifically designed for first-responder use</li>
+        <li><strong>Output format:</strong> Raw/flat <code>.mem</code> or <code>.raw</code></li>
+        <li><strong>Footprint:</strong> Low; tool automatically records acquisition timestamp and file hash after capture</li>
+        <li><strong>Best for:</strong> First-responders who need a guided interface and minimal CLI familiarity; produces raw output directly compatible with Volatility</li>
+        <li><strong>Limitation:</strong> GUI adds slight overhead vs. pure CLI tools; mouse interaction required, which may be awkward during tense live-incident conditions</li>
+      </ul>
+      <pre><span class="cm"># Magnet RAM Capture is entirely GUI-driven.
+# Launch from USB → select output destination (USB drive) → click Capture Memory.
+# The tool records the acquisition timestamp and computes the output hash automatically.
+# No command-line syntax required.</span></pre>
+    </div>
+
+    <button class="cbtn" aria-expanded="false" aria-controls="t-ftk" onclick="tog(this,'t-ftk')">
+      FTK Imager Lite <span style="font-weight:400;font-size:.8rem;color:#a8bcdc;"> — Free (Exterro) · GUI · Raw (.mem)</span>
+      <span class="chev" aria-hidden="true">▼</span>
+    </button>
+    <div class="ccontent" id="t-ftk">
+      <ul>
+        <li><strong>Developer:</strong> Exterro (formerly AccessData)</li>
+        <li><strong>Mechanism:</strong> Uses a <code>windd</code>-style kernel-mode driver; GUI-driven memory capture feature; can optionally acquire <code>pagefile.sys</code> simultaneously</li>
+        <li><strong>Output format:</strong> Raw <code>.mem</code></li>
+        <li><strong>Footprint:</strong> Moderate — FTK Imager is a larger application; run the <em>Lite</em> (portable) version from USB to avoid installing on the target</li>
+        <li><strong>Best for:</strong> Examiners already deploying FTK Imager for disk acquisition who want a unified toolset; simultaneous RAM + pagefile capture in a single workflow</li>
+        <li><strong>Important:</strong> Always run FTK Imager Lite from USB. Do not use an installed copy on the suspect machine — the installation footprint defeats the purpose.</li>
+      </ul>
+      <pre><span class="cm"># FTK Imager Lite — Memory Capture (GUI):
+#   File → Capture Memory
+#   Set destination to USB drive
+#   Optionally check "Include pagefile" if pagefile.sys is relevant
+#   Click "Capture Memory"
+#
+# Post-capture hash verification in FTK Imager:
+#   File → Verify Drive/Image → select the output .mem file</span></pre>
+    </div>
+
+  </div>
+
+  <!-- Windows comparison table -->
+  <h4 style="margin-top:1.3rem;">Windows Tool Quick-Reference</h4>
+  <div class="tw">
+    <table aria-label="Windows memory acquisition tool comparison">
+      <thead>
+        <tr><th>Tool</th><th>License</th><th>Interface</th><th>Output Format</th><th>Footprint</th><th>Lab 10</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>WinPmem</td><td>Open source</td><td>CLI</td><td>Raw, AFF4</td><td>Very low</td><td>✅ Path B</td></tr>
+        <tr><td>DumpIt</td><td>Free (Magnet)</td><td>CLI</td><td>Raw, Crash Dump</td><td>Very low</td><td>—</td></tr>
+        <tr><td>Magnet RAM Capture</td><td>Free</td><td>GUI</td><td>Raw</td><td>Low</td><td>—</td></tr>
+        <tr><td>FTK Imager Lite</td><td>Free (Exterro)</td><td>GUI</td><td>Raw (.mem)</td><td>Moderate</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── LINUX TOOLS ── -->
+  <h3 style="margin-top:2rem;">Linux Acquisition — LiME</h3>
+  <div class="cgroup">
+
+    <button class="cbtn" aria-expanded="false" aria-controls="t-lime" onclick="tog(this,'t-lime')">
+      LiME — Linux Memory Extractor <span style="font-weight:400;font-size:.8rem;color:#a8bcdc;"> — Open-source · LKM · Raw / Padded / LiME format</span>
+      <span class="chev" aria-hidden="true">▼</span>
+    </button>
+    <div class="ccontent" id="t-lime">
+      <ul>
+        <li><strong>Developer:</strong> 504ENSICS Labs (Joe Sylve); open source on GitHub</li>
+        <li><strong>Mechanism:</strong> Loadable Kernel Module (LKM) inserted via <code>insmod</code>; reads physical memory directly from kernel space; output goes to a file or TCP socket</li>
+        <li><strong>Output formats:</strong>
+          <ul>
+            <li><code>raw</code> — linear byte-for-byte copy (equivalent to Windows raw image)</li>
+            <li><code>padded</code> — same as raw but physical address gaps are zero-padded for precise offset alignment</li>
+            <li><code>lime</code> — LiME format with range-header metadata for each physical memory segment; preferred for Volatility 3 analysis</li>
+          </ul>
+        </li>
+        <li><strong>Network streaming:</strong> LiME natively streams the image over a TCP socket — the image file is written directly to the forensic workstation, never touching the target filesystem</li>
+        <li><strong>Kernel version dependency:</strong> The LKM must be compiled against the <em>exact</em> kernel version and CPU architecture of the target. Pre-compile and stage LiME before deployment; carrying a pre-built kit for common kernel versions is standard practice</li>
+        <li><strong>Footprint:</strong> Minimal — kernel module lives in kernel space; image goes directly to network or an externally mounted drive</li>
+      </ul>
+
+      <pre><span class="cm"># ── Acquire to a locally mounted USB drive ──────────────────────────────</span>
+<span class="prm">root@target:~#</span> <span class="cmd">insmod</span> <span class="pth">/media/usb/lime-5.15.0-76-generic.ko</span> <span class="fl">"path=/mnt/evidence/case001.lime format=lime"</span>
+
+<span class="cm"># ── Acquire over network (preferred — no write to target disk) ──────────
+# Step 1: on the forensic workstation — start listener first</span>
+<span class="prm">examiner@ws:~$</span> <span class="cmd">nc</span> <span class="fl">-l -p 4444</span> <span class="fl">&gt;</span> <span class="pth">case001.lime</span>
+
+<span class="cm"># Step 2: on the target — load LiME and stream to forensic workstation IP</span>
+<span class="prm">root@target:~#</span> <span class="cmd">insmod</span> <span class="pth">lime.ko</span> <span class="fl">"path=tcp:4444 format=lime"</span>
+
+<span class="cm"># ── Hash the received image immediately ─────────────────────────────────</span>
+<span class="prm">examiner@ws:~$</span> <span class="cmd">sha256sum</span> <span class="pth">case001.lime</span>
+
+<span class="cm"># ── Remove the LKM from the target when acquisition is complete ─────────</span>
+<span class="prm">root@target:~#</span> <span class="cmd">rmmod</span> lime</pre>
+
+      <div class="callout callout-tip" style="margin-top:.8rem;">
+        <div class="ct">⚙ LiME Format vs. Raw Format for Volatility</div>
+        The <code>lime</code> format preserves per-segment range headers that help Volatility 3 accurately reconstruct the physical address space — especially important when memory has non-contiguous regions. For tools that expect a pure byte stream, <code>format=raw</code> works. Confirm the format before selecting symbol files for Volatility; both formats are supported in Volatility 3.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     SECTION 6 — FORENSIC INTEGRITY DOCS
+═════════════════════════════════════════ -->
+<section id="sec-integrity" aria-labelledby="h2-integrity">
+  <h2 id="h2-integrity">Forensic Integrity Documentation</h2>
+
+  <p>Documentation transforms a memory capture into forensic evidence. The goal is a <strong>contemporaneous record</strong> — written at the time, in sequence — that allows any third party (opposing counsel, a reviewing judge, a second examiner) to reconstruct exactly what you did, why you did it, and what effect your actions had on the evidence. The checklist below maps directly to the documentation requirements graded in Lab Activity 10.</p>
+
+  <div class="callout callout-tip">
+    <div class="ct">⚙ Forensic Tip — Documentation as the Write-Blocker Equivalent</div>
+    For disk acquisition, the write-blocker is the technical control. For RAM, <strong>documentation is the control</strong>. A complete, timestamped acquisition log demonstrates that you chose a minimal-footprint tool, ran it from removable media, immediately hashed the output image, and disclosed every action taken on the live system. This documentation standard has been accepted in DFIR reviews and legal proceedings even with full awareness of the observer effect.
+  </div>
+
+  <h3>Pre-Acquisition Checklist</h3>
+  <ul class="chklist" aria-label="Pre-acquisition documentation checklist">
+    <li>Case number, date, time (local and UTC), and examiner name recorded in case notes</li>
+    <li>Physical description of the system: make, model, serial number, asset tag, visible hostname</li>
+    <li>System state on arrival: power status, screen contents, active connections observed, logged-in user (photograph or authorized screenshot if possible)</li>
+    <li>Decision rationale: why live acquisition was chosen over post-mortem — or vice versa — with specific contributing factors cited (active C2, volatile session, confirmed wiper, etc.)</li>
+    <li>Acquisition tool: name, version number, and source media (e.g., "WinPmem 3.3.rc3 from forensic USB; tool SHA-256 pre-verified against known-good hash before use")</li>
+    <li>Output destination identified: USB make, model, serial number; available storage capacity confirmed as sufficient</li>
+  </ul>
+
+  <h3>During Acquisition</h3>
+  <ul class="chklist" aria-label="During acquisition documentation checklist">
+    <li>Exact command or GUI action taken to initiate acquisition — record verbatim, including all flags and arguments</li>
+    <li>Time acquisition started (HH:MM:SS UTC); time acquisition completed</li>
+    <li>Any errors, warnings, or unexpected tool behavior — record exact text as displayed</li>
+    <li>Tool-reported total RAM size and any reported gaps, excluded regions, or skipped pages</li>
+  </ul>
+
+  <h3>Post-Acquisition Checklist</h3>
+  <ul class="chklist" aria-label="Post-acquisition documentation checklist">
+    <li>Output image: full filename, file size in bytes, storage location on acquisition media</li>
+    <li>SHA-256 hash of the output image file, computed immediately after capture — record the full 64-character hash verbatim</li>
+    <li>Confirm hash is repeatable: compute a second hash of the same file and verify it matches (a match here proves file integrity; non-matching hash vs. live RAM is expected — document this explicitly)</li>
+    <li>Note in case documentation: RAM source hash cannot match the image file hash due to continuous state change during acquisition; this is expected per RFC 3227 §2.1 and does not indicate tampering</li>
+    <li>All further actions taken on the live system after acquisition: commands run, investigation steps, shutdown decision — each with timestamp</li>
+    <li>System disposition: machine powered down, left running, or returned to custodian — state which, and at what time</li>
+  </ul>
+
+  <div class="callout callout-lab">
+    <div class="ct">🧪 Lab Activity 10 — Documentation Requirements</div>
+    <strong>Path A students:</strong> You will not perform a live acquisition, but you must document the provenance of <em>victoria-v8.memdump.img</em> in your lab report: format identified, SHA-256 verified before analysis begins, tool used, any errors or anomalies noted.<br><br>
+    <strong>Path B students:</strong> You perform a live WinPmem acquisition as the first step in Lab 10. Use the Pre / During / Post checklist above as the structure for the Acquisition Documentation section of your report. Your log must include the exact WinPmem command, start and end timestamps, reported RAM size, and the full SHA-256 hash of your output file. This section is directly assessed in the Lab 10 rubric.
+  </div>
+
+  <h3>Sample Acquisition Log</h3>
+  <pre><span class="out">========================================
+MEMORY ACQUISITION LOG
+Case:       CSC156-LAB10-[STUDENT ID]
+Date:       2026-04-08
+Examiner:   [Your Name]
+========================================</span>
+
+<span class="out">PRE-ACQUISITION
+──────────────────────────────────────────
+Time (UTC):     2026-04-08T14:22:10Z
+System:         Dell OptiPlex 7090, SN: ABCD1234, Hostname: WKSTN-07
+System state:   Powered on, Windows 10 22H2, user logged in,
+                active terminal window visible with network output
+Decision:       Live acquisition — active user session and suspected
+                C2 activity; volatile evidence present; capture before
+                any other action per RFC 3227 / NIST SP 800-86
+Tool:           WinPmem 3.3.rc3  (winpmem_mini_x64.exe)
+Tool source:    Forensic USB SN: USBSN5678
+Tool SHA-256:   Pre-verified against known-good hash [recorded separately]
+Output dest:    SanDisk USB 3.0 32 GB SN: USBSN5678  Drive: E:\</span>
+
+<span class="out">DURING ACQUISITION
+──────────────────────────────────────────
+Command:    E:\&gt; winpmem_mini_x64.exe E:\case001_RAM_20260408.raw
+Started:    14:23:05Z
+Completed:  14:38:42Z
+RAM size:   16,384 MB reported by tool (17,179,869,184 bytes)
+Errors:     None reported</span>
+
+<span class="out">POST-ACQUISITION
+──────────────────────────────────────────
+Output file:    case001_RAM_20260408.raw
+File size:      17,179,869,184 bytes
+SHA-256:        a3f8c2d1e9b047dc... [full 64-character hash]
+Hash verified:  Second hash computation confirmed — file unchanged
+Hash note:      Hash of image FILE only. Source RAM hash mismatch
+                is expected (continuous state change during capture);
+                does not indicate tampering — RFC 3227 §2.1
+Post-acq action: Machine left powered on; returned to custodian 14:40Z
+                 No further commands run on target after acquisition</span></pre>
+</section>
+
+<!-- ════════════════════════════════════════
+     SECTION 7 — KNOWLEDGE CHECK
+═════════════════════════════════════════ -->
+<section id="sec-kc" aria-labelledby="h2-kc">
+  <h2 id="h2-kc">Knowledge Check — Module 11.2</h2>
+  <p>These questions are <strong>ungraded</strong> and for self-assessment only. Select your answer and click <em>Check Answer</em> for immediate explanatory feedback. All four topics are testable in Quiz 3 (Week 12).</p>
+
+  <!-- Q1 -->
+  <div class="qblock" id="qb1">
+    <div class="qtext">A forensic examiner acquires a memory image from a live Windows workstation using WinPmem and immediately computes a SHA-256 hash of the output file, getting value X. She then hashes the running RAM directly and gets value Y, where X ≠ Y. Which is the correct interpretation?</div>
+    <ul class="opts" role="radiogroup" aria-label="Question 1 options">
+      <li><label class="olabel"><input type="radio" name="q1" value="a"> <span>A) The image is corrupt — the file hash should always match the live RAM hash for a valid acquisition.</span></label></li>
+      <li><label class="olabel"><input type="radio" name="q1" value="b"> <span>B) The image file is intact; the mismatch is expected because RAM changes continuously and cannot be frozen during acquisition.</span></label></li>
+      <li><label class="olabel"><input type="radio" name="q1" value="c"> <span>C) WinPmem modified the output file after capture, which is a forensic integrity violation requiring the capture to be repeated.</span></label></li>
+      <li><label class="olabel"><input type="radio" name="q1" value="d"> <span>D) The write-blocker failed; all RAM evidence from this acquisition must be discarded.</span></label></li>
+    </ul>
+    <button class="ckbtn" onclick="chk(1,'b',this)">Check Answer</button>
+    <div class="fbk" id="f1" role="alert"></div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="qblock" id="qb2">
+    <div class="qtext">You arrive at a powered-off Windows laptop. The user reports they put it into sleep mode — not shut down — before leaving. Which artifact should you prioritize acquiring during disk imaging to recover the most complete RAM content?</div>
+    <ul class="opts" role="radiogroup" aria-label="Question 2 options">
+      <li><label class="olabel"><input type="radio" name="q2" value="a"> <span>A) <code>pagefile.sys</code> — it contains all swapped-out RAM pages.</span></label></li>
+      <li><label class="olabel"><input type="radio" name="q2" value="b"> <span>B) <code>hiberfil.sys</code> — it contains a compressed snapshot of the full RAM state at the time the system suspended to disk.</span></label></li>
+      <li><label class="olabel"><input type="radio" name="q2" value="c"> <span>C) <code>MEMORY.DMP</code> — it is always the most recent and most complete memory artifact.</span></label></li>
+      <li><label class="olabel"><input type="radio" name="q2" value="d"> <span>D) The Windows Event Log — it records all in-memory process activity.</span></label></li>
+    </ul>
+    <button class="ckbtn" onclick="chk(2,'b',this)">Check Answer</button>
+    <div class="fbk" id="f2" role="alert"></div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="qblock" id="qb3">
+    <div class="qtext">A colleague tells you they chose not to capture memory from a suspected malware-infected workstation because "pulling the plug preserves the disk." Which response best identifies the flaw in that reasoning?</div>
+    <ul class="opts" role="radiogroup" aria-label="Question 3 options">
+      <li><label class="olabel"><input type="radio" name="q3" value="a"> <span>A) Pulling the plug destroys all volatile evidence — running processes, open sockets, decryption keys, injected code — and may trigger anti-forensic shutdown routines embedded in the malware.</span></label></li>
+      <li><label class="olabel"><input type="radio" name="q3" value="b"> <span>B) Pulling the plug is acceptable because disk evidence is always more reliable than RAM evidence in court.</span></label></li>
+      <li><label class="olabel"><input type="radio" name="q3" value="c"> <span>C) Disk images cannot be collected from a powered-off machine.</span></label></li>
+      <li><label class="olabel"><input type="radio" name="q3" value="d"> <span>D) The observer effect makes any live acquisition legally inadmissible regardless of documentation.</span></label></li>
+    </ul>
+    <button class="ckbtn" onclick="chk(3,'a',this)">Check Answer</button>
+    <div class="fbk" id="f3" role="alert"></div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="qblock" id="qb4">
+    <div class="qtext">You receive a memory image with the filename <code>server-snapshot.vmem</code> collected from a corporate virtualization host. What is the most likely source of this image, and what does that source tell you about the observer effect during its acquisition?</div>
+    <ul class="opts" role="radiogroup" aria-label="Question 4 options">
+      <li><label class="olabel"><input type="radio" name="q4" value="a"> <span>A) A raw WinPmem image; a significant observer effect was present during live acquisition.</span></label></li>
+      <li><label class="olabel"><input type="radio" name="q4" value="b"> <span>B) A Windows kernel crash dump; only partial RAM is present and no observer effect occurred.</span></label></li>
+      <li><label class="olabel"><input type="radio" name="q4" value="c"> <span>C) A VMware guest VM RAM file written by the hypervisor when the VM was snapshotted or suspended; minimal to no observer effect because the guest was frozen externally, not probed from inside.</span></label></li>
+      <li><label class="olabel"><input type="radio" name="q4" value="d"> <span>D) A LiME acquisition from a Linux guest; observer effect was present but minimized by network streaming.</span></label></li>
+    </ul>
+    <button class="ckbtn" onclick="chk(4,'c',this)">Check Answer</button>
+    <div class="fbk" id="f4" role="alert"></div>
+  </div>
+
+</section>
+
+<!-- ════════════════════════════════════════
+     SECTION 8 — SUMMARY AND LOOK AHEAD
+═════════════════════════════════════════ -->
+<section id="sec-summary" aria-labelledby="h2-summary">
+  <h2 id="h2-summary">Summary and Look Ahead</h2>
+
+  <h3>Module 11.2 Key Takeaways</h3>
+  <ul>
+    <li><strong>The observer effect is unavoidable</strong> in live acquisition. Tool selection, contemporaneous documentation, and transparent disclosure together replace the write-blocker as the integrity control for volatile media.</li>
+    <li><strong>Hash the image file immediately</strong> after capture. A match between the file hash and a hash of the live RAM is impossible and not expected. The file hash is your integrity anchor for all downstream analysis — verify it before every analysis session.</li>
+    <li><strong>Format determines your parser</strong>. Raw/flat, crash dump, hiberfil.sys, VM snapshots, and pagefile each require different handling. Identify the format before opening any analysis tool.</li>
+    <li><strong>Capture first</strong> is the default. NIST SP 800-86 and RFC 3227 both advise live acquisition before any other action when the system is running and volatile evidence is likely present. The exceptions — confirmed wiper without isolation capability, and powered-off arrival — are well-defined and require documented justification.</li>
+    <li><strong>Tool selection is platform-specific</strong>. WinPmem and DumpIt for Windows live acquisition; LiME (kernel version matched) for Linux. Know LiME's kernel dependency before you are dispatched.</li>
+    <li><strong>Documentation is the deliverable</strong>. A memory image without a contemporaneous acquisition log is not forensic evidence — it is just a file.</li>
+  </ul>
+
+  <div class="look-ahead" role="region" aria-label="Preview of Module 11.3">
+    <h3>⟶ Up Next: Module 11.3 — Volatility and Process Analysis</h3>
+    <p>You now have a correctly acquired, documented memory image. Module 11.3 puts it under the microscope using the <strong>Volatility 3 Framework</strong>. You will:</p>
+    <ul>
+      <li>Set up Volatility 3 and validate your symbol table against your image (Path B students will use their WinPmem acquisition; Path A students use <em>victoria-v8.memdump.img</em>)</li>
+      <li>Run the core process enumeration plugins: <code>pslist</code>, <code>pstree</code>, <code>psscan</code>, and <code>cmdline</code></li>
+      <li>Cross-reference process output to identify orphaned processes, parent-child mismatches, and unexpected executable paths</li>
+      <li>Interpret <code>malfind</code> output as a starting point for detecting code injection and memory-resident malware</li>
+    </ul>
+    <p style="margin-top:.75rem;font-size:.86rem;color:#a8bcdc;">Module 11.3 is the most technically demanding module in Week 11. If you are completing Path B, ensure your WinPmem acquisition is finished and your Volatility 3 Python environment is configured before you begin Module 11.3 — the install process can take 15–30 minutes on a first run.</p>
+  </div>
+</section>
+
+</main><!-- /main -->
+
+<script>
+/* ══════════════════════════════════════
+   COLLAPSIBLE SECTIONS
+══════════════════════════════════════ */
+function tog(btn, id) {
+  var c = document.getElementById(id);
+  var open = btn.getAttribute('aria-expanded') === 'true';
+  btn.setAttribute('aria-expanded', String(!open));
+  c.classList.toggle('open', !open);
+}
+
+/* ══════════════════════════════════════
+   DECISION TREE
+══════════════════════════════════════ */
+var dPath = [];
+
+var dOutcomes = {
+  'cap-malware': {
+    cls: 'do-capture',
+    html: '<strong>✅ Capture RAM immediately — live acquisition.</strong><br>Active malware with unknown or no confirmed wiper behavior: acquire memory now with WinPmem or DumpIt from your forensic USB. The C2 channel is actively threatening evidence. Before touching any tool, photograph or note the visible screen state — network connections, running processes, current time. Hash the image the moment capture completes and record the hash verbatim.'
+  },
+  'cap-routine': {
+    cls: 'do-capture',
+    html: '<strong>✅ Live acquisition, then disk.</strong><br>Active user session with no malware suspected: capture RAM to preserve open documents, authenticated browser sessions, and credentials resident in memory. Proceed to disk acquisition only after memory is secured and documented. Follow the pre/during/post documentation checklist.'
+  },
+  'cap-idle': {
+    cls: 'do-disk',
+    html: '<strong>ℹ Live acquisition preferred — assess urgency.</strong><br>Idle or locked system with no active sessions reduces urgency, but live capture still preserves kernel structures and any resident artifacts. Capture RAM if time and your site procedure allow; proceed to disk acquisition if policy requires shutdown first. Either way, document your decision and its rationale before acting.'
+  },
+  'iso-cap': {
+    cls: 'do-capture',
+    html: '<strong>✅ Network isolate, then capture RAM.</strong><br>Pull the network cable (or disable the NIC via Device Manager) to sever the C2 channel before the wipe command can arrive — then immediately begin RAM acquisition. Document the exact time of isolation in your case notes, then proceed with WinPmem or DumpIt. Isolating without shutdown preserves all volatile evidence while removing the external threat.'
+  },
+  'cap-fast': {
+    cls: 'do-capture',
+    html: '<strong>⚠ Capture RAM as fast as possible — accept the race.</strong><br>Confirmed wiper with active C2 and no isolation path: launch DumpIt with zero arguments (fastest invocation) or WinPmem immediately. Accept that capture may be interrupted if the remote wipe command arrives mid-acquisition — a partial image is better than no image. Document the threat intelligence that drove the decision and note in your report that capture may be incomplete.'
+  },
+  'hiberfil': {
+    cls: 'do-capture',
+    html: '<strong>✅ Acquire hiberfil.sys during disk imaging.</strong><br>The system was hibernated — hiberfil.sys at the root of the system drive contains a full compressed RAM snapshot from the moment of hibernation. Ensure your disk image captures this file (it is marked hidden/system). After disk acquisition, convert hiberfil.sys to a raw image using <code>winpmem --hiber</code> or <code>hibr2bin</code> before Volatility analysis. Encryption keys and open session data may be recoverable.'
+  },
+  'disk-only': {
+    cls: 'do-disk',
+    html: '<strong>📋 Disk acquisition only — RAM evidence is unrecoverable.</strong><br>Clean shutdown with no hibernation file means volatile memory is gone. Proceed with a full disk acquisition. During analysis, examine pagefile.sys and swapfile.sys for paged-out memory fragments — bulk_extractor and strings analysis can still recover credentials, URLs, and document content from these files even on a powered-off system.'
+  }
+};
+
+function dgo(nodeId, label) {
+  document.querySelectorAll('.dnode').forEach(function(n){ n.classList.remove('active'); });
+  document.getElementById('dn' + nodeId).classList.add('active');
+  document.getElementById('dout-display').innerHTML = '';
+  dPath.push(label);
+  document.getElementById('dbc').textContent = 'Path: ' + dPath.join(' → ');
+  document.getElementById('dreset').style.display = 'inline-block';
+  var q = document.getElementById('dq' + nodeId);
+  if (q) { q.setAttribute('tabindex', '-1'); q.focus(); }
+}
+
+function dout(key) {
+  document.querySelectorAll('.dnode').forEach(function(n){ n.classList.remove('active'); });
+  var o = dOutcomes[key];
+  var el = document.getElementById('dout-display');
+  el.innerHTML = '<div class="doutcome ' + o.cls + '" role="status" tabindex="-1">' + o.html + '</div>';
+  document.getElementById('dreset').style.display = 'inline-block';
+  var out = el.querySelector('.doutcome');
+  if (out) out.focus();
+}
+
+function dreset() {
+  document.querySelectorAll('.dnode').forEach(function(n){ n.classList.remove('active'); });
+  document.getElementById('dn0').classList.add('active');
+  document.getElementById('dout-display').innerHTML = '';
+  document.getElementById('dbc').textContent = '';
+  document.getElementById('dreset').style.display = 'none';
+  dPath = [];
+  var q0 = document.getElementById('dq0');
+  if (q0) { q0.setAttribute('tabindex', '-1'); q0.focus(); }
+}
+
+/* ══════════════════════════════════════
+   KNOWLEDGE CHECK
+══════════════════════════════════════ */
+var kc = {
+  1: {
+    ans: 'b',
+    ok:  '✅ Correct. The image <em>file</em> hash (X) and the live <em>RAM</em> hash (Y) are measuring two different things. RAM changes continuously — every timer tick, every network buffer flush, every kernel update changes its contents. Hashing the live source at two different moments will always produce different values. This is documented expected behavior under RFC 3227 §2.1 and NIST SP 800-86. The image file hash (X, stable because the file does not change) is your integrity anchor. Non-matching X vs. Y does not indicate corruption or tampering.',
+    err: '❌ Not quite — the correct answer is B. There are two distinct objects being hashed: the output <em>file</em> (frozen at the moment capture ended, so its hash is stable) and the live <em>RAM</em> (continuously changing, so its hash changes every instant). A mismatch between the two is expected and does not indicate anything is wrong. The file hash is what matters for chain of custody. This distinction is critical — understand it before Quiz 3.'
+  },
+  2: {
+    ans: 'b',
+    ok:  '✅ Correct. When Windows hibernates (suspends to disk), it writes the entire contents of RAM to hiberfil.sys, compressed with the Xpress algorithm. This file represents the exact full RAM state at the moment of suspension — including open applications, decryption keys, and authenticated sessions. pagefile.sys (A) contains only pages that were swapped out — typically inactive pages, not the active session. MEMORY.DMP (C) is a crash dump, only present after a BSOD. Event Logs (D) record system events, not raw memory content.',
+    err: '❌ Not quite — the correct answer is B, hiberfil.sys. When a Windows system hibernates, the entire RAM is written to this file in compressed form. It is the closest post-mortem equivalent to a live RAM acquisition. While pagefile.sys (A) contains memory fragments and is forensically useful, it holds only paged-out (inactive) pages, not the full active session state. MEMORY.DMP (C) exists only after a BSOD crash, not after a normal sleep.'
+  },
+  3: {
+    ans: 'a',
+    ok:  '✅ Correct. "Pulling the plug" destroys all volatile evidence instantly and permanently — running processes, open network sockets, decryption keys, injected shellcode in RAM, and all active session state. It may also trigger anti-forensic routines embedded in the Windows shutdown sequence or in the malware itself. Modern guidance (NIST SP 800-86, RFC 3227) defaults to live acquisition precisely because the observer effect from a minimal-footprint tool is small and documented, while lost volatile evidence is unrecoverable.',
+    err: '❌ Not quite — the correct answer is A. The core flaw in "pull the plug" reasoning is that it destroys all volatile evidence — which in a malware case is often the most forensically valuable evidence (injected code, C2 state, decryption keys). It can also trigger anti-forensic routines. The observer effect from live acquisition (B, D) is small, bounded, and forensically defensible with documentation. Disk acquisition from a powered-off machine (C) is entirely possible — that\'s not the issue.'
+  },
+  4: {
+    ans: 'c',
+    ok:  '✅ Correct. The .vmem extension identifies a VMware guest virtual machine RAM file, written by the hypervisor when the VM was snapshotted or suspended. Because the hypervisor freezes the guest externally before writing its RAM to disk, the guest OS had no knowledge of the operation — no tool ran inside it, no process list was modified, no kernel structures were altered. This means the observer effect is minimal to zero, making VM snapshots among the cleanest memory evidence sources available. The victoria-v8.memdump.img in Lab 10 Path A originates from exactly this kind of artifact.',
+    err: '❌ Not quite — the correct answer is C. The .vmem extension belongs to VMware: it is the guest VM RAM file created when a virtual machine is snapshotted or suspended by the hypervisor. The key forensic implication is that the hypervisor writes the guest RAM to disk externally — the guest OS is frozen and unaware of the operation. This eliminates the observer effect entirely. WinPmem (A) and LiME (D) both have observer effects because they run tools inside the live guest OS.'
+  }
+};
+
+function chk(n, correct, btn) {
+  var sel = document.querySelector('input[name="q' + n + '"]:checked');
+  var fb  = document.getElementById('f' + n);
+  var radios = document.querySelectorAll('input[name="q' + n + '"]');
+
+  if (!sel) {
+    fb.className = 'fbk err';
+    fb.textContent = 'Please select an answer before checking.';
+    return;
+  }
+  var ok = sel.value === correct;
+  fb.className = 'fbk ' + (ok ? 'ok' : 'err');
+  fb.innerHTML = kc[n][ok ? 'ok' : 'err'];
+  radios.forEach(function(r){ r.disabled = true; });
+  btn.disabled = true;
+  fb.setAttribute('tabindex', '-1');
+  fb.focus();
+}
+</script>
+</body>
+</html>

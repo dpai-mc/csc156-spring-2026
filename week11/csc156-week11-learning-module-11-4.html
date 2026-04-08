@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSC 156 – Module 11.4: Network, Registry Artifacts, and Investigation Workflow</title>
+<style>
+/* ===== RESET & BASE ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1b2a3f;--navy-dark:#111d2c;--teal:#1a8a8a;--teal-light:#e8f5f5;
+  --teal-bright:#22a8a8;--blue-mid:#2c5f8a;--blue-light:#e8f0f8;
+  --green:#2e7d52;--green-light:#e8f5ee;--purple:#5c3d82;--purple-light:#f0ecf7;
+  --yellow:#c47d00;--yellow-light:#fef8e8;--red:#a8282a;--red-light:#fdeaea;
+  --orange:#d9622b;--gray-100:#f5f6f8;--gray-200:#e8eaed;--gray-300:#d1d5db;
+  --gray-600:#6b7280;--gray-800:#1f2937;--text:#1f2937;--text-muted:#4b5563;
+  --white:#ffffff;--nav-h:58px;--radius:6px;
+  --shadow:0 2px 8px rgba(0,0,0,.10);--shadow-lg:0 4px 16px rgba(0,0,0,.13);
+  --font-main:'Segoe UI',Arial,sans-serif;--font-mono:'Consolas','Courier New',monospace;
+  --tr:.2s ease;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-main);color:var(--text);background:var(--gray-100);line-height:1.7;font-size:16px}
+
+/* SKIP LINK */
+.skip-link{position:absolute;top:-100px;left:0;background:var(--navy);color:var(--white);
+  padding:8px 18px;font-size:.9rem;font-weight:600;z-index:9999;
+  border-bottom-right-radius:var(--radius);text-decoration:none;transition:top var(--tr)}
+.skip-link:focus{top:0}
+
+/* NAV */
+#top-nav{position:sticky;top:0;z-index:1000;background:var(--navy);
+  box-shadow:var(--shadow-lg);height:var(--nav-h);display:flex;align-items:center;padding:0 20px}
+.nav-inner{max-width:1100px;width:100%;margin:0 auto;display:flex;align-items:center;overflow-x:auto}
+.nav-brand{color:var(--white);font-weight:700;font-size:.85rem;white-space:nowrap;
+  margin-right:18px;letter-spacing:.02em;flex-shrink:0}
+.nav-links{display:flex;gap:2px;flex-wrap:nowrap;list-style:none}
+.nav-links a{color:rgba(255,255,255,.80);text-decoration:none;font-size:.78rem;font-weight:500;
+  padding:6px 10px;border-radius:4px;white-space:nowrap;display:block;
+  transition:background var(--tr),color var(--tr)}
+.nav-links a:hover,.nav-links a:focus{background:rgba(255,255,255,.14);color:var(--white);
+  outline:2px solid var(--teal-bright);outline-offset:1px}
+
+/* PAGE */
+.page-wrapper{max-width:940px;margin:0 auto;padding:32px 20px 60px}
+
+/* MODULE HEADER */
+.module-header{background:linear-gradient(135deg,var(--navy-dark) 0%,var(--navy) 60%,var(--blue-mid) 100%);
+  color:var(--white);border-radius:var(--radius);padding:36px 36px 32px;margin-bottom:36px;
+  box-shadow:var(--shadow-lg);position:relative;overflow:hidden}
+.module-header::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;
+  border-radius:50%;background:rgba(26,138,138,.12)}
+.module-header .badge{display:inline-block;background:var(--teal);color:var(--white);
+  font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  padding:3px 10px;border-radius:20px;margin-bottom:10px}
+.module-header h1{font-size:1.65rem;font-weight:700;margin-bottom:10px;line-height:1.3}
+.module-header .subtitle{font-size:.95rem;color:rgba(255,255,255,.82);max-width:680px}
+.module-meta{display:flex;flex-wrap:wrap;gap:16px;margin-top:20px;padding-top:16px;
+  border-top:1px solid rgba(255,255,255,.18);font-size:.82rem;color:rgba(255,255,255,.72)}
+.module-meta span strong{color:var(--white);font-weight:600}
+
+/* SECTION BLOCKS */
+.section-block{background:var(--white);border-radius:var(--radius);padding:32px 36px;
+  margin-bottom:28px;box-shadow:var(--shadow);scroll-margin-top:calc(var(--nav-h) + 12px)}
+h2.section-title{font-size:1.3rem;font-weight:700;color:var(--navy);margin-bottom:20px;
+  padding-bottom:10px;border-bottom:2px solid var(--teal);display:flex;align-items:center;gap:10px}
+h2.section-title .sec-num{display:inline-flex;align-items:center;justify-content:center;
+  background:var(--teal);color:var(--white);width:28px;height:28px;border-radius:50%;
+  font-size:.80rem;font-weight:700;flex-shrink:0}
+h3{font-size:1.05rem;font-weight:700;color:var(--navy);margin:22px 0 10px}
+h4{font-size:.95rem;font-weight:600;color:var(--blue-mid);margin:16px 0 8px}
+p{margin-bottom:14px}p:last-child{margin-bottom:0}
+ul,ol{margin:10px 0 14px 20px;line-height:1.8}
+li{margin-bottom:4px}
+
+/* CODE */
+.code-block{background:#1e2a38;color:#c9d9e8;border-radius:var(--radius);padding:16px 20px;
+  font-family:var(--font-mono);font-size:.82rem;line-height:1.6;overflow-x:auto;
+  margin:14px 0;border-left:3px solid var(--teal);white-space:pre}
+.code-block .comment{color:#6a9955}.code-block .cmd{color:#569cd6}
+.code-block .flag{color:#9cdcfe}.code-block .path{color:#ce9178}
+.code-block .hi{color:#dcdcaa;background:rgba(255,255,0,.08);border-radius:2px;padding:0 2px}
+.code-block .warn{color:#f48771}
+code.il{font-family:var(--font-mono);font-size:.85em;background:var(--gray-200);
+  color:var(--navy);padding:1px 6px;border-radius:3px}
+
+/* CALLOUTS */
+.callout{border-radius:var(--radius);padding:16px 20px;margin:18px 0;border-left:4px solid;
+  display:flex;gap:12px;align-items:flex-start}
+.callout-icon{font-size:1.3rem;line-height:1;flex-shrink:0;margin-top:2px}
+.callout-body{flex:1}
+.callout-body strong{display:block;margin-bottom:4px;font-size:.88rem;
+  letter-spacing:.03em;text-transform:uppercase}
+.callout-body p{font-size:.93rem;margin-bottom:8px}.callout-body p:last-child{margin-bottom:0}
+.callout-body ul{font-size:.93rem;margin-left:16px}
+.callout-info{background:var(--blue-light);border-color:var(--blue-mid);color:#1a3a5c}
+.callout-info .callout-body strong{color:var(--blue-mid)}
+.callout-warning{background:var(--yellow-light);border-color:var(--yellow);color:#6b4000}
+.callout-warning .callout-body strong{color:var(--yellow)}
+.callout-bridge{background:var(--purple-light);border-color:var(--purple);color:#2e1a4a}
+.callout-bridge .callout-body strong{color:var(--purple)}
+.callout-forward{background:var(--teal-light);border-color:var(--teal);color:#0d3d3d}
+.callout-forward .callout-body strong{color:var(--teal)}
+.callout-tip{background:var(--green-light);border-color:var(--green);color:#0e3d22}
+.callout-tip .callout-body strong{color:var(--green)}
+.callout-alert{background:var(--red-light);border-color:var(--red);color:#4a0a0a}
+.callout-alert .callout-body strong{color:var(--red)}
+
+/* TABLES */
+.table-wrap{overflow-x:auto;margin:16px 0;border-radius:var(--radius);
+  box-shadow:0 1px 4px rgba(0,0,0,.07)}
+table{width:100%;border-collapse:collapse;font-size:.88rem;background:var(--white)}
+thead{background:var(--navy);color:var(--white)}
+thead th{padding:10px 14px;text-align:left;font-weight:600;font-size:.82rem;
+  letter-spacing:.03em;white-space:nowrap}
+tbody tr:nth-child(even){background:var(--gray-100)}
+tbody tr:hover{background:var(--teal-light)}
+tbody td{padding:9px 14px;border-bottom:1px solid var(--gray-200);vertical-align:top;line-height:1.5}
+
+/* STATE BADGES */
+.sb{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.77rem;
+  font-weight:600;letter-spacing:.03em;font-family:var(--font-mono);white-space:nowrap}
+.sb-est{background:#d4edda;color:#155724}.sb-lst{background:#d1ecf1;color:#0c5460}
+.sb-cw{background:#fff3cd;color:#856404}.sb-tw{background:#f8d7da;color:#721c24}
+.sb-cl{background:var(--gray-200);color:var(--gray-800)}.sb-syn{background:#e2d9f3;color:#3d246c}
+
+/* DEF BOX */
+.def-box{background:var(--gray-100);border:1px solid var(--gray-300);border-radius:var(--radius);
+  padding:14px 18px;margin:14px 0}
+.def-box dt{font-weight:700;font-family:var(--font-mono);color:var(--navy);
+  font-size:.90rem;margin-bottom:4px}
+.def-box dd{font-size:.88rem;color:var(--text-muted);margin-left:16px;line-height:1.5;margin-bottom:10px}
+.def-box dd:last-child{margin-bottom:0}
+
+/* WORKFLOW FLOW STRIP */
+.workflow-flow{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:16px 0;
+  padding:14px 18px;background:var(--gray-100);border-radius:var(--radius);
+  border:1px solid var(--gray-200)}
+.flow-step{background:var(--navy);color:var(--white);padding:6px 12px;border-radius:4px;
+  font-size:.78rem;font-weight:600;letter-spacing:.03em;white-space:nowrap;
+  cursor:pointer;border:2px solid transparent;transition:background var(--tr),border-color var(--tr)}
+.flow-step:hover,.flow-step:focus{background:var(--blue-mid);border-color:var(--teal-bright);outline:none}
+.flow-arrow{color:var(--teal);font-size:1.1rem;font-weight:700}
+
+/* ACCORDION */
+.accordion{margin:16px 0}
+.accordion-item{border:1px solid var(--gray-300);border-radius:var(--radius);margin-bottom:8px;overflow:hidden}
+.accordion-trigger{width:100%;background:var(--navy);color:var(--white);border:none;
+  padding:14px 18px;text-align:left;font-family:var(--font-main);font-size:.95rem;
+  font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:space-between;
+  gap:12px;transition:background var(--tr)}
+.accordion-trigger:hover,.accordion-trigger:focus{background:var(--blue-mid);
+  outline:2px solid var(--teal-bright);outline-offset:-2px}
+.phase-badge{display:inline-flex;align-items:center;gap:8px}
+.phase-num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;
+  background:var(--teal);border-radius:50%;font-size:.78rem;font-weight:700;flex-shrink:0}
+.accordion-trigger .chevron{font-size:.85rem;transition:transform var(--tr);flex-shrink:0}
+.accordion-trigger[aria-expanded="true"] .chevron{transform:rotate(180deg)}
+.accordion-panel{background:var(--white);padding:0 20px;max-height:0;overflow:hidden;
+  transition:max-height .35s ease,padding .2s ease}
+.accordion-panel.open{max-height:900px;padding:18px 20px}
+.phase-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.phase-tag{background:var(--teal-light);color:var(--teal);border:1px solid var(--teal);
+  border-radius:20px;font-size:.78rem;font-weight:600;padding:3px 10px;font-family:var(--font-mono)}
+.phase-goal{background:var(--blue-light);border-left:3px solid var(--blue-mid);padding:10px 14px;
+  border-radius:0 var(--radius) var(--radius) 0;font-size:.90rem;margin-bottom:12px;color:#1a3a5c}
+
+/* KNOWLEDGE CHECK */
+.kc-container{background:var(--gray-100);border-radius:var(--radius);padding:24px;
+  margin:16px 0;border:1px solid var(--gray-200)}
+.kc-question{background:var(--white);border-radius:var(--radius);padding:20px;
+  margin-bottom:16px;border:1px solid var(--gray-200);box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.q-num{display:inline-block;background:var(--teal);color:white;font-size:.75rem;
+  font-weight:700;padding:2px 8px;border-radius:10px;margin-bottom:8px}
+.q-text{font-weight:600;color:var(--navy);margin-bottom:14px;font-size:.96rem}
+.options{list-style:none;margin:0;padding:0}
+.options li{margin-bottom:8px}
+.options label{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;
+  border-radius:var(--radius);border:1.5px solid var(--gray-300);cursor:pointer;
+  font-size:.90rem;transition:background var(--tr),border-color var(--tr);
+  background:var(--white);line-height:1.5}
+.options label:hover{background:var(--teal-light);border-color:var(--teal)}
+.options input[type="radio"]{margin-top:2px;flex-shrink:0;accent-color:var(--teal)}
+.options label:focus-within{outline:2px solid var(--teal-bright);outline-offset:1px}
+.kc-feedback{display:none;border-radius:var(--radius);padding:12px 16px;margin-top:10px;
+  font-size:.89rem;line-height:1.5;border-left:4px solid}
+.kc-feedback.correct{background:var(--green-light);border-color:var(--green);color:#0e3d22;display:block}
+.kc-feedback.incorrect{background:var(--red-light);border-color:var(--red);color:#4a0a0a;display:block}
+.kc-feedback.show{display:block}
+.btn{display:inline-block;padding:9px 20px;border:none;border-radius:var(--radius);
+  font-family:var(--font-main);font-size:.88rem;font-weight:600;cursor:pointer;
+  transition:background var(--tr),transform .1s;text-decoration:none}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--teal);color:var(--white)}
+.btn-primary:hover,.btn-primary:focus{background:var(--teal-bright);
+  outline:2px solid var(--navy);outline-offset:2px}
+.btn-check{margin-top:10px}
+.kc-score-bar{background:var(--white);border:1px solid var(--gray-300);border-radius:var(--radius);
+  padding:16px 20px;margin-top:16px;display:none;text-align:center}
+.kc-score-bar.show{display:block}
+.score-num{font-size:2rem;font-weight:700;color:var(--teal)}
+.score-label{font-size:.88rem;color:var(--text-muted)}
+
+/* SCENARIO */
+.scenario-box{background:#1e2a38;color:#c9d9e8;border-radius:var(--radius);padding:20px 24px;
+  margin:16px 0;font-family:var(--font-mono);font-size:.81rem;line-height:1.8;
+  border-left:4px solid var(--orange);overflow-x:auto;white-space:pre}
+.sc-hi{color:#f48771;font-weight:bold}.sc-note{color:#dcdcaa}
+.sc-ok{color:#6a9955}.sc-pid{color:#9cdcfe}.sc-addr{color:#b5cea8}
+.triage-options{display:flex;flex-direction:column;gap:8px;margin:14px 0}
+.triage-btn{background:var(--white);border:2px solid var(--gray-300);border-radius:var(--radius);
+  padding:12px 16px;font-family:var(--font-main);font-size:.90rem;font-weight:500;
+  cursor:pointer;text-align:left;transition:background var(--tr),border-color var(--tr);color:var(--text)}
+.triage-btn:hover,.triage-btn:focus{background:var(--teal-light);border-color:var(--teal);outline:none}
+.triage-btn.sel-ok{background:var(--green-light);border-color:var(--green);color:#0e3d22}
+.triage-btn.sel-no{background:var(--red-light);border-color:var(--red);color:#4a0a0a}
+.triage-result{display:none;border-radius:var(--radius);padding:14px 18px;margin-top:12px;
+  font-size:.91rem;border-left:4px solid;line-height:1.6}
+.triage-result.show{display:block}
+.tr-ok{background:var(--green-light);border-color:var(--green);color:#0e3d22}
+.tr-no{background:var(--red-light);border-color:var(--red);color:#4a0a0a}
+
+/* SUMMARY GRID */
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));
+  gap:14px;margin:16px 0}
+.summary-card{background:var(--gray-100);border:1px solid var(--gray-200);
+  border-radius:var(--radius);padding:14px 16px;border-top:3px solid var(--teal)}
+.summary-card h4{font-size:.82rem;font-weight:700;color:var(--teal);text-transform:uppercase;
+  letter-spacing:.05em;margin:0 0 8px}
+.summary-card ul{list-style:none;margin:0;padding:0;font-size:.85rem}
+.summary-card ul li{padding:2px 0}
+.summary-card ul li::before{content:"✓ ";color:var(--teal);font-weight:700}
+
+/* RESPONSIVE */
+@media(max-width:640px){
+  .page-wrapper{padding:20px 14px 40px}
+  .section-block{padding:22px 18px}
+  .module-header{padding:24px 20px}
+  .module-header h1{font-size:1.3rem}
+  h2.section-title{font-size:1.1rem}
+  .flow-step{font-size:.72rem;padding:5px 9px}
+}
+</style>
+</head>
+<body>
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<!-- ===== STICKY NAV ===== -->
+<nav id="top-nav" aria-label="Module 11.4 sections">
+  <div class="nav-inner">
+    <span class="nav-brand">CSC 156 · Module 11.4</span>
+    <ul class="nav-links" role="list">
+      <li><a href="#sec-network">Network in RAM</a></li>
+      <li><a href="#sec-registry">Registry in RAM</a></li>
+      <li><a href="#sec-plugins">Plugin Ref</a></li>
+      <li><a href="#sec-workflow">6-Phase Workflow</a></li>
+      <li><a href="#sec-correlation">Correlation</a></li>
+      <li><a href="#sec-limits">Limitations</a></li>
+      <li><a href="#sec-kc">Knowledge Check</a></li>
+      <li><a href="#sec-summary">Summary</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main id="main-content" class="page-wrapper">
+
+<!-- MODULE HEADER -->
+<header class="module-header" role="banner">
+  <div class="badge">Week 11 · Module 4 of 4</div>
+  <h1>Network &amp; Registry Artifacts in RAM — and the Six-Phase Investigation Workflow</h1>
+  <p class="subtitle">Complete the memory forensics picture: recover network connections and registry evidence directly from a RAM image, then unify all Week 11 tools into a structured, repeatable investigation methodology.</p>
+  <div class="module-meta">
+    <span><strong>Course:</strong> CSC 156 – Digital Forensic Fundamentals</span>
+    <span><strong>Week:</strong> 11</span>
+    <span><strong>Module:</strong> 11.4</span>
+    <span><strong>Prerequisite:</strong> Modules 11.1–11.3</span>
+  </div>
+</header>
+
+<!-- ============================================================
+     SECTION 1 — NETWORK CONNECTIONS IN MEMORY
+     ============================================================ -->
+<section class="section-block" id="sec-network" aria-labelledby="h-network">
+  <h2 class="section-title" id="h-network">
+    <span class="sec-num" aria-hidden="true">1</span>
+    Network Connections in Memory
+  </h2>
+
+  <p>
+    When a process opens a TCP or UDP socket, the Windows kernel maintains that connection's complete metadata — source address, destination address, port numbers, state, and owning process — entirely in physical RAM. Because this data lives only in memory and is never written to disk in a structured forensic-friendly format, a RAM image is often the <em>only</em> place an investigator can recover active and recently-closed connections.
+  </p>
+
+  <h3>The <code class="il">windows.netscan</code> Plugin</h3>
+  <p>
+    Volatility 3's <code class="il">windows.netscan</code> plugin carves the memory image for network connection and socket objects. It works by scanning pool tags associated with <code class="il">_TCP_ENDPOINT</code>, <code class="il">_TCP_LISTENER</code>, and <code class="il">_UDP_ENDPOINT</code> kernel structures, then parsing each structure for address and process-ownership data.
+  </p>
+
+  <div class="code-block" role="region" aria-label="windows.netscan command examples"><span class="comment"># Volatility 3 — scan for all network artifacts in a RAM image</span>
+<span class="cmd">python3</span> vol.py <span class="flag">-f</span> <span class="path">memory.raw</span> <span class="cmd">windows.netscan</span>
+
+<span class="comment"># Filter output to a specific destination port (e.g., 443)</span>
+<span class="cmd">python3</span> vol.py <span class="flag">-f</span> <span class="path">memory.raw</span> <span class="cmd">windows.netscan</span> | grep <span class="path">":443"</span>
+
+<span class="comment"># Export to CSV for timeline correlation with other artifact sources</span>
+<span class="cmd">python3</span> vol.py <span class="flag">-f</span> <span class="path">memory.raw</span> <span class="cmd">windows.netscan</span> <span class="flag">--output csv</span> <span class="flag">-o</span> <span class="path">netscan_results.csv</span></div>
+
+  <h3>Output Columns Explained</h3>
+  <div class="table-wrap">
+    <table aria-label="windows.netscan output columns and investigative significance">
+      <thead>
+        <tr><th>Column</th><th>Description</th><th>Investigative Significance</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code class="il">Offset</code></td>
+          <td>Physical memory address of the kernel structure</td>
+          <td>Reference point for raw hex analysis; use to locate surrounding context in the image</td>
+        </tr>
+        <tr>
+          <td><code class="il">Proto</code></td>
+          <td>Protocol: TCPv4, TCPv6, UDPv4, UDPv6</td>
+          <td>UDP has no handshake state — unusual UDP sockets may indicate DNS exfiltration or C2 beaconing</td>
+        </tr>
+        <tr>
+          <td><code class="il">LocalAddr:Port</code></td>
+          <td>IP address and port on the examined system</td>
+          <td>Identify unexpected listening ports or high-numbered ephemeral source ports used by malware</td>
+        </tr>
+        <tr>
+          <td><code class="il">ForeignAddr:Port</code></td>
+          <td>Remote IP address and port</td>
+          <td>Flag connections to known-malicious IPs, Tor exit nodes, or geographically unexpected destinations</td>
+        </tr>
+        <tr>
+          <td><code class="il">State</code></td>
+          <td>TCP connection state (see table below)</td>
+          <td>State communicates the recency and nature of the connection at the moment of capture</td>
+        </tr>
+        <tr>
+          <td><code class="il">PID</code></td>
+          <td>Process ID that owns the socket</td>
+          <td>Cross-reference directly to <code class="il">windows.pslist</code> and <code class="il">windows.pstree</code> output from Module 11.2</td>
+        </tr>
+        <tr>
+          <td><code class="il">Owner</code></td>
+          <td>Process name associated with the PID</td>
+          <td>Watch for unexpected owners — e.g., <code class="il">notepad.exe</code> or <code class="il">svchost.exe</code> on port 4444</td>
+        </tr>
+        <tr>
+          <td><code class="il">Created</code></td>
+          <td>Timestamp when the connection or socket was created</td>
+          <td>Timeline anchor; compare against Windows Event Log timestamps studied in Week 8</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>TCP Connection States</h3>
+  <p>Understanding TCP state helps distinguish active exfiltration from residual artifacts of past activity.</p>
+  <div class="table-wrap">
+    <table aria-label="TCP connection states and forensic interpretation">
+      <thead>
+        <tr><th>State</th><th>Meaning</th><th>Forensic Interpretation</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="sb sb-est">ESTABLISHED</span></td>
+          <td>Active, bidirectional data transfer in progress</td>
+          <td>Connection was live at capture time — highest priority for investigation</td>
+        </tr>
+        <tr>
+          <td><span class="sb sb-lst">LISTEN</span></td>
+          <td>Process waiting for incoming connections on a port</td>
+          <td>Unexpected listeners (e.g., ports 4444, 5900, 3389 on non-RDP systems) suggest backdoors or remote access tools</td>
+        </tr>
+        <tr>
+          <td><span class="sb sb-cw">CLOSE_WAIT</span></td>
+          <td>Remote side closed the connection; local side has not yet</td>
+          <td>May indicate a completed C2 session or interrupted data transfer — destination IP is still recoverable</td>
+        </tr>
+        <tr>
+          <td><span class="sb sb-tw">TIME_WAIT</span></td>
+          <td>Connection closing; waiting to ensure remote received the final ACK</td>
+          <td>Residual of a recently completed session — timestamps and addresses remain valid evidence</td>
+        </tr>
+        <tr>
+          <td><span class="sb sb-syn">SYN_SENT</span></td>
+          <td>Local host sent SYN; awaiting remote response</td>
+          <td>Attempted outbound connection — may indicate scanning or a C2 check-in that has not yet succeeded</td>
+        </tr>
+        <tr>
+          <td><span class="sb sb-cl">CLOSED</span></td>
+          <td>Connection terminated; structure still resident in RAM</td>
+          <td>Historical evidence; timestamps and addresses document past activity</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>What to Look For</h3>
+  <ul>
+    <li><strong>Process–port mismatch:</strong> A process like <code class="il">notepad.exe</code> or <code class="il">calc.exe</code> that owns any network socket is immediately suspicious.</li>
+    <li><strong>Non-standard ports:</strong> Common C2 frameworks use ports 4444, 1234, 8080, or high-range ephemeral ports for reverse shells. Port 4444 is the Metasploit meterpreter default.</li>
+    <li><strong>Multiple simultaneous ESTABLISHED connections</strong> to the same foreign IP from a single process — a potential data exfiltration pattern.</li>
+    <li><strong>Connections to RFC 1918 private ranges</strong> from a server that has no business communicating internally — a lateral movement indicator.</li>
+    <li><strong>Loopback abuse:</strong> Some malware communicates over 127.0.0.1 between co-resident injected components, avoiding network visibility.</li>
+    <li><strong>UDP sockets with no state field:</strong> DNS over unusual ports, ICMP-tunneling artifacts, or data exfiltration using raw UDP streams.</li>
+  </ul>
+
+  <h3>Legacy Volatility 2 Plugin Reference</h3>
+  <p>If you encounter Volatility 2 plugin names in practitioner write-ups, the equivalents are:</p>
+  <ul>
+    <li><code class="il">connections</code> — active TCP connections (Windows XP / Server 2003 only)</li>
+    <li><code class="il">connscan</code> — pool-tag scan for TCP structures including terminated connections</li>
+    <li><code class="il">sockets</code> / <code class="il">sockscan</code> — active and carved socket objects including UDP (XP / Server 2003)</li>
+    <li><code class="il">netscan</code> — unified plugin for Windows Vista and later (direct predecessor of Volatility 3's <code class="il">windows.netscan</code>)</li>
+  </ul>
+
+  <div class="callout callout-forward" role="note" aria-label="Forward-looking callout: Week 12 Network Forensics">
+    <div class="callout-icon" aria-hidden="true">🔭</div>
+    <div class="callout-body">
+      <strong>Looking Ahead — Week 12: Network Forensics</strong>
+      <p>
+        The foreign IP addresses and ports you recover with <code class="il">windows.netscan</code> become starting points in Week 12 Network Forensics. You will learn to correlate these findings against PCAP captures, NetFlow records, and firewall logs — constructing a full network-layer view of the attack path that the RAM image alone cannot provide.
+      </p>
+    </div>
+  </div>
+
+  <div class="callout callout-info" role="note">
+    <div class="callout-icon" aria-hidden="true">ℹ️</div>
+    <div class="callout-body">
+      <strong>Volatility 3 Platform Prefixes</strong>
+      <p>All Volatility 3 plugins are prefixed by platform: <code class="il">windows.</code> for Windows targets, <code class="il">linux.</code> for Linux, and <code class="il">mac.</code> for macOS. This naming convention makes cross-platform analysis unambiguous and eliminates the manual profile-selection step required in Volatility 2.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 2 — REGISTRY ARTIFACTS IN MEMORY
+     ============================================================ -->
+<section class="section-block" id="sec-registry" aria-labelledby="h-registry">
+  <h2 class="section-title" id="h-registry">
+    <span class="sec-num" aria-hidden="true">2</span>
+    Registry Artifacts in Memory
+  </h2>
+
+  <p>
+    The Windows Registry is not a single file on disk. Active hives are loaded into kernel memory and managed by the Windows Registry Manager. Volatility reads these in-memory hive structures directly, giving examiners access to the full registry state at the exact moment of capture — including <em>volatile keys</em> that are built dynamically at runtime and are never written to any disk file.
+  </p>
+
+  <div class="callout callout-bridge" role="note" aria-label="Prior-week bridge: Week 7 Registry Forensics">
+    <div class="callout-icon" aria-hidden="true">🔗</div>
+    <div class="callout-body">
+      <strong>Prior-Week Bridge — Week 7: Windows Registry Forensics</strong>
+      <p>
+        In Week 7 you examined registry hive files on disk — <code class="il">NTUSER.DAT</code>, <code class="il">SAM</code>, <code class="il">SYSTEM</code>, <code class="il">SOFTWARE</code> — using tools such as Registry Explorer and RegRipper. The plugins below are the in-memory counterpart: the same registry data, accessed through RAM rather than a mounted disk image. Many of the same key paths you studied in Week 7 (persistence, user activity, credentials) appear in both contexts, making cross-source comparison a powerful consistency check.
+      </p>
+    </div>
+  </div>
+
+  <h3>Plugin: <code class="il">windows.registry.hivelist</code></h3>
+  <p>
+    Before querying any specific registry key, use <code class="il">hivelist</code> to enumerate all hives currently loaded in memory. The output provides the virtual memory offset of each hive — which most other registry plugins require as input.
+  </p>
+
+  <div class="code-block" role="region" aria-label="hivelist command and example output"><span class="comment"># Enumerate all registry hives currently loaded in memory</span>
+<span class="cmd">python3</span> vol.py <span class="flag">-f</span> <span class="path">memory.raw</span> <span class="cmd">windows.registry.hivelist</span>
+
+<span class="comment"># Typical output (truncated):</span>
+<span class="hi">Offset              FileFullPath</span>
+0xe38ba800          \REGISTRY\MACHINE\SYSTEM
+0xe38d3800          \REGISTRY\MACHINE\SAM
+0xe3901800          \REGISTRY\MACHINE\SOFTWARE
+0xe3970800          \Device\HarddiskVolume2\Users\jsmith\NTUSER.DAT
+<span class="warn">0xf80001234800      \REGISTRY\MACHINE\HARDWARE</span>  <span class="comment"># volatile — never exists on disk</span></div>
+
+  <div class="callout callout-warning" role="note">
+    <div class="callout-icon" aria-hidden="true">⚠️</div>
+    <div class="callout-body">
+      <strong>Volatile Hive: HARDWARE</strong>
+      <p>
+        The <code class="il">HARDWARE</code> hive (highlighted above) is built dynamically at boot time by the Windows kernel. It is <strong>never saved to any disk file</strong>. It contains the current hardware configuration, device mappings, interrupt assignments, and firmware-provided ACPI table data. This hive is accessible only through a RAM image — it is completely invisible to disk forensics.
+      </p>
+    </div>
+  </div>
+
+  <h3>Plugin: <code class="il">windows.registry.printkey</code></h3>
+  <p>
+    <code class="il">printkey</code> displays the contents of a specific registry key and all of its values. It can be invoked with a key path directly; specifying the hive offset from <code class="il">hivelist</code> speeds up the search.
+  </p>
+
+  <div class="code-block" role="region" aria-label="printkey Run key example with output"><span class="comment"># Print the HKLM Run key — a primary persistence location</span>
+<span class="cmd">python3</span> vol.py <span class="flag">-f</span> <span class="path">memory.raw</span> <span class="cmd">windows.registry.printkey</span> \
+    <span class="flag">--key</span> <span class="path">"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"</span>
+
+<span class="comment"># Example output:</span>
+Last Write Time  2026-03-21 14:22:07
+Key: Run
+  Value: <span class="hi">updater</span>      Type: REG_SZ
+  Data:  <span class="warn">C:\ProgramData\upd.exe --silent --connect 185.220.101.9</span>
+  Value: OneDrive     Type: REG_SZ
+  Data:  C:\Users\jsmith\AppData\Local\Microsoft\OneDrive\OneDrive.exe</span></div>
+
+  <p>
+    In the example above, the entry named <code class="il">updater</code> is suspicious: it points to a file in <code class="il">ProgramData</code> (not a standard software installation path) and passes a remote IP address as a command-line argument. This is a classic persistence-via-Run-key pattern used by many RATs (Remote Access Trojans).
+  </p>
+
+  <h4>High-Value Key Paths for printkey Investigation</h4>
+  <div class="table-wrap">
+    <table aria-label="High-value registry key paths and forensic purpose">
+      <thead>
+        <tr><th>Key Path</th><th>Forensic Purpose</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code class="il">HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run</code></td>
+          <td>Programs that auto-launch at boot for all users — system-wide persistence</td>
+        </tr>
+        <tr>
+          <td><code class="il">HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run</code></td>
+          <td>Programs that auto-launch for a specific user — per-user persistence</td>
+        </tr>
+        <tr>
+          <td><code class="il">HKLM\SYSTEM\CurrentControlSet\Services</code></td>
+          <td>Installed services — malicious services or drivers register here for persistent execution</td>
+        </tr>
+        <tr>
+          <td><code class="il">HKLM\SYSTEM\CurrentControlSet\Control\Session Manager</code></td>
+          <td>BootExecute entries run before the Windows subsystem loads — high-privilege pre-boot persistence</td>
+        </tr>
+        <tr>
+          <td><code class="il">HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon</code></td>
+          <td>Shell and notification package values; hijackable by malware to achieve persistence at user login</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Plugin: <code class="il">windows.registry.userassist</code></h3>
+  <p>
+    UserAssist is a Windows feature that tracks recently executed programs to populate the Start menu's usage statistics. The data is stored in <code class="il">HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist</code> and is <em>ROT-13 encoded</em> to obscure program paths from casual inspection. Volatility decodes it automatically.
+  </p>
+
+  <div class="code-block" role="region" aria-label="userassist command example"><span class="cmd">python3</span> vol.py <span class="flag">-f</span> <span class="path">memory.raw</span> <span class="cmd">windows.registry.userassist</span>
+
+<span class="comment"># Output includes decoded path, execution count, last run time, and focus time</span>
+<span class="comment"># Volatility handles ROT-13 decoding automatically:</span>
+<span class="hi">C:\Users\jsmith\Desktop\mimikatz.exe</span>   Count: 3   LastRun: 2026-03-21 14:19:04
+C:\Windows\System32\cmd.exe            Count: 8   LastRun: 2026-03-21 14:20:51</div>
+
+  <div class="callout callout-tip" role="note">
+    <div class="callout-icon" aria-hidden="true">💡</div>
+    <div class="callout-body">
+      <strong>UserAssist Forensic Value</strong>
+      <p>
+        UserAssist provides execution evidence — it demonstrates that a user (or malware running in user context) actually launched a program. This is especially valuable when the executable has since been deleted from disk, because the execution artifact survives in the registry and therefore in the RAM image. Cross-reference UserAssist timestamps against the logon/logoff windows captured in Windows Event Log data studied in Week 8.
+      </p>
+    </div>
+  </div>
+
+  <h3>Plugin: <code class="il">windows.hashdump</code></h3>
+  <p>
+    <code class="il">hashdump</code> extracts NTLM password hashes from the SAM (Security Account Manager) hive loaded in memory. The SAM hive on disk is encrypted by the boot key stored in the SYSTEM hive. Volatility reconstructs this decryption using both hives as they exist in the RAM image.
+  </p>
+
+  <div class="code-block" role="region" aria-label="hashdump command and example output"><span class="cmd">python3</span> vol.py <span class="flag">-f</span> <span class="path">memory.raw</span> <span class="cmd">windows.hashdump</span>
+
+<span class="comment"># Output format: username : RID : LM-hash : NTLM-hash :::</span>
+Administrator:500:<span class="warn">aad3b435b51404eeaad3b435b51404ee</span>:<span class="hi">31d6cfe0d16ae931b73c59d7e0c089c0</span>:::
+jsmith:1001:<span class="warn">aad3b435b51404eeaad3b435b51404ee</span>:<span class="hi">fc525c9683e8fe067095ba2ddc971889</span>:::
+<span class="warn">backdoor</span>:1002:aad3b435b51404eeaad3b435b51404ee:<span class="warn">e19ccf75ee54e06b06a5907af13cef42</span>:::</div>
+
+  <p>
+    The LM hash value <code class="il">aad3b435b51404ee</code> is the "null" LM hash, indicating LM authentication is disabled on this system (expected on modern Windows). NTLM hashes can be cracked offline or compared against precomputed rainbow tables. The account named <code class="il">backdoor</code> (RID 1002) is a strong indicator of unauthorized account creation by an attacker.
+  </p>
+
+  <div class="callout callout-alert" role="note">
+    <div class="callout-icon" aria-hidden="true">🔒</div>
+    <div class="callout-body">
+      <strong>Legal and Ethical Use of hashdump</strong>
+      <p>
+        Hash extraction from a live system without authorization may violate the Computer Fraud and Abuse Act (CFAA) and similar statutes. In this course, <code class="il">windows.hashdump</code> is applied only to memory images acquired as part of an authorized forensic investigation or to instructor-provided lab images. Never use this technique on systems you do not own or lack explicit written authorization to examine.
+      </p>
+    </div>
+  </div>
+
+  <h3>Volatile Registry Keys — Data That Never Reaches Disk</h3>
+  <p>Several registry hives and key subtrees are built dynamically at runtime and are never flushed to a disk file. They are accessible only through a memory image captured from a running system:</p>
+
+  <div class="def-box">
+    <dl>
+      <dt>HKLM\HARDWARE</dt>
+      <dd>Kernel-populated hardware device map rebuilt at every boot. Contains PnP device enumeration, IRQ assignments, memory-mapped I/O ranges, and firmware-provided ACPI tables. No corresponding disk file exists.</dd>
+      <dt>HKEY_PERFORMANCE_DATA</dt>
+      <dd>Performance counter data read directly from the kernel subsystem. Never stored in any hive file; only visible through a live system call or a RAM image.</dd>
+      <dt>HKEY_CURRENT_CONFIG (HKCC)</dt>
+      <dd>Runtime-computed hardware profile derived from the SYSTEM hive at boot. The in-memory version may differ from the on-disk SYSTEM hive if hardware changes occurred post-boot.</dd>
+      <dt>RunMRU (volatile in-session updates)</dt>
+      <dd>Recently-run entries from the Windows Run dialog are updated in memory before being flushed to <code class="il">NTUSER.DAT</code> on disk. A RAM image may contain entries absent from the disk hive file.</dd>
+      <dt>Session-based hive modifications</dt>
+      <dd>Registry writes made by processes during a session are cached in memory and flushed periodically. A crash or forced acquisition may capture in-memory state that diverges from the last flushed disk state — this discrepancy is itself a forensic finding.</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 3 — ADDITIONAL ARTIFACT PLUGINS REFERENCE
+     ============================================================ -->
+<section class="section-block" id="sec-plugins" aria-labelledby="h-plugins">
+  <h2 class="section-title" id="h-plugins">
+    <span class="sec-num" aria-hidden="true">3</span>
+    Additional Artifact Plugins — Quick Reference
+  </h2>
+
+  <p>
+    The following plugins complement the process, network, and registry analysis techniques from Modules 11.1–11.4. They are introduced here as a reference table; selected plugins will be applied hands-on in Lab 10.
+  </p>
+
+  <div class="table-wrap">
+    <table aria-label="Additional Volatility artifact plugins quick reference">
+      <thead>
+        <tr>
+          <th>Plugin</th>
+          <th>Platform</th>
+          <th>What It Does</th>
+          <th>Key Use Case</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code class="il">windows.filescan</code></td>
+          <td>Windows</td>
+          <td>Carves pool tags for <code class="il">_FILE_OBJECT</code> structures; lists all file handles open in memory, including files deleted from disk while still held open by a process</td>
+          <td>Recover malicious executables or configuration files opened and then deleted to evade disk forensics</td>
+        </tr>
+        <tr>
+          <td><code class="il">windows.handles</code></td>
+          <td>Windows</td>
+          <td>Lists open handles (files, registry keys, mutants, events, threads, sections) for each process via the handle table</td>
+          <td>Identify malware mutex names, unusual registry access, or shared memory sections used for inter-process communication between injected components</td>
+        </tr>
+        <tr>
+          <td><code class="il">windows.envars</code></td>
+          <td>Windows</td>
+          <td>Dumps the environment variable block for each running process from its PEB</td>
+          <td>Malware sometimes receives C2 addresses, staging payloads, or configuration parameters via environment variables set at process launch</td>
+        </tr>
+        <tr>
+          <td><code class="il">linux.bash</code></td>
+          <td>Linux</td>
+          <td>Recovers Bash command history from in-memory Bash history buffers — before the session is closed and the history is flushed to <code class="il">~/.bash_history</code></td>
+          <td>Capture commands executed in an active shell session that have not yet been written to disk; closes the gap between disk log coverage and live attacker activity</td>
+        </tr>
+        <tr>
+          <td><code class="il">linux.pslist</code></td>
+          <td>Linux</td>
+          <td>Lists running processes by traversing the kernel's <code class="il">task_struct</code> doubly-linked list</td>
+          <td>Linux equivalent of <code class="il">windows.pslist</code>; compare against <code class="il">linux.psscan</code> to identify hidden processes unlinked from the task list</td>
+        </tr>
+        <tr>
+          <td><code class="il">windows.cmdline</code></td>
+          <td>Windows</td>
+          <td>Reads the Process Environment Block (PEB) to extract the full command-line string for each process</td>
+          <td>Reveal malicious flags passed to legitimate LOLBins — e.g., <code class="il">powershell.exe -enc &lt;base64payload&gt;</code> or <code class="il">mshta.exe http://...</code></td>
+        </tr>
+        <tr>
+          <td><code class="il">windows.dlllist</code></td>
+          <td>Windows</td>
+          <td>Lists all DLLs loaded into each process via the PEB loader data tables</td>
+          <td>Detect DLL injection or DLL search-order hijacking by identifying unexpected DLLs loaded into trusted system processes</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout callout-bridge" role="note" aria-label="Prior-week bridge: Week 9 Linux System Forensics">
+    <div class="callout-icon" aria-hidden="true">🔗</div>
+    <div class="callout-body">
+      <strong>Prior-Week Bridge — Week 9: Linux System Forensics</strong>
+      <p>
+        In Week 9 you analyzed <code class="il">auth.log</code>, <code class="il">/var/log/syslog</code>, and command audit logs to reconstruct attacker activity on a Linux endpoint. The <code class="il">linux.bash</code> plugin is the RAM-based complement to that work: it captures commands that were run but not yet written to the on-disk Bash history file, closing the temporal gap between what on-disk logging captures and what an attacker actually typed in an active terminal session.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 4 — SIX-PHASE WORKFLOW
+     ============================================================ -->
+<section class="section-block" id="sec-workflow" aria-labelledby="h-workflow">
+  <h2 class="section-title" id="h-workflow">
+    <span class="sec-num" aria-hidden="true">4</span>
+    The Six-Phase Memory Analysis Workflow
+  </h2>
+
+  <p>
+    Running plugins at random produces an overwhelming, unstructured mass of data with no defensible chain of reasoning. The six-phase workflow below provides a <em>repeatable, structured methodology</em> that moves from high-level image verification, through progressive triage, to deep analysis and documentation. Each phase builds on findings from the previous one and produces artifacts consumed in subsequent phases.
+  </p>
+
+  <!-- Flow strip -->
+  <div class="workflow-flow" role="region" aria-label="Six-phase workflow sequence overview">
+    <button class="flow-step" onclick="openPhase(0)" aria-label="Jump to Phase 1: Identify">1 · IDENTIFY</button>
+    <span class="flow-arrow" aria-hidden="true">→</span>
+    <button class="flow-step" onclick="openPhase(1)" aria-label="Jump to Phase 2: Process Triage">2 · PROCESS TRIAGE</button>
+    <span class="flow-arrow" aria-hidden="true">→</span>
+    <button class="flow-step" onclick="openPhase(2)" aria-label="Jump to Phase 3: Network Triage">3 · NETWORK TRIAGE</button>
+    <span class="flow-arrow" aria-hidden="true">→</span>
+    <button class="flow-step" onclick="openPhase(3)" aria-label="Jump to Phase 4: Deep Process Analysis">4 · DEEP ANALYSIS</button>
+    <span class="flow-arrow" aria-hidden="true">→</span>
+    <button class="flow-step" onclick="openPhase(4)" aria-label="Jump to Phase 5: Registry and Credentials">5 · REG &amp; CREDS</button>
+    <span class="flow-arrow" aria-hidden="true">→</span>
+    <button class="flow-step" onclick="openPhase(5)" aria-label="Jump to Phase 6: Document">6 · DOCUMENT</button>
+  </div>
+  <p style="font-size:.83rem;color:var(--text-muted);margin-top:-4px;margin-bottom:16px;">
+    Click or activate any phase above to open its details below.
+  </p>
+
+  <div class="accordion" id="workflow-accordion" role="list">
+
+    <!-- PHASE 1 -->
+    <div class="accordion-item" role="listitem">
+      <button class="accordion-trigger" id="ptrig-0" aria-expanded="false"
+              aria-controls="ppan-0" onclick="togglePhase(0)">
+        <span class="phase-badge">
+          <span class="phase-num" aria-hidden="true">1</span>
+          Identify — Image Verification and Environment Profiling
+        </span>
+        <span class="chevron" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion-panel" id="ppan-0" role="region" aria-labelledby="ptrig-0">
+        <div class="phase-goal"><strong>Goal:</strong> Confirm image integrity and identify the OS environment before any investigative plugin is run.</div>
+        <p>
+          Before analysis begins, verify that the memory image is intact and identify the target operating system, architecture, and build number. Running plugins against an incorrect environment produces meaningless or misleading output. Record system time at acquisition — this anchors all subsequent timestamps.
+        </p>
+        <h4>Key Plugins</h4>
+        <div class="phase-meta">
+          <span class="phase-tag">windows.info</span>
+          <span class="phase-tag">banners.Banners</span>
+          <span class="phase-tag">windows.kpcr</span>
+        </div>
+        <div class="code-block" role="region" aria-label="Phase 1 commands"><span class="comment"># Confirm Windows build, architecture, KPCR addresses, system time</span>
+<span class="cmd">python3</span> vol.py <span class="flag">-f</span> <span class="path">memory.raw</span> <span class="cmd">windows.info</span>
+
+<span class="comment"># Detect OS banner strings (useful for Linux / mixed images)</span>
+<span class="cmd">python3</span> vol.py <span class="flag">-f</span> <span class="path">memory.raw</span> <span class="cmd">banners.Banners</span></div>
+        <p>Record: OS name and build number, architecture (x64/x86), system time at acquisition, and number of processors. These facts are the foundation for all subsequent plugin selection and output interpretation.</p>
+      </div>
+    </div>
+
+    <!-- PHASE 2 -->
+    <div class="accordion-item" role="listitem">
+      <button class="accordion-trigger" id="ptrig-1" aria-expanded="false"
+              aria-controls="ppan-1" onclick="togglePhase(1)">
+        <span class="phase-badge">
+          <span class="phase-num" aria-hidden="true">2</span>
+          Process Triage — Enumerate, Compare, and Flag
+        </span>
+        <span class="chevron" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion-panel" id="ppan-1" role="region" aria-labelledby="ptrig-1">
+        <div class="phase-goal"><strong>Goal:</strong> Build a complete process inventory and identify anomalies by cross-referencing list-walk and pool-scan outputs.</div>
+        <p>
+          Process triage is the first investigative step after profiling. Run both <code class="il">windows.pslist</code> (walks the doubly-linked EPROCESS list) and <code class="il">windows.psscan</code> (pool-tag carving). Compare their outputs: processes present in <code class="il">psscan</code> but absent from <code class="il">pslist</code> may have been <em>unlinked</em> via DKOM (Direct Kernel Object Manipulation) to hide from the operating system — and from defenders.
+        </p>
+        <h4>Key Plugins</h4>
+        <div class="phase-meta">
+          <span class="phase-tag">windows.pslist</span>
+          <span class="phase-tag">windows.psscan</span>
+          <span class="phase-tag">windows.pstree</span>
+          <span class="phase-tag">windows.cmdline</span>
+          <span class="phase-tag">windows.dlllist</span>
+        </div>
+        <h4>Process Triage Checklist</h4>
+        <ul>
+          <li>Verify expected parent–child relationships (all <code class="il">svchost.exe</code> instances must be children of <code class="il">services.exe</code>)</li>
+          <li>Flag process names that mimic system processes by one character — e.g., <code class="il">svch0st.exe</code>, <code class="il">lssas.exe</code></li>
+          <li>Identify orphaned processes whose parent PID no longer exists</li>
+          <li>Run <code class="il">windows.cmdline</code> on all processes — look for Base64-encoded arguments or unusual paths</li>
+          <li>Count singleton processes: only one <code class="il">lsass.exe</code>, one <code class="il">wininit.exe</code>, one <code class="il">csrss.exe</code> per session</li>
+          <li>Note processes started after an unusual hour or outside typical usage windows</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- PHASE 3 -->
+    <div class="accordion-item" role="listitem">
+      <button class="accordion-trigger" id="ptrig-2" aria-expanded="false"
+              aria-controls="ppan-2" onclick="togglePhase(2)">
+        <span class="phase-badge">
+          <span class="phase-num" aria-hidden="true">3</span>
+          Network Triage — Map Active and Historical Connections
+        </span>
+        <span class="chevron" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion-panel" id="ppan-2" role="region" aria-labelledby="ptrig-2">
+        <div class="phase-goal"><strong>Goal:</strong> Identify all network activity captured at acquisition time and cross-reference every socket to the process list from Phase 2.</div>
+        <p>
+          Network triage maps every socket to its owning process. Prioritize ESTABLISHED and LISTEN entries. Any connection whose owning process was already flagged in Phase 2 is immediately elevated to a high-priority indicator and drives the focus of Phase 4.
+        </p>
+        <h4>Key Plugin</h4>
+        <div class="phase-meta">
+          <span class="phase-tag">windows.netscan</span>
+        </div>
+        <h4>Network Triage Checklist</h4>
+        <ul>
+          <li>List all ESTABLISHED connections; note foreign IPs and ports for offline threat intelligence review</li>
+          <li>List all LISTEN entries; compare against the known service baseline for this system type</li>
+          <li>Cross-reference every PID in the netscan output with the flagged process list from Phase 2</li>
+          <li>Record all connection timestamps and add them to the growing investigation timeline</li>
+          <li>Flag any process that owns both an ESTABLISHED external connection AND an internal SMB/CIFS connection simultaneously — lateral movement pattern</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- PHASE 4 -->
+    <div class="accordion-item" role="listitem">
+      <button class="accordion-trigger" id="ptrig-3" aria-expanded="false"
+              aria-controls="ppan-3" onclick="togglePhase(3)">
+        <span class="phase-badge">
+          <span class="phase-num" aria-hidden="true">4</span>
+          Deep Process Analysis — Injection, Code Anomalies, and Artifacts
+        </span>
+        <span class="chevron" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion-panel" id="ppan-3" role="region" aria-labelledby="ptrig-3">
+        <div class="phase-goal"><strong>Goal:</strong> Perform detailed examination of flagged processes for injected code, open file/handle artifacts, and behavioral evidence.</div>
+        <p>
+          For each process flagged in Phases 2 or 3, apply injection-detection and artifact-recovery plugins. This phase deliberately narrows focus to flagged targets — running these plugins against all processes without prior triage generates excessive output and risks overlooking the critical findings.
+        </p>
+        <h4>Key Plugins</h4>
+        <div class="phase-meta">
+          <span class="phase-tag">windows.malfind</span>
+          <span class="phase-tag">windows.handles</span>
+          <span class="phase-tag">windows.filescan</span>
+          <span class="phase-tag">windows.envars</span>
+          <span class="phase-tag">windows.memmap</span>
+        </div>
+        <ul>
+          <li><code class="il">malfind</code> — flags memory regions with executable (PAGE_EXECUTE_*) permissions that have no backing disk file; a strong indicator of injected shellcode or a reflectively-loaded PE</li>
+          <li><code class="il">handles</code> — reveals mutex names (malware families often use hardcoded mutexes to prevent double-infection), open registry keys, and shared memory sections</li>
+          <li><code class="il">filescan</code> — recovers all open file handles, including those whose backing files were deleted after being opened (the handle keeps the inode alive)</li>
+          <li><code class="il">envars</code> — inspect environment variables for embedded payloads or encoded C2 addresses passed at process creation</li>
+        </ul>
+        <div class="callout callout-forward" role="note">
+          <div class="callout-icon" aria-hidden="true">🔭</div>
+          <div class="callout-body">
+            <strong>Looking Ahead — Week 13: Malware Forensics</strong>
+            <p>
+              The output of <code class="il">windows.malfind</code> — specifically the extracted PE headers and shellcode byte regions — is the primary input for Week 13 Malware Forensics. You will learn how to dump and disassemble those memory regions, identify packing and obfuscation, and extract Indicators of Compromise (IOCs) that can be applied across multiple cases.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 5 -->
+    <div class="accordion-item" role="listitem">
+      <button class="accordion-trigger" id="ptrig-4" aria-expanded="false"
+              aria-controls="ppan-4" onclick="togglePhase(4)">
+        <span class="phase-badge">
+          <span class="phase-num" aria-hidden="true">5</span>
+          Registry and Credentials — Persistence and Identity
+        </span>
+        <span class="chevron" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion-panel" id="ppan-4" role="region" aria-labelledby="ptrig-4">
+        <div class="phase-goal"><strong>Goal:</strong> Extract persistence mechanisms from the in-memory registry and recover credential evidence to identify compromised accounts.</div>
+        <p>
+          With suspect processes and connections confirmed, pivot to the registry to determine how the attacker achieved persistence and what accounts may have been compromised or created.
+        </p>
+        <h4>Key Plugins</h4>
+        <div class="phase-meta">
+          <span class="phase-tag">windows.registry.hivelist</span>
+          <span class="phase-tag">windows.registry.printkey</span>
+          <span class="phase-tag">windows.registry.userassist</span>
+          <span class="phase-tag">windows.hashdump</span>
+          <span class="phase-tag">windows.lsadump</span>
+        </div>
+        <ul>
+          <li>Run <code class="il">hivelist</code> first to obtain hive offsets needed for targeted queries</li>
+          <li>Query all Run, RunOnce, RunServices keys using <code class="il">printkey</code></li>
+          <li>Use <code class="il">userassist</code> to confirm or deny execution of suspect binaries identified in Phase 2</li>
+          <li>Run <code class="il">hashdump</code> to enumerate all local accounts and extract NTLM hashes</li>
+          <li>Flag any account with an unexpected name, low RID, or creation time coinciding with the suspected compromise window</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- PHASE 6 -->
+    <div class="accordion-item" role="listitem">
+      <button class="accordion-trigger" id="ptrig-5" aria-expanded="false"
+              aria-controls="ppan-5" onclick="togglePhase(5)">
+        <span class="phase-badge">
+          <span class="phase-num" aria-hidden="true">6</span>
+          Document — Record, Export, and Report
+        </span>
+        <span class="chevron" aria-hidden="true">▼</span>
+      </button>
+      <div class="accordion-panel" id="ppan-5" role="region" aria-labelledby="ptrig-5">
+        <div class="phase-goal"><strong>Goal:</strong> Produce a reproducible, court-defensible record of every finding, its source, and the commands used to obtain it.</div>
+        <p>
+          Documentation is not an afterthought — it should occur throughout the investigation. By Phase 6, all findings are consolidated, cross-verified, and exported in formats suitable for the case report and potential legal proceedings.
+        </p>
+        <h4>Documentation Checklist</h4>
+        <ul>
+          <li>Record the SHA-256 hash of the memory image at the start and end of the analysis session and confirm they match</li>
+          <li>Log every command run, with full flags and output, to a timestamped log file</li>
+          <li>Export all plugin results using Volatility's <code class="il">--output csv</code> flag and hash each export immediately</li>
+          <li>Construct a unified timeline: process start times + network connection timestamps + registry Last Write Times + Event Log entries from Week 8</li>
+          <li>Write a short narrative for each finding: <em>what was found, where in memory, what it means, and what follow-up action it warrants</em></li>
+          <li>Cross-reference all memory findings against corresponding disk artifacts using the correlation table in Section 5</li>
+        </ul>
+        <div class="callout callout-info" role="note">
+          <div class="callout-icon" aria-hidden="true">ℹ️</div>
+          <div class="callout-body">
+            <strong>Chain of Custody for Exported Artifacts</strong>
+            <p>
+              Every file you export during analysis must be hashed immediately upon creation and that hash recorded in your notes. If an exported CSV is later modified — even accidentally — the hash changes, creating a chain-of-custody gap that can undermine the admissibility of your findings in a legal context.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.accordion -->
+</section>
+
+<!-- ============================================================
+     SECTION 5 — CROSS-SOURCE CORRELATION
+     ============================================================ -->
+<section class="section-block" id="sec-correlation" aria-labelledby="h-correlation">
+  <h2 class="section-title" id="h-correlation">
+    <span class="sec-num" aria-hidden="true">5</span>
+    Cross-Source Correlation — Memory Meets Disk
+  </h2>
+
+  <p>
+    No single forensic source tells the complete story. Memory forensics excels at capturing the live state of a system — running processes, open connections, credentials in use — while disk artifacts provide a longer historical record. Conversely, an attacker who thoroughly sanitizes disk-based logs may leave extensive traces in RAM. The table below maps each memory artifact to its disk counterpart and identifies the week in which that disk technique was studied.
+  </p>
+
+  <div class="callout callout-bridge" role="note" aria-label="Prior-week bridge: Weeks 7, 8, and 9">
+    <div class="callout-icon" aria-hidden="true">🔗</div>
+    <div class="callout-body">
+      <strong>Prior-Week Bridge — Weeks 7, 8, and 9</strong>
+      <p>
+        This section directly connects the memory artifacts you have worked with this week to techniques from three earlier weeks: Week 7 (Windows Registry Forensics), Week 8 (Windows Event Log Analysis), and Week 9 (Linux System Forensics). Use this table as a study reference when preparing for Quiz 3 in Week 12.
+      </p>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table aria-label="Cross-source correlation: memory artifacts mapped to disk artifacts and study week">
+      <thead>
+        <tr>
+          <th>Memory Artifact / Plugin</th>
+          <th>What It Reveals in RAM</th>
+          <th>Corresponding Disk Artifact</th>
+          <th>Disk Source Type</th>
+          <th>Week Studied</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code class="il">windows.pslist</code> / <code class="il">psscan</code></td>
+          <td>All running processes at capture time, including parent–child relationships and start timestamps</td>
+          <td>Prefetch files (<code class="il">C:\Windows\Prefetch\*.pf</code>); Shimcache entries in the SYSTEM hive; Amcache.hve</td>
+          <td>Execution artifacts on disk</td>
+          <td>Week 7</td>
+        </tr>
+        <tr>
+          <td><code class="il">windows.registry.userassist</code></td>
+          <td>Programs executed in user context: decoded path, count, and last-run timestamp</td>
+          <td>UserAssist subkeys in <code class="il">NTUSER.DAT</code> — same data; compare flushed (disk) vs. in-memory state to detect unflushed modifications</td>
+          <td>Registry hive on disk</td>
+          <td>Week 7</td>
+        </tr>
+        <tr>
+          <td><code class="il">windows.registry.printkey</code> (Run keys)</td>
+          <td>Active persistence entries as currently loaded in memory — may differ from disk if malware modified them post-boot without a flush</td>
+          <td><code class="il">SOFTWARE</code> and <code class="il">NTUSER.DAT</code> hive files examined offline with Registry Explorer or RegRipper</td>
+          <td>Registry hive on disk</td>
+          <td>Week 7</td>
+        </tr>
+        <tr>
+          <td><code class="il">windows.hashdump</code></td>
+          <td>NTLM hashes for all local accounts, decrypted using the in-memory boot key</td>
+          <td>SAM hive file on disk (encrypted; requires the SYSKEY from the SYSTEM hive to decrypt offline)</td>
+          <td>Registry hive on disk</td>
+          <td>Week 7</td>
+        </tr>
+        <tr>
+          <td><code class="il">windows.netscan</code> (connection timestamps)</td>
+          <td>Active and recent TCP connections, owning process, foreign IP, and creation time</td>
+          <td>Windows Event Log ID 5156 (Filtering Platform: connection allowed); Sysmon Event ID 3 (Network connection)</td>
+          <td>Windows Event Log</td>
+          <td>Week 8</td>
+        </tr>
+        <tr>
+          <td><code class="il">windows.pslist</code> (process start time)</td>
+          <td>Process creation timestamp from the EPROCESS structure</td>
+          <td>Windows Event Log ID 4688 (Process creation); includes command line if audit policy is enabled</td>
+          <td>Windows Event Log</td>
+          <td>Week 8</td>
+        </tr>
+        <tr>
+          <td><code class="il">windows.hashdump</code> (account enumeration)</td>
+          <td>Presence and RID of every local account at time of capture</td>
+          <td>Event Log ID 4720 (Account created), ID 4722 (Account enabled), ID 4624 (Successful logon)</td>
+          <td>Windows Event Log</td>
+          <td>Week 8</td>
+        </tr>
+        <tr>
+          <td><code class="il">windows.malfind</code></td>
+          <td>Injected code regions — executable memory with no backing disk file; often contains shellcode or a reflectively-loaded PE</td>
+          <td>Sysmon Event ID 8 (CreateRemoteThread), Sysmon ID 10 (ProcessAccess), AV quarantine logs</td>
+          <td>Windows Event Log / AV logs</td>
+          <td>Week 8</td>
+        </tr>
+        <tr>
+          <td><code class="il">linux.bash</code></td>
+          <td>Commands typed in active shell sessions not yet flushed to disk</td>
+          <td><code class="il">~/.bash_history</code> (flushed portion); <code class="il">/var/log/auth.log</code> (sudo commands); auditd logs if configured</td>
+          <td>Linux log files</td>
+          <td>Week 9</td>
+        </tr>
+        <tr>
+          <td><code class="il">linux.pslist</code></td>
+          <td>All Linux processes via <code class="il">task_struct</code> traversal at capture time</td>
+          <td><code class="il">/var/log/auth.log</code> (PAM authentication events); <code class="il">/var/log/syslog</code> (service start/stop events)</td>
+          <td>Linux log files</td>
+          <td>Week 9</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout callout-tip" role="note">
+    <div class="callout-icon" aria-hidden="true">💡</div>
+    <div class="callout-body">
+      <strong>Disagreement Between Sources Is Also a Finding</strong>
+      <p>
+        When memory and disk artifacts agree, confidence in the finding increases. When they <em>disagree</em> — for example, the in-memory Run key contains an entry absent from the disk hive file — that discrepancy is itself a forensic finding. It may indicate that malware modified the registry in memory without ever flushing to disk, or that the disk image was acquired before the change propagated. Document the discrepancy and its possible explanations in your report.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 6 — LIMITATIONS
+     ============================================================ -->
+<section class="section-block" id="sec-limits" aria-labelledby="h-limits">
+  <h2 class="section-title" id="h-limits">
+    <span class="sec-num" aria-hidden="true">6</span>
+    Limitations of Memory Forensics
+  </h2>
+
+  <p>
+    Memory forensics is a powerful technique, but experienced examiners understand its inherent constraints. Knowing these limitations helps you avoid over-interpreting evidence, articulate caveats clearly in reports, and design acquisition workflows that minimize their impact.
+  </p>
+
+  <h3>1. Incomplete Captures — RAM Is a Snapshot, Not a Recording</h3>
+  <p>
+    A RAM image captures a single point in time. If a malicious process completed its work and exited five minutes before acquisition, it will not appear in a live process scan. Network connections that terminated before capture will not appear in <code class="il">windows.netscan</code> output — though residual pool structures may remain in unallocated memory pools if pages have not been reused.
+  </p>
+  <ul>
+    <li>Processes that complete in milliseconds (common in multi-stage malware droppers) leave no EPROCESS trace.</li>
+    <li>Encryption keys loaded, used, and immediately discarded are irrecoverable from a post-use image.</li>
+    <li>The elapsed time between the incident and the acquisition decision directly determines the completeness of recoverable evidence.</li>
+  </ul>
+
+  <h3>2. Acquisition Tool Footprint — The Observer Effect</h3>
+  <p>
+    Any tool run on a live system to acquire memory necessarily modifies that system's RAM. The acquisition tool itself must be loaded into memory, overwriting a small portion of the very data it is trying to preserve. This is sometimes called the "Heisenberg problem" of live forensics.
+  </p>
+  <div class="callout callout-warning" role="note">
+    <div class="callout-icon" aria-hidden="true">⚠️</div>
+    <div class="callout-body">
+      <strong>Minimize Footprint During Acquisition</strong>
+      <p>
+        Best practice is to run the acquisition tool from a write-blocked USB device or a trusted network share — never install it to the disk of the examined system. Use purpose-built memory acquisition utilities (e.g., Magnet RAM Capture, WinPmem) that are designed to minimize their kernel footprint and document clearly which memory regions they occupy.
+      </p>
+    </div>
+  </div>
+
+  <h3>3. Anti-Forensic Techniques Targeting RAM Analysis</h3>
+  <p>Sophisticated attackers are aware of memory forensics methodologies and actively attempt to defeat them:</p>
+  <ul>
+    <li><strong>DKOM (Direct Kernel Object Manipulation):</strong> Unlinking a process's EPROCESS entry from the PsActiveProcessHead list makes it invisible to <code class="il">windows.pslist</code>. However, <code class="il">windows.psscan</code> may still recover it via pool-tag carving, which is why running both is essential.</li>
+    <li><strong>Memory wiping:</strong> Malware can zero or encrypt its own heap regions before exiting, destroying string artifacts, shellcode, and configuration data.</li>
+    <li><strong>Timestamp manipulation:</strong> Overwriting EPROCESS creation and exit timestamps obscures the process timeline.</li>
+    <li><strong>Pagefile offloading:</strong> Malware that forces its own pages to be swapped out before acquisition will be absent from the RAM image — though the pages may then appear in a pagefile examination.</li>
+  </ul>
+
+  <h3>4. OS Hardening and Kernel Protections</h3>
+  <p>Modern operating systems increasingly restrict third-party access to raw memory, which directly affects forensic acquisition and analysis:</p>
+  <ul>
+    <li><strong>Windows Kernel Patch Protection (PatchGuard):</strong> Prevents modification of kernel structures on 64-bit Windows, which also restricts some live acquisition methods.</li>
+    <li><strong>Virtualization-Based Security (VBS) / Credential Guard:</strong> Introduced in Windows 10 and standard in Windows 11 enterprise configurations. LSASS and domain credentials are moved to an isolated VTL 1 (Virtual Trust Level 1) region managed by the hypervisor. This region is not accessible to acquisition tools operating at VTL 0. The <code class="il">windows.hashdump</code> plugin will not recover domain credential hashes from a VBS-protected system.</li>
+    <li><strong>Secure Boot:</strong> Prevents unsigned bootloader and kernel code from executing, limiting the effectiveness of kernel-mode acquisition drivers that lack a valid signature.</li>
+  </ul>
+
+  <h3>5. ASLR — Address Space Layout Randomization</h3>
+  <p>
+    ASLR randomizes the base addresses of the stack, heap, and loaded modules in virtual memory at each process launch. Volatility 3 accounts for ASLR by reading data from kernel structures (which maintain the actual base addresses) rather than relying on hardcoded values. Forensic implications include:
+  </p>
+  <ul>
+    <li>Analysis scripts that assume fixed module base addresses will fail silently on ASLR-enabled systems, producing incorrect or missing results.</li>
+    <li>Reconstructing injected shellcode's API calls requires resolving the randomized base addresses of target modules — a more complex analysis step.</li>
+    <li>ASLR combined with DEP (Data Execution Prevention) limits the reliability of simple heap-spray pattern matching in memory images.</li>
+  </ul>
+
+  <h3>6. Partial or Fragmented Memory Images</h3>
+  <p>
+    Some acquisition tools skip hardware-mapped, firmware-reserved, or paged-out memory regions. Some enterprise configurations perform partial captures to reduce acquisition time. Volatility may generate parsing warnings or produce incomplete output when applied to such images. Always verify acquisition completeness by comparing the image file size against the reported total physical RAM. If there is a significant discrepancy, document it and note which regions were not captured.
+  </p>
+</section>
+
+<!-- ============================================================
+     SECTION 7 — KNOWLEDGE CHECK
+     ============================================================ -->
+<section class="section-block" id="sec-kc" aria-labelledby="h-kc">
+  <h2 class="section-title" id="h-kc">
+    <span class="sec-num" aria-hidden="true">7</span>
+    Knowledge Check
+  </h2>
+
+  <div class="callout callout-info" role="note">
+    <div class="callout-icon" aria-hidden="true">ℹ️</div>
+    <div class="callout-body">
+      <strong>Ungraded Practice Activity</strong>
+      <p>
+        This knowledge check is <strong>not graded</strong>. It is self-assessment practice to help you prepare for Quiz 3 (Week 12) and Lab 10. Select an answer and click Submit to receive immediate explanatory feedback.
+      </p>
+    </div>
+  </div>
+
+  <div class="kc-container" role="region" aria-label="Knowledge check questions">
+
+    <!-- Q1 -->
+    <div class="kc-question" id="kc-q1">
+      <span class="q-num">Question 1 of 4</span>
+      <p class="q-text">
+        A <code class="il">windows.netscan</code> scan shows <code class="il">svchost.exe</code> (PID 2344) with an ESTABLISHED connection to an external IP on port 4444. Which answer represents one of the two best immediate follow-up actions?
+      </p>
+      <ul class="options" role="radiogroup" aria-label="Question 1 answer options">
+        <li><label><input type="radio" name="q1" value="a"> A. Run <code class="il">windows.pstree</code> to verify the parent of PID 2344 and confirm it is the expected <code class="il">services.exe</code>.</label></li>
+        <li><label><input type="radio" name="q1" value="b"> B. Immediately shut down the system to prevent further data exfiltration.</label></li>
+        <li><label><input type="radio" name="q1" value="c"> C. Cross-reference PID 2344 with Windows Event Log ID 4688 records (from Week 8 techniques) to obtain the process creation time and command-line arguments.</label></li>
+        <li><label><input type="radio" name="q1" value="d"> D. Delete the suspicious process from the running process list to terminate the connection.</label></li>
+      </ul>
+      <button class="btn btn-primary btn-check" onclick="checkKC('q1')" aria-label="Submit answer for question 1">Submit Answer</button>
+      <div class="kc-feedback" id="kc-fb-q1" aria-live="polite"></div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="kc-question" id="kc-q2">
+      <span class="q-num">Question 2 of 4</span>
+      <p class="q-text">
+        An investigator wants to recover a list of programs a suspect user executed — including execution count and last-run timestamp — using in-memory registry artifacts. Which Volatility 3 plugin is most appropriate?
+      </p>
+      <ul class="options" role="radiogroup" aria-label="Question 2 answer options">
+        <li><label><input type="radio" name="q2" value="a"> A. <code class="il">windows.registry.hivelist</code></label></li>
+        <li><label><input type="radio" name="q2" value="b"> B. <code class="il">windows.registry.printkey</code></label></li>
+        <li><label><input type="radio" name="q2" value="c"> C. <code class="il">windows.registry.userassist</code></label></li>
+        <li><label><input type="radio" name="q2" value="d"> D. <code class="il">windows.hashdump</code></label></li>
+      </ul>
+      <button class="btn btn-primary btn-check" onclick="checkKC('q2')" aria-label="Submit answer for question 2">Submit Answer</button>
+      <div class="kc-feedback" id="kc-fb-q2" aria-live="polite"></div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="kc-question" id="kc-q3">
+      <span class="q-num">Question 3 of 4</span>
+      <p class="q-text">
+        In the six-phase memory analysis workflow, during which phase would you run <code class="il">windows.malfind</code> to detect injected shellcode in a process already identified as suspicious?
+      </p>
+      <ul class="options" role="radiogroup" aria-label="Question 3 answer options">
+        <li><label><input type="radio" name="q3" value="a"> A. Phase 1 — Identify</label></li>
+        <li><label><input type="radio" name="q3" value="b"> B. Phase 2 — Process Triage</label></li>
+        <li><label><input type="radio" name="q3" value="c"> C. Phase 4 — Deep Process Analysis</label></li>
+        <li><label><input type="radio" name="q3" value="d"> D. Phase 6 — Document</label></li>
+      </ul>
+      <button class="btn btn-primary btn-check" onclick="checkKC('q3')" aria-label="Submit answer for question 3">Submit Answer</button>
+      <div class="kc-feedback" id="kc-fb-q3" aria-live="polite"></div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="kc-question" id="kc-q4">
+      <span class="q-num">Question 4 of 4</span>
+      <p class="q-text">
+        A memory analyst runs <code class="il">windows.hashdump</code> on a workstation that had a domain administrator actively logged in at acquisition time, but the domain admin account hash is absent from the output. What is the most likely explanation?
+      </p>
+      <ul class="options" role="radiogroup" aria-label="Question 4 answer options">
+        <li><label><input type="radio" name="q4" value="a"> A. <code class="il">windows.hashdump</code> only captures accounts with a RID below 500.</label></li>
+        <li><label><input type="radio" name="q4" value="b"> B. The system has Windows Credential Guard (VBS) enabled, which isolates domain credentials in a hypervisor-protected region inaccessible to standard acquisition tools.</label></li>
+        <li><label><input type="radio" name="q4" value="c"> C. The memory image was acquired in 32-bit mode and cannot parse 64-bit credential structures.</label></li>
+        <li><label><input type="radio" name="q4" value="d"> D. Domain accounts are never cached in local memory and therefore never appear in memory forensics.</label></li>
+      </ul>
+      <button class="btn btn-primary btn-check" onclick="checkKC('q4')" aria-label="Submit answer for question 4">Submit Answer</button>
+      <div class="kc-feedback" id="kc-fb-q4" aria-live="polite"></div>
+    </div>
+
+    <div class="kc-score-bar" id="kc-score" aria-live="polite">
+      <div class="score-num" id="kc-score-num">—</div>
+      <div class="score-label">out of 4 correct</div>
+      <p style="font-size:.85rem;color:var(--text-muted);margin-top:8px;">
+        Review feedback for any questions marked incorrect, then revisit the relevant section of this module.
+      </p>
+    </div>
+  </div>
+
+  <!-- SCENARIO ACTIVITY -->
+  <h3 style="margin-top:28px;">Scenario-Based Triage Activity</h3>
+  <p>
+    Review the <code class="il">windows.netscan</code> output excerpt below from a suspected compromised endpoint. Then select the single most critical observation that warrants immediate follow-up investigation.
+  </p>
+
+  <div class="scenario-box" role="region" aria-label="Simulated windows.netscan output for triage scenario"><span class="sc-note">Offset       Proto   LocalAddr:Port          ForeignAddr:Port        State        PID   Owner        Created</span>
+<span class="sc-ok">0xe5a1f3b0  TCPv4   10.10.1.55:49832        203.0.113.47:443        ESTABLISHED   892  chrome.exe   2026-04-08 09:11:44</span>
+<span class="sc-ok">0xe5a2c190  TCPv4   10.10.1.55:49834        8.8.8.8:443             ESTABLISHED   892  chrome.exe   2026-04-08 09:11:52</span>
+<span class="sc-hi">0xe6b3a010  TCPv4   10.10.1.55:4444         185.220.101.47:4444     ESTABLISHED  <span class="sc-pid">3812</span> svchost.exe  2026-04-08 09:14:23</span>
+<span class="sc-hi">0xe6b3d200  TCPv4   0.0.0.0:8080            *:*                     LISTEN       <span class="sc-pid">3812</span> svchost.exe  2026-04-08 09:14:21</span>
+<span class="sc-ok">0xe5f91aa0  UDPv4   10.10.1.55:137          *:*                     -               4  System       2026-04-08 07:02:18</span>
+<span class="sc-addr">0xe5f80000  TCPv4   10.10.1.55:49900        10.10.1.1:445           CLOSE_WAIT   <span class="sc-pid">3812</span> svchost.exe  2026-04-08 09:13:59</span></div>
+
+  <p style="margin-top:12px;"><strong>Which of the following best identifies the most critical finding?</strong></p>
+
+  <div class="triage-options" role="group" aria-label="Triage scenario answer choices">
+    <button class="triage-btn" onclick="triageAnswer('a')">
+      A. Chrome (PID 892) has two simultaneous HTTPS connections — this pattern indicates C2 communication tunneled over port 443.
+    </button>
+    <button class="triage-btn" onclick="triageAnswer('b')">
+      B. svchost.exe (PID 3812) simultaneously shows an ESTABLISHED connection to a known-suspicious external IP on port 4444, an open LISTEN socket on port 8080, and a CLOSE_WAIT connection to an internal SMB port — a single PID exhibiting all three suspicious network behaviors.
+    </button>
+    <button class="triage-btn" onclick="triageAnswer('c')">
+      C. System (PID 4) is using UDP port 137 — this is abnormal behavior for the System process and indicates a NetBIOS attack.
+    </button>
+    <button class="triage-btn" onclick="triageAnswer('d')">
+      D. The CLOSE_WAIT connection from svchost.exe (PID 3812) to the internal gateway on SMB port 445 is the primary finding, indicating a completed internal file transfer.
+    </button>
+  </div>
+
+  <div class="triage-result" id="triage-result" aria-live="polite"></div>
+
+</section>
+
+<!-- ============================================================
+     SECTION 8 — WEEK 11 SUMMARY
+     ============================================================ -->
+<section class="section-block" id="sec-summary" aria-labelledby="h-summary">
+  <h2 class="section-title" id="h-summary">
+    <span class="sec-num" aria-hidden="true">8</span>
+    Week 11 Summary
+  </h2>
+
+  <p>
+    Week 11 has taken you through the complete arc of memory forensics: from acquisition and environment profiling in Module 11.1, through process analysis and code injection detection in Modules 11.2 and 11.3, to the network and registry artifact techniques and the unified six-phase investigation workflow in this module. The summary below synthesizes the four-module arc.
+  </p>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <h4>Module 11.1</h4>
+      <ul>
+        <li>Memory acquisition methods</li>
+        <li>Volatility 3 architecture and invocation</li>
+        <li>Image profiling with windows.info</li>
+        <li>Acquisition integrity and SHA-256 hashing</li>
+      </ul>
+    </div>
+    <div class="summary-card">
+      <h4>Module 11.2</h4>
+      <ul>
+        <li>pslist vs. psscan (DKOM detection)</li>
+        <li>pstree for parent–child hierarchy</li>
+        <li>Normal vs. abnormal Windows process names</li>
+        <li>cmdline and dlllist for behavioral evidence</li>
+      </ul>
+    </div>
+    <div class="summary-card">
+      <h4>Module 11.3</h4>
+      <ul>
+        <li>Virtual memory layout and VAD trees</li>
+        <li>malfind for injected code detection</li>
+        <li>PE header recognition in RAM</li>
+        <li>Shellcode behavioral indicators</li>
+      </ul>
+    </div>
+    <div class="summary-card">
+      <h4>Module 11.4 (This Module)</h4>
+      <ul>
+        <li>netscan output columns and TCP states</li>
+        <li>hivelist, printkey, userassist</li>
+        <li>hashdump and volatile hives</li>
+        <li>Six-phase investigation workflow</li>
+        <li>Memory-to-disk artifact correlation</li>
+        <li>Limitations of memory forensics</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>What to Retain for Lab 10 and Quiz 3</h3>
+
+  <div class="callout callout-tip" role="note">
+    <div class="callout-icon" aria-hidden="true">🎯</div>
+    <div class="callout-body">
+      <strong>Lab 10 — Memory Forensics Investigation</strong>
+      <p>
+        Lab 10 provides a memory image of a compromised Windows endpoint. You will apply the full six-phase workflow: profiling the image, conducting process and network triage, performing deep analysis with <code class="il">windows.malfind</code>, querying registry persistence keys, and extracting NTLM hashes. Your deliverable is a structured investigation report following the documentation phase. All instructions and submission details are in the Lab 10 assignment document.
+      </p>
+    </div>
+  </div>
+
+  <div class="callout callout-forward" role="note">
+    <div class="callout-icon" aria-hidden="true">📋</div>
+    <div class="callout-body">
+      <strong>Quiz 3 Preview — Week 12</strong>
+      <p>
+        Quiz 3 covers Weeks 10 and 11. From Week 11, expect questions on: Volatility plugin selection and output interpretation; TCP connection state meanings and forensic significance; the six-phase workflow sequence and its rationale; cross-source correlation between memory and disk artifacts; and the key limitations of memory forensics. Use the Knowledge Check questions in all four Week 11 modules as your primary preparation guide.
+      </p>
+    </div>
+  </div>
+
+  <h3>Key Concepts Checklist</h3>
+  <ul>
+    <li>I can run <code class="il">windows.netscan</code> and accurately interpret all output columns, including Owner and State.</li>
+    <li>I can distinguish ESTABLISHED, LISTEN, CLOSE_WAIT, TIME_WAIT, and SYN_SENT states and explain the forensic significance of each.</li>
+    <li>I can use <code class="il">windows.registry.hivelist</code> to enumerate loaded hives, then <code class="il">windows.registry.printkey</code> to query specific persistence key paths.</li>
+    <li>I can explain why the HARDWARE hive is never available in a disk image and describe what information it uniquely provides.</li>
+    <li>I can name all six phases of the memory analysis workflow in order and identify the primary plugin(s) associated with each phase.</li>
+    <li>I can match each memory artifact to its corresponding disk artifact and identify the week in which that disk technique was studied.</li>
+    <li>I can articulate at least three specific limitations of memory forensics that could affect the completeness or legal defensibility of evidence.</li>
+  </ul>
+</section>
+
+</main>
+
+<script>
+/* ======================================================
+   ACCORDION — Six-Phase Workflow
+   ====================================================== */
+function togglePhase(idx) {
+  var trig = document.getElementById('ptrig-' + idx);
+  var pan  = document.getElementById('ppan-'  + idx);
+  var open = trig.getAttribute('aria-expanded') === 'true';
+  trig.setAttribute('aria-expanded', String(!open));
+  open ? pan.classList.remove('open') : pan.classList.add('open');
+}
+
+function openPhase(idx) {
+  var trig = document.getElementById('ptrig-' + idx);
+  var pan  = document.getElementById('ppan-'  + idx);
+  trig.setAttribute('aria-expanded', 'true');
+  pan.classList.add('open');
+  setTimeout(function() {
+    trig.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    trig.focus();
+  }, 60);
+}
+
+/* ======================================================
+   KNOWLEDGE CHECK
+   ====================================================== */
+var kcCorrect = { q1: ['a','c'], q2: 'c', q3: 'c', q4: 'b' };
+
+var kcData = {
+  q1: {
+    a: { ok: true,  html: '<strong>✓ Correct — this is one of the two best next steps.</strong> Running <code>windows.pstree</code> to verify the parent of PID 2344 is essential. Legitimate <code>svchost.exe</code> instances are <em>always</em> direct children of <code>services.exe</code>. If PID 2344 is instead parented by <code>explorer.exe</code>, an unknown process, or appears orphaned, that confirms process masquerading, hollowing, or injection. Note: cross-referencing Event Log ID 4688 (answer C) is an equally valid immediate next step — both A and C are correct. Answers B and D would destroy evidence.' },
+    b: { ok: false, html: '<strong>✗ Incorrect.</strong> Immediately shutting down the system destroys all volatile memory evidence — precisely what you are working to preserve. Unless there is an active, life-threatening or infrastructure-critical escalation, memory acquisition and investigation must proceed with the system running. System shutdown is a last resort, not a first response, and it is a remediation action rather than a forensic one.' },
+    c: { ok: true,  html: '<strong>✓ Correct — this is also one of the two best next steps.</strong> Correlating PID 2344 against Event Log ID 4688 (Process Creation) entries provides the exact command-line arguments at launch and a disk-sourced creation timestamp, enabling timeline correlation. In practice you would perform both this check and the pstree check (answer A). Answers B and D would destroy evidence and are never appropriate as forensic first responses.' },
+    d: { ok: false, html: '<strong>✗ Incorrect.</strong> Terminating or modifying running processes violates the principle of evidence preservation and would be outside scope for most forensic examiners. The forensic role is to document, not to remediate. Remediation belongs to the incident response team after the forensic examiner has completed their work.' }
+  },
+  q2: {
+    a: { ok: false, html: '<strong>✗ Incorrect.</strong> <code>windows.registry.hivelist</code> enumerates the registry hives loaded in memory (name and virtual offset). It does not provide execution history, counts, or timestamps. It is a prerequisite step before querying specific keys.' },
+    b: { ok: false, html: '<strong>✗ Incorrect.</strong> <code>windows.registry.printkey</code> displays the values and data inside a specific registry key. It is useful for reading Run keys or other persistence locations, but it does not automatically provide program execution counts or last-run timestamps.' },
+    c: { ok: true,  html: '<strong>✓ Correct!</strong> <code>windows.registry.userassist</code> reads the UserAssist subkeys in the HKCU hive. Windows stores program execution telemetry here — including execution count, last-run timestamp, and session focus duration — to populate Start menu usage statistics. Volatility automatically decodes the ROT-13 encoding used to obscure the program paths.' },
+    d: { ok: false, html: '<strong>✗ Incorrect.</strong> <code>windows.hashdump</code> is a credential-recovery plugin that extracts NTLM password hashes from the SAM hive in memory. It provides account names and hashes, not program execution history.' }
+  },
+  q3: {
+    a: { ok: false, html: '<strong>✗ Incorrect.</strong> Phase 1 (Identify) is for image integrity verification and OS environment profiling — establishing the baseline before any investigative plugins run. Running <code>windows.malfind</code> here would be premature because no suspicious processes have yet been identified.' },
+    b: { ok: false, html: '<strong>✗ Incorrect.</strong> Phase 2 (Process Triage) uses <code>windows.pslist</code>, <code>windows.psscan</code>, <code>windows.pstree</code>, and <code>windows.cmdline</code> to build a process inventory and flag anomalies. <code>windows.malfind</code> is a deeper analytical tool applied only to processes already flagged as suspicious — running it in Phase 2 against all processes generates excessive noise.' },
+    c: { ok: true,  html: '<strong>✓ Correct!</strong> Phase 4 (Deep Process Analysis) is where injection-detection tools like <code>windows.malfind</code> — along with <code>windows.handles</code>, <code>windows.filescan</code>, and <code>windows.envars</code> — are applied to specific processes already identified as suspicious in the triage phases. This targeted application significantly reduces false positives and focuses analytical effort on confirmed anomalies.' },
+    d: { ok: false, html: '<strong>✗ Incorrect.</strong> Phase 6 (Document) is for recording, exporting, and reporting. All active plugin-based analysis should be complete by the end of Phase 5. Documentation occurs throughout the investigation, but by Phase 6 no new plugin execution should be driving new findings.' }
+  },
+  q4: {
+    a: { ok: false, html: '<strong>✗ Incorrect.</strong> <code>windows.hashdump</code> reads all accounts from the SAM hive indexed by RID (Relative Identifier). There is no RID threshold — it captures accounts from RID 500 (Administrator) through all created user accounts. A RID filter is not a feature of this plugin.' },
+    b: { ok: true,  html: '<strong>✓ Correct!</strong> Windows Credential Guard, part of Virtualization-Based Security (VBS), moves domain credential storage — NTLM hashes and Kerberos tickets — into an isolated VTL 1 environment managed by the hypervisor. Standard memory acquisition and analysis tools operate at VTL 0 and have no access to the VTL 1 protected region. This is one of the most significant modern limitations of memory-based credential recovery. <code>windows.hashdump</code> can still recover local SAM hashes; only domain/cached credentials are isolated by Credential Guard.' },
+    c: { ok: false, html: '<strong>✗ Incorrect.</strong> Volatility 3 handles both 32-bit and 64-bit memory architectures natively, selecting the correct parser based on the profiled image. A genuine 32-bit/64-bit mismatch would cause broad parsing failures across many plugins — not a selective failure limited to domain account hashes.' },
+    d: { ok: false, html: '<strong>✗ Incorrect.</strong> Domain credentials are absolutely cached in LSASS process memory during an active session — this is precisely why pass-the-hash attacks and tools like Mimikatz are effective against unprotected systems. It is specifically because domain credential hashes appear in LSASS memory that Microsoft developed Credential Guard to move them to a protected hypervisor region.' }
+  }
+};
+
+var kcSubmitted = { q1: false, q2: false, q3: false, q4: false };
+
+function checkKC(qName) {
+  var sel = document.querySelector('input[name="' + qName + '"]:checked');
+  var fb  = document.getElementById('kc-fb-' + qName);
+  if (!sel) {
+    fb.className = 'kc-feedback show incorrect';
+    fb.innerHTML = '⚠️ Please select an answer before submitting.';
+    return;
+  }
+  var val  = sel.value;
+  var data = kcData[qName][val];
+  var correct = kcCorrect[qName];
+  var isOk = Array.isArray(correct) ? correct.indexOf(val) !== -1 : (correct === val);
+  kcSubmitted[qName] = isOk;
+  fb.className = 'kc-feedback show ' + (isOk ? 'correct' : 'incorrect');
+  fb.innerHTML  = data.html;
+  // Check if all four answered
+  var doneCount = ['q1','q2','q3','q4'].filter(function(q) {
+    var el = document.getElementById('kc-fb-' + q);
+    return el && el.classList.contains('show');
+  }).length;
+  if (doneCount === 4) {
+    var score = ['q1','q2','q3','q4'].filter(function(q){ return kcSubmitted[q]; }).length;
+    var bar = document.getElementById('kc-score');
+    document.getElementById('kc-score-num').textContent = score;
+    bar.classList.add('show');
+  }
+}
+
+/* ======================================================
+   SCENARIO TRIAGE
+   ====================================================== */
+var triageFeedback = {
+  a: {
+    ok: false,
+    html: '<strong>✗ Not the most critical observation.</strong> Chrome having two simultaneous HTTPS connections on port 443 is entirely normal browser behavior — Chrome routinely opens multiple parallel connections for performance optimization. Port 443 is expected for a browser. Without additional context (such as the destination IP flagged in threat intelligence), these connections are not suspicious.'
+  },
+  b: {
+    ok: true,
+    html: '<strong>✓ Correct — this is the most critical finding.</strong> PID 3812 (<code>svchost.exe</code>) exhibits three simultaneous red flags from a single process:<br><br>' +
+          '<strong>(1) ESTABLISHED to 185.220.101.47:4444</strong> — Port 4444 is the Metasploit meterpreter default C2 port, and 185.220.101.47 falls within a known Tor exit-node IP range. This alone warrants immediate escalation.<br>' +
+          '<strong>(2) LISTEN on 0.0.0.0:8080</strong> — Legitimate <code>svchost.exe</code> instances do not open HTTP proxy ports. This is consistent with a reverse-tunnel backdoor or a proxy implant.<br>' +
+          '<strong>(3) CLOSE_WAIT to 10.10.1.1:445</strong> — An SMB connection to the internal gateway suggests the process attempted or completed lateral movement via file shares.<br><br>' +
+          'The concentration of all three indicators in a single PID makes this the unambiguous top priority. Recommended next steps: run <code>windows.pstree</code> to verify the parent of PID 3812, then <code>windows.malfind --pid 3812</code> to check for injected code.'
+  },
+  c: {
+    ok: false,
+    html: '<strong>✗ Not abnormal.</strong> System (PID 4) using UDP port 137 for NetBIOS Name Service is standard Windows network behavior on any domain-joined or workgroup system. Port 137 UDP is used for NetBIOS name resolution. Unless this system is in a fully isolated environment with explicit policy prohibiting NetBIOS, this is a normal finding and not a priority.'
+  },
+  d: {
+    ok: false,
+    html: '<strong>✗ Partially correct reasoning, but incomplete.</strong> The CLOSE_WAIT SMB connection from PID 3812 is indeed suspicious — it indicates a recently completed or interrupted connection to an internal SMB share, which is consistent with lateral movement. However, selecting only this finding misses the far higher-priority evidence: the same PID has an active ESTABLISHED connection to a known-malicious IP on the Metasploit default C2 port and an unexplained LISTEN socket on 8080. The SMB finding is a supporting indicator for the broader PID 3812 compromise, not the primary finding on its own.'
+  }
+};
+
+function triageAnswer(choice) {
+  var buttons = document.querySelectorAll('.triage-btn');
+  var result  = document.getElementById('triage-result');
+  var letters = ['a','b','c','d'];
+  buttons.forEach(function(b){ b.classList.remove('sel-ok','sel-no'); });
+  var idx = letters.indexOf(choice);
+  var fb  = triageFeedback[choice];
+  if (fb.ok) {
+    buttons[idx].classList.add('sel-ok');
+    result.className = 'triage-result show tr-ok';
+  } else {
+    buttons[idx].classList.add('sel-no');
+    result.className = 'triage-result show tr-no';
+  }
+  result.innerHTML = fb.html;
+  result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+</script>
+</body>
+</html>

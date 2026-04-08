@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 11.3 – Volatility Framework and Process Analysis | CSC 156</title>
+<style>
+:root {
+  --bg-base:#0f1117; --bg-card:#1a1f2e; --bg-code:#0d1117;
+  --border:#2a3050; --border-lt:#3a4170;
+  --accent:#4ecdc4; --accent-blue:#5b8dee; --accent-warn:#f7b731;
+  --accent-danger:#fc5c65; --accent-success:#26de81; --accent-purple:#a55eea;
+  --text:#e8eaf0; --text-sec:#9ba3c2; --text-muted:#5d6485;
+  --nav-h:56px; --r:8px; --r-sm:4px;
+  --mono:'Courier New',Courier,monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg-base);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:1rem;line-height:1.7;}
+
+/* Skip */
+.skip{position:absolute;top:-40px;left:0;background:var(--accent);color:#000;padding:8px 16px;font-weight:700;z-index:9999;border-radius:0 0 var(--r-sm) 0;text-decoration:none;}
+.skip:focus{top:0;}
+
+/* Nav */
+#nav{position:sticky;top:0;z-index:100;background:#111827;border-bottom:2px solid var(--accent);height:var(--nav-h);display:flex;align-items:center;padding:0 1.25rem;overflow-x:auto;gap:0;box-shadow:0 4px 20px rgba(0,0,0,.45);}
+.nav-brand{font-size:.78rem;font-weight:700;color:var(--accent);white-space:nowrap;margin-right:1.1rem;letter-spacing:.09em;text-transform:uppercase;flex-shrink:0;}
+.nav-list{display:flex;gap:.2rem;list-style:none;}
+.nav-list a{color:var(--text-sec);text-decoration:none;font-size:.74rem;font-weight:600;padding:5px 9px;border-radius:var(--r-sm);white-space:nowrap;transition:color .15s,background .15s;}
+.nav-list a:hover{color:var(--text);background:rgba(78,205,196,.12);}
+.nav-list a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+/* Wrap */
+.wrap{max-width:940px;margin:0 auto;padding:2.5rem 1.5rem 4rem;}
+section[id]{scroll-margin-top:calc(var(--nav-h) + 8px);}
+.section{margin-bottom:3rem;}
+
+/* Hero */
+.hero{background:linear-gradient(135deg,#1a1f2e 0%,#1b2540 100%);border:1px solid var(--border);border-left:5px solid var(--accent);border-radius:var(--r);padding:2rem;margin-bottom:2.5rem;}
+.mod-tag{font-size:.74rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:.5rem;}
+.hero h1{font-size:1.75rem;font-weight:800;color:#fff;line-height:1.2;margin-bottom:.75rem;}
+.hero-sub{color:var(--text-sec);font-size:.95rem;margin-bottom:1.25rem;}
+.badges{display:flex;flex-wrap:wrap;gap:.7rem;}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.05);border:1px solid var(--border-lt);border-radius:99px;padding:4px 12px;font-size:.74rem;color:var(--text-sec);}
+.bdot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+
+/* Section headers */
+.sec-hdr{display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:1px solid var(--border);}
+.sec-num{background:var(--accent);color:#000;font-weight:900;font-size:.78rem;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sec-hdr h2{font-size:1.3rem;font-weight:700;color:#fff;}
+h3{font-size:1.05rem;font-weight:700;color:var(--accent);margin:1.5rem 0 .6rem;}
+h4{font-size:.93rem;font-weight:700;color:var(--text);margin:1rem 0 .4rem;}
+p{margin-bottom:.9rem;color:var(--text-sec);}
+p strong{color:var(--text);}
+ul,ol{margin:.5rem 0 .9rem 1.4rem;color:var(--text-sec);}
+li{margin-bottom:.3rem;}
+li strong{color:var(--text);}
+hr.div{border:none;border-top:1px solid var(--border);margin:1.75rem 0;}
+
+/* Callouts */
+.callout{border-radius:var(--r);padding:.9rem 1.1rem;margin:1.1rem 0;border-left:4px solid;display:flex;gap:.7rem;align-items:flex-start;}
+.c-ico{font-size:1rem;flex-shrink:0;margin-top:.15rem;}
+.c-body>*:last-child{margin-bottom:0;}
+.c-title{display:block;margin-bottom:.3rem;font-size:.77rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;}
+.co-bridge{background:rgba(91,141,238,.09);border-color:var(--accent-blue);}
+.co-bridge .c-title{color:var(--accent-blue);}
+.co-bridge p{color:#b0c4f0;}
+.co-info{background:rgba(78,205,196,.08);border-color:var(--accent);}
+.co-info .c-title{color:var(--accent);}
+.co-info p{color:#9de8e4;}
+.co-warn{background:rgba(247,183,49,.07);border-color:var(--accent-warn);}
+.co-warn .c-title{color:var(--accent-warn);}
+.co-warn p,.co-warn li{color:#f0d080;}
+.co-success{background:rgba(38,222,129,.07);border-color:var(--accent-success);}
+.co-success .c-title{color:var(--accent-success);}
+.co-success p{color:#88efc0;}
+.co-linux{background:rgba(165,94,234,.08);border-color:var(--accent-purple);}
+.co-linux .c-title{color:var(--accent-purple);}
+.co-linux p,.co-linux li{color:#cca8f5;}
+
+/* Code */
+.code-lbl{display:block;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:.2rem;}
+pre{background:var(--bg-code);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.1rem;overflow-x:auto;margin:.5rem 0 1rem;font-family:var(--mono);font-size:.83rem;line-height:1.6;}
+code{font-family:var(--mono);font-size:.87em;background:rgba(78,205,196,.1);padding:2px 5px;border-radius:3px;color:var(--accent);}
+pre code{background:none;padding:0;color:#c9d1d9;font-size:1em;}
+.cc{color:#79c0ff;} .cf{color:#ffa657;} .cp{color:#a5d6ff;} .cm{color:#6e7681;font-style:italic;} .ch{color:var(--accent-danger);font-weight:700;}
+
+/* Tables */
+.tbl-wrap{overflow-x:auto;margin:.75rem 0 1.1rem;border-radius:var(--r);border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:.87rem;}
+caption{caption-side:top;text-align:left;padding:.4rem .9rem;font-size:.72rem;color:var(--text-muted);}
+th{background:#1d2440;color:var(--accent);text-align:left;padding:.6rem .9rem;font-weight:700;font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border-lt);}
+td{padding:.55rem .9rem;border-bottom:1px solid rgba(42,48,80,.5);color:var(--text-sec);vertical-align:top;}
+td strong{color:var(--text);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(78,205,196,.03);}
+
+/* Toggle btn */
+.tog-btn{display:inline-flex;align-items:center;gap:8px;background:rgba(78,205,196,.08);border:1px solid var(--accent);color:var(--accent);font-size:.84rem;font-weight:600;padding:7px 15px;border-radius:var(--r-sm);cursor:pointer;transition:background .15s;margin-bottom:.75rem;}
+.tog-btn:hover{background:rgba(78,205,196,.18);}
+.tog-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.t-arr{display:inline-block;transition:transform .25s;font-size:.74rem;}
+.collapsible{overflow:hidden;max-height:0;transition:max-height .35s ease;}
+.collapsible.open{max-height:3200px;}
+
+/* Plugin cards */
+.plugins{display:flex;flex-direction:column;gap:.65rem;margin:1rem 0;}
+.pc{border:1px solid var(--border);border-radius:var(--r);background:var(--bg-card);overflow:hidden;}
+.pc-hdr{display:flex;align-items:center;gap:.9rem;padding:.7rem 1rem;cursor:pointer;user-select:none;transition:background .15s;}
+.pc-hdr:hover{background:rgba(78,205,196,.05);}
+.pc-hdr:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+.pc-name{font-family:var(--mono);font-size:.92rem;font-weight:700;color:var(--accent);flex-shrink:0;}
+.pc-brief{font-size:.8rem;color:var(--text-muted);flex:1;}
+.pc-chev{color:var(--text-muted);font-size:.72rem;flex-shrink:0;transition:transform .25s;}
+.pc-hdr[aria-expanded="true"] .pc-chev{transform:rotate(180deg);}
+.pc-body{max-height:0;overflow:hidden;transition:max-height .35s ease;}
+.pc-body.open{max-height:900px;}
+.pc-inner{padding:0 1rem 1rem;border-top:1px solid var(--border);}
+
+/* Injection cards */
+.inj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:1rem;margin:1rem 0;}
+.inj-card{background:var(--bg-card);border:1px solid var(--border);border-top:3px solid var(--accent-purple);border-radius:var(--r);padding:.9rem 1rem;}
+.inj-card h4{color:var(--accent-purple);margin-top:0;font-size:.88rem;margin-bottom:.4rem;}
+.inj-card p{font-size:.82rem;margin-bottom:0;}
+
+/* Scenario */
+.scn-instr{background:rgba(247,183,49,.06);border:1px solid rgba(247,183,49,.2);border-radius:var(--r);padding:.75rem 1rem;font-size:.86rem;color:#f0d080;margin-bottom:.75rem;}
+.a-row{cursor:pointer;transition:background .12s;}
+.a-row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+.a-row.hit-sus td{background:rgba(252,92,101,.12)!important;}
+.a-row.hit-ok td{background:rgba(38,222,129,.07)!important;}
+.scn-fb{min-height:1px;padding:.75rem 1rem;border-radius:var(--r-sm);font-size:.86rem;margin-top:.5rem;display:none;}
+.scn-fb.show{display:block;}
+.scn-fb.fb-sus{background:rgba(252,92,101,.1);border:1px solid rgba(252,92,101,.3);color:#f5a5aa;}
+.scn-fb.fb-ok{background:rgba(38,222,129,.08);border:1px solid rgba(38,222,129,.25);color:#88efc0;}
+.scn-score{font-size:.88rem;color:var(--text-sec);margin-top:.5rem;min-height:1.4em;}
+.rst-btn{background:transparent;border:1px solid var(--border-lt);color:var(--text-sec);padding:5px 13px;border-radius:var(--r-sm);cursor:pointer;font-size:.8rem;margin-top:.65rem;transition:border-color .15s,color .15s;}
+.rst-btn:hover{border-color:var(--accent);color:var(--accent);}
+.rst-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+/* Walkthrough tabs */
+.wt-tabs{display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.85rem;}
+.wt-tab{background:var(--bg-card);border:1px solid var(--border);color:var(--text-sec);font-size:.79rem;font-weight:600;padding:5px 13px;border-radius:99px;cursor:pointer;transition:all .15s;}
+.wt-tab.active{background:rgba(78,205,196,.14);border-color:var(--accent);color:var(--accent);}
+.wt-tab:hover:not(.active){border-color:var(--border-lt);color:var(--text);}
+.wt-tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.wt-panel{display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem;animation:fadeUp .2s ease;}
+.wt-panel.active{display:block;}
+.wt-panel h4{color:var(--accent);margin-top:0;margin-bottom:.6rem;}
+.wt-panel p{font-size:.89rem;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+/* Knowledge check */
+.kc-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;}
+.kc-head{font-size:.97rem;font-weight:700;color:#fff;padding-bottom:.7rem;border-bottom:1px solid var(--border);margin-bottom:1.25rem;}
+.kc-q{margin-bottom:1.6rem;}
+.kc-qt{font-size:.93rem;color:var(--text);font-weight:600;margin-bottom:.65rem;}
+.kc-n{color:var(--accent);margin-right:.35rem;}
+.kc-opts{list-style:none;margin:0 0 .65rem;padding:0;display:flex;flex-direction:column;gap:.35rem;}
+.kc-opts li label{display:flex;align-items:flex-start;gap:9px;padding:9px 13px;border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;font-size:.86rem;color:var(--text-sec);transition:border-color .15s,background .15s;line-height:1.5;}
+.kc-opts li label:hover{border-color:var(--accent);background:rgba(78,205,196,.04);}
+.kc-opts li input{margin-top:3px;accent-color:var(--accent);flex-shrink:0;}
+.kc-opts li.opt-c label{border-color:var(--accent-success);background:rgba(38,222,129,.09);color:#88efc0;}
+.kc-opts li.opt-w label{border-color:var(--accent-danger);background:rgba(252,92,101,.07);color:#f5a5aa;}
+.kc-btn{background:var(--accent);color:#000;border:none;font-weight:700;font-size:.86rem;padding:8px 18px;border-radius:var(--r-sm);cursor:pointer;transition:opacity .15s;}
+.kc-btn:hover{opacity:.85;}
+.kc-btn:focus-visible{outline:2px solid #fff;outline-offset:2px;}
+.kc-btn:disabled{opacity:.4;cursor:not-allowed;}
+.kc-fb{margin-top:.65rem;padding:.7rem .95rem;border-radius:var(--r-sm);font-size:.86rem;display:none;}
+.kc-fb.show{display:block;}
+.kc-fb.correct{background:rgba(38,222,129,.08);border:1px solid rgba(38,222,129,.25);color:#88efc0;}
+.kc-fb.incorrect{background:rgba(252,92,101,.07);border:1px solid rgba(252,92,101,.25);color:#f5a5aa;}
+.kc-fb strong{display:block;margin-bottom:.25rem;}
+
+/* Baseline badges */
+.bl-b{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.7rem;font-weight:700;letter-spacing:.04em;}
+.bl-sys{background:rgba(91,141,238,.2);color:#8aafff;border:1px solid rgba(91,141,238,.3);}
+.bl-core{background:rgba(78,205,196,.15);color:var(--accent);border:1px solid rgba(78,205,196,.3);}
+.bl-user{background:rgba(247,183,49,.15);color:var(--accent-warn);border:1px solid rgba(247,183,49,.3);}
+
+/* Look-ahead */
+.lookahead{background:linear-gradient(135deg,#1a1f2e 0%,#1b2540 100%);border:1px solid var(--border-lt);border-radius:var(--r);padding:1.4rem;margin-top:1.5rem;}
+.lookahead h3{margin-top:0;color:var(--accent-blue);}
+.prev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:.65rem;margin-top:.9rem;}
+.prev-item{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--r-sm);padding:.6rem .8rem;font-size:.81rem;color:var(--text-sec);}
+.prev-item strong{display:block;color:var(--accent-blue);font-size:.78rem;margin-bottom:.15rem;}
+
+@media(max-width:620px){
+  .wrap{padding:1.5rem 1rem 3rem;}
+  .hero h1{font-size:1.35rem;}
+  .inj-grid{grid-template-columns:1fr 1fr;}
+  .nav-brand{display:none;}
+}
+@media(max-width:400px){.inj-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip">Skip to main content</a>
+
+<!-- ── STICKY NAV ── -->
+<nav id="nav" aria-label="Module sections">
+  <span class="nav-brand" aria-hidden="true">11.3&nbsp;Volatility</span>
+  <ul class="nav-list" role="list">
+    <li><a href="#s1">1&nbsp;Overview</a></li>
+    <li><a href="#s2">2&nbsp;Profiles</a></li>
+    <li><a href="#s3">3&nbsp;Plugins</a></li>
+    <li><a href="#s4">4&nbsp;Baseline</a></li>
+    <li><a href="#s5">5&nbsp;Anomalies</a></li>
+    <li><a href="#s6">6&nbsp;Injection</a></li>
+    <li><a href="#s7">7&nbsp;Malfind</a></li>
+    <li><a href="#s8">8&nbsp;Check</a></li>
+    <li><a href="#s9">9&nbsp;Summary</a></li>
+  </ul>
+</nav>
+
+<main id="main">
+<div class="wrap">
+
+<!-- ── HERO ── -->
+<header class="hero">
+  <p class="mod-tag">CSC&nbsp;156 &mdash; Week&nbsp;11 &middot; Module&nbsp;11.3</p>
+  <h1>Inside the Machine: Volatility Framework,<br>Process Enumeration, and Malicious Process Detection</h1>
+  <p class="hero-sub">Learn to orient a memory image using Volatility 3, enumerate and compare running processes with core plugins, apply a structured anomaly-detection framework, and detect process injection with <code>windows.malfind</code>. This is the primary preparation module for Lab Activity 10.</p>
+  <div class="badges">
+    <span class="badge"><span class="bdot"></span>Estimated time: 2.0–2.5 hrs</span>
+    <span class="badge"><span class="bdot"></span>Objectives 3 &amp; 6</span>
+    <span class="badge"><span class="bdot"></span>Supports Lab 10 &amp; Quiz 3</span>
+    <span class="badge"><span class="bdot"></span>Module 3 of 4</span>
+  </div>
+</header>
+
+<!-- Prior-week bridge -->
+<div class="callout co-bridge" role="note" aria-label="Prior-week bridge callout">
+  <span class="c-ico" aria-hidden="true">🔗</span>
+  <div class="c-body">
+    <strong class="c-title">Prior-Week Bridge — Weeks 7–9</strong>
+    <p>In <strong>Weeks 7–8</strong> you extracted process artifacts from Windows disk evidence — Prefetch files, ShimCache, and the Security event log — noting process names, executable paths, parent–child relationships, and launch timestamps. In <strong>Week 9</strong> you triaged a Linux forensic disk image using TSK, <code>grep</code>, and <code>journalctl</code>: orient to the image → enumerate objects → flag anomalies → document findings. Module 11.3 applies that same investigative discipline to a <em>memory image</em> using Volatility plugins. The tools change; the analytical logic does not.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SECTION 1 — FRAMEWORK OVERVIEW
+     ═══════════════════════════════════════ -->
+<section class="section" id="s1" aria-labelledby="sh1">
+  <div class="sec-hdr">
+    <span class="sec-num" aria-hidden="true">1</span>
+    <h2 id="sh1">Volatility Framework Overview</h2>
+  </div>
+
+  <p><strong>Volatility</strong> is an open-source, Python-based memory forensics framework and the industry standard for RAM analysis in both incident response and digital forensics. It operates entirely against a static memory image — no running operating system required. Volatility parses raw binary structures directly from the dump: kernel object pools, page tables, VAD trees, and linked lists to reconstruct evidence that exists only in RAM: the live process list, open network connections, in-memory code, and volatile registry data.</p>
+  <p>Two major versions are active in field documentation, certification materials, and online resources. Understanding both is necessary for reading industry write-ups. <strong>Volatility 3 is the primary tool for all course work.</strong></p>
+
+  <h3>V2 vs. V3 Architecture Comparison</h3>
+  <p>The table below highlights the key architectural differences. It is collapsed by default — expand it to review before continuing.</p>
+
+  <button class="tog-btn" id="v2v3-btn" aria-controls="v2v3-region" aria-expanded="false" onclick="toggleV2V3()">
+    <i class="t-arr" aria-hidden="true">▶</i>
+    <span id="v2v3-lbl">Show V2 vs. V3 Comparison Table</span>
+  </button>
+
+  <div class="collapsible" id="v2v3-region" role="region" aria-labelledby="v2v3-btn">
+    <div class="tbl-wrap">
+      <table>
+        <caption>Table 1 — Volatility 2 vs. Volatility 3 Feature Comparison</caption>
+        <thead>
+          <tr>
+            <th scope="col">Feature</th>
+            <th scope="col">Volatility 2</th>
+            <th scope="col">Volatility 3 &nbsp;&#10003;&nbsp; Course Tool</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Python version</strong></td>
+            <td>Python 2 (end-of-life)</td>
+            <td>Python 3 (actively maintained)</td>
+          </tr>
+          <tr>
+            <td><strong>OS identification</strong></td>
+            <td>Manual — analyst must specify <code>--profile=Win7SP1x64</code>; wrong profile = incorrect output with no obvious error</td>
+            <td>Automatic — detects OS version from in-memory structures and resolves correct symbols without analyst input</td>
+          </tr>
+          <tr>
+            <td><strong>Symbol format</strong></td>
+            <td>Bundled profile files encoding fixed offsets; may lag behind OS patch levels</td>
+            <td>Intermediate Symbol Format (ISF) JSON files generated from Microsoft PDB data; accurate for any patch level</td>
+          </tr>
+          <tr>
+            <td><strong>Plugin namespace</strong></td>
+            <td>Flat names: <code>pslist</code>, <code>psscan</code>, <code>malfind</code></td>
+            <td>Namespaced: <code>windows.pslist</code>, <code>windows.psscan</code>, <code>windows.malfind</code></td>
+          </tr>
+          <tr>
+            <td><strong>Invocation</strong></td>
+            <td><code>vol.py -f image.mem --profile=Win7SP1x64 pslist</code></td>
+            <td><code>python3 vol.py -f image.mem windows.pslist</code></td>
+          </tr>
+          <tr>
+            <td><strong>Output formats</strong></td>
+            <td>Text tables; limited structured export</td>
+            <td>Text, CSV, JSON, SQLite — structured output for pipeline and spreadsheet use</td>
+          </tr>
+          <tr>
+            <td><strong>Linux / macOS</strong></td>
+            <td>Limited OS support</td>
+            <td>Windows, Linux, macOS — consistent <code>os.plugin</code> namespace across platforms</td>
+          </tr>
+          <tr>
+            <td><strong>Field status</strong></td>
+            <td>Still in legacy SOC playbooks and older CTF write-ups; GCFE v1 reference materials</td>
+            <td>Current field standard; aligns with updated GCFE/GCFA content; used in Lab 10 and Quiz 3</td>
+          </tr>
+          <tr>
+            <td><strong>Course use</strong></td>
+            <td>Recognize V2 syntax when encountered in external documentation — do not use in labs</td>
+            <td><strong>All module examples, Lab Activity 10, and Quiz 3</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h3>V3 Basic Invocation Syntax</h3>
+  <p>Every Volatility 3 command follows this general pattern:</p>
+
+  <span class="code-lbl">General syntax</span>
+  <pre><code><span class="cc">python3</span> vol.py <span class="cf">-f</span> <span class="cp">&lt;memory.mem&gt;</span> <span class="cf">[--output csv --output-file out.csv]</span> <span class="cp">windows.&lt;plugin&gt;</span> <span class="cf">[plugin args]</span></code></pre>
+
+  <span class="code-lbl">Run pslist against a memory image</span>
+  <pre><code><span class="cc">python3</span> vol.py <span class="cf">-f</span> <span class="cp">memdump.mem</span> windows.pslist</code></pre>
+
+  <span class="code-lbl">Save output to CSV for spreadsheet triage</span>
+  <pre><code><span class="cc">python3</span> vol.py <span class="cf">-f</span> <span class="cp">memdump.mem</span> <span class="cf">--output csv --output-file</span> <span class="cp">pslist.csv</span> windows.pslist</code></pre>
+
+  <div class="callout co-info" role="note">
+    <span class="c-ico" aria-hidden="true">💡</span>
+    <div class="c-body">
+      <strong class="c-title">Recognizing V2 Syntax in External Resources</strong>
+      <p>Older guides, CTF write-ups, and some certification study materials use Volatility 2 syntax. You will recognize it by flat plugin names and a required <code>--profile</code> flag: <code>vol.py -f image.mem --profile=Win7SP1x64 pslist</code>. Identify this pattern when you encounter it — do not use it in Lab 10 or any course submission.</p>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════
+     SECTION 2 — PROFILE AND SYMBOL SELECTION
+     ═══════════════════════════════════════ -->
+<section class="section" id="s2" aria-labelledby="sh2">
+  <div class="sec-hdr">
+    <span class="sec-num" aria-hidden="true">2</span>
+    <h2 id="sh2">Profile and Symbol Selection</h2>
+  </div>
+
+  <p>Memory forensics requires parsing kernel data structures at exact memory offsets. Those offsets differ across OS versions and patch levels — a field in the Windows 10 Build 19041 EPROCESS structure sits at a different offset than the same field in Build 22621. Using the wrong offsets produces incorrect or empty output with no obvious error message.</p>
+
+  <h3>Volatility 2 — Manual Profile Selection</h3>
+  <p>In V2, the examiner determined the OS version independently — by running <code>imageinfo</code> or <code>kdbgscan</code> and interpreting suggestions — then supplied a <strong>profile</strong> name that bundled the correct offset table for that specific build. An incorrect profile produced silently wrong results. Profiles required separate downloads for patched systems and could become stale as Microsoft released updates.</p>
+
+  <h3>Volatility 3 — Automatic Symbol Resolution</h3>
+  <p>V3 replaces profiles with <strong>Intermediate Symbol Format (ISF) files</strong> — compact JSON files encoding kernel symbol offsets derived from Microsoft's public symbol server (PDB files). The workflow is automatic:</p>
+  <ol>
+    <li>V3 identifies the OS build from structures present in the memory image.</li>
+    <li>V3 retrieves or uses a locally cached ISF file for that exact build.</li>
+    <li>Analysis proceeds with correct offsets — no analyst action required.</li>
+  </ol>
+
+  <div class="callout co-info" role="note">
+    <span class="c-ico" aria-hidden="true">⚙️</span>
+    <div class="c-body">
+      <strong class="c-title">First-Run Behavior in Lab 10</strong>
+      <p>When you analyze your own machine's memory dump in Lab Activity 10 Path B, V3 auto-resolves the ISF file for your exact Windows build. The first run against a new build may pause briefly to fetch symbol data. Subsequent runs use the local cache and run at full speed. All course-provided analysis images include pre-cached symbols.</p>
+    </div>
+  </div>
+
+  <h3>Linux — ISF Files and Custom Kernels</h3>
+  <p>Linux memory analysis in V3 requires an ISF file generated from the <em>specific kernel</em> of the target system. Unlike Windows, there is no centralized symbol server — Linux kernels vary by distribution, version, and compile-time flags. Examiners generate ISF files using the <code>dwarf2json</code> tool against the target kernel's debug symbol package.</p>
+
+  <div class="callout co-linux" role="note" aria-label="Linux note">
+    <span class="c-ico" aria-hidden="true">🐧</span>
+    <div class="c-body">
+      <strong class="c-title">Linux Note — Challenge 7 Lab Image</strong>
+      <p>The Challenge 7 lab image is a Linux/Debian system. Volatility 3 Linux plugins use the <code>linux.</code> namespace (e.g., <code>linux.pslist</code>, <code>linux.psscan</code>, <code>linux.malfind</code>) and accept identical command syntax to Windows plugins. The ISF file for that image is provided with the lab — you do not need to generate it. This module focuses on Windows analysis; Linux equivalents are noted in callouts alongside each relevant plugin.</p>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════
+     SECTION 3 — CORE NAVIGATION PLUGINS
+     ═══════════════════════════════════════ -->
+<section class="section" id="s3" aria-labelledby="sh3">
+  <div class="sec-hdr">
+    <span class="sec-num" aria-hidden="true">3</span>
+    <h2 id="sh3">Core Navigation Plugins</h2>
+  </div>
+
+  <p>Six plugins form the foundation of every process-level Volatility investigation. Learn their purpose, syntax, and limitations before attempting Lab Activity 10. Click any card to expand its full reference entry.</p>
+
+  <div class="callout co-warn" role="note">
+    <span class="c-ico" aria-hidden="true">⚠️</span>
+    <div class="c-body">
+      <strong class="c-title">Best Practice — Always Run Both pslist AND psscan</strong>
+      <p><code>windows.pslist</code> walks the kernel's doubly-linked active-process list. A rootkit using <strong>Direct Kernel Object Manipulation (DKOM)</strong> can unlink its EPROCESS entry from that list, hiding the process from pslist entirely. <code>windows.psscan</code> scans raw memory for EPROCESS pool-tag signatures, bypassing the linked list and finding hidden processes. <strong>Any process visible in psscan but absent from pslist is a high-priority rootkit indicator.</strong> Comparing both outputs is standard practice on every investigation.</p>
+    </div>
+  </div>
+
+  <div class="plugins" role="list" aria-label="Plugin reference cards — click to expand">
+
+    <!-- windows.info -->
+    <div class="pc" role="listitem">
+      <div class="pc-hdr" tabindex="0" role="button" aria-expanded="false" aria-controls="pci-info"
+           onclick="togglePC(this,'pci-info')" onkeydown="pcKey(event,this,'pci-info')">
+        <span class="pc-name">windows.info</span>
+        <span class="pc-brief">System identification and image orientation</span>
+        <span class="pc-chev" aria-hidden="true">▼</span>
+      </div>
+      <div class="pc-body" id="pci-info">
+        <div class="pc-inner">
+          <p><strong>Purpose:</strong> Displays OS version, architecture, kernel build string, and key memory addresses. Run this plugin first on every image to confirm successful loading and to record the OS version in your case notes.</p>
+          <span class="code-lbl">Syntax</span>
+          <pre><code><span class="cc">python3</span> vol.py <span class="cf">-f</span> <span class="cp">memdump.mem</span> windows.info</code></pre>
+          <span class="code-lbl">Key output fields</span>
+          <pre><code>Variable           Value
+-----------        -------------------------------------------
+Kernel Base        0xf8000285e000
+DTB                0x187000
+NtBuildLab         19041.1.amd64fre.vb_release...  <span class="cm">&#8592; confirms OS build</span>
+NtMajorVersion     10
+NtMinorVersion     0
+PE MajorOperSysVer 10</code></pre>
+          <div class="callout co-linux" role="note" style="margin-top:.6rem;">
+            <span class="c-ico" aria-hidden="true">🐧</span>
+            <div class="c-body">
+              <strong class="c-title">Linux Equivalent</strong>
+              <p><code>linux.banners.Banners</code> — extracts kernel version banner strings from a Linux memory image.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- windows.pslist -->
+    <div class="pc" role="listitem">
+      <div class="pc-hdr" tabindex="0" role="button" aria-expanded="false" aria-controls="pci-pslist"
+           onclick="togglePC(this,'pci-pslist')" onkeydown="pcKey(event,this,'pci-pslist')">
+        <span class="pc-name">windows.pslist</span>
+        <span class="pc-brief">Active process list via EPROCESS linked list</span>
+        <span class="pc-chev" aria-hidden="true">▼</span>
+      </div>
+      <div class="pc-body" id="pci-pslist">
+        <div class="pc-inner">
+          <p><strong>Purpose:</strong> Walks the kernel's doubly-linked list of <code>EPROCESS</code> structures to enumerate active processes. Returns PID, parent PID (PPID), process name, create time, and exit time. Fast and reliable for standard (non-rootkit) scenarios.</p>
+          <p><strong>Limitation:</strong> A rootkit can unlink its EPROCESS entry via DKOM, hiding the process from pslist output. Always cross-reference with <code>windows.psscan</code>.</p>
+          <span class="code-lbl">Syntax</span>
+          <pre><code><span class="cc">python3</span> vol.py <span class="cf">-f</span> <span class="cp">memdump.mem</span> windows.pslist</code></pre>
+          <span class="code-lbl">Sample output (truncated)</span>
+          <pre><code>PID   PPID  Name            Offset      Threads  Sessions  CreateTime
+4     0     System          0xe000...   136      None      2024-11-01 09:12:03
+556   496   lsass.exe       0xb501...   12       0         2024-11-01 09:12:15
+1234  1340  powershell.exe  0xa800...   8        1         2024-11-01 14:32:01</code></pre>
+          <div class="callout co-linux" role="note" style="margin-top:.6rem;">
+            <span class="c-ico" aria-hidden="true">🐧</span>
+            <div class="c-body">
+              <strong class="c-title">Linux Equivalent</strong>
+              <p><code>linux.pslist</code> — walks the Linux <code>task_struct</code> doubly-linked list to enumerate processes.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- windows.psscan -->
+    <div class="pc" role="listitem">
+      <div class="pc-hdr" tabindex="0" role="button" aria-expanded="false" aria-controls="pci-psscan"
+           onclick="togglePC(this,'pci-psscan')" onkeydown="pcKey(event,this,'pci-psscan')">
+        <span class="pc-name">windows.psscan</span>
+        <span class="pc-brief">Pool-tag scan for EPROCESS structures — rootkit-resistant</span>
+        <span class="pc-chev" aria-hidden="true">▼</span>
+      </div>
+      <div class="pc-body" id="pci-psscan">
+        <div class="pc-inner">
+          <p><strong>Purpose:</strong> Scans physical memory for EPROCESS pool-tag signatures rather than following the linked list. Finds currently active processes, recently terminated processes still resident in memory, and DKOM-unlinked (hidden) processes. Slower than pslist but more complete and rootkit-resistant.</p>
+          <p><strong>Key use:</strong> Run after pslist and compare outputs. Any process present in psscan but absent from pslist is a priority finding requiring immediate follow-up.</p>
+          <span class="code-lbl">Syntax</span>
+          <pre><code><span class="cc">python3</span> vol.py <span class="cf">-f</span> <span class="cp">memdump.mem</span> windows.psscan</code></pre>
+          <div class="callout co-linux" role="note" style="margin-top:.6rem;">
+            <span class="c-ico" aria-hidden="true">🐧</span>
+            <div class="c-body">
+              <strong class="c-title">Linux Equivalent</strong>
+              <p><code>linux.psscan</code> — scans Linux memory pools for <code>task_struct</code> objects, finding processes that may not appear in the standard list.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- windows.pstree -->
+    <div class="pc" role="listitem">
+      <div class="pc-hdr" tabindex="0" role="button" aria-expanded="false" aria-controls="pci-pstree"
+           onclick="togglePC(this,'pci-pstree')" onkeydown="pcKey(event,this,'pci-pstree')">
+        <span class="pc-name">windows.pstree</span>
+        <span class="pc-brief">Process hierarchy rendered as a parent–child tree</span>
+        <span class="pc-chev" aria-hidden="true">▼</span>
+      </div>
+      <div class="pc-body" id="pci-pstree">
+        <div class="pc-inner">
+          <p><strong>Purpose:</strong> Renders the process list as an indented tree showing parent–child relationships visually. This view is critical for detecting <em>wrong-parent anomalies</em> — one of the most common structural indicators of process injection, privilege escalation, and living-off-the-land attacks.</p>
+          <span class="code-lbl">Syntax</span>
+          <pre><code><span class="cc">python3</span> vol.py <span class="cf">-f</span> <span class="cp">memdump.mem</span> windows.pstree</code></pre>
+          <span class="code-lbl">Sample output with anomaly highlighted</span>
+          <pre><code>* 4      System
+** 348   smss.exe
+*** 448  csrss.exe
+*** 496  wininit.exe
+**** 548 services.exe
+***** 688 svchost.exe
+<span class="ch">****** 1284 cmd.exe</span>  <span class="cm">&#8592; cmd.exe child of svchost — suspicious wrong-parent</span>
+**** 556 lsass.exe</code></pre>
+          <div class="callout co-linux" role="note" style="margin-top:.6rem;">
+            <span class="c-ico" aria-hidden="true">🐧</span>
+            <div class="c-body">
+              <strong class="c-title">Linux Equivalent</strong>
+              <p><code>linux.pstree</code> — renders the Linux process hierarchy using <code>task_struct</code> parent pointers.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- windows.cmdline -->
+    <div class="pc" role="listitem">
+      <div class="pc-hdr" tabindex="0" role="button" aria-expanded="false" aria-controls="pci-cmdline"
+           onclick="togglePC(this,'pci-cmdline')" onkeydown="pcKey(event,this,'pci-cmdline')">
+        <span class="pc-name">windows.cmdline</span>
+        <span class="pc-brief">Full command-line arguments for each process</span>
+        <span class="pc-chev" aria-hidden="true">▼</span>
+      </div>
+      <div class="pc-body" id="pci-cmdline">
+        <div class="pc-inner">
+          <p><strong>Purpose:</strong> Retrieves the full command-line string used to launch each process from its Process Environment Block (PEB). Exposes executable paths, launch flags, encoded payloads, and embedded URLs that a process name alone cannot reveal. Essential for confirming suspicious processes found in pslist or pstree.</p>
+          <span class="code-lbl">Syntax</span>
+          <pre><code><span class="cc">python3</span> vol.py <span class="cf">-f</span> <span class="cp">memdump.mem</span> windows.cmdline</code></pre>
+          <span class="code-lbl">Suspicious example — Base64-encoded PowerShell payload</span>
+          <pre><code>PID   Process         Args
+1234  powershell.exe  <span class="ch">powershell.exe -enc SQBFAFgAKABOAGUAdwAtAE8A...</span>
+<span class="cm">                      ↑ -enc flag + Base64 string = obfuscated command, major red flag</span></code></pre>
+          <div class="callout co-linux" role="note" style="margin-top:.6rem;">
+            <span class="c-ico" aria-hidden="true">🐧</span>
+            <div class="c-body">
+              <strong class="c-title">Linux Equivalent</strong>
+              <p><code>linux.cmdline</code> — retrieves command-line arguments from Linux process memory (equivalent of reading <code>/proc/&lt;pid&gt;/cmdline</code>).</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- windows.dlllist -->
+    <div class="pc" role="listitem">
+      <div class="pc-hdr" tabindex="0" role="button" aria-expanded="false" aria-controls="pci-dlllist"
+           onclick="togglePC(this,'pci-dlllist')" onkeydown="pcKey(event,this,'pci-dlllist')">
+        <span class="pc-name">windows.dlllist</span>
+        <span class="pc-brief">Loaded DLLs for each process — path and load order</span>
+        <span class="pc-chev" aria-hidden="true">▼</span>
+      </div>
+      <div class="pc-body" id="pci-dlllist">
+        <div class="pc-inner">
+          <p><strong>Purpose:</strong> Lists all DLLs loaded into each process's address space by walking the LDR_DATA_TABLE_ENTRY list in the PEB. Reveals injected DLLs, anomalous load paths, and name-masquerading DLLs (e.g., a malicious <code>ntdll.dll</code> loaded from <code>C:\Users\Public\</code> alongside the real one from System32).</p>
+          <span class="code-lbl">Syntax — all processes</span>
+          <pre><code><span class="cc">python3</span> vol.py <span class="cf">-f</span> <span class="cp">memdump.mem</span> windows.dlllist</code></pre>
+          <span class="code-lbl">Syntax — single process by PID</span>
+          <pre><code><span class="cc">python3</span> vol.py <span class="cf">-f</span> <span class="cp">memdump.mem</span> windows.dlllist <span class="cf">--pid</span> <span class="cp">688</span></code></pre>
+          <span class="code-lbl">Suspicious output — duplicate DLL name, wrong path</span>
+          <pre><code>PID  Name         Path
+688  svchost.exe  C:\Windows\System32\ntdll.dll      <span class="cm">&#8592; expected</span>
+688  svchost.exe  <span class="ch">C:\Users\Public\ntdll.dll</span>          <span class="cm">&#8592; wrong path — injected DLL?</span></code></pre>
+          <div class="callout co-linux" role="note" style="margin-top:.6rem;">
+            <span class="c-ico" aria-hidden="true">🐧</span>
+            <div class="c-body">
+              <strong class="c-title">Linux Equivalent</strong>
+              <p><code>linux.library_list</code> — lists shared libraries loaded by Linux processes from their memory maps.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /plugins -->
+</section>
+
+<!-- ═══════════════════════════════════════
+     SECTION 4 — NORMAL WINDOWS PROCESS BASELINE
+     ═══════════════════════════════════════ -->
+<section class="section" id="s4" aria-labelledby="sh4">
+  <div class="sec-hdr">
+    <span class="sec-num" aria-hidden="true">4</span>
+    <h2 id="sh4">Normal Windows Process Baseline</h2>
+  </div>
+
+  <p>No anomaly is detectable without a clear picture of what is <em>normal</em>. Before triaging any memory image, internalize the expected attributes of core Windows processes. Deviations in name spelling, executable path, parent process, or instance count are all investigative findings.</p>
+
+  <div class="callout co-info" role="note">
+    <span class="c-ico" aria-hidden="true">📋</span>
+    <div class="c-body">
+      <strong class="c-title">Why Baseline Memorization Matters</strong>
+      <p>Malware frequently impersonates these eight processes by misspelling names (<code>scvhost.exe</code>), running from non-standard paths (<code>C:\Windows\Temp\lsass.exe</code>), appearing with wrong parents, or spawning unexpected additional instances. None of these deviations are visible without knowing what each field <em>should</em> contain. Table 2 is the analytical rubric applied throughout Lab Activity 10 Path B.</p>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <caption>Table 2 — Windows Core Process Baseline Reference</caption>
+      <thead>
+        <tr>
+          <th scope="col">Process</th>
+          <th scope="col">Expected Path</th>
+          <th scope="col">Expected Parent</th>
+          <th scope="col">Instances</th>
+          <th scope="col">Session</th>
+          <th scope="col">Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>System</strong></td>
+          <td>N/A (kernel threads)</td>
+          <td>Idle (PID 0); always PID 4</td>
+          <td>Exactly 1</td>
+          <td>0</td>
+          <td><span class="bl-b bl-sys">Kernel</span></td>
+        </tr>
+        <tr>
+          <td><strong>smss.exe</strong><br><small>Session Manager</small></td>
+          <td><code>\SystemRoot\System32\smss.exe</code></td>
+          <td>System (PID 4)</td>
+          <td>1 master + short-lived child per login session</td>
+          <td>0</td>
+          <td><span class="bl-b bl-sys">System</span></td>
+        </tr>
+        <tr>
+          <td><strong>csrss.exe</strong><br><small>Client/Server Runtime</small></td>
+          <td><code>%SystemRoot%\System32\csrss.exe</code></td>
+          <td>smss.exe (smss exits after launch)</td>
+          <td>1 per login session (typically ≥ 2)</td>
+          <td>0, 1, &hellip;</td>
+          <td><span class="bl-b bl-core">Core</span></td>
+        </tr>
+        <tr>
+          <td><strong>wininit.exe</strong><br><small>Windows Initialization</small></td>
+          <td><code>%SystemRoot%\System32\wininit.exe</code></td>
+          <td>smss.exe (smss exits after launch)</td>
+          <td>Exactly 1</td>
+          <td>0</td>
+          <td><span class="bl-b bl-core">Core</span></td>
+        </tr>
+        <tr>
+          <td><strong>lsass.exe</strong><br><small>Local Security Authority</small></td>
+          <td><code>%SystemRoot%\System32\lsass.exe</code></td>
+          <td>wininit.exe</td>
+          <td>Exactly 1</td>
+          <td>0</td>
+          <td><span class="bl-b bl-core">Core</span></td>
+        </tr>
+        <tr>
+          <td><strong>svchost.exe</strong><br><small>Service Host</small></td>
+          <td><code>%SystemRoot%\System32\svchost.exe</code></td>
+          <td>services.exe</td>
+          <td>Many (5–20+ depending on build and loaded services)</td>
+          <td>0 or 1</td>
+          <td><span class="bl-b bl-core">Core</span></td>
+        </tr>
+        <tr>
+          <td><strong>explorer.exe</strong><br><small>Windows Shell</small></td>
+          <td><code>%SystemRoot%\explorer.exe</code></td>
+          <td>userinit.exe (userinit exits after launch)</td>
+          <td>1 per interactive user session</td>
+          <td>1+</td>
+          <td><span class="bl-b bl-user">User</span></td>
+        </tr>
+        <tr>
+          <td><strong>cmd.exe</strong><br><small>Command Prompt</small></td>
+          <td><code>%SystemRoot%\System32\cmd.exe</code></td>
+          <td>explorer.exe or legitimate application</td>
+          <td>0 to several (user-launched)</td>
+          <td>1+</td>
+          <td><span class="bl-b bl-user">User</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout co-warn" role="note">
+    <span class="c-ico" aria-hidden="true">🔍</span>
+    <div class="c-body">
+      <strong class="c-title">Examiner Habit — Baseline-Check Every Process</strong>
+      <p>When reviewing <code>pstree</code> output, mentally apply Table 2 to each core process: correct name spelling → correct path (verify with <code>cmdline</code>) → correct parent → expected instance count. A deviation in any single column is a finding — even if all other attributes appear normal.</p>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════
+     SECTION 5 — SUSPICIOUS PROCESS DETECTION
+     ═══════════════════════════════════════ -->
+<section class="section" id="s5" aria-labelledby="sh5">
+  <div class="sec-hdr">
+    <span class="sec-num" aria-hidden="true">5</span>
+    <h2 id="sh5">Suspicious Process Detection</h2>
+  </div>
+
+  <p>Malware authors study the same baseline table you just reviewed. Their evasion strategies are not random — they produce predictable anomaly patterns. Recognizing these patterns by name and example is a core analyst skill.</p>
+
+  <h3>Detection Pattern Framework</h3>
+  <div class="tbl-wrap">
+    <table>
+      <caption>Table 3 — Suspicious Process Detection Patterns</caption>
+      <thead>
+        <tr>
+          <th scope="col">Pattern</th>
+          <th scope="col">What to Look For</th>
+          <th scope="col">Primary Plugin</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Name masquerading</strong></td>
+          <td>Typosquatting: <code>scvhost.exe</code>, <code>lsass.exe&nbsp;</code> (trailing space), <code>svch0st.exe</code>; correct-sounding names absent from the baseline; Unicode lookalike characters</td>
+          <td>pslist, pstree</td>
+        </tr>
+        <tr>
+          <td><strong>Wrong executable path</strong></td>
+          <td>Correct name but non-standard directory: <code>svchost.exe</code> from <code>C:\Windows\Temp\</code>, <code>C:\Users\Public\</code>, <code>C:\ProgramData\</code>, or any location other than System32</td>
+          <td>cmdline, dlllist</td>
+        </tr>
+        <tr>
+          <td><strong>Wrong parent process</strong></td>
+          <td>Unexpected PPID: <code>lsass.exe</code> child of <code>explorer.exe</code>; <code>cmd.exe</code> child of <code>svchost.exe</code>; <code>powershell.exe</code> child of <code>winword.exe</code> (macro malware pattern)</td>
+          <td>pstree</td>
+        </tr>
+        <tr>
+          <td><strong>Suspicious command-line args</strong></td>
+          <td>Encoded payloads: <code>powershell -enc &lt;Base64&gt;</code>; download cradles: <code>IEX(New-Object Net.WebClient).DownloadString(...)</code>; unusual flags on system binaries; long random-looking strings</td>
+          <td>cmdline</td>
+        </tr>
+        <tr>
+          <td><strong>Unusual timing</strong></td>
+          <td>System-critical processes (System, smss, csrss, wininit, lsass) start within seconds of boot; a new instance of any of these appearing hours later is a strong indicator of malicious activity</td>
+          <td>pslist, psscan</td>
+        </tr>
+        <tr>
+          <td><strong>Wrong instance count</strong></td>
+          <td>Two copies of <code>lsass.exe</code>; zero <code>explorer.exe</code> on an active user session; unusually high svchost count on a simple workstation</td>
+          <td>pslist</td>
+        </tr>
+        <tr>
+          <td><strong>psscan / pslist discrepancy</strong></td>
+          <td>Process visible in psscan output but absent from pslist — DKOM manipulation; process was unlinked from the active list by a rootkit</td>
+          <td>pslist + psscan comparison</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Interactive Scenario — Spot the Anomaly</h3>
+  <p>The table below shows a process list from a Windows 10 workstation memory dump. <strong>Four of the fourteen processes are anomalous.</strong> Click (or press Enter / Space) on any row you believe is suspicious. You will receive immediate feedback for every click. Find all four before reading Section 6.</p>
+
+  <div class="scn-instr" role="note">
+    <strong>Instructions:</strong> Click any row to evaluate it. Suspicious rows highlight red with an explanation; normal rows highlight green with a brief note. Find all four anomalies. Use the Reset button to start over.
+  </div>
+
+  <div class="tbl-wrap" style="margin-bottom:.4rem;">
+    <table aria-label="Spot the anomaly — interactive process list" id="scn-tbl">
+      <thead>
+        <tr>
+          <th scope="col">PID</th>
+          <th scope="col">PPID</th>
+          <th scope="col">Name</th>
+          <th scope="col">Path / Args (abbreviated)</th>
+          <th scope="col">Create Time</th>
+        </tr>
+      </thead>
+      <tbody id="scn-body"></tbody>
+    </table>
+  </div>
+  <div class="scn-fb" id="scn-fb" role="alert" aria-live="polite"></div>
+  <div class="scn-score" id="scn-score" aria-live="polite"></div>
+  <button class="rst-btn" onclick="resetScenario()" aria-label="Reset anomaly scenario">&#8635;&nbsp;Reset</button>
+
+  <div class="callout co-bridge" role="note" style="margin-top:1.25rem;" aria-label="Prior-week bridge callout">
+    <span class="c-ico" aria-hidden="true">🔗</span>
+    <div class="c-body">
+      <strong class="c-title">Week 7–8 Connection — Same Patterns, Different Source</strong>
+      <p>In Weeks 7–8 you identified the same anomaly types — wrong path, wrong parent, unusual timing — from Prefetch records, ShimCache, and Security event log entries. Memory forensics surfaces the same patterns but adds runtime state that disk artifacts cannot provide: active DLL loads, open handles, and in-memory code that was never written to a file. The next two sections cover memory-specific indicators unavailable from disk evidence alone.</p>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════
+     SECTION 6 — PROCESS INJECTION CONCEPTS
+     ═══════════════════════════════════════ -->
+<section class="section" id="s6" aria-labelledby="sh6">
+  <div class="sec-hdr">
+    <span class="sec-num" aria-hidden="true">6</span>
+    <h2 id="sh6">Process Injection Concepts</h2>
+  </div>
+
+  <p>Sophisticated malware does not create a conspicuously named process — it hides <em>inside</em> a legitimate, trusted one. <strong>Process injection</strong> is a family of techniques that place malicious code into the address space of a running host process, allowing the injected code to execute under that process's identity, privileges, and security context while evading process-name-based detection entirely.</p>
+
+  <div class="callout co-info" role="note">
+    <span class="c-ico" aria-hidden="true">📌</span>
+    <div class="c-body">
+      <strong class="c-title">Scope — Conceptual Overview</strong>
+      <p>This section introduces four injection categories at the level needed for forensic analysis. Implementation-level reverse engineering is outside the scope of CSC 156. Your goal is to recognize the <em>memory artifacts</em> each technique leaves so that you can interpret Volatility plugin output correctly and document findings with appropriate technical precision.</p>
+    </div>
+  </div>
+
+  <div class="inj-grid" role="list" aria-label="Process injection technique cards">
+
+    <div class="inj-card" role="listitem">
+      <h4>DLL Injection</h4>
+      <p>The attacker writes a malicious DLL path into a target process's memory and triggers <code>LoadLibrary</code> via a remote thread. The DLL executes inside the host process under its identity. <em>Forensic signature:</em> unexpected DLL in the process module list with an anomalous path — visible with <code>windows.dlllist</code>.</p>
+    </div>
+
+    <div class="inj-card" role="listitem">
+      <h4>Process Hollowing</h4>
+      <p>A legitimate process is created in a suspended state. Its original executable code is unmapped from memory and replaced with malicious code. Execution is then resumed. The process name in pslist looks legitimate; the running code is entirely attacker-controlled. <em>Forensic signature:</em> VAD entry mismatch between on-disk image and in-memory content — detectable with <code>windows.malfind</code>.</p>
+    </div>
+
+    <div class="inj-card" role="listitem">
+      <h4>Reflective DLL Injection</h4>
+      <p>The malicious DLL includes its own custom loader and maps itself directly into memory without invoking the standard Windows loader and without writing to disk. File-based detection misses it entirely. <em>Forensic signature:</em> anonymous executable memory regions containing a PE header (MZ signature) — the primary artifact targeted by <code>windows.malfind</code>.</p>
+    </div>
+
+    <div class="inj-card" role="listitem">
+      <h4>Thread Hijacking</h4>
+      <p>An existing thread in a target process is suspended. Its register context and instruction pointer are redirected to malicious shellcode. The thread is then resumed. No new thread or DLL is created. <em>Forensic signature:</em> thread instruction pointers referencing anomalous memory regions; indirect evidence from <code>windows.malfind</code> flagging the shellcode region.</p>
+    </div>
+
+  </div>
+
+  <h3>Common Forensic Indicators of Injection</h3>
+  <ul>
+    <li><strong>RWX memory regions</strong> (read + write + execute) — executable memory that is also writable is abnormal in legitimate code after process initialization.</li>
+    <li><strong>PE headers in anonymous memory</strong> — MZ/PE magic bytes (<code>4D 5A</code>) at the start of a non-file-backed executable region indicate a reflectively loaded or hollowed PE image.</li>
+    <li><strong>Module list vs. memory discrepancy</strong> — DLLs visible in memory but absent from the <code>dlllist</code> module list (reflective injection bypasses the standard loader and thus the LDR list).</li>
+    <li><strong>On-disk vs. in-memory hash mismatch</strong> — the executable on disk hashes differently from its in-memory image, indicating process hollowing or patching.</li>
+  </ul>
+
+</section>
+
+<!-- ═══════════════════════════════════════
+     SECTION 7 — MALFIND
+     ═══════════════════════════════════════ -->
+<section class="section" id="s7" aria-labelledby="sh7">
+  <div class="sec-hdr">
+    <span class="sec-num" aria-hidden="true">7</span>
+    <h2 id="sh7">Detecting Injected Code with <code>windows.malfind</code></h2>
+  </div>
+
+  <p><code>windows.malfind</code> is Volatility's primary plugin for detecting code injection. It scans the Virtual Address Descriptor (VAD) tree of each process — the kernel structure recording the attributes of every memory region — and flags regions that combine suspicious permissions with suspicious content.</p>
+
+  <h3>What malfind Flags</h3>
+  <p>A region is reported when it satisfies <em>both</em> conditions simultaneously:</p>
+  <ol>
+    <li><strong>Executable permissions</strong> — the region protection includes execute: <code>PAGE_EXECUTE</code>, <code>PAGE_EXECUTE_READ</code>, <code>PAGE_EXECUTE_READWRITE</code>, or <code>PAGE_EXECUTE_WRITECOPY</code>.</li>
+    <li><strong>Not file-backed</strong> — the region has no associated memory-mapped file; it is anonymous memory, not a loaded module from disk.</li>
+  </ol>
+  <p>For each flagged region, malfind outputs: process name and PID, the virtual address range, VAD protection flags, a hex dump of the opening bytes, and a disassembly listing of those bytes.</p>
+
+  <span class="code-lbl">Syntax — all processes</span>
+  <pre><code><span class="cc">python3</span> vol.py <span class="cf">-f</span> <span class="cp">memdump.mem</span> windows.malfind</code></pre>
+
+  <span class="code-lbl">Syntax — single process by PID</span>
+  <pre><code><span class="cc">python3</span> vol.py <span class="cf">-f</span> <span class="cp">memdump.mem</span> windows.malfind <span class="cf">--pid</span> <span class="cp">688</span></code></pre>
+
+  <span class="code-lbl">Syntax — save to CSV for triage</span>
+  <pre><code><span class="cc">python3</span> vol.py <span class="cf">-f</span> <span class="cp">memdump.mem</span> <span class="cf">--output csv --output-file</span> <span class="cp">malfind.csv</span> windows.malfind</code></pre>
+
+  <span class="code-lbl">Example output — PE header in anonymous executable memory (high-confidence injection)</span>
+  <pre><code>PID   Process      Start          End            Protection
+688   svchost.exe  0x00d0000000   0x00d0001fff   <span class="ch">PAGE_EXECUTE_READWRITE</span>
+
+Hexdump:
+0x00d0000000  <span class="ch">4d 5a</span> 90 00 03 00 00 00  04 00 00 00 ff ff 00 00  MZ......  ........
+<span class="cm">              ↑ MZ at offset 0 = PE header start in anonymous executable memory = strong injection indicator</span>
+
+Disasm:
+0x00d0000000  4d    dec   ebp
+0x00d0000001  5a    pop   edx
+...</code></pre>
+
+  <h3>Malfind Triage Walkthrough</h3>
+  <p>malfind output can be voluminous and includes legitimate false positives. Use this four-step workflow to prioritize findings systematically. Click each step to view the guidance.</p>
+
+  <div class="wt-tabs" role="tablist" aria-label="Malfind triage steps">
+    <button class="wt-tab active" role="tab" aria-selected="true"  aria-controls="wt1" id="wtbtn1" onclick="wtStep(this,'wt1')">Step&nbsp;1 — Collect Flags</button>
+    <button class="wt-tab"        role="tab" aria-selected="false" aria-controls="wt2" id="wtbtn2" onclick="wtStep(this,'wt2')">Step&nbsp;2 — PE Headers</button>
+    <button class="wt-tab"        role="tab" aria-selected="false" aria-controls="wt3" id="wtbtn3" onclick="wtStep(this,'wt3')">Step&nbsp;3 — Host Process</button>
+    <button class="wt-tab"        role="tab" aria-selected="false" aria-controls="wt4" id="wtbtn4" onclick="wtStep(this,'wt4')">Step&nbsp;4 — False Positives</button>
+  </div>
+
+  <div id="wt1" class="wt-panel active" role="tabpanel" aria-labelledby="wtbtn1">
+    <h4>Step 1 — Collect All Flagged Regions</h4>
+    <p>Run <code>windows.malfind --output csv</code> and save to a file for easier review. Note the total number of findings, which processes appear, and which protection flags are present. Processes with many hits, or rare processes appearing in the output, are higher priority.</p>
+    <p>Focus first on regions flagged as <code>PAGE_EXECUTE_READWRITE</code> — combining write and execute permissions is almost never needed by legitimate code after process startup, and represents the highest-risk profile in malfind output.</p>
+  </div>
+
+  <div id="wt2" class="wt-panel" role="tabpanel" aria-labelledby="wtbtn2">
+    <h4>Step 2 — Check for Embedded PE Headers</h4>
+    <p>Examine the hex dump for each flagged region. Look for <code>4D 5A</code> ("MZ") at offset 0 — the magic bytes that start every Windows PE executable. A PE header inside anonymous executable memory is a strong indicator of reflective DLL injection or process hollowing.</p>
+    <span class="code-lbl">MZ signature identification</span>
+    <pre><code><span class="ch">4D 5A</span> 90 00 03 00 00 00  &#8592; "MZ" at offset 0 = PE file header
+<span class="cm"># In non-file-backed executable memory &#8594; high-confidence injection indicator</span>
+<span class="cm"># No MZ present &#8594; may still be shellcode; check disassembly for position-independent code</span></code></pre>
+  </div>
+
+  <div id="wt3" class="wt-panel" role="tabpanel" aria-labelledby="wtbtn3">
+    <h4>Step 3 — Assess the Host Process Context</h4>
+    <p>Apply your process baseline knowledge. A malfind hit in a process already flagged for a wrong path, wrong parent, or suspicious command-line arguments is a compounding indicator — treat it as high priority. A hit in <code>lsass.exe</code> or <code>svchost.exe</code> is also high priority: attackers target trusted system processes precisely because they are expected to be running and are less likely to be terminated by security tools.</p>
+    <p>Follow up every significant hit: run <code>windows.cmdline --pid &lt;PID&gt;</code> and <code>windows.dlllist --pid &lt;PID&gt;</code> on the same process before drawing conclusions.</p>
+  </div>
+
+  <div id="wt4" class="wt-panel" role="tabpanel" aria-labelledby="wtbtn4">
+    <h4>Step 4 — Manage False Positives</h4>
+    <p>malfind routinely flags legitimate anonymous executable memory in certain process categories. Recognizing these common sources prevents wasted triage time:</p>
+    <ul style="margin:.5rem 0 .75rem 1.2rem;">
+      <li><strong>JIT-compiled code</strong> — Chrome (V8), Edge, Firefox (SpiderMonkey), .NET CLR, Node.js, and Java JVMs all allocate anonymous executable memory for just-in-time compiled code. Expect many hits in any browser or .NET application.</li>
+      <li><strong>Self-modifying packers</strong> — some legitimate software temporarily uses RWX regions during unpacking or self-decryption at startup.</li>
+      <li><strong>Anti-cheat engines</strong> — use intentionally obfuscated executable memory as a design feature.</li>
+    </ul>
+    <p><strong>Analyst guidance:</strong> False positives are <em>classified and documented</em>, not ignored. A malfind hit in <code>chrome.exe</code> with no MZ header = low priority / probable JIT. A hit in <code>lsass.exe</code> with an MZ header in a process that also has a suspicious parent = high priority regardless of alternative explanations. Never dismiss a finding in a core system process without a documented reason.</p>
+    <div class="callout co-warn" role="note" style="margin-top:.65rem;">
+      <span class="c-ico" aria-hidden="true">⚠️</span>
+      <div class="c-body">
+        <strong class="c-title">Lab 10 Expectation — Path B</strong>
+        <p>When analyzing your own machine's memory, expect malfind to flag multiple browser and JIT-related regions. For each finding, document: process name and PID, protection flags, whether an MZ header is present, and your classification (likely false positive / warrants further investigation) with a one-sentence reason. Analysis quality and reasoning matter more than finding count.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout co-linux" role="note" style="margin-top:1.1rem;" aria-label="Linux note">
+    <span class="c-ico" aria-hidden="true">🐧</span>
+    <div class="c-body">
+      <strong class="c-title">Linux Equivalent</strong>
+      <p><code>linux.malfind</code> — applies the same anonymous-executable-memory scan to Linux process VMAs. Linux uses different permission notation (<code>rwxp</code> vs. <code>r-xp</code> from the VMA table) but the investigative logic is identical: flag anonymous executable regions and look for embedded ELF headers (<code>7F 45 4C 46</code>) rather than PE MZ headers.</p>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════
+     SECTION 8 — KNOWLEDGE CHECK
+     ═══════════════════════════════════════ -->
+<section class="section" id="s8" aria-labelledby="sh8">
+  <div class="sec-hdr">
+    <span class="sec-num" aria-hidden="true">8</span>
+    <h2 id="sh8">Knowledge Check</h2>
+  </div>
+
+  <p>These four questions are <strong>ungraded</strong> and for self-assessment only. Select an answer and click <em>Check Answer</em> for immediate explanatory feedback. No responses are submitted or recorded anywhere.</p>
+
+  <div class="kc-wrap" role="form" aria-label="Module 11.3 self-check questions">
+    <p class="kc-head">Module 11.3 — Self-Check (4 Questions, Ungraded)</p>
+
+    <!-- Q1 -->
+    <div class="kc-q">
+      <p class="kc-qt"><span class="kc-n">Q1.</span> You run <code>windows.pslist</code> on a memory image and see 14 processes. You then run <code>windows.psscan</code> on the same image and see 17. What best explains the discrepancy?</p>
+      <ul class="kc-opts" role="list">
+        <li id="q1a"><label><input type="radio" name="q1" value="a"> psscan uses a faster scanning algorithm that detects more processes by default</label></li>
+        <li id="q1b"><label><input type="radio" name="q1" value="b"> pslist includes terminated processes while psscan only shows active ones</label></li>
+        <li id="q1c"><label><input type="radio" name="q1" value="c"> psscan scans physical memory for EPROCESS pool-tag signatures and may find processes unlinked from the active list — a possible indicator of DKOM rootkit manipulation</label></li>
+        <li id="q1d"><label><input type="radio" name="q1" value="d"> The discrepancy indicates image corruption; both outputs should be discarded</label></li>
+      </ul>
+      <button class="kc-btn" onclick="checkKC(1)" id="kcbtn1">Check Answer</button>
+      <div class="kc-fb" id="kcfb1" role="alert"></div>
+    </div>
+
+    <hr class="div">
+
+    <!-- Q2 -->
+    <div class="kc-q">
+      <p class="kc-qt"><span class="kc-n">Q2.</span> A memory image shows a process named <code>svchost.exe</code> running from the path <code>C:\Windows\Temp\svchost.exe</code> with <code>explorer.exe</code> as its parent. Which detection patterns apply? (Select the most complete answer.)</p>
+      <ul class="kc-opts" role="list">
+        <li id="q2a"><label><input type="radio" name="q2" value="a"> Name masquerading only — the name is spelled correctly</label></li>
+        <li id="q2b"><label><input type="radio" name="q2" value="b"> Wrong path and wrong parent — both attributes deviate from the svchost.exe baseline</label></li>
+        <li id="q2c"><label><input type="radio" name="q2" value="c"> Unusual timing only — no conclusions until the creation timestamp is reviewed</label></li>
+        <li id="q2d"><label><input type="radio" name="q2" value="d"> No anomaly — svchost.exe can run from user-accessible directories</label></li>
+      </ul>
+      <button class="kc-btn" onclick="checkKC(2)" id="kcbtn2">Check Answer</button>
+      <div class="kc-fb" id="kcfb2" role="alert"></div>
+    </div>
+
+    <hr class="div">
+
+    <!-- Q3 -->
+    <div class="kc-q">
+      <p class="kc-qt"><span class="kc-n">Q3.</span> <code>windows.malfind</code> flags a memory region in <code>chrome.exe</code> with <code>PAGE_EXECUTE_READWRITE</code> protection. The hex dump shows no MZ signature at offset 0. What is the most appropriate immediate response?</p>
+      <ul class="kc-opts" role="list">
+        <li id="q3a"><label><input type="radio" name="q3" value="a"> Classify as confirmed injection — all RWX regions in any process indicate malware</label></li>
+        <li id="q3b"><label><input type="radio" name="q3" value="b"> Dismiss the finding entirely — Chrome is a trusted application</label></li>
+        <li id="q3c"><label><input type="radio" name="q3" value="c"> Classify as a likely false positive due to Chrome's V8 JIT compiler, document the finding with that reasoning, assign low priority, and continue reviewing other malfind output</label></li>
+        <li id="q3d"><label><input type="radio" name="q3" value="d"> Re-run malfind with a different Volatility profile to get a second result</label></li>
+      </ul>
+      <button class="kc-btn" onclick="checkKC(3)" id="kcbtn3">Check Answer</button>
+      <div class="kc-fb" id="kcfb3" role="alert"></div>
+    </div>
+
+    <hr class="div">
+
+    <!-- Q4 -->
+    <div class="kc-q" style="margin-bottom:0;">
+      <p class="kc-qt"><span class="kc-n">Q4.</span> Which process injection technique creates a legitimate process in a suspended state, replaces its executable code in memory with malicious code, then resumes execution?</p>
+      <ul class="kc-opts" role="list">
+        <li id="q4a"><label><input type="radio" name="q4" value="a"> DLL injection</label></li>
+        <li id="q4b"><label><input type="radio" name="q4" value="b"> Process hollowing</label></li>
+        <li id="q4c"><label><input type="radio" name="q4" value="c"> Thread hijacking</label></li>
+        <li id="q4d"><label><input type="radio" name="q4" value="d"> Reflective DLL injection</label></li>
+      </ul>
+      <button class="kc-btn" onclick="checkKC(4)" id="kcbtn4">Check Answer</button>
+      <div class="kc-fb" id="kcfb4" role="alert"></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     SECTION 9 — SUMMARY AND LOOK AHEAD
+     ═══════════════════════════════════════ -->
+<section class="section" id="s9" aria-labelledby="sh9">
+  <div class="sec-hdr">
+    <span class="sec-num" aria-hidden="true">9</span>
+    <h2 id="sh9">Summary and Look Ahead</h2>
+  </div>
+
+  <h3>Module 11.3 — Key Takeaways</h3>
+  <ul>
+    <li><strong>Volatility 3 is the course tool.</strong> It auto-resolves symbols via ISF files, uses namespaced plugins (<code>windows.pslist</code>, etc.), and produces structured output. V2 uses flat plugin names and a required <code>--profile</code> flag — recognize it, do not use it.</li>
+    <li><strong>Always run pslist AND psscan.</strong> A process in psscan but absent from pslist = DKOM rootkit indicator, high priority.</li>
+    <li><strong>Six core plugins in sequence:</strong> <code>windows.info</code> → <code>windows.pslist</code> → <code>windows.psscan</code> → <code>windows.pstree</code> → <code>windows.cmdline</code> → <code>windows.dlllist</code>. Know the purpose, syntax, and limitation of each.</li>
+    <li><strong>Baseline before anomaly.</strong> Memorize the expected name, path, parent, and instance count for the eight core Windows processes. Table 2 is your mental reference standard on every investigation.</li>
+    <li><strong>Seven anomaly patterns:</strong> name masquerading, wrong path, wrong parent, suspicious command-line arguments, unusual timing, wrong instance count, psscan/pslist discrepancy. Any single pattern is a finding.</li>
+    <li><strong>Four injection techniques:</strong> DLL injection (dlllist evidence), process hollowing (VAD content mismatch), reflective DLL injection (PE header in anonymous memory), thread hijacking (redirected thread context).</li>
+    <li><strong>malfind triage:</strong> collect all flags → look for MZ headers → assess host process context → classify and document false positives (JIT, packers). Never dismiss a hit in a core system process without documentation.</li>
+  </ul>
+
+  <div class="callout co-success" role="note">
+    <span class="c-ico" aria-hidden="true">&#10003;</span>
+    <div class="c-body">
+      <strong class="c-title">Lab 10 Readiness Check</strong>
+      <p>After completing this module you should be able to: invoke Volatility 3 and confirm an image loaded correctly with <code>windows.info</code>; run all six core plugins and interpret their output; apply the seven-pattern detection framework to a real process list; and run <code>windows.malfind</code>, triage its output using the four-step walkthrough, and classify each finding with written reasoning. If any area feels uncertain, revisit that section before opening Lab Activity 10.</p>
+    </div>
+  </div>
+
+  <div class="lookahead" role="complementary" aria-label="Preview of Module 11.4">
+    <h3>Coming Up — Module 11.4: Network, Registry, and Investigation Workflow</h3>
+    <p>Module 11.4 completes the Week 11 memory forensics sequence by extending Volatility analysis to network connections and volatile registry data, then assembles all four modules into the end-to-end six-phase investigation workflow you will follow in Lab Activity 10.</p>
+    <div class="prev-grid">
+      <div class="prev-item"><strong>Network Artifacts</strong>windows.netstat and windows.netscan — extracting live and recently-closed TCP/UDP connections and mapping them to owning processes</div>
+      <div class="prev-item"><strong>Registry in Memory</strong>windows.registry.hivelist and printkey — reading volatile registry keys that are never written to the disk hive files</div>
+      <div class="prev-item"><strong>Six-Phase Workflow</strong>The complete Lab 10 analysis sequence: orient → process → network → registry → injection → report narrative</div>
+      <div class="prev-item"><strong>Cross-Artifact Correlation</strong>Tying process, network, registry, and malfind findings into a coherent investigative conclusion</div>
+    </div>
+  </div>
+
+</section>
+
+</div><!-- /wrap -->
+</main>
+
+<!-- ═══════════════════════════════════════
+     JAVASCRIPT
+     ═══════════════════════════════════════ -->
+<script>
+/* ── V2/V3 toggle ── */
+function toggleV2V3(){
+  var btn=document.getElementById('v2v3-btn'),
+      reg=document.getElementById('v2v3-region'),
+      lbl=document.getElementById('v2v3-lbl'),
+      arr=btn.querySelector('.t-arr');
+  var open=reg.classList.toggle('open');
+  btn.setAttribute('aria-expanded',open?'true':'false');
+  arr.style.transform=open?'rotate(90deg)':'';
+  lbl.textContent=open?'Hide V2 vs. V3 Comparison Table':'Show V2 vs. V3 Comparison Table';
+}
+
+/* ── Plugin cards ── */
+function togglePC(hdr,bodyId){
+  var body=document.getElementById(bodyId);
+  var open=body.classList.toggle('open');
+  hdr.setAttribute('aria-expanded',open?'true':'false');
+}
+function pcKey(e,hdr,bodyId){
+  if(e.key==='Enter'||e.key===' '){e.preventDefault();togglePC(hdr,bodyId);}
+}
+
+/* ── Walkthrough tabs ── */
+function wtStep(btn,panelId){
+  document.querySelectorAll('.wt-tab').forEach(function(b){b.classList.remove('active');b.setAttribute('aria-selected','false');});
+  document.querySelectorAll('.wt-panel').forEach(function(p){p.classList.remove('active');});
+  btn.classList.add('active');btn.setAttribute('aria-selected','true');
+  document.getElementById(panelId).classList.add('active');
+}
+
+/* ── Spot the Anomaly ── */
+var SD=[
+  {pid:4,   ppid:0,  name:'System',       path:'N/A (kernel)',                                        t:'09:12:03',sus:false,r:''},
+  {pid:348, ppid:4,  name:'smss.exe',      path:'C:\\Windows\\System32\\smss.exe',                     t:'09:12:04',sus:false,r:''},
+  {pid:448, ppid:348,name:'csrss.exe',     path:'C:\\Windows\\System32\\csrss.exe',                    t:'09:12:05',sus:false,r:''},
+  {pid:496, ppid:348,name:'wininit.exe',   path:'C:\\Windows\\System32\\wininit.exe',                  t:'09:12:05',sus:false,r:''},
+  {pid:548, ppid:496,name:'services.exe',  path:'C:\\Windows\\System32\\services.exe',                 t:'09:12:06',sus:false,r:''},
+  {pid:556, ppid:496,name:'lsass.exe',     path:'C:\\Windows\\System32\\lsass.exe',                    t:'09:12:06',sus:false,r:''},
+  {pid:688, ppid:548,name:'svchost.exe',   path:'C:\\Windows\\System32\\svchost.exe',                  t:'09:12:07',sus:false,r:''},
+  {pid:812, ppid:548,name:'svchost.exe',   path:'C:\\Windows\\System32\\svchost.exe',                  t:'09:12:08',sus:false,r:''},
+  {pid:1024,ppid:548,name:'scvhost.exe',   path:'C:\\Windows\\Temp\\scvhost.exe',                      t:'09:12:09',sus:true,
+   r:'<strong>Anomaly\u00a01\u00a0of\u00a04\u00a0\u2014 Name masquerading + wrong path.</strong> The process name is \u201cscvhost.exe\u201d \u2014 the letters sv are transposed to cv. Legitimate svchost.exe must reside in C:\\Windows\\System32\\, never in C:\\Windows\\Temp\\. Two simultaneous red flags on the same process.'},
+  {pid:1100,ppid:688,name:'cmd.exe',       path:'C:\\Windows\\System32\\cmd.exe',                      t:'14:31:52',sus:true,
+   r:'<strong>Anomaly\u00a02\u00a0of\u00a04\u00a0\u2014 Wrong parent process.</strong> cmd.exe is a child of svchost.exe (PID\u00a0688). Legitimate cmd.exe is launched by explorer.exe or a user application \u2014 not a service host process. This pattern suggests that PID\u00a0688 was exploited or is itself malicious and spawned a shell.'},
+  {pid:1200,ppid:548,name:'lsass.exe',     path:'C:\\Windows\\System32\\lsass.exe',                    t:'14:30:01',sus:true,
+   r:'<strong>Anomaly\u00a03\u00a0of\u00a04\u00a0\u2014 Wrong instance count + unusual timing + wrong parent.</strong> A legitimate lsass.exe already exists (PID\u00a0556, parent wininit.exe). This second lsass.exe appears over five hours after boot and is a child of services.exe instead of wininit.exe. lsass is a prime credential-store target; a duplicate instance is a strong indicator of a credential-dumping tool or a hollowed process.'},
+  {pid:1340,ppid:800,name:'explorer.exe',  path:'C:\\Windows\\explorer.exe',                           t:'09:14:30',sus:false,r:''},
+  {pid:2001,ppid:1340,name:'powershell.exe',path:'powershell.exe -enc SQBFAFgAKABOAGUAdwAt\u2026 [Base64 truncated]',t:'14:32:01',sus:true,
+   r:'<strong>Anomaly\u00a04\u00a0of\u00a04\u00a0\u2014 Suspicious command-line argument.</strong> The -enc flag instructs PowerShell to execute a Base64-encoded command. This is a standard living-off-the-land (LotL) obfuscation technique used by download cradles, staged payload loaders, and reverse shells to evade simple string-based detection. Decode the Base64 string to determine the actual command.'},
+  {pid:2200,ppid:1340,name:'notepad.exe',  path:'C:\\Windows\\System32\\notepad.exe',                  t:'14:45:00',sus:false,r:''}
+];
+var scnSel={},scnFound=0;
+var scnTotal=SD.filter(function(r){return r.sus;}).length;
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function buildScenario(){
+  var tbody=document.getElementById('scn-body');
+  tbody.innerHTML='';
+  scnSel={};scnFound=0;
+  var fb=document.getElementById('scn-fb');
+  fb.className='scn-fb';fb.innerHTML='';
+  var sc=document.getElementById('scn-score');
+  sc.textContent='';sc.style.color='';
+  SD.forEach(function(row,i){
+    var tr=document.createElement('tr');
+    tr.className='a-row';
+    tr.tabIndex=0;
+    tr.setAttribute('role','button');
+    tr.setAttribute('aria-label','Process row '+(i+1)+': '+row.name+', PID '+row.pid+'. Press Enter or Space to evaluate.');
+    tr.innerHTML='<td>'+row.pid+'</td><td>'+row.ppid+'</td>'+
+      '<td><strong>'+esc(row.name)+'</strong></td>'+
+      '<td style="font-size:.78rem;font-family:var(--mono);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(row.path)+'">'+esc(row.path)+'</td>'+
+      '<td style="white-space:nowrap;">'+row.t+'</td>';
+    tr.addEventListener('click',function(){scnClick(i,tr);});
+    tr.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();scnClick(i,tr);}});
+    tbody.appendChild(tr);
+  });
+}
+
+function scnClick(i,tr){
+  if(scnSel[i])return;
+  scnSel[i]=true;
+  var row=SD[i];
+  var fb=document.getElementById('scn-fb');
+  var sc=document.getElementById('scn-score');
+  if(row.sus){
+    tr.classList.add('hit-sus');
+    scnFound++;
+    fb.className='scn-fb show fb-sus';
+    fb.innerHTML=row.r;
+  } else {
+    tr.classList.add('hit-ok');
+    fb.className='scn-fb show fb-ok';
+    fb.innerHTML='<strong>\u2713 Normal process.</strong> All visible attributes \u2014 name, path, parent \u2014 are consistent with the baseline. Keep looking for the four anomalies.';
+  }
+  if(scnFound<scnTotal){
+    sc.textContent='Anomalies found: '+scnFound+' / '+scnTotal+' \u2014 keep going.';
+  } else {
+    sc.textContent='\u2713 All '+scnTotal+' anomalies identified. Review the explanations for each before continuing.';
+    sc.style.color='var(--accent-success)';
+  }
+}
+
+function resetScenario(){buildScenario();}
+
+/* ── Knowledge check ── */
+var KCA={
+  1:{c:'c',
+     cm:'<strong>\u2713 Correct.</strong> windows.psscan scans raw physical memory for EPROCESS pool-tag signatures independent of the kernel\u2019s linked list. A rootkit can hide a process by using DKOM to unlink its EPROCESS entry from the active-process list \u2014 making it invisible to pslist \u2014 while psscan still detects it by scanning pool memory directly. Processes present in psscan but absent from pslist are a high-priority rootkit finding.',
+     wm:'<strong>\u2717 Not quite.</strong> psscan operates by scanning physical memory for EPROCESS pool tags rather than following the active-process linked list. This design allows it to detect processes hidden via Direct Kernel Object Manipulation (DKOM). Pslist follows the linked list only \u2014 so processes intentionally unlinked from that list by a rootkit are invisible to pslist but still found by psscan.'},
+  2:{c:'b',
+     cm:'<strong>\u2713 Correct.</strong> Legitimate svchost.exe must reside in C:\\Windows\\System32\\ and must be a child of services.exe. Both attributes deviate here: the path is a user Temp directory (wrong path) and the parent is explorer.exe (wrong parent). Either deviation alone would be suspicious; both together on the same process are strong indicators of malware impersonating a critical system binary.',
+     wm:'<strong>\u2717 Not quite.</strong> Legitimate svchost.exe must run from C:\\Windows\\System32\\ \u2014 a Temp directory is never correct. Additionally, legitimate svchost.exe is always a child of services.exe, not explorer.exe. Both the path and the parent deviate from the baseline in Table\u00a02.'},
+  3:{c:'c',
+     cm:'<strong>\u2713 Correct.</strong> Chrome\u2019s V8 JavaScript engine allocates anonymous executable memory for JIT-compiled code as normal operating behavior. The absence of an MZ header makes an injected PE file unlikely. The correct analyst response is to document the finding, classify it as a probable JIT false positive, record your reasoning, assign low priority, and move on to higher-priority findings. Dismissing without documentation is poor forensic practice; classifying all RWX regions as malware produces unworkable numbers of false alarms.',
+     wm:'<strong>\u2717 Not quite.</strong> RWX regions in JIT-enabled processes like Chrome are common false positives generated by the V8 engine during normal operation. All-RWX-equals-malware (A) generates excessive false alarms. Dismissing without documentation (B) violates forensic documentation standards. Changing profiles (D) does not apply to V3 and would not affect this result. Document, classify with reasoning, and prioritize.'},
+  4:{c:'b',
+     cm:'<strong>\u2713 Correct.</strong> Process hollowing \u2014 also called process replacement or RunPE \u2014 creates a legitimate process in a suspended state, unmaps its original executable content from memory, writes malicious code into the same address space, and resumes execution. The process name visible in pslist and pstree is legitimate; the running code is entirely attacker-controlled. Forensically, this creates a detectable mismatch between on-disk image content and in-memory image content.',
+     wm:'<strong>\u2717 Not quite.</strong> Review the injection technique definitions in Section\u00a06. Process hollowing is the technique that creates a suspended legitimate process and replaces its code before resuming it. DLL injection forces a target to load a malicious library. Thread hijacking redirects an existing thread\u2019s execution context. Reflective DLL injection loads a DLL into memory without the standard Windows loader, leaving no disk artifact.'}
+};
+
+function checkKC(n){
+  var sel=document.querySelector('input[name="q'+n+'"]:checked');
+  var fb=document.getElementById('kcfb'+n);
+  var btn=document.getElementById('kcbtn'+n);
+  if(!sel){
+    fb.className='kc-fb show incorrect';
+    fb.innerHTML='<strong>Please select an answer first.</strong>';
+    return;
+  }
+  ['a','b','c','d'].forEach(function(v){
+    var li=document.getElementById('q'+n+v);
+    if(li){li.classList.remove('opt-c','opt-w');}
+  });
+  var ans=KCA[n],val=sel.value;
+  if(val===ans.c){
+    fb.className='kc-fb show correct';
+    fb.innerHTML=ans.cm;
+    document.getElementById('q'+n+ans.c).classList.add('opt-c');
+  } else {
+    fb.className='kc-fb show incorrect';
+    fb.innerHTML=ans.wm;
+    document.getElementById('q'+n+val).classList.add('opt-w');
+    document.getElementById('q'+n+ans.c).classList.add('opt-c');
+  }
+  btn.disabled=true;
+}
+
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded',buildScenario);
+</script>
+
+</body>
+</html>

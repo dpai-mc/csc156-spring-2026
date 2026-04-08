@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Lab Activity 10 — Memory Acquisition and Analysis | CSC 156</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,Arial,sans-serif;line-height:1.6;color:#111;background:#eef1f5;font-size:1rem}
+header{background:#1a3a5c;color:#fff;padding:1.2rem 1.5rem}
+header h1{font-size:1.35rem;margin-bottom:.2rem}
+.meta{font-size:.82rem;opacity:.9;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-top:.25rem}
+nav{position:sticky;top:0;z-index:100;background:#1e5799}
+nav ul{display:flex;flex-wrap:wrap;list-style:none;padding:0 .5rem}
+nav a{display:block;color:#fff;text-decoration:none;padding:.5rem .75rem;font-size:.82rem;font-weight:600;border-radius:3px}
+nav a:hover{background:rgba(255,255,255,.18);text-decoration:underline}
+nav a:focus-visible{outline:2px solid #ffe566;outline-offset:-2px}
+main{max-width:920px;margin:0 auto;padding:1.5rem 1rem 2rem}
+section{background:#fff;border-radius:6px;box-shadow:0 1px 5px rgba(0,0,0,.09);margin-bottom:1.5rem;padding:1.5rem;scroll-margin-top:3rem}
+h2{font-size:1.15rem;color:#1a3a5c;border-bottom:2px solid #2e6da4;padding-bottom:.3rem;margin-bottom:.9rem}
+h3{font-size:.98rem;color:#1a3a5c;margin:1rem 0 .35rem}
+h4{font-size:.88rem;color:#222;margin:.5rem 0 .2rem}
+p{margin-bottom:.6rem}
+ul,ol{margin:.35rem 0 .6rem 1.35rem}
+li{margin-bottom:.2rem}
+.badge{display:inline-block;font-size:.7rem;font-weight:700;padding:.1rem .38rem;border-radius:3px;vertical-align:middle;margin-left:.25rem}
+.b-pts{background:#d4edda;color:#155724}
+.b-cslo{background:#cce5ff;color:#004085}
+.b-ec{background:#fff3cd;color:#856404}
+.ph{padding:.65rem 1.25rem;margin:-1.5rem -1.5rem 1rem;border-radius:6px 6px 0 0;font-weight:700;font-size:.9rem}
+.ph-a{background:#1a6b3c;color:#fff}
+.ph-b{background:#7b2d00;color:#fff}
+.ph-ec{background:#5c3700;color:#fff}
+.box{border-left:4px solid;border-radius:0 4px 4px 0;padding:.6rem .9rem;margin:.6rem 0;font-size:.88rem}
+.box-info{background:#e8f0f8;border-color:#2e6da4}
+.box-warn{background:#fff8e1;border-color:#d97706}
+.box-priv{background:#fee2e2;border-color:#b91c1c;font-weight:500}
+.decl{border:2px solid #2e6da4;border-radius:6px;padding:1.1rem 1.25rem;background:#f0f6ff;margin-top:1rem}
+.task{border:1px solid #d0d7e0;border-radius:4px;padding:.9rem;margin-bottom:.9rem}
+.task-hdr{display:flex;align-items:flex-start;gap:.45rem;margin-bottom:.3rem}
+.tnum{display:inline-flex;align-items:center;justify-content:center;min-width:1.7rem;height:1.7rem;border-radius:50%;background:#2e6da4;color:#fff;font-weight:700;font-size:.78rem;flex-shrink:0;margin-top:.1rem}
+.tnum-a{background:#1a6b3c}
+.tnum-b{background:#7b2d00}
+label{display:block;font-weight:600;font-size:.85rem;margin:.45rem 0 .2rem}
+textarea,input[type=text],select{width:100%;border:1px solid #9ca3af;border-radius:4px;padding:.38rem .48rem;font:inherit;font-size:.85rem;color:#111;background:#f9fafb;resize:vertical}
+textarea{min-height:88px}
+textarea:focus,input[type=text]:focus,select:focus{outline:2px solid #2e6da4;outline-offset:0;background:#fff}
+pre,code{font-family:'Courier New',Courier,monospace;font-size:.83rem}
+pre{background:#1e2a38;color:#e2e8f0;border-radius:4px;padding:.7rem .9rem;overflow-x:auto;margin:.35rem 0;white-space:pre-wrap}
+code{background:#e8f0f8;color:#1a3a5c;padding:.05rem .25rem;border-radius:2px}
+pre code{background:none;color:inherit;padding:0}
+details{border:1px solid #b8ccd8;border-radius:4px;margin:.45rem 0}
+summary{cursor:pointer;padding:.32rem .7rem;font-weight:600;font-size:.82rem;color:#1e5799;background:#e8f0f8;border-radius:3px;list-style:none;user-select:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:'▶ ';font-size:.68rem}
+details[open]>summary::before{content:'▼ '}
+details[open]>summary{border-radius:3px 3px 0 0}
+summary:focus-visible{outline:2px solid #2e6da4;outline-offset:-1px}
+.hint-body{padding:.6rem .85rem;font-size:.83rem;background:#f8fafc}
+table{width:100%;border-collapse:collapse;font-size:.83rem;margin:.4rem 0 .7rem}
+th{background:#1a3a5c;color:#fff;padding:.42rem .7rem;text-align:left}
+td{padding:.38rem .7rem;border-bottom:1px solid #e5e7eb}
+tr:nth-child(even) td{background:#f9fafb}
+.save-bar{position:sticky;bottom:0;z-index:90;background:#1a3a5c;display:flex;align-items:center;gap:1rem;padding:.6rem 1.5rem}
+.save-bar p{color:#c8d8e8;font-size:.82rem;margin:0}
+.btn-pdf{background:#1a6b3c;color:#fff;border:none;border-radius:4px;padding:.5rem 1.2rem;font-size:.88rem;font-weight:700;cursor:pointer;white-space:nowrap}
+.btn-pdf:hover{background:#145530}
+.btn-pdf:focus-visible{outline:2px solid #ffe566;outline-offset:2px}
+footer{background:#1a3a5c;color:#b0c4d8;text-align:center;padding:.85rem;font-size:.8rem}
+@media print{
+  nav,.save-bar{display:none!important}
+  body{background:#fff}
+  section{box-shadow:none;break-inside:avoid}
+  textarea,input[type=text],select{display:none!important}
+  .print-resp{display:block!important;border:1px solid #ccc;border-radius:3px;padding:.35rem .5rem;min-height:2.5em;font-size:.82rem;background:#fafafa;white-space:pre-wrap;font-family:Arial,sans-serif;line-height:1.5}
+}
+.print-resp{display:none}
+@media(max-width:600px){nav ul{flex-direction:column}header h1{font-size:1.1rem}main{padding:1rem .75rem}}
+</style>
+</head>
+<body>
+
+<header role="banner">
+  <h1>Lab Activity 10 — Memory Acquisition and Analysis</h1>
+  <div class="meta">
+    <span>CSC 156 – Digital Forensic Fundamentals · Week 11</span>
+    <span class="badge b-pts">30 pts</span>
+    <span class="badge b-ec">+10 Extra Credit</span>
+    <span class="badge b-cslo">CSLO 2 &amp; 3</span>
+  </div>
+</header>
+
+<nav aria-label="Lab sections">
+  <ul>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#common">Common Components</a></li>
+    <li><a href="#path-a">Path A</a></li>
+    <li><a href="#path-b">Path B</a></li>
+    <li><a href="#extra-credit">Extra Credit</a></li>
+    <li><a href="#deliverables">Deliverables</a></li>
+  </ul>
+</nav>
+
+<main role="main">
+
+<!-- ═══ OVERVIEW ═══ -->
+<section id="overview" aria-labelledby="h-ov">
+  <h2 id="h-ov">Overview &amp; Lab Objectives</h2>
+  <p>This lab investigates volatile memory artifacts using two equally valid approaches. <strong>Path A</strong> uses accessible open-source tools — bulk_extractor and strings — applied to a pre-provided Debian Linux challenge image. <strong>Path B</strong> uses Volatility 3 applied to a raw memory image you acquire from your own Windows system. Both paths address the same learning objectives and earn the same 30 points.</p>
+  <div class="box box-info" role="note">
+    <strong>Prerequisites:</strong> Complete Modules 11.1–11.4 before beginning any execution task. Path A students should have their Lab Activity 09 results available for cross-correlation in Task A4.
+  </div>
+  <h3>Lab Objectives</h3>
+  <ul>
+    <li>Apply RFC 3227 order-of-volatility principles to a memory acquisition or analysis workflow.</li>
+    <li>Use memory forensics tools to identify process, network, file, and credential artifacts in a memory image.</li>
+    <li>Produce a forensically documented chain of analysis with annotated screenshots and a structured artifact summary table.</li>
+    <li>Correlate memory-resident findings with previously recovered disk-level artifacts.</li>
+  </ul>
+  <h3>Point Distribution</h3>
+  <table>
+    <thead>
+      <tr><th scope="col">Component</th><th scope="col">Points</th><th scope="col">Who</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>C1 — Pre-Lab Questions</td><td>3</td><td>All students</td></tr>
+      <tr><td>C2 — Documentation Standard (Lab Notebook)</td><td>6</td><td>All students</td></tr>
+      <tr><td>C3 — Lab Report (1–2 pages)</td><td>3</td><td>All students</td></tr>
+      <tr><td>Path A — Execution Tasks A1–A4</td><td>18</td><td>Path A students</td></tr>
+      <tr><td>Path B — Execution Tasks B1–B9</td><td>18</td><td>Path B students</td></tr>
+      <tr><td><strong>Total</strong></td><td><strong>30</strong></td><td></td></tr>
+      <tr><td>Extra Credit — Complete the other path</td><td>+10</td><td>Optional</td></tr>
+    </tbody>
+  </table>
+  <div class="decl" role="region" aria-labelledby="h-decl">
+    <h3 id="h-decl">⚑ Path Declaration — Required</h3>
+    <p>Select which path you are submitting for full credit. <strong>This exact declaration must also appear as the first line of your submission document:</strong> "I am submitting Path [A / B] for full credit."</p>
+    <label for="path-sel">I am submitting Path ___ for full credit:</label>
+    <select id="path-sel" name="path-sel" aria-required="true">
+      <option value="">— Select your path —</option>
+      <option value="A">Path A — Accessible Tools (bulk_extractor + strings, Challenge 7 image)</option>
+      <option value="B">Path B — Volatility 3 (live Windows memory acquisition and analysis)</option>
+    </select>
+    <p style="margin-top:.5rem;font-size:.82rem;color:#555">After completing your chosen path for full credit, you may complete the other path and clearly label it "Extra Credit" for up to 10 additional points.</p>
+  </div>
+</section>
+
+<!-- ═══ COMMON COMPONENTS ═══ -->
+<section id="common" aria-labelledby="h-cc">
+  <h2 id="h-cc">Common Components <span class="badge b-pts">12 pts — All Students</span></h2>
+
+  <h3>C1 — Pre-Lab Questions <span class="badge b-pts">3 pts</span></h3>
+  <p>Answer all three questions before beginning execution tasks. Use your own words; cite Module 11 content where relevant.</p>
+
+  <div class="task">
+    <div class="task-hdr">
+      <span class="tnum" aria-hidden="true">1</span>
+      <h4>RFC 3227 and Order of Volatility</h4>
+    </div>
+    <p>RFC 3227 provides guidelines for evidence collection and archiving. (a) In your own words, what is the "order of volatility"? (b) Why does RAM rank above hard-disk storage on that order? (c) How should this principle have influenced the acquisition strategy in your chosen path?</p>
+    <label for="c1q1">Response:</label>
+    <textarea id="c1q1" name="c1q1" rows="5" placeholder="Type your response here…"></textarea>
+  </div>
+
+  <div class="task">
+    <div class="task-hdr">
+      <span class="tnum" aria-hidden="true">2</span>
+      <h4>Volatile Data Categories</h4>
+    </div>
+    <p>List and briefly describe at least <strong>four categories</strong> of forensically significant data found in a memory image. For each, name one specific artifact type that represents it (e.g., "Category: Running Processes — Artifact: process name, PID, parent PID").</p>
+    <label for="c1q2">Response:</label>
+    <textarea id="c1q2" name="c1q2" rows="7" placeholder="Category 1 — [name]: description…  Representative artifact: …&#10;Category 2 — …&#10;Category 3 — …&#10;Category 4 — …"></textarea>
+  </div>
+
+  <div class="task">
+    <div class="task-hdr">
+      <span class="tnum" aria-hidden="true">3</span>
+      <h4>Acquisition Tool Comparison</h4>
+    </div>
+    <p>Compare any two memory acquisition tools covered in Module 11 (e.g., winpmem, DumpIt, LiME, FTK Imager). For each: state its target platform, acquisition method, and one advantage or limitation relevant to forensic soundness.</p>
+    <label for="c1q3">Response:</label>
+    <textarea id="c1q3" name="c1q3" rows="7" placeholder="Tool 1 — [name]:&#10;  Platform: …  Method: …&#10;  Advantage / Limitation: …&#10;Tool 2 — [name]:&#10;  Platform: …  Method: …&#10;  Advantage / Limitation: …"></textarea>
+  </div>
+
+  <h3>C2 — Documentation Standard — Lab Notebook <span class="badge b-pts">6 pts</span></h3>
+  <div class="box box-info" role="note">
+    Your lab notebook is a contemporaneous, forensically sound record of your investigation. Graders evaluate completeness and forensic soundness — not just whether commands were run. All four elements below are required; incomplete elements reduce this score.
+  </div>
+  <ol>
+    <li><strong>Command log</strong> — Every command executed, in order, with a timestamp for each entry.</li>
+    <li><strong>Output record</strong> — Full output for short results; representative excerpts with a note of the total line count for long outputs. Do not truncate without noting it.</li>
+    <li><strong>Annotated screenshots</strong> — At least one per major task, annotated to identify: (a) the tool or plugin used, (b) the specific finding highlighted, and (c) why it is forensically significant.</li>
+    <li><strong>Artifact summary table</strong> — All significant artifacts organized by category (Process, Network, File/String, Credential). Required columns: Artifact, Category, Source (tool/plugin), Forensic Significance.</li>
+  </ol>
+  <label for="nb-log">Lab notebook notes — command log, timestamps, key observations (optional; included in PDF export):</label>
+  <textarea id="nb-log" name="nb-log" rows="5" placeholder="2026-04-08 14:32  [command entered]&#10;Output summary: …&#10;&#10;2026-04-08 14:45  [next command]…"></textarea>
+
+  <h3>C3 — Lab Report <span class="badge b-pts">3 pts</span></h3>
+  <p>Write a <strong>1–2 page written report</strong> (approximately 400–600 words) summarizing your investigation. Required sections:</p>
+  <ul>
+    <li><strong>Executive Summary:</strong> System analyzed, tools used, and primary finding.</li>
+    <li><strong>Key Findings:</strong> At least three significant artifacts, their forensic significance, and how they relate to each other.</li>
+    <li><strong>Limitations:</strong> What could not be determined from memory alone? What follow-on investigation would you recommend?</li>
+    <li><strong>Path Cross-Reference</strong> (only if extra credit completed): Brief comparison of findings across both paths.</li>
+  </ul>
+  <label for="report-notes">Report draft notes (optional; included in PDF export):</label>
+  <textarea id="report-notes" name="report-notes" rows="6" placeholder="Draft report ideas here. Your final submission should be a polished, formatted 1–2 page document."></textarea>
+</section>
+
+<!-- ═══ PATH A ═══ -->
+<section id="path-a" aria-labelledby="h-pa">
+  <div class="ph ph-a" aria-hidden="true">PATH A — Accessible Tools Analysis · 18 pts</div>
+  <h2 id="h-pa" style="color:#1a6b3c;border-color:#1a6b3c">Path A: Challenge 7 Memory Image Analysis</h2>
+  <div class="box box-info" role="note">
+    <strong>Scenario:</strong> A Debian Linux server has been compromised. You have received a forensic memory image: <code>victoria-v8.memdump.img</code> (262 MB). Your task is to identify evidence of compromise using open-source command-line tools. Volatility is not required for this path.
+  </div>
+  <div class="box box-warn" role="note">
+    <strong>Obtaining the image:</strong> Download <code>victoria-v8.memdump.img</code> from the Week 11 Lab Resources folder in the course Files area. Do not rename the file before hashing — the expected hash values correspond to the original file exactly.
+  </div>
+
+  <!-- A1 -->
+  <div class="task" id="task-a1">
+    <div class="task-hdr">
+      <span class="tnum tnum-a" aria-hidden="true">A1</span>
+      <h3>Image Verification and Chain of Custody <span class="badge b-pts">3 pts</span></h3>
+    </div>
+    <p>Before any analysis, verify the integrity of the memory image. Hashing confirms the file has not been modified since it was created and is a fundamental step in establishing forensic soundness.</p>
+    <ol>
+      <li>Compute the MD5 and SHA-256 hashes of <code>victoria-v8.memdump.img</code> using your OS command-line tools.</li>
+      <li>Record both hash values, the source of the file, and the date/time you downloaded it (chain of custody entry).</li>
+      <li>Screenshot your terminal showing the hash computation output.</li>
+    </ol>
+    <details>
+      <summary>Hint: Hash commands by operating system</summary>
+      <div class="hint-body">
+        <p><strong>Linux / macOS:</strong></p>
+        <pre><code>md5sum victoria-v8.memdump.img
+sha256sum victoria-v8.memdump.img</code></pre>
+        <p><strong>Windows — PowerShell:</strong></p>
+        <pre><code>Get-FileHash victoria-v8.memdump.img -Algorithm MD5
+Get-FileHash victoria-v8.memdump.img -Algorithm SHA256</code></pre>
+        <p><strong>Windows — certutil:</strong></p>
+        <pre><code>certutil -hashfile victoria-v8.memdump.img MD5
+certutil -hashfile victoria-v8.memdump.img SHA256</code></pre>
+        <p>Record the full hash string as output — do not abbreviate it.</p>
+      </div>
+    </details>
+    <label for="a1-md5">MD5 hash value:</label>
+    <input type="text" id="a1-md5" name="a1-md5" placeholder="Paste the full computed MD5 hash here…">
+    <label for="a1-sha">SHA-256 hash value:</label>
+    <input type="text" id="a1-sha" name="a1-sha" placeholder="Paste the full computed SHA-256 hash here…">
+    <label for="a1-coc">Chain of custody notes (source, download date/time, any hash discrepancy):</label>
+    <textarea id="a1-coc" name="a1-coc" rows="4" placeholder="Source: Course Files — Week 11 Lab Resources&#10;Downloaded: 2026-04-08 14:00&#10;Hash match (expected vs. computed): &#10;Notes: "></textarea>
+  </div>
+
+  <!-- A2 -->
+  <div class="task" id="task-a2">
+    <div class="task-hdr">
+      <span class="tnum tnum-a" aria-hidden="true">A2</span>
+      <h3>bulk_extractor Analysis <span class="badge b-pts">6 pts</span></h3>
+    </div>
+    <p>Run <code>bulk_extractor</code> against the memory image to extract structured artifacts — URLs, email addresses, domain names, IP addresses, and other network indicators — directly from raw binary data without requiring a file system.</p>
+    <ol>
+      <li>Create an output directory (e.g., <code>bulk_out/</code>) and run bulk_extractor on the image.</li>
+      <li>Examine at minimum: <code>url_histogram.txt</code>, <code>email.txt</code>, <code>domain_histogram.txt</code>, and <code>ip.txt</code>.</li>
+      <li>Identify at least <strong>three forensically significant artifacts</strong>. For each: state the value, the output file it came from, and its forensic significance.</li>
+      <li>Take annotated screenshots of the relevant output sections.</li>
+    </ol>
+    <details>
+      <summary>Hint: bulk_extractor commands and key output files</summary>
+      <div class="hint-body">
+        <p><strong>Linux / macOS:</strong></p>
+        <pre><code>bulk_extractor -o bulk_out victoria-v8.memdump.img
+# Multi-threaded (faster on multi-core systems):
+bulk_extractor -j 4 -o bulk_out victoria-v8.memdump.img</code></pre>
+        <p><strong>Windows:</strong></p>
+        <pre><code>bulk_extractor.exe -o bulk_out victoria-v8.memdump.img</code></pre>
+        <p><strong>Key output files:</strong></p>
+        <ul>
+          <li><code>url.txt</code> / <code>url_histogram.txt</code> — URLs found in memory (histogram ranks by frequency)</li>
+          <li><code>email.txt</code> / <code>email_histogram.txt</code> — Email addresses</li>
+          <li><code>domain.txt</code> / <code>domain_histogram.txt</code> — Domain names</li>
+          <li><code>ip.txt</code> — Carved IP address strings</li>
+          <li><code>json.txt</code> — JSON fragments (may reveal application session data)</li>
+          <li><code>report.xml</code> — Complete run summary</li>
+        </ul>
+        <p><strong>Tip:</strong> Start with histogram files — entries ranked by frequency highlight the most active domains and URLs. Look for internal vs. external IPs, unexpected domain names, and any indicators that suggest malicious or unauthorized activity on a server.</p>
+      </div>
+    </details>
+    <label for="a2-cmd">Commands executed (include timestamps):</label>
+    <textarea id="a2-cmd" name="a2-cmd" rows="3" placeholder="2026-04-08 14:20  bulk_extractor -j 4 -o bulk_out victoria-v8.memdump.img&#10;Completed at: 14:46  (runtime: ~26 min)"></textarea>
+    <label for="a2-find">Key findings — at least 3 forensically significant artifacts:</label>
+    <textarea id="a2-find" name="a2-find" rows="8" placeholder="Artifact 1: [value or pattern] — from: url_histogram.txt — significance: …&#10;Artifact 2: [value] — from: domain.txt — significance: …&#10;Artifact 3: [value] — from: ip.txt — significance: …"></textarea>
+    <label for="a2-notes">Additional observations (anomalies, patterns, screenshot references):</label>
+    <textarea id="a2-notes" name="a2-notes" rows="3" placeholder="e.g., domain_histogram shows 47 hits for a suspicious domain not associated with server function; see screenshot A2a…"></textarea>
+  </div>
+
+  <!-- A3 -->
+  <div class="task" id="task-a3">
+    <div class="task-hdr">
+      <span class="tnum tnum-a" aria-hidden="true">A3</span>
+      <h3>Strings Analysis <span class="badge b-pts">5 pts</span></h3>
+    </div>
+    <p>Extract all printable character sequences from the memory image and apply targeted filters to locate forensically significant content that structured tools may have missed.</p>
+    <ol>
+      <li>Run <code>strings</code> against the image; save the full output to a file and note the total line count.</li>
+      <li>Apply at least <strong>four targeted filters</strong> (e.g., IP address pattern, password-related strings, shell/download commands, HTTP/HTTPS strings). Document each filter, the exact command used, and notable findings.</li>
+      <li>Take screenshots showing each filter command and representative results.</li>
+    </ol>
+    <details>
+      <summary>Hint: strings commands and filter examples</summary>
+      <div class="hint-body">
+        <p><strong>Linux / macOS — extract and save:</strong></p>
+        <pre><code>strings victoria-v8.memdump.img > strings_out.txt
+wc -l strings_out.txt           # record total line count
+
+# IP address pattern
+grep -E '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' strings_out.txt | sort -u
+
+# Password-related strings
+grep -i 'passw' strings_out.txt
+
+# Shell / download commands
+grep -E '^\s*(wget|curl|nc|bash|python|perl)' strings_out.txt
+
+# HTTP/HTTPS URLs
+grep -i 'http' strings_out.txt | sort -u | head -50</code></pre>
+        <p><strong>Windows — Strings.exe (Sysinternals):</strong></p>
+        <pre><code>strings.exe victoria-v8.memdump.img > strings_out.txt
+findstr /I "password passwd" strings_out.txt
+findstr /R "[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*" strings_out.txt</code></pre>
+        <p><strong>PowerShell filtering:</strong></p>
+        <pre><code>Select-String -Path strings_out.txt -Pattern "http" | Select-Object -First 50</code></pre>
+        <p><strong>Unicode strings:</strong> Use <code>strings -e l</code> (Linux) or <code>strings.exe -u</code> (Windows) to also capture 16-bit Unicode — important for finding Windows-origin artifacts that may be present in the image.</p>
+      </div>
+    </details>
+    <label for="a3-cmd">Commands executed (with timestamps and line counts):</label>
+    <textarea id="a3-cmd" name="a3-cmd" rows="4" placeholder="2026-04-08 14:50  strings victoria-v8.memdump.img > strings_out.txt&#10;  Total lines: [count]&#10;14:52  grep -i 'passw' strings_out.txt > pw_hits.txt  (hits: [count])&#10;…"></textarea>
+    <label for="a3-find">Targeted filter findings — at least 4 searches with results and observations:</label>
+    <textarea id="a3-find" name="a3-find" rows="11" placeholder="Filter 1 — pattern: [pattern]  command: [cmd]&#10;  Notable findings: …&#10;&#10;Filter 2 — pattern: …  command: …&#10;  Notable findings: …&#10;&#10;Filter 3 — …&#10;&#10;Filter 4 — …"></textarea>
+  </div>
+
+  <!-- A4 -->
+  <div class="task" id="task-a4">
+    <div class="task-hdr">
+      <span class="tnum tnum-a" aria-hidden="true">A4</span>
+      <h3>Cross-Correlation with Lab Activity 09 Findings <span class="badge b-pts">4 pts</span></h3>
+    </div>
+    <p>Compare your memory analysis results with disk-level artifacts from Lab Activity 09. Memory evidence and disk evidence should complement each other — look for confirming evidence, contradictions, and artifacts that appear in only one source.</p>
+    <ol>
+      <li>Identify at least <strong>two artifacts appearing in both</strong> the memory image and your Lab 09 disk evidence (e.g., the same IP address, file path, username, or domain name).</li>
+      <li>Identify at least <strong>one artifact found only in memory</strong> and absent from disk evidence. What does its disk-level absence suggest (e.g., fileless technique, in-memory-only execution)?</li>
+      <li>Describe any contradictions or unexplained gaps between the two evidence sources.</li>
+      <li>State your overall assessment: does the memory evidence support, extend, or conflict with your Lab 09 disk findings?</li>
+    </ol>
+    <div class="box box-info" role="note">
+      <strong>Note:</strong> Reference specific artifact values from your Lab Activity 09 submission. If you did not complete Lab 09, describe what disk-level evidence you would expect to compare against and explain your reasoning.
+    </div>
+    <label for="a4-corr">Cross-correlation analysis:</label>
+    <textarea id="a4-corr" name="a4-corr" rows="11" placeholder="Artifact appearing in both sources:&#10;  Memory finding: [value / description]&#10;  Lab 09 disk finding: [value / description]&#10;  Significance: …&#10;&#10;Second shared artifact:&#10;  Memory: …  |  Lab 09: …  |  Significance: …&#10;&#10;Artifact in memory only:&#10;  Finding: …  |  Implication (why absent from disk?): …&#10;&#10;Contradictions / gaps: …&#10;&#10;Overall assessment: …"></textarea>
+  </div>
+</section>
+
+<!-- ═══ PATH B ═══ -->
+<section id="path-b" aria-labelledby="h-pb">
+  <div class="ph ph-b" aria-hidden="true">PATH B — Volatility 3 Analysis · 18 pts</div>
+  <h2 id="h-pb" style="color:#7b2d00;border-color:#7b2d00">Path B: Live Windows Memory Analysis with Volatility 3</h2>
+  <div class="box box-info" role="note">
+    <strong>Scenario:</strong> You will acquire a raw memory image from your own Windows system and analyze it with Volatility 3, following a six-phase structured workflow. This path mirrors real-world incident response practice: live acquisition followed by artifact-driven analysis.
+  </div>
+  <div class="box box-priv" role="alert">
+    <strong>Privacy and Sensitivity Notice — Read before starting.</strong> Your memory image will contain personal data — browser sessions, cached credentials, application tokens, and more. <strong>Do not include verbatim credentials, passwords, hashes, or personal account details anywhere in your submission.</strong> When describing credential-category findings, state the type and context only. Example of compliant reporting: "One NTLM hash fragment was identified in the context of the lsass.exe process — the hash value was not recorded." This rule applies to your written report, your lab notebook, and every response field on this page.
+  </div>
+
+  <!-- B1 -->
+  <div class="task" id="task-b1">
+    <div class="task-hdr">
+      <span class="tnum tnum-b" aria-hidden="true">B1</span>
+      <h3>System State Documentation <span class="badge b-pts">2 pts</span></h3>
+    </div>
+    <p>Before acquisition, document the live system state to establish a pre-acquisition baseline and begin the chain of custody record.</p>
+    <ol>
+      <li>Record OS version, architecture (x86/x64), hostname, uptime, and current user account name.</li>
+      <li>Note active applications running at the time you begin acquisition preparation.</li>
+      <li>Record the exact date and time (with timezone) of this documentation step.</li>
+      <li>Screenshot your system information output.</li>
+    </ol>
+    <details>
+      <summary>Hint: System state commands (Windows)</summary>
+      <div class="hint-body">
+        <pre><code>systeminfo
+whoami /all
+Get-Date
+tasklist /v | more</code></pre>
+        <p>Run and capture this output <em>before</em> starting the acquisition tool — it is part of your chain of custody record.</p>
+      </div>
+    </details>
+    <label for="b1-sys">System state record:</label>
+    <textarea id="b1-sys" name="b1-sys" rows="7" placeholder="OS: Windows 10/11 Pro x64  Build: …&#10;Hostname: [OK to include your hostname]&#10;Architecture: x64&#10;Documentation date/time (with timezone): &#10;Uptime: &#10;Current user: &#10;Active applications at acquisition time: &#10;Notes: "></textarea>
+  </div>
+
+  <!-- B2 -->
+  <div class="task" id="task-b2">
+    <div class="task-hdr">
+      <span class="tnum tnum-b" aria-hidden="true">B2</span>
+      <h3>Tool Integrity Verification <span class="badge b-pts">1 pt</span></h3>
+    </div>
+    <p>Before use, verify the integrity of your acquisition and analysis tools. This is a forensic chain-of-custody requirement that establishes the tools themselves have not been tampered with.</p>
+    <ol>
+      <li>Record the version of Volatility 3 installed (run <code>python vol.py -h</code> to confirm).</li>
+      <li>Record the name, version, and SHA-256 hash of the acquisition tool executable you will use.</li>
+      <li>State the source from which each tool was obtained (description only — no external URLs needed).</li>
+    </ol>
+    <label for="b2-tools">Tool integrity record:</label>
+    <textarea id="b2-tools" name="b2-tools" rows="6" placeholder="Volatility 3 version: &#10;Acquisition tool: [name] v[version]&#10;Acquisition tool SHA-256: &#10;Source (description): &#10;Verification status: confirmed / unable to verify — reason: "></textarea>
+  </div>
+
+  <!-- B3 -->
+  <div class="task" id="task-b3">
+    <div class="task-hdr">
+      <span class="tnum tnum-b" aria-hidden="true">B3</span>
+      <h3>Memory Acquisition <span class="badge b-pts">2 pts</span></h3>
+    </div>
+    <p>Acquire a raw memory image from your live Windows system using an approved acquisition tool.</p>
+    <ol>
+      <li>Run your acquisition tool as Administrator; direct output to a known file path on a local or external drive.</li>
+      <li>Record the acquisition command, start time, end time, and output file size.</li>
+      <li>Compute MD5 and SHA-256 hashes of the acquired image immediately after acquisition completes.</li>
+      <li>Screenshot the acquisition process and the hash computation output.</li>
+    </ol>
+    <div class="box box-warn" role="note">
+      <strong>Run as Administrator.</strong> Standard user permissions are insufficient for raw memory access. Your antivirus may flag the acquisition tool as a false positive — this is expected behavior for forensic tools. Do not permanently disable AV; consult the tool's documentation for adding a temporary exception.
+    </div>
+    <details>
+      <summary>Hint: winpmem and DumpIt acquisition commands</summary>
+      <div class="hint-body">
+        <p><strong>winpmem — raw format (recommended for Volatility 3):</strong></p>
+        <pre><code>winpmem_mini_x64_rc2.exe --format raw -o memory.raw</code></pre>
+        <p><strong>DumpIt alternative:</strong></p>
+        <pre><code>DumpIt.exe /OUTPUT memory.raw /QUIET</code></pre>
+        <p><strong>Hash the image immediately after acquisition:</strong></p>
+        <pre><code>certutil -hashfile memory.raw MD5
+certutil -hashfile memory.raw SHA256</code></pre>
+        <p>Do not open, move, or rename the output file during acquisition. Allow the tool to complete fully. Acquisition time depends on installed RAM (typically 2–8 minutes for 8–32 GB systems).</p>
+      </div>
+    </details>
+    <label for="b3-acq">Acquisition log:</label>
+    <textarea id="b3-acq" name="b3-acq" rows="8" placeholder="Command used: &#10;Start time: &#10;End time: &#10;Output file: memory.raw  Size: &#10;MD5: &#10;SHA-256: &#10;Notes: "></textarea>
+  </div>
+
+  <!-- B4 Phase 1 -->
+  <div class="task" id="task-b4">
+    <div class="task-hdr">
+      <span class="tnum tnum-b" aria-hidden="true">B4</span>
+      <h3>Phase 1 — Process Analysis <span class="badge b-pts">3 pts</span></h3>
+    </div>
+    <p>Analyze the process space to identify running processes, parent-child relationships, and anomalous entries that may indicate malicious activity.</p>
+    <ol>
+      <li>Run <code>windows.pslist</code> and note the total process count.</li>
+      <li>Run <code>windows.pstree</code> and review parent-child relationships.</li>
+      <li>Run <code>windows.psscan</code> and compare to pslist — discrepancies may indicate hidden or recently terminated processes.</li>
+      <li>Run <code>windows.cmdline</code> on any process that appears unusual or suspicious.</li>
+      <li>Identify at least <strong>two processes of forensic interest</strong> and explain why each is notable.</li>
+    </ol>
+    <details>
+      <summary>Hint: Volatility 3 process commands and indicators of interest</summary>
+      <div class="hint-body">
+        <p><strong>Commands (replace memory.raw with your image filename):</strong></p>
+        <pre><code>python vol.py -f memory.raw windows.pslist
+python vol.py -f memory.raw windows.pstree
+python vol.py -f memory.raw windows.psscan
+python vol.py -f memory.raw windows.cmdline --pid 1234</code></pre>
+        <p><strong>Common indicators of interest:</strong></p>
+        <ul>
+          <li>Unexpected parent-child relationships (e.g., cmd.exe spawned by svchost.exe)</li>
+          <li>Misspelled process names used as masquerading (scvhost.exe vs. svchost.exe)</li>
+          <li>Multiple instances of singleton processes (lsass.exe should appear exactly once)</li>
+          <li>Processes running from non-standard paths (C:\Temp\, C:\Users\...\AppData\)</li>
+          <li>Processes in psscan absent from pslist (possible hiding technique)</li>
+        </ul>
+        <p><strong>Note:</strong> On a normal system, results will look clean. "No anomalies found" is a valid forensic finding — document it with supporting evidence.</p>
+      </div>
+    </details>
+    <label for="b4-cmd">Commands executed (with timestamps):</label>
+    <textarea id="b4-cmd" name="b4-cmd" rows="3" placeholder="2026-04-08 16:00  python vol.py -f memory.raw windows.pslist > pslist.txt&#10;16:02  python vol.py -f memory.raw windows.pstree > pstree.txt"></textarea>
+    <label for="b4-find">Process analysis findings:</label>
+    <textarea id="b4-find" name="b4-find" rows="8" placeholder="Total process count (pslist): &#10;Process of interest 1: PID [xxx]  name: [name]  parent: [name]  — reason flagged: …&#10;Process of interest 2: PID [xxx]  name: [name]  parent: [name]  — reason flagged: …&#10;pslist vs. psscan discrepancies: &#10;cmdline findings: &#10;Overall assessment: "></textarea>
+  </div>
+
+  <!-- B5 Phase 2 -->
+  <div class="task" id="task-b5">
+    <div class="task-hdr">
+      <span class="tnum tnum-b" aria-hidden="true">B5</span>
+      <h3>Phase 2 — Network Connection Analysis <span class="badge b-pts">3 pts</span></h3>
+    </div>
+    <p>Extract network connection data from memory to identify active, recently closed, and listening connections at the time of acquisition.</p>
+    <ol>
+      <li>Run <code>windows.netstat</code> and note active and recently terminated connections.</li>
+      <li>Run <code>windows.netscan</code> and compare results to netstat output — differences may reveal partially cleaned-up connections.</li>
+      <li>Identify at least <strong>three connections or sockets</strong> of forensic interest, noting process name, local/remote addresses and ports, and state.</li>
+    </ol>
+    <details>
+      <summary>Hint: Volatility 3 network commands and what to examine</summary>
+      <div class="hint-body">
+        <pre><code>python vol.py -f memory.raw windows.netstat
+python vol.py -f memory.raw windows.netscan</code></pre>
+        <p><strong>What to examine:</strong></p>
+        <ul>
+          <li>ESTABLISHED connections to unexpected external IP addresses</li>
+          <li>Processes with outbound connections that should not have network access</li>
+          <li>Listening ports on non-standard or high-numbered port numbers</li>
+          <li>Entries present in netscan but absent from netstat (recently terminated or cleaned up)</li>
+        </ul>
+        <p><strong>Tip:</strong> On a normal system you will see many expected connections (browser, update services, cloud storage). Focus on explaining what you observe — unexpected ESTABLISHED connections to external addresses are the highest-value findings.</p>
+      </div>
+    </details>
+    <label for="b5-cmd">Commands executed:</label>
+    <textarea id="b5-cmd" name="b5-cmd" rows="3" placeholder="Commands with timestamps…"></textarea>
+    <label for="b5-find">Network analysis findings:</label>
+    <textarea id="b5-find" name="b5-find" rows="8" placeholder="Connection 1: [process name] PID [xxx]  local [ip:port] → remote [ip:port]  state [STATE]  significance: …&#10;Connection 2: …&#10;Connection 3: …&#10;netstat vs. netscan discrepancies: &#10;Unexpected external connections: &#10;Overall assessment: "></textarea>
+  </div>
+
+  <!-- B6 Phase 3 -->
+  <div class="task" id="task-b6">
+    <div class="task-hdr">
+      <span class="tnum tnum-b" aria-hidden="true">B6</span>
+      <h3>Phase 3 — File and Handle Analysis <span class="badge b-pts">3 pts</span></h3>
+    </div>
+    <p>Examine file objects in the memory pool and open handles to identify which files were in active use at acquisition time.</p>
+    <ol>
+      <li>Run <code>windows.filescan</code> to list all file objects in the memory pool.</li>
+      <li>Run <code>windows.handles</code> on at least one process of interest identified in Phase 1.</li>
+      <li>Identify at least <strong>two file artifacts</strong> of forensic interest (unusual file paths, unexpected executables, suspicious file access patterns).</li>
+    </ol>
+    <details>
+      <summary>Hint: File and handle analysis commands</summary>
+      <div class="hint-body">
+        <pre><code>python vol.py -f memory.raw windows.filescan
+python vol.py -f memory.raw windows.handles --pid 1234
+
+# Filter filescan output for common indicators (Linux/macOS):
+python vol.py -f memory.raw windows.filescan > filescan.txt
+grep -iE "\.exe|\.dll|Temp|AppData" filescan.txt</code></pre>
+        <p><strong>What to look for:</strong></p>
+        <ul>
+          <li>Executables or DLLs located in Temp or AppData directories</li>
+          <li>Named pipes (can indicate inter-process communication used by malware frameworks)</li>
+          <li>Unusually named files or files with misleading extensions</li>
+          <li>Registry key handles (can confirm registry-based persistence mechanisms)</li>
+        </ul>
+      </div>
+    </details>
+    <label for="b6-cmd">Commands executed:</label>
+    <textarea id="b6-cmd" name="b6-cmd" rows="3" placeholder="Commands with timestamps…"></textarea>
+    <label for="b6-find">File and handle analysis findings:</label>
+    <textarea id="b6-find" name="b6-find" rows="7" placeholder="File artifact 1: [path/name] — associated process: [name] — significance: …&#10;File artifact 2: [path/name] — associated process: [name] — significance: …&#10;Notable handles found: &#10;Observations: "></textarea>
+  </div>
+
+  <!-- B7 Phase 4 -->
+  <div class="task" id="task-b7">
+    <div class="task-hdr">
+      <span class="tnum tnum-b" aria-hidden="true">B7</span>
+      <h3>Phase 4 — Driver and Module Analysis <span class="badge b-pts">2 pts</span></h3>
+    </div>
+    <p>Examine loaded kernel modules and DLLs to detect unauthorized or suspicious code that has been loaded into memory.</p>
+    <ol>
+      <li>Run <code>windows.modules</code> to list loaded kernel modules.</li>
+      <li>Run <code>windows.dlllist</code> on at least one process of interest from Phase 1.</li>
+      <li>Run <code>windows.modscan</code> and compare to the modules list — entries in modscan absent from modules may indicate a hidden kernel-level module (a rootkit indicator).</li>
+      <li>Note any DLLs or modules loaded from non-standard or unexpected file paths.</li>
+    </ol>
+    <details>
+      <summary>Hint: Module and DLL analysis commands</summary>
+      <div class="hint-body">
+        <pre><code>python vol.py -f memory.raw windows.modules
+python vol.py -f memory.raw windows.dlllist --pid 1234
+python vol.py -f memory.raw windows.modscan</code></pre>
+        <p><strong>What to look for:</strong></p>
+        <ul>
+          <li>Modules or DLLs loaded from C:\Temp, C:\Users\...\AppData\, or other non-system paths</li>
+          <li>Entries in modscan not present in modules (possible hidden kernel module)</li>
+          <li>DLL injection: a DLL present in a process that has no logical reason to load it</li>
+          <li>Unsigned or unknown module names in the kernel space</li>
+        </ul>
+      </div>
+    </details>
+    <label for="b7-cmd">Commands executed:</label>
+    <textarea id="b7-cmd" name="b7-cmd" rows="3" placeholder="Commands with timestamps…"></textarea>
+    <label for="b7-find">Driver and module findings:</label>
+    <textarea id="b7-find" name="b7-find" rows="6" placeholder="Notable module or DLL: [name] — [path] — significance: …&#10;modules vs. modscan discrepancies: &#10;DLL injection indicators: &#10;Overall assessment: "></textarea>
+  </div>
+
+  <!-- B8 Phase 5 -->
+  <div class="task" id="task-b8">
+    <div class="task-hdr">
+      <span class="tnum tnum-b" aria-hidden="true">B8</span>
+      <h3>Phase 5 — String and Credential Artifact Analysis <span class="badge b-pts">1 pt</span></h3>
+    </div>
+    <div class="box box-priv" role="alert">
+      <strong>Privacy reminder:</strong> Describe credential artifacts by type and context only — never record verbatim hash values, passwords, or tokens anywhere in your submission.
+    </div>
+    <ol>
+      <li>Extract strings from the memory image and filter for indicators identified in Phases 1–4.</li>
+      <li>Attempt <code>windows.hashdump</code> — this may fail on live acquisition images; document the result regardless.</li>
+      <li>Describe any credential-category artifacts found: state the type and context, not the value.</li>
+    </ol>
+    <details>
+      <summary>Hint: String extraction and credential analysis commands</summary>
+      <div class="hint-body">
+        <pre><code># Extract and save strings
+strings memory.raw > strings_mem.txt
+
+# Map strings to originating processes (Volatility 3)
+python vol.py -f memory.raw windows.strings --strings-file strings_mem.txt
+
+# Attempt credential hash dump
+python vol.py -f memory.raw windows.hashdump</code></pre>
+        <p><strong>Note:</strong> hashdump requires the SAM and SYSTEM hive to be accessible in the image. Failure on a live acquisition is expected — document the error message.</p>
+        <p><strong>Compliant reporting example:</strong> "One NTLM hash fragment was identified at offset 0x1a2b3c in the context of the lsass.exe process (PID 684). The hash value was not recorded per the lab privacy policy."</p>
+      </div>
+    </details>
+    <label for="b8-find">String and credential artifact summary (type and context only — no verbatim values):</label>
+    <textarea id="b8-find" name="b8-find" rows="7" placeholder="Credential artifact type: [e.g., browser session token reference] — process context: [name] — significance: …&#10;&#10;String artifacts related to earlier phase findings: …&#10;&#10;hashdump result: [success / failure — include error message if failed]&#10;&#10;Notes: "></textarea>
+  </div>
+
+  <!-- B9 Final Documentation -->
+  <div class="task" id="task-b9">
+    <div class="task-hdr">
+      <span class="tnum tnum-b" aria-hidden="true">B9</span>
+      <h3>Final Documentation — Artifact Summary Table <span class="badge b-pts">1 pt</span></h3>
+    </div>
+    <p>Complete your artifact summary table compiled from Phases 1–5. This satisfies the table requirement in C2 and must be built from your actual analysis results. Enter a text summary here; include the fully formatted table in your submitted PDF.</p>
+    <p>Required categories: <strong>Process Artifacts</strong>, <strong>Network Artifacts</strong>, <strong>File/String Artifacts</strong>, <strong>Credential Artifacts</strong> (if any found). Required columns: Artifact Description, Category, Source Plugin, Forensic Significance.</p>
+    <label for="b9-table">Artifact summary table entries:</label>
+    <textarea id="b9-table" name="b9-table" rows="12" placeholder="--- Process Artifacts ---&#10;Artifact: [description]  |  Source: windows.pslist  |  Significance: …&#10;&#10;--- Network Artifacts ---&#10;Artifact: [connection description]  |  Source: windows.netscan  |  Significance: …&#10;&#10;--- File/String Artifacts ---&#10;Artifact: [path or string]  |  Source: windows.filescan  |  Significance: …&#10;&#10;--- Credential Artifacts (if any found) ---&#10;Artifact: [type only — no values]  |  Source: [plugin]  |  Significance: …"></textarea>
+  </div>
+</section>
+
+<!-- ═══ EXTRA CREDIT ═══ -->
+<section id="extra-credit" aria-labelledby="h-ec">
+  <div class="ph ph-ec" aria-hidden="true">EXTRA CREDIT — Complete the Other Path · +10 pts</div>
+  <h2 id="h-ec" style="color:#5c3700;border-color:#5c3700">Extra Credit: Second Path Analysis <span class="badge b-ec">+10 pts</span></h2>
+  <div class="box box-warn" role="note">
+    <strong>How to earn extra credit:</strong> After completing your chosen path for full credit, complete the <em>other</em> path. In your submission PDF, add a clearly labeled section heading: <em>"Extra Credit — Path [A or B] Analysis."</em> Work not clearly labeled as extra credit may not be scored.
+  </div>
+
+  <h3>If your full-credit path was Path A — complete Path B for extra credit</h3>
+  <p>Follow all Path B instructions (Tasks B1–B9). Abbreviated responses are acceptable for extra credit, but you must include:</p>
+  <ul>
+    <li>System state documentation and acquisition log with both hash values.</li>
+    <li>At least one Volatility 3 plugin output from each analysis category: process, network, and file/handle.</li>
+    <li>A required cross-correlation paragraph comparing your Volatility 3 findings to the bulk_extractor and strings results from Path A.</li>
+  </ul>
+
+  <h3>If your full-credit path was Path B — complete Path A for extra credit</h3>
+  <p>Follow all Path A instructions (Tasks A1–A4). You must include:</p>
+  <ul>
+    <li>Verified MD5 and SHA-256 hashes for <code>victoria-v8.memdump.img</code>.</li>
+    <li>At least three significant bulk_extractor artifacts with forensic significance notes.</li>
+    <li>At least two strings-analysis filtered search results with notable findings.</li>
+    <li>A required cross-correlation paragraph comparing Challenge 7 memory image findings to your live Windows memory findings from Path B.</li>
+  </ul>
+
+  <h3>Extra Credit Scoring (10 pts total)</h3>
+  <table>
+    <thead>
+      <tr><th scope="col">Criterion</th><th scope="col">Points</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Completeness — all required elements present</td><td>4</td></tr>
+      <tr><td>Quality of analysis — accurate, specific, forensically sound</td><td>4</td></tr>
+      <tr><td>Cross-correlation insight — substantive comparison of findings across both paths</td><td>2</td></tr>
+    </tbody>
+  </table>
+  <label for="ec-notes">Extra credit notes and draft findings (optional; included in PDF export):</label>
+  <textarea id="ec-notes" name="ec-notes" rows="8" placeholder="Extra Credit — Path [A / B] Analysis&#10;&#10;Command log:&#10;&#10;Key findings:&#10;&#10;Cross-correlation paragraph:&#10;"></textarea>
+</section>
+
+<!-- ═══ DELIVERABLES ═══ -->
+<section id="deliverables" aria-labelledby="h-del">
+  <h2 id="h-del">Deliverables &amp; Submission Notes</h2>
+
+  <h3>What to Submit</h3>
+  <p>Submit <strong>one PDF file</strong> to the Lab Activity 10 assignment in Canvas. Organize your PDF in the following order:</p>
+  <ol>
+    <li><strong>Page 1 — Path declaration:</strong> "I am submitting Path [A/B] for full credit."</li>
+    <li><strong>Pre-Lab Question responses</strong> (C1.1–C1.3).</li>
+    <li><strong>Lab notebook:</strong> full command log with timestamps, output excerpts with line counts noted, annotated screenshots (minimum one per major task), and complete artifact summary table.</li>
+    <li><strong>Execution task responses:</strong> Path A (Tasks A1–A4) or Path B (Tasks B1–B9).</li>
+    <li><strong>Written lab report</strong> (1–2 pages, approximately 400–600 words).</li>
+    <li><strong>Extra credit section</strong> (if completed), with the heading "Extra Credit — Path [A/B] Analysis."</li>
+  </ol>
+  <div class="box box-info" role="note">
+    <strong>File naming:</strong> <code>LastName_FirstName_Lab10.pdf</code> — submissions not following this convention may be returned without grading.
+  </div>
+
+  <h3>Using the Save as PDF Button</h3>
+  <p>The <strong>Save as PDF</strong> button below opens your browser's print dialog with all page content — including your typed responses — ready to capture. Select "Save as PDF" (or "Microsoft Print to PDF") as your destination. Enable "Background graphics" in the print dialog options for best visual output.</p>
+  <div class="box box-warn" role="note">
+    The Save as PDF button captures a working draft from your in-page responses. Review the resulting PDF to confirm all text fields are visible and legible. Your final submission should be a polished, formatted document — use this capture as a starting point or supplement.
+  </div>
+
+  <h3>Grading Summary</h3>
+  <table>
+    <thead>
+      <tr><th scope="col">Component</th><th scope="col">Pts</th><th scope="col">Key Criteria</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>C1 — Pre-Lab Questions</td><td>3</td><td>Accurate, in own words, all sub-questions fully addressed</td></tr>
+      <tr><td>C2 — Lab Notebook</td><td>6</td><td>All 4 elements present; annotated screenshots; complete artifact table</td></tr>
+      <tr><td>C3 — Lab Report</td><td>3</td><td>1–2 pp.; executive summary, key findings, and limitations all addressed</td></tr>
+      <tr><td>Path A Tasks (A1–A4)</td><td>18</td><td>Hash verified; ≥3 bulk_extractor artifacts; ≥4 strings searches; Lab 09 cross-correlation present</td></tr>
+      <tr><td>Path B Tasks (B1–B9)</td><td>18</td><td>Acquisition fully documented; all 5 analysis phases completed; privacy rules followed throughout</td></tr>
+      <tr><td><strong>Full Credit Total</strong></td><td><strong>30</strong></td><td></td></tr>
+      <tr><td>Extra Credit</td><td>+10</td><td>Completeness (4 pts), analysis quality (4 pts), cross-correlation insight (2 pts)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+</main>
+
+<div class="save-bar">
+  <button class="btn-pdf" id="btn-pdf" type="button">⬇ Save as PDF</button>
+  <p>Captures all sections and typed responses — select "Save as PDF" in the print dialog.</p>
+</div>
+
+<footer role="contentinfo">
+  CSC 156 – Digital Forensic Fundamentals &nbsp;|&nbsp; Lab Activity 10 &nbsp;|&nbsp; Week 11 &nbsp;|&nbsp; Mendocino College
+</footer>
+
+<script>
+(function () {
+  var btn = document.getElementById('btn-pdf');
+  var stored = [];
+  var fallback = null;
+
+  function makePrintDiv(text) {
+    var d = document.createElement('div');
+    d.className = 'print-resp';
+    d.setAttribute('aria-hidden', 'true');
+    d.textContent = text;
+    return d;
+  }
+
+  function insertPrintValues() {
+    stored = [];
+    document.querySelectorAll('textarea').forEach(function (el) {
+      var d = makePrintDiv(el.value.trim() || '(no response entered)');
+      el.insertAdjacentElement('afterend', d);
+      stored.push(d);
+    });
+    document.querySelectorAll('input[type=text]').forEach(function (el) {
+      var d = makePrintDiv(el.value.trim() || '(no value entered)');
+      el.insertAdjacentElement('afterend', d);
+      stored.push(d);
+    });
+    document.querySelectorAll('select').forEach(function (el) {
+      var opt = el.options[el.selectedIndex];
+      var text = (opt && opt.value) ? opt.text : '(no selection made)';
+      var d = makePrintDiv(text);
+      el.insertAdjacentElement('afterend', d);
+      stored.push(d);
+    });
+  }
+
+  function removePrintValues() {
+    if (fallback) { clearTimeout(fallback); fallback = null; }
+    stored.forEach(function (d) { if (d.parentNode) d.parentNode.removeChild(d); });
+    stored = [];
+  }
+
+  if (btn) {
+    btn.addEventListener('click', function () {
+      insertPrintValues();
+      window.addEventListener('afterprint', function handler() {
+        window.removeEventListener('afterprint', handler);
+        removePrintValues();
+      });
+      fallback = setTimeout(removePrintValues, 5000);
+      window.print();
+    });
+  }
+}());
+</script>
+</body>
+</html>
