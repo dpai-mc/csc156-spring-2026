@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 12.2 – Packet Analysis with Wireshark | CSC 156</title>
+<style>
+/* ===== RESET & BASE ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+body{font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.65;color:#1e1e1e;background:#f5f6fa}
+
+/* ===== SKIP LINK ===== */
+.skip-link{position:absolute;top:-100%;left:8px;background:#1a5276;color:#fff;padding:8px 16px;border-radius:0 0 6px 6px;z-index:9999;font-weight:600;text-decoration:none}
+.skip-link:focus{top:0}
+
+/* ===== STICKY NAV ===== */
+.topnav{position:sticky;top:0;z-index:900;background:#1a5276;display:flex;flex-wrap:wrap;align-items:center;padding:6px 16px;gap:4px 12px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.topnav a{color:#e8f0fe;text-decoration:none;font-size:.82rem;padding:5px 8px;border-radius:4px;white-space:nowrap;transition:background .2s}
+.topnav a:hover,.topnav a:focus-visible{background:rgba(255,255,255,.18);outline:none}
+.topnav a:focus-visible{box-shadow:0 0 0 2px #f7dc6f}
+.nav-title{color:#fff;font-weight:700;font-size:.88rem;margin-right:8px}
+
+/* ===== PAGE WRAP ===== */
+.page-wrap{max-width:960px;margin:0 auto;padding:24px 20px 80px}
+
+/* ===== MODULE HEADER ===== */
+.module-header{text-align:center;padding:32px 16px 24px;border-bottom:3px solid #1a5276;margin-bottom:32px}
+.module-header h1{font-size:1.7rem;color:#1a5276;margin-bottom:4px}
+.module-header .subtitle{font-size:1.05rem;color:#555;margin-bottom:10px;font-style:italic}
+.meta{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 20px;font-size:.82rem;color:#555}
+
+/* ===== SECTIONS ===== */
+.section{margin-bottom:40px}
+.section__heading h2{font-size:1.3rem;color:#1a5276;border-left:5px solid #2e86c1;padding-left:12px;margin-bottom:16px}
+.section__heading h2 .num{display:inline-block;background:#1a5276;color:#fff;width:28px;height:28px;text-align:center;line-height:28px;border-radius:50%;font-size:.85rem;margin-right:8px;vertical-align:middle}
+.section__body{padding-left:4px}
+h3{font-size:1.08rem;color:#1a5276;margin:20px 0 8px}
+h4{font-size:.98rem;color:#2e4053;margin:14px 0 6px}
+p,li{font-size:.94rem}
+p{margin-bottom:10px}
+ul,ol{margin:6px 0 12px 22px}
+li{margin-bottom:4px}
+
+/* ===== CALLOUT BOXES ===== */
+.callout{border-left:5px solid #2e86c1;background:#eaf2fa;border-radius:6px;padding:14px 18px;margin:16px 0;font-size:.92rem}
+.callout-title{font-weight:700;margin-bottom:4px;font-size:.94rem}
+.callout.examiner{border-color:#1a5276;background:#dce6f0}
+.callout.connection{border-color:#7d3c98;background:#f3ecf9}
+.callout.connection .callout-title{color:#7d3c98}
+.callout.warning{border-color:#e67e22;background:#fef5e7}
+.callout.warning .callout-title{color:#e67e22}
+.callout.info{border-color:#2e86c1;background:#eaf2fa}
+.callout.info .callout-title{color:#2e86c1}
+.callout.tip{border-color:#1e8449;background:#eafaf1}
+.callout.tip .callout-title{color:#1e8449}
+
+/* ===== TABLES ===== */
+.table-wrap{overflow-x:auto;margin:12px 0 18px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th{background:#1a5276;color:#fff;text-align:left;padding:9px 12px;font-weight:600}
+td{padding:8px 12px;border-bottom:1px solid #d5d8dc;vertical-align:top}
+tr:nth-child(even) td{background:#f2f4f6}
+
+/* ===== CODE ===== */
+code{font-family:'Consolas','Courier New',monospace;background:#eaecee;padding:1px 5px;border-radius:3px;font-size:.88rem;word-break:break-word}
+pre{background:#1e1e1e;color:#d4d4d4;padding:14px 18px;border-radius:6px;overflow-x:auto;font-size:.84rem;line-height:1.55;margin:10px 0 16px}
+pre code{background:none;padding:0;color:inherit}
+
+/* ===== ACCORDION ===== */
+.accordion{margin:10px 0 16px}
+.accordion-btn{width:100%;text-align:left;background:#dce6f0;border:1px solid #b0c4d8;padding:11px 16px;font-size:.93rem;font-weight:600;color:#1a5276;cursor:pointer;border-radius:6px;transition:background .2s;display:flex;justify-content:space-between;align-items:center}
+.accordion-btn:hover,.accordion-btn:focus-visible{background:#c9daea}
+.accordion-btn:focus-visible{outline:2px solid #f7dc6f;outline-offset:2px}
+.accordion-btn::after{content:'+';font-size:1.15rem;font-weight:700;transition:transform .25s}
+.accordion-btn[aria-expanded="true"]::after{content:'−'}
+.accordion-panel{max-height:0;overflow:hidden;transition:max-height .35s ease;border:1px solid #b0c4d8;border-top:none;border-radius:0 0 6px 6px;background:#fff}
+.accordion-panel[aria-hidden="false"]{border-top:none}
+.accordion-inner{padding:14px 18px}
+
+/* ===== TABS ===== */
+.tabs{margin:14px 0 18px}
+.tab-list{display:flex;flex-wrap:wrap;gap:4px;border-bottom:2px solid #b0c4d8;padding-bottom:0}
+.tab-btn{background:#eaecee;border:1px solid #b0c4d8;border-bottom:none;padding:8px 16px;font-size:.87rem;font-weight:600;color:#555;cursor:pointer;border-radius:6px 6px 0 0;transition:background .2s}
+.tab-btn:hover{background:#dce6f0}
+.tab-btn:focus-visible{outline:2px solid #f7dc6f;outline-offset:2px}
+.tab-btn[aria-selected="true"]{background:#fff;color:#1a5276;border-bottom:2px solid #fff;margin-bottom:-2px}
+.tab-panel{background:#fff;border:1px solid #b0c4d8;border-top:none;border-radius:0 0 6px 6px;padding:16px 18px;font-size:.92rem}
+.tab-panel[hidden]{display:none}
+
+/* ===== REVEAL BUTTON ===== */
+.reveal-wrap{margin:10px 0 16px}
+.reveal-btn{background:#2e86c1;color:#fff;border:none;padding:8px 18px;border-radius:5px;cursor:pointer;font-size:.88rem;font-weight:600;transition:background .2s}
+.reveal-btn:hover,.reveal-btn:focus-visible{background:#1a5276}
+.reveal-btn:focus-visible{outline:2px solid #f7dc6f;outline-offset:2px}
+.reveal-content{display:none;background:#eaf2fa;border:1px solid #b0c4d8;border-radius:6px;padding:14px 18px;margin-top:8px;font-size:.92rem}
+.reveal-content.visible{display:block}
+
+/* ===== COPY BUTTON ===== */
+.copy-btn{background:none;border:1px solid #b0c4d8;color:#2e86c1;font-size:.76rem;padding:2px 8px;border-radius:3px;cursor:pointer;margin-left:6px;vertical-align:middle;transition:background .2s}
+.copy-btn:hover,.copy-btn:focus-visible{background:#dce6f0}
+.copy-btn:focus-visible{outline:2px solid #f7dc6f;outline-offset:2px}
+
+/* ===== KNOWLEDGE CHECK ===== */
+.kc-question{background:#fff;border:1px solid #b0c4d8;border-radius:8px;padding:18px 20px;margin:14px 0}
+.kc-question h4{margin-top:0}
+.kc-options label{display:block;padding:6px 10px;margin:3px 0;border-radius:5px;cursor:pointer;font-size:.9rem;transition:background .15s}
+.kc-options label:hover{background:#eaf2fa}
+.kc-options input[type="radio"]{margin-right:8px}
+.kc-feedback{display:none;padding:10px 14px;border-radius:5px;margin-top:10px;font-size:.9rem}
+.kc-feedback.correct{background:#d5f5e3;border:1px solid #27ae60;display:block}
+.kc-feedback.incorrect{background:#fadbd8;border:1px solid #e74c3c;display:block}
+.kc-submit{background:#2e86c1;color:#fff;border:none;padding:7px 18px;border-radius:5px;cursor:pointer;font-size:.87rem;font-weight:600;margin-top:8px;transition:background .2s}
+.kc-submit:hover,.kc-submit:focus-visible{background:#1a5276}
+.kc-submit:focus-visible{outline:2px solid #f7dc6f;outline-offset:2px}
+
+/* ===== SCENARIO BOX ===== */
+.scenario-box{background:#fff3cd;border:2px solid #f0c040;border-radius:8px;padding:18px 20px;margin:16px 0;font-size:.93rem}
+.scenario-box strong{color:#856404}
+
+/* ===== FILTER CARD ===== */
+.filter-card{background:#fff;border:1px solid #b0c4d8;border-radius:8px;padding:14px 18px;margin:10px 0}
+.filter-card code{background:#1e1e1e;color:#d4d4d4;padding:3px 8px;border-radius:4px;font-size:.86rem}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:600px){
+  .topnav{padding:6px 8px;gap:2px 6px}
+  .topnav a{font-size:.76rem;padding:4px 6px}
+  .module-header h1{font-size:1.3rem}
+  .page-wrap{padding:16px 12px 60px}
+}
+
+/* ===== PRINT ===== */
+@media print{
+  .topnav,.skip-link,.copy-btn,.reveal-btn,.kc-submit,.tab-list{display:none}
+  .accordion-panel{max-height:none!important}
+  .reveal-content{display:block!important}
+  .tab-panel[hidden]{display:block!important}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+
+<!-- Skip link -->
+<a href="#top" class="skip-link">Skip to main content</a>
+
+<!-- ===== STICKY NAV ===== -->
+<nav class="topnav" aria-label="Module navigation">
+  <span class="nav-title">12.2</span>
+  <a href="#scenario">Scenario</a>
+  <a href="#interface">Interface</a>
+  <a href="#filters">Filters</a>
+  <a href="#streams">Streams</a>
+  <a href="#extraction">Extraction</a>
+  <a href="#tcpdump">tcpdump</a>
+  <a href="#suspicious">Suspicious Traffic</a>
+  <a href="#knowledge-check">Knowledge Check</a>
+</nav>
+
+<main class="page-wrap" id="top">
+
+<!-- ======== MODULE HEADER ======== -->
+<header class="module-header">
+  <h1>Module 12.2 – Packet Analysis with Wireshark</h1>
+  <p class="subtitle">Filters, Streams, and Artifact Extraction</p>
+  <div class="meta">
+    <span>📅 Week 12 of 17</span>
+    <span>⏱ Est. 2.0–2.5 hrs</span>
+    <span>📘 CSC 156 – Digital Forensics Fundamentals</span>
+  </div>
+  <div class="meta" style="margin-top:8px;">
+    <span>🎯 CSLO 1 &amp; CSLO 2</span>
+    <span>🏫 Mendocino College</span>
+  </div>
+</header>
+
+<!-- ================================================================
+     SECTION 1 – SCENARIO CONTINUATION
+================================================================ -->
+<section class="section" id="scenario">
+  <div class="section__heading"><h2><span class="num">1</span> Scenario Continuation — Acme Corp PCAP</h2></div>
+  <div class="section__body">
+
+    <div class="scenario-box">
+      <strong>🔍 Acme Corp SOC — Your Assignment Continues</strong>
+      <p style="margin-top:8px;">In Module 12.1 you learned that the Acme Corp Security Operations Center flagged unusual outbound traffic from a web server at <strong>2:47 AM</strong>. A full packet capture was running on the network TAP, and Apache access logs are available. You reviewed the networking foundations, evidence types, and chain-of-custody procedures needed to handle this evidence.</p>
+      <p><strong>Now it's time to open the PCAP.</strong> The SOC has handed you a 45-minute capture from the Acme Corp web server's network segment. Your first task: open it in Wireshark, orient yourself to the interface, apply targeted filters, reconstruct suspicious sessions, and extract any artifacts the attacker may have transferred. By the end of this module you will have the Wireshark skills to answer the core questions: <em>Who was communicating? What protocols were used? Did anything leave the building?</em></p>
+    </div>
+
+    <div class="callout connection">
+      <div class="callout-title">🔗 Cross-Module Connection</div>
+      <p>Module 12.1 gave you the protocol vocabulary (TCP handshake, common ports, OSI model) and evidence-handling framework. This module builds directly on that foundation. If you are uncertain about TCP flags, port numbers, or PCAP integrity procedures, revisit Module 12.1 before continuing.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================
+     SECTION 2 – WIRESHARK INTERFACE ORIENTATION
+================================================================ -->
+<section class="section" id="interface">
+  <div class="section__heading"><h2><span class="num">2</span> Wireshark Interface Orientation</h2></div>
+  <div class="section__body">
+
+    <p>Wireshark is the most widely used network protocol analyzer in the world, and it is a standard tool in digital forensics labs. Before you apply a single filter, you need to understand the interface layout and how Wireshark organizes packet data.</p>
+
+    <h3>2.1 The Three-Pane Layout</h3>
+    <p>When you open a PCAP file in Wireshark, the main window is divided into three panes. Each pane shows the <em>same</em> selected packet at a different level of detail:</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Pane</th><th>Location</th><th>What It Shows</th><th>Forensic Use</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Packet List</strong></td><td>Top</td><td>One row per packet: number, time, source, destination, protocol, length, info</td><td>Scan for patterns, sort/filter, identify time ranges</td></tr>
+          <tr><td><strong>Packet Details</strong></td><td>Middle</td><td>Protocol tree for the selected packet — expandable layers from Frame → Ethernet → IP → TCP/UDP → Application</td><td>Inspect specific header fields, flag values, payload content</td></tr>
+          <tr><td><strong>Packet Bytes</strong></td><td>Bottom</td><td>Raw hexadecimal and ASCII representation of the selected packet</td><td>Verify exact byte values, spot magic bytes, find embedded strings</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout tip">
+      <div class="callout-title">💡 Tip</div>
+      <p>Click on any field in the <strong>Packet Details</strong> pane and the corresponding bytes are highlighted in the <strong>Packet Bytes</strong> pane. This is invaluable when you need to verify exactly what data was on the wire.</p>
+    </div>
+
+    <h3>2.2 Capture Filters vs. Display Filters</h3>
+    <p>Wireshark supports two distinct filtering systems. Understanding the difference is critical for forensic work:</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Feature</th><th>Capture Filter</th><th>Display Filter</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>When applied</strong></td><td>During capture — before packets are written</td><td>After capture — filters what is <em>displayed</em></td></tr>
+          <tr><td><strong>Syntax</strong></td><td>BPF (Berkeley Packet Filter) syntax<br><code>host 192.168.1.100</code></td><td>Wireshark display filter syntax<br><code>ip.addr == 192.168.1.100</code></td></tr>
+          <tr><td><strong>Forensic recommendation</strong></td><td>Rarely used in forensic analysis — you want <em>all</em> packets preserved</td><td><strong>Primary tool</strong> — filter during analysis, not during collection</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout examiner">
+      <div class="callout-title">🔬 Examiner Note</div>
+      <p>In forensic analysis, you will almost always use <strong>display filters</strong>, not capture filters. You want to capture everything and filter during analysis. Capture filters permanently discard non-matching packets — data you might need later in the investigation.</p>
+    </div>
+
+    <h3>2.3 Coloring Rules</h3>
+    <p>Wireshark applies color coding to the Packet List pane to help you visually distinguish traffic types at a glance:</p>
+
+    <div class="accordion">
+      <button class="accordion-btn" aria-expanded="false" aria-controls="color-panel">Default Coloring Rules Quick Reference</button>
+      <div class="accordion-panel" id="color-panel" role="region" aria-hidden="true">
+        <div class="accordion-inner">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Color</th><th>Traffic Type</th><th>Example</th></tr></thead>
+              <tbody>
+                <tr><td style="background:#e8ffe8;color:#1e1e1e;">Light green</td><td>TCP traffic</td><td>HTTP requests, established sessions</td></tr>
+                <tr><td style="background:#d8e8ff;color:#1e1e1e;">Light blue</td><td>UDP traffic</td><td>DNS queries, DHCP</td></tr>
+                <tr><td style="background:#e0e0e0;color:#1e1e1e;">Light gray</td><td>TCP SYN / SYN-ACK</td><td>Connection setup (handshake)</td></tr>
+                <tr><td style="background:#ffd0d0;color:#1e1e1e;">Light red</td><td>HTTP errors (4xx/5xx)</td><td>404 Not Found, 500 Server Error</td></tr>
+                <tr><td style="background:#1e1e1e;color:#ff4444;">Black / red text</td><td>TCP errors, RST, malformed</td><td>Connection resets, checksum errors</td></tr>
+                <tr><td style="background:#ffffc0;color:#1e1e1e;">Yellow</td><td>SMB / Windows networking</td><td>File shares, lateral movement</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>You can customize these under <strong>View → Coloring Rules</strong>, but the defaults are a solid starting point for forensic analysis.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>2.4 Statistics Menu — Your Investigation Starting Point</h3>
+    <p>Before diving into individual packets, experienced examiners use the <strong>Statistics</strong> menu to get a high-level overview of the capture:</p>
+
+    <div class="accordion">
+      <button class="accordion-btn" aria-expanded="false" aria-controls="stats-panel">Key Statistics Tools</button>
+      <div class="accordion-panel" id="stats-panel" role="region" aria-hidden="true">
+        <div class="accordion-inner">
+          <ul>
+            <li><strong>Protocol Hierarchy</strong> (<em>Statistics → Protocol Hierarchy</em>) — Shows the percentage breakdown of all protocols in the capture. Use this first to understand what types of traffic are present.</li>
+            <li><strong>Conversations</strong> (<em>Statistics → Conversations</em>) — Lists all communication pairs (by Ethernet, IPv4, TCP, or UDP). Sort by bytes transferred to quickly identify the heaviest talkers.</li>
+            <li><strong>Endpoints</strong> (<em>Statistics → Endpoints</em>) — Lists every unique address in the capture with packet/byte counts. Spot hosts that sent or received unusually large amounts of data.</li>
+            <li><strong>I/O Graphs</strong> (<em>Statistics → I/O Graphs</em>) — Plots traffic volume over time. Look for spikes (possible exfiltration) or regular patterns (possible beaconing).</li>
+            <li><strong>DNS</strong> (<em>Statistics → DNS</em>) — Summarizes all DNS queries and responses. Useful for identifying domains contacted by a suspect host.</li>
+          </ul>
+          <div class="callout tip">
+            <div class="callout-title">💡 Tip</div>
+            <p>A good forensic workflow: <strong>Protocol Hierarchy → Conversations → targeted display filters</strong>. Start broad, then narrow down.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================
+     SECTION 3 – ESSENTIAL DISPLAY FILTERS
+================================================================ -->
+<section class="section" id="filters">
+  <div class="section__heading"><h2><span class="num">3</span> Essential Display Filters for Forensic Analysis</h2></div>
+  <div class="section__body">
+
+    <p>Display filters are the forensic examiner's query language. Mastering filter syntax is the single most important Wireshark skill you can develop. This section provides an interactive reference card and guided practice.</p>
+
+    <h3>3.1 Filter Syntax Fundamentals</h3>
+    <p>Wireshark display filters follow a consistent pattern:</p>
+    <pre><code>protocol.field operator value</code></pre>
+    <p>Filters can be combined with logical operators:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Operator</th><th>Meaning</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td><code>==</code></td><td>Equal to</td><td><code>ip.addr == 10.0.0.5</code></td></tr>
+          <tr><td><code>!=</code></td><td>Not equal to</td><td><code>ip.addr != 10.0.0.1</code></td></tr>
+          <tr><td><code>&gt;</code></td><td>Greater than</td><td><code>frame.len > 1000</code></td></tr>
+          <tr><td><code>contains</code></td><td>Contains string</td><td><code>http.host contains "acme"</code></td></tr>
+          <tr><td><code>matches</code></td><td>Regex match</td><td><code>http.request.uri matches "admin|login"</code></td></tr>
+          <tr><td><code>&amp;&amp;</code> or <code>and</code></td><td>Logical AND</td><td><code>ip.src == 10.0.0.5 &amp;&amp; tcp.port == 80</code></td></tr>
+          <tr><td><code>||</code> or <code>or</code></td><td>Logical OR</td><td><code>dns || http</code></td></tr>
+          <tr><td><code>!</code> or <code>not</code></td><td>Logical NOT</td><td><code>!(arp || dns)</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>3.2 Interactive Filter Reference Card</h3>
+    <p>The following card contains the filters you will use most often in forensic PCAP analysis. Click the <strong>copy</strong> button to copy any filter to your clipboard for use in Wireshark.</p>
+
+    <!-- TABS for filter categories -->
+    <div class="tabs" role="tablist" aria-label="Filter categories">
+      <div class="tab-list">
+        <button class="tab-btn" role="tab" aria-selected="true" aria-controls="tab-host" id="btn-host">Host &amp; IP</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-proto" id="btn-proto">Protocol</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-http" id="btn-http">HTTP</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-dns" id="btn-dns">DNS</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-flags" id="btn-flags">TCP Flags</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-search" id="btn-search">String Search</button>
+      </div>
+
+      <!-- Host & IP -->
+      <div class="tab-panel" role="tabpanel" id="tab-host" aria-labelledby="btn-host">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Purpose</th><th>Filter</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>All traffic to/from a host</td><td><code>ip.addr == 192.168.1.100</code></td><td><button class="copy-btn" data-copy="ip.addr == 192.168.1.100" aria-label="Copy filter ip.addr == 192.168.1.100">Copy</button></td></tr>
+            <tr><td>Traffic <em>from</em> a specific source</td><td><code>ip.src == 203.0.113.42</code></td><td><button class="copy-btn" data-copy="ip.src == 203.0.113.42" aria-label="Copy filter ip.src == 203.0.113.42">Copy</button></td></tr>
+            <tr><td>Traffic <em>to</em> a specific destination</td><td><code>ip.dst == 10.0.0.50</code></td><td><button class="copy-btn" data-copy="ip.dst == 10.0.0.50" aria-label="Copy filter ip.dst == 10.0.0.50">Copy</button></td></tr>
+            <tr><td>Exclude a known-good host (e.g., gateway)</td><td><code>!(ip.addr == 10.0.0.1)</code></td><td><button class="copy-btn" data-copy="!(ip.addr == 10.0.0.1)" aria-label="Copy filter exclude gateway">Copy</button></td></tr>
+            <tr><td>Traffic between two specific hosts</td><td><code>ip.addr == 10.0.0.5 &amp;&amp; ip.addr == 203.0.113.42</code></td><td><button class="copy-btn" data-copy="ip.addr == 10.0.0.5 && ip.addr == 203.0.113.42" aria-label="Copy filter two hosts">Copy</button></td></tr>
+            <tr><td>Filter by subnet</td><td><code>ip.addr == 192.168.1.0/24</code></td><td><button class="copy-btn" data-copy="ip.addr == 192.168.1.0/24" aria-label="Copy filter subnet">Copy</button></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <!-- Protocol -->
+      <div class="tab-panel" role="tabpanel" id="tab-proto" aria-labelledby="btn-proto" hidden>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Purpose</th><th>Filter</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>HTTP traffic only</td><td><code>http</code></td><td><button class="copy-btn" data-copy="http" aria-label="Copy filter http">Copy</button></td></tr>
+            <tr><td>DNS traffic only</td><td><code>dns</code></td><td><button class="copy-btn" data-copy="dns" aria-label="Copy filter dns">Copy</button></td></tr>
+            <tr><td>FTP traffic</td><td><code>ftp || ftp-data</code></td><td><button class="copy-btn" data-copy="ftp || ftp-data" aria-label="Copy filter ftp">Copy</button></td></tr>
+            <tr><td>SMTP (email)</td><td><code>smtp</code></td><td><button class="copy-btn" data-copy="smtp" aria-label="Copy filter smtp">Copy</button></td></tr>
+            <tr><td>TLS/SSL encrypted traffic</td><td><code>tls</code></td><td><button class="copy-btn" data-copy="tls" aria-label="Copy filter tls">Copy</button></td></tr>
+            <tr><td>Filter by port number</td><td><code>tcp.port == 443</code></td><td><button class="copy-btn" data-copy="tcp.port == 443" aria-label="Copy filter port 443">Copy</button></td></tr>
+            <tr><td>Non-standard port for HTTP</td><td><code>tcp.port == 8080 &amp;&amp; http</code></td><td><button class="copy-btn" data-copy="tcp.port == 8080 && http" aria-label="Copy filter non-standard HTTP">Copy</button></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <!-- HTTP -->
+      <div class="tab-panel" role="tabpanel" id="tab-http" aria-labelledby="btn-http" hidden>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Purpose</th><th>Filter</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>HTTP GET requests</td><td><code>http.request.method == "GET"</code></td><td><button class="copy-btn" data-copy='http.request.method == "GET"' aria-label="Copy filter HTTP GET">Copy</button></td></tr>
+            <tr><td>HTTP POST requests (data submission)</td><td><code>http.request.method == "POST"</code></td><td><button class="copy-btn" data-copy='http.request.method == "POST"' aria-label="Copy filter HTTP POST">Copy</button></td></tr>
+            <tr><td>HTTP response codes 4xx/5xx (errors)</td><td><code>http.response.code >= 400</code></td><td><button class="copy-btn" data-copy="http.response.code >= 400" aria-label="Copy filter HTTP errors">Copy</button></td></tr>
+            <tr><td>Specific HTTP host header</td><td><code>http.host contains "acme"</code></td><td><button class="copy-btn" data-copy='http.host contains "acme"' aria-label="Copy filter HTTP host">Copy</button></td></tr>
+            <tr><td>HTTP requests with URI containing "admin"</td><td><code>http.request.uri contains "admin"</code></td><td><button class="copy-btn" data-copy='http.request.uri contains "admin"' aria-label="Copy filter HTTP admin URI">Copy</button></td></tr>
+            <tr><td>POST from attacker IP</td><td><code>http.request.method == "POST" &amp;&amp; ip.src == 203.0.113.42</code></td><td><button class="copy-btn" data-copy='http.request.method == "POST" && ip.src == 203.0.113.42' aria-label="Copy filter POST from attacker">Copy</button></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <!-- DNS -->
+      <div class="tab-panel" role="tabpanel" id="tab-dns" aria-labelledby="btn-dns" hidden>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Purpose</th><th>Filter</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>DNS queries containing keyword</td><td><code>dns.qry.name contains "evil"</code></td><td><button class="copy-btn" data-copy='dns.qry.name contains "evil"' aria-label="Copy filter DNS query keyword">Copy</button></td></tr>
+            <tr><td>DNS responses only</td><td><code>dns.flags.response == 1</code></td><td><button class="copy-btn" data-copy="dns.flags.response == 1" aria-label="Copy filter DNS responses">Copy</button></td></tr>
+            <tr><td>DNS queries only</td><td><code>dns.flags.response == 0</code></td><td><button class="copy-btn" data-copy="dns.flags.response == 0" aria-label="Copy filter DNS queries">Copy</button></td></tr>
+            <tr><td>DNS TXT records (tunneling indicator)</td><td><code>dns.qry.type == 16</code></td><td><button class="copy-btn" data-copy="dns.qry.type == 16" aria-label="Copy filter DNS TXT">Copy</button></td></tr>
+            <tr><td>NXDOMAIN responses (non-existent domain)</td><td><code>dns.flags.rcode == 3</code></td><td><button class="copy-btn" data-copy="dns.flags.rcode == 3" aria-label="Copy filter NXDOMAIN">Copy</button></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <!-- TCP Flags -->
+      <div class="tab-panel" role="tabpanel" id="tab-flags" aria-labelledby="btn-flags" hidden>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Purpose</th><th>Filter</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>SYN-only packets (port scan indicator)</td><td><code>tcp.flags.syn == 1 &amp;&amp; tcp.flags.ack == 0</code></td><td><button class="copy-btn" data-copy="tcp.flags.syn == 1 && tcp.flags.ack == 0" aria-label="Copy filter SYN scan">Copy</button></td></tr>
+            <tr><td>RST packets (connection resets)</td><td><code>tcp.flags.reset == 1</code></td><td><button class="copy-btn" data-copy="tcp.flags.reset == 1" aria-label="Copy filter RST">Copy</button></td></tr>
+            <tr><td>FIN packets (connection teardown)</td><td><code>tcp.flags.fin == 1</code></td><td><button class="copy-btn" data-copy="tcp.flags.fin == 1" aria-label="Copy filter FIN">Copy</button></td></tr>
+            <tr><td>SYN-ACK (handshake response)</td><td><code>tcp.flags.syn == 1 &amp;&amp; tcp.flags.ack == 1</code></td><td><button class="copy-btn" data-copy="tcp.flags.syn == 1 && tcp.flags.ack == 1" aria-label="Copy filter SYN-ACK">Copy</button></td></tr>
+            <tr><td>Retransmissions (network issues)</td><td><code>tcp.analysis.retransmission</code></td><td><button class="copy-btn" data-copy="tcp.analysis.retransmission" aria-label="Copy filter retransmission">Copy</button></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <!-- String Search -->
+      <div class="tab-panel" role="tabpanel" id="tab-search" aria-labelledby="btn-search" hidden>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Purpose</th><th>Filter</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>Search for "password" in any packet</td><td><code>frame contains "password"</code></td><td><button class="copy-btn" data-copy='frame contains "password"' aria-label="Copy filter frame contains password">Copy</button></td></tr>
+            <tr><td>Search for "login" in TCP payload</td><td><code>tcp contains "login"</code></td><td><button class="copy-btn" data-copy='tcp contains "login"' aria-label="Copy filter tcp contains login">Copy</button></td></tr>
+            <tr><td>Search for "SELECT" (SQL in traffic)</td><td><code>frame contains "SELECT"</code></td><td><button class="copy-btn" data-copy='frame contains "SELECT"' aria-label="Copy filter frame contains SELECT">Copy</button></td></tr>
+            <tr><td>Regex match on URI</td><td><code>http.request.uri matches "\\.(php|asp|jsp)"</code></td><td><button class="copy-btn" data-copy='http.request.uri matches "\\.(php|asp|jsp)"' aria-label="Copy filter regex URI">Copy</button></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div><!-- end tabs -->
+
+    <h3>3.3 Guided Filter Walkthrough</h3>
+    <p>Imagine you have just opened the Acme Corp PCAP (tens of thousands of packets). Here is how an examiner would systematically narrow the data:</p>
+
+    <div class="accordion">
+      <button class="accordion-btn" aria-expanded="false" aria-controls="walkthrough-panel">Step-by-Step Filter Narrowing (click to expand)</button>
+      <div class="accordion-panel" id="walkthrough-panel" role="region" aria-hidden="true">
+        <div class="accordion-inner">
+          <ol>
+            <li><strong>Step 1 — Get an overview:</strong> Use <em>Statistics → Protocol Hierarchy</em> to see what protocols are present. You notice HTTP, DNS, TLS, and a surprising amount of FTP traffic.</li>
+            <li><strong>Step 2 — Isolate the suspect host:</strong> Apply <code>ip.addr == 192.168.1.105</code> — the web server flagged by the SOC. The packet count drops from 48,000 to 12,400.</li>
+            <li><strong>Step 3 — Focus on HTTP:</strong> Refine to <code>ip.addr == 192.168.1.105 &amp;&amp; http</code> — now you see 3,200 HTTP packets. Sort by time to see the request sequence.</li>
+            <li><strong>Step 4 — Look for POST requests:</strong> Further narrow with <code>ip.addr == 192.168.1.105 &amp;&amp; http.request.method == "POST"</code> — only 47 POST requests. Several come from an external IP: 203.0.113.42.</li>
+            <li><strong>Step 5 — Isolate the attacker:</strong> Apply <code>ip.src == 203.0.113.42</code> — all traffic from this IP. You now have a focused dataset to investigate.</li>
+          </ol>
+          <p>In five steps you went from 48,000 packets to a manageable set of attacker-related traffic. This is the power of display filters.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>3.4 Mini-Exercise: Write the Filter</h3>
+    <p>For each scenario below, write the Wireshark display filter you would use. Try writing your answer before revealing the model answer.</p>
+
+    <!-- Exercise 1 -->
+    <div class="filter-card">
+      <h4>Scenario A</h4>
+      <p>You want to see <strong>only DNS queries</strong> made by the host <strong>10.0.0.25</strong>.</p>
+      <div class="reveal-wrap">
+        <button class="reveal-btn" aria-expanded="false">Show Model Answer</button>
+        <div class="reveal-content" role="region">
+          <p><code>dns.flags.response == 0 &amp;&amp; ip.src == 10.0.0.25</code></p>
+          <p><strong>Explanation:</strong> <code>dns.flags.response == 0</code> selects DNS queries (not responses). Adding <code>ip.src == 10.0.0.25</code> limits results to queries <em>originating from</em> that host. This is useful for building a list of every domain the suspect system attempted to resolve.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Exercise 2 -->
+    <div class="filter-card">
+      <h4>Scenario B</h4>
+      <p>You suspect a SYN port scan was launched <strong>from</strong> the IP <strong>203.0.113.42</strong>. Write a filter to isolate SYN-only packets from that source.</p>
+      <div class="reveal-wrap">
+        <button class="reveal-btn" aria-expanded="false">Show Model Answer</button>
+        <div class="reveal-content" role="region">
+          <p><code>ip.src == 203.0.113.42 &amp;&amp; tcp.flags.syn == 1 &amp;&amp; tcp.flags.ack == 0</code></p>
+          <p><strong>Explanation:</strong> A SYN scan sends TCP SYN packets without completing the handshake. <code>tcp.flags.syn == 1 &amp;&amp; tcp.flags.ack == 0</code> matches SYN-only packets (not SYN-ACKs). Combined with the source IP, this reveals every port the attacker probed.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Exercise 3 -->
+    <div class="filter-card">
+      <h4>Scenario C</h4>
+      <p>You want to find any packet in the entire capture that contains the string <strong>"UNION SELECT"</strong> (a common SQL injection payload).</p>
+      <div class="reveal-wrap">
+        <button class="reveal-btn" aria-expanded="false">Show Model Answer</button>
+        <div class="reveal-content" role="region">
+          <p><code>frame contains "UNION SELECT"</code></p>
+          <p><strong>Explanation:</strong> The <code>frame contains</code> filter performs a case-sensitive string search across the entire packet (all layers). This catches SQL injection payloads in HTTP requests, regardless of which specific HTTP field they appear in. Note: for URL-encoded variants like <code>UNION%20SELECT</code>, you would need <code>frame contains "UNION%20SELECT"</code> or use <code>http.request.uri contains "UNION"</code>.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================
+     SECTION 4 – TCP STREAM RECONSTRUCTION
+================================================================ -->
+<section class="section" id="streams">
+  <div class="section__heading"><h2><span class="num">4</span> TCP Stream Reconstruction</h2></div>
+  <div class="section__body">
+
+    <p>Individual packets are fragments of a conversation. To understand what actually happened — what was requested, what was sent, what credentials were exchanged — you need to <strong>reconstruct the full TCP stream</strong>.</p>
+
+    <div class="callout examiner">
+      <div class="callout-title">🔬 Examiner Note</div>
+      <p><strong>"Follow TCP Stream" is one of the most powerful techniques in Wireshark.</strong> It reassembles all packets in a TCP session into a single, readable conversation — exactly as the two endpoints experienced it. Master this technique and you can read HTTP sessions, recover FTP transfers, and capture cleartext credentials.</p>
+    </div>
+
+    <h3>4.1 How to Follow a TCP Stream</h3>
+    <div class="accordion">
+      <button class="accordion-btn" aria-expanded="false" aria-controls="follow-steps">Step-by-Step Procedure</button>
+      <div class="accordion-panel" id="follow-steps" role="region" aria-hidden="true">
+        <div class="accordion-inner">
+          <ol>
+            <li>In the <strong>Packet List</strong> pane, select any packet that belongs to the TCP session you want to examine.</li>
+            <li>Right-click the packet and select <strong>Follow → TCP Stream</strong> (or use the menu: <em>Analyze → Follow → TCP Stream</em>).</li>
+            <li>A new window opens showing the <strong>reconstructed conversation</strong>:
+              <ul>
+                <li><span style="color:#c0392b;font-weight:600;">Red text</span> = data sent by the <strong>client</strong> (the side that initiated the connection)</li>
+                <li><span style="color:#2471a3;font-weight:600;">Blue text</span> = data sent by the <strong>server</strong> (the side that accepted the connection)</li>
+              </ul>
+            </li>
+            <li>Use the <strong>Stream</strong> dropdown at the bottom to navigate between different TCP streams in the capture.</li>
+            <li>Use <strong>"Show and save data as"</strong> to switch between ASCII, Hex Dump, C Arrays, Raw, or YAML views.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <h3>4.2 Follow HTTP Stream</h3>
+    <p>For HTTP traffic specifically, you can use <strong>Follow → HTTP Stream</strong>, which reconstructs the HTTP request/response pairs in a more readable format. This is particularly useful because:</p>
+    <ul>
+      <li>HTTP headers and body are displayed together in context</li>
+      <li>You can see the full request URI, cookies, form data, and server response</li>
+      <li>Chunked transfer encoding is automatically reassembled</li>
+    </ul>
+
+    <h3>4.3 Forensic Applications of Stream Reconstruction</h3>
+
+    <div class="accordion">
+      <button class="accordion-btn" aria-expanded="false" aria-controls="stream-apps">Forensic Use Cases (click to expand)</button>
+      <div class="accordion-panel" id="stream-apps" role="region" aria-hidden="true">
+        <div class="accordion-inner">
+          <h4>Cleartext Credential Capture</h4>
+          <p>Protocols that transmit credentials in plaintext are goldmines for forensic examiners:</p>
+          <ul>
+            <li><strong>HTTP Basic Authentication:</strong> Credentials are Base64-encoded (not encrypted!) in the <code>Authorization</code> header. Following the stream reveals the encoded string, which you can decode instantly.</li>
+            <li><strong>FTP:</strong> The <code>USER</code> and <code>PASS</code> commands appear in plaintext in the stream. Example:</li>
+          </ul>
+          <pre><code>USER admin
+331 Password required for admin
+PASS P@ssw0rd123
+230 User admin logged in</code></pre>
+          <ul>
+            <li><strong>Telnet:</strong> The entire session — including keystrokes — appears in the stream. Every command the user typed is visible.</li>
+          </ul>
+
+          <h4>HTTP Session Reconstruction</h4>
+          <p>Following an HTTP stream lets you see exactly what an attacker requested and what the server returned. You can read:</p>
+          <ul>
+            <li>SQL injection payloads in GET/POST parameters</li>
+            <li>Server responses revealing database contents</li>
+            <li>File upload requests (webshells, malware)</li>
+            <li>Cookie values and session tokens</li>
+          </ul>
+
+          <h4>Data Exfiltration Evidence</h4>
+          <p>If an attacker used HTTP POST to exfiltrate data, following the stream reveals the exact data that was sent, the destination URL, and any encoding applied.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout warning">
+      <div class="callout-title">⚠️ Limitation: Encrypted Traffic</div>
+      <p>Following a TLS/HTTPS stream shows only the encrypted ciphertext — you cannot read the content without the server's private key or a pre-master secret log. In forensic analysis, you may still extract metadata (server name from the TLS Client Hello SNI extension, certificate information) but not the payload. Use the filter <code>tls.handshake.extensions_server_name</code> to see which hostnames were requested over HTTPS.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================
+     SECTION 5 – EXTRACTING ARTIFACTS FROM PCAPs
+================================================================ -->
+<section class="section" id="extraction">
+  <div class="section__heading"><h2><span class="num">5</span> Extracting Artifacts from PCAPs</h2></div>
+  <div class="section__body">
+
+    <p>Beyond reading conversations, Wireshark can extract complete files, credentials, and metadata from packet captures. This is <strong>network-layer file carving</strong> — the same concept you learned in Week 5, applied to network traffic instead of disk images.</p>
+
+    <div class="callout connection">
+      <div class="callout-title">🔗 Cross-Module Connection — Week 5 File Carving</div>
+      <p>In Week 5 you learned to recover files from disk by identifying <strong>magic bytes</strong> (file signatures) and carving data from unallocated space. The same principle applies here: files transferred over HTTP are embedded in TCP streams, and Wireshark can extract them by reassembling the stream and identifying the file boundaries. The magic bytes you learned to recognize (e.g., <code>%PDF</code> for PDF, <code>PK</code> for ZIP, <code>&#x89;PNG</code> for PNG) will help you verify extracted files.</p>
+    </div>
+
+    <h3>5.1 Exporting HTTP Objects</h3>
+    <div class="accordion">
+      <button class="accordion-btn" aria-expanded="false" aria-controls="export-steps">Step-by-Step: Export HTTP Objects</button>
+      <div class="accordion-panel" id="export-steps" role="region" aria-hidden="true">
+        <div class="accordion-inner">
+          <ol>
+            <li>Go to <strong>File → Export Objects → HTTP</strong>.</li>
+            <li>A dialog lists every file transferred over HTTP in the capture: images, scripts, HTML pages, downloads, uploaded files.</li>
+            <li>Key columns: <strong>Hostname</strong>, <strong>Content Type</strong>, <strong>Size</strong>, <strong>Filename</strong>.</li>
+            <li>Select individual files and click <strong>Save</strong>, or click <strong>Save All</strong> to export everything.</li>
+            <li><strong>After extraction:</strong> Hash each file (SHA-256) and document it in your forensic notes. Compare hashes against known-malware databases or the original server files.</li>
+          </ol>
+          <div class="callout tip">
+            <div class="callout-title">💡 Tip</div>
+            <p>You can also export objects from other protocols: <strong>File → Export Objects → SMB</strong> (for Windows file shares), <strong>DICOM</strong> (medical imaging), <strong>IMF</strong> (email messages), and <strong>TFTP</strong>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3>5.2 Credential Extraction</h3>
+    <p>Wireshark can help you identify credentials transmitted in cleartext. Common sources:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Protocol</th><th>Where Credentials Appear</th><th>How to Find Them</th></tr></thead>
+        <tbody>
+          <tr><td>HTTP Basic Auth</td><td><code>Authorization: Basic dXNlcjpwYXNz</code> header (Base64)</td><td>Filter: <code>http.authorization</code></td></tr>
+          <tr><td>HTTP Form Login</td><td>POST body: <code>username=admin&amp;password=secret</code></td><td>Filter: <code>http.request.method == "POST"</code> then follow stream</td></tr>
+          <tr><td>FTP</td><td><code>USER</code> and <code>PASS</code> commands in plaintext</td><td>Filter: <code>ftp.request.command == "PASS"</code></td></tr>
+          <tr><td>Telnet</td><td>Entire session in cleartext (including typed passwords)</td><td>Filter: <code>telnet</code> then follow stream</td></tr>
+          <tr><td>SMTP</td><td>AUTH LOGIN with Base64-encoded credentials</td><td>Filter: <code>smtp.req.command == "AUTH"</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout examiner">
+      <div class="callout-title">🔬 Examiner Note</div>
+      <p>Base64 encoding is <strong>not encryption</strong>. It is trivially reversible. If you see <code>dXNlcjpwYXNz</code> in an HTTP Authorization header, decoding it with any Base64 tool yields <code>user:pass</code>. Always check Base64-encoded values in HTTP headers and SMTP AUTH exchanges.</p>
+    </div>
+
+    <h3>5.3 DNS Query Extraction</h3>
+    <p>Every DNS query in a PCAP tells you what domain a host tried to reach. This is forensically valuable because:</p>
+    <ul>
+      <li>It reveals <strong>every website and service</strong> the suspect system communicated with</li>
+      <li>DNS queries occur even when the actual traffic is encrypted (HTTPS)</li>
+      <li>Queries to known-malicious domains are strong indicators of compromise</li>
+      <li>Unusual DNS patterns can reveal tunneling or DGA (Domain Generation Algorithm) activity</li>
+    </ul>
+    <p>To extract all DNS queries: <strong>Statistics → DNS</strong> provides a summary. For detailed analysis, apply the filter <code>dns.flags.response == 0</code> to see all queries, then examine the <code>dns.qry.name</code> field in the Packet Details pane.</p>
+
+    <div class="callout connection">
+      <div class="callout-title">🔗 Cross-Module Connection — Week 11 Memory Forensics</div>
+      <p>In Week 11 you used Volatility's <code>netscan</code> plugin to identify active network connections in a memory dump. If <code>netscan</code> showed a connection to <strong>198.51.100.5:443</strong>, you can now search the PCAP for <code>ip.addr == 198.51.100.5</code> to find the corresponding network traffic — and check DNS queries to learn what domain that IP resolved to. This is the <strong>host-to-network correlation loop</strong>.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================
+     SECTION 6 – TCPDUMP FOR COMMAND-LINE CAPTURE
+================================================================ -->
+<section class="section" id="tcpdump">
+  <div class="section__heading"><h2><span class="num">6</span> tcpdump for Command-Line Capture</h2></div>
+  <div class="section__body">
+
+    <p>Wireshark is powerful, but it requires a graphical interface. In many forensic and incident-response scenarios, you need to capture packets on a <strong>headless server</strong>, a <strong>remote system over SSH</strong>, or as part of an <strong>automated script</strong>. That is where <code>tcpdump</code> comes in.</p>
+
+    <h3>6.1 What Is tcpdump?</h3>
+    <p><code>tcpdump</code> is a command-line packet capture and analysis tool available on virtually every Linux and macOS system. It uses the same underlying capture library (libpcap) as Wireshark, and its output files are fully compatible with Wireshark for later analysis.</p>
+
+    <h3>6.2 When to Prefer tcpdump Over Wireshark</h3>
+    <ul>
+      <li><strong>Headless servers:</strong> Production servers rarely have a GUI. Use <code>tcpdump</code> to capture, then transfer the PCAP to your analysis workstation for Wireshark analysis.</li>
+      <li><strong>Remote capture over SSH:</strong> You can run <code>tcpdump</code> on a remote system via SSH and pipe the output to a local file.</li>
+      <li><strong>Scripted/automated capture:</strong> Incident response playbooks often include <code>tcpdump</code> commands for immediate evidence preservation.</li>
+      <li><strong>Resource-constrained environments:</strong> <code>tcpdump</code> uses far less memory and CPU than Wireshark.</li>
+    </ul>
+
+    <h3>6.3 Essential tcpdump Syntax</h3>
+    <div class="accordion">
+      <button class="accordion-btn" aria-expanded="false" aria-controls="tcpdump-cmds">Common tcpdump Commands (click to expand)</button>
+      <div class="accordion-panel" id="tcpdump-cmds" role="region" aria-hidden="true">
+        <div class="accordion-inner">
+          <div class="table-wrap"><table>
+            <thead><tr><th>Purpose</th><th>Command</th></tr></thead>
+            <tbody>
+              <tr><td>Capture on interface eth0, write to file</td><td><code>tcpdump -i eth0 -w capture.pcap</code></td></tr>
+              <tr><td>Read a saved PCAP file</td><td><code>tcpdump -r capture.pcap</code></td></tr>
+              <tr><td>Capture traffic to/from a specific host</td><td><code>tcpdump -i eth0 host 192.168.1.105 -w host105.pcap</code></td></tr>
+              <tr><td>Capture only port 80 traffic</td><td><code>tcpdump -i eth0 port 80 -w http.pcap</code></td></tr>
+              <tr><td>Capture with verbose output (more detail)</td><td><code>tcpdump -i eth0 -v</code></td></tr>
+              <tr><td>Capture first 100 packets only</td><td><code>tcpdump -i eth0 -c 100 -w sample.pcap</code></td></tr>
+              <tr><td>Show ASCII content of packets</td><td><code>tcpdump -r capture.pcap -A</code></td></tr>
+              <tr><td>Show hex and ASCII</td><td><code>tcpdump -r capture.pcap -X</code></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+
+    <h3>6.4 Reading tcpdump Output</h3>
+    <p>When you read a PCAP with <code>tcpdump -r</code>, each line represents one packet:</p>
+    <pre><code>14:22:07.456123 IP 192.168.1.105.43210 > 203.0.113.42.80: Flags [S], seq 1234567, win 65535, length 0
+│               │   │                       │              │          │           │           │
+│               │   │                       │              │          │           │           └─ Payload length
+│               │   │                       │              │          │           └─ Window size
+│               │   │                       │              │          └─ Sequence number
+│               │   │                       │              └─ TCP flags: [S]=SYN [.]=ACK [P.]=PSH+ACK [F.]=FIN+ACK [R]=RST
+│               │   │                       └─ Destination IP.port
+│               │   └─ Source IP.port
+│               └─ Protocol (IP)
+└─ Timestamp</code></pre>
+
+    <div class="callout tip">
+      <div class="callout-title">💡 Typical Forensic Workflow</div>
+      <p><strong>Capture with tcpdump → Analyze with Wireshark.</strong> Use <code>tcpdump -i eth0 -w evidence.pcap</code> on the target system to create the capture file, hash it immediately (<code>sha256sum evidence.pcap</code>), then transfer it to your forensic workstation and open it in Wireshark for detailed analysis.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================
+     SECTION 7 – IDENTIFYING SUSPICIOUS TRAFFIC PATTERNS
+================================================================ -->
+<section class="section" id="suspicious">
+  <div class="section__heading"><h2><span class="num">7</span> Identifying Suspicious Traffic Patterns</h2></div>
+  <div class="section__body">
+
+    <p>Now that you can navigate Wireshark, apply filters, follow streams, and extract artifacts, the critical forensic skill is <strong>knowing what to look for</strong>. This section teaches you to distinguish normal network behavior from indicators of malicious activity.</p>
+
+    <h3>7.1 Baseline: What Does "Normal" Look Like?</h3>
+    <p>Before you can identify the abnormal, you need a mental model of typical corporate network traffic:</p>
+    <ul>
+      <li><strong>DNS queries:</strong> Frequent, short, to internal DNS servers or well-known resolvers (8.8.8.8, 1.1.1.1)</li>
+      <li><strong>HTTP/HTTPS:</strong> Web browsing generates bursts of requests to many different domains</li>
+      <li><strong>DHCP:</strong> Periodic lease renewals from client machines</li>
+      <li><strong>ARP:</strong> Broadcast requests for MAC address resolution on the local subnet</li>
+      <li><strong>SMB:</strong> File share access typically between workstations and file servers — <em>not between workstations</em></li>
+      <li><strong>Traffic volume:</strong> Relatively symmetric for browsing; asymmetric (more download than upload) is normal for most users</li>
+    </ul>
+
+    <div class="callout info">
+      <div class="callout-title">ℹ️ Key Principle</div>
+      <p>Anomaly detection requires a baseline. In a real investigation, you would compare the suspect traffic against known-normal patterns for that specific network. In our lab exercises, we provide the context — but in practice, always ask: <em>"What is normal for this environment?"</em></p>
+    </div>
+
+    <!-- Sub-sections as tabs for readability -->
+    <div class="tabs" role="tablist" aria-label="Suspicious traffic categories">
+      <div class="tab-list">
+        <button class="tab-btn" role="tab" aria-selected="true" aria-controls="tab-recon" id="btn-recon">Reconnaissance</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-c2" id="btn-c2">C2 / Beaconing</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-exfil" id="btn-exfil">Exfiltration</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-dns-tunnel" id="btn-dns-tunnel">DNS Tunneling</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-lateral" id="btn-lateral">Lateral Movement</button>
+      </div>
+
+      <!-- Reconnaissance -->
+      <div class="tab-panel" role="tabpanel" id="tab-recon" aria-labelledby="btn-recon">
+        <h4>7.2 Reconnaissance and Scanning Indicators</h4>
+        <p>Attackers typically begin by mapping the network. These patterns reveal scanning activity:</p>
+        <ul>
+          <li><strong>SYN scan (port scan):</strong> Many SYN packets from one source to many destination ports, with no completed handshakes. The attacker sends SYN, receives SYN-ACK (port open) or RST (port closed), but never sends the final ACK.</li>
+          <li><strong>Wireshark filter:</strong> <code>ip.src == [attacker IP] &amp;&amp; tcp.flags.syn == 1 &amp;&amp; tcp.flags.ack == 0</code></li>
+          <li><strong>Visual indicator:</strong> In the Packet List, you see sequential destination ports (21, 22, 23, 25, 80, 443…) from the same source IP — often with RST responses.</li>
+          <li><strong>ICMP sweep:</strong> Many ICMP Echo Request packets to sequential IP addresses — the attacker is discovering which hosts are alive.</li>
+          <li><strong>Wireshark filter:</strong> <code>icmp.type == 8 &amp;&amp; ip.src == [attacker IP]</code></li>
+          <li><strong>Nmap signatures:</strong> Nmap's default SYN scan produces a distinctive pattern of SYN packets with specific TCP window sizes and options. Experienced analysts can recognize Nmap traffic by these characteristics.</li>
+        </ul>
+      </div>
+
+      <!-- C2 / Beaconing -->
+      <div class="tab-panel" role="tabpanel" id="tab-c2" aria-labelledby="btn-c2" hidden>
+        <h4>7.3 Command-and-Control (C2) Indicators</h4>
+        <p>After gaining access, malware often establishes a <strong>C2 channel</strong> — a persistent communication link back to the attacker's infrastructure. Key indicators:</p>
+        <ul>
+          <li><strong>Beaconing:</strong> Regular-interval outbound connections (e.g., every 60 or 90 seconds) to the same external IP or domain. This periodic "check-in" is the hallmark of C2 malware.</li>
+          <li><strong>How to detect:</strong> Use <em>Statistics → I/O Graphs</em> to visualize traffic over time. Beaconing appears as evenly spaced spikes. Filter for the suspect connection and examine timestamps.</li>
+          <li><strong>HTTP-based C2:</strong> Regular POST requests to suspicious URLs with encoded or encrypted payloads in the body. The URLs may look like legitimate paths (<code>/api/update</code>, <code>/status</code>) but carry encoded commands.</li>
+          <li><strong>Unusual outbound connections:</strong> Internal hosts connecting to external IPs on non-standard ports (e.g., port 8443, 4444, 1337) or to IP addresses with no associated DNS name.</li>
+        </ul>
+        <div class="callout connection">
+          <div class="callout-title">🔗 Cross-Module Connection — Week 11 Memory Forensics</div>
+          <p>If Volatility's <code>netscan</code> showed a suspicious ESTABLISHED connection from a process like <code>svchost.exe</code> to an external IP, you can now search for that same IP in the PCAP. Finding matching traffic in both memory and network evidence <strong>corroborates</strong> the finding and strengthens your case.</p>
+        </div>
+      </div>
+
+      <!-- Exfiltration -->
+      <div class="tab-panel" role="tabpanel" id="tab-exfil" aria-labelledby="btn-exfil" hidden>
+        <h4>7.4 Data Exfiltration Indicators</h4>
+        <p>Exfiltration — the unauthorized transfer of data out of the network — is often the attacker's ultimate goal. Look for:</p>
+        <ul>
+          <li><strong>Large outbound transfers:</strong> Use <em>Statistics → Conversations</em> and sort by bytes. An internal host sending gigabytes to an external IP is a red flag, especially outside business hours.</li>
+          <li><strong>Asymmetric traffic:</strong> Normal browsing downloads more than it uploads. A workstation with more <em>outbound</em> data than inbound is suspicious.</li>
+          <li><strong>Encrypted traffic to non-standard ports:</strong> TLS on port 443 is normal. TLS on port 8443 or an unrecognized port to an unknown IP warrants investigation.</li>
+          <li><strong>FTP/SCP uploads from internal systems:</strong> Outbound FTP <code>STOR</code> commands or SCP transfers to external hosts — especially from servers that should not be initiating outbound file transfers.</li>
+          <li><strong>HTTP POST with large bodies:</strong> Filter with <code>http.request.method == "POST" &amp;&amp; http.content_length > 100000</code> to find large data submissions.</li>
+        </ul>
+      </div>
+
+      <!-- DNS Tunneling -->
+      <div class="tab-panel" role="tabpanel" id="tab-dns-tunnel" aria-labelledby="btn-dns-tunnel" hidden>
+        <h4>7.5 DNS Tunneling Indicators</h4>
+        <p>DNS tunneling encodes data within DNS queries and responses, using a legitimate protocol on a legitimate port (53) to bypass firewalls. Indicators include:</p>
+        <ul>
+          <li><strong>Unusually long subdomain strings:</strong> Normal DNS queries are short (<code>www.example.com</code>). Tunneling queries look like <code>aGVsbG8gd29ybGQ.data.evil.com</code> — the subdomain contains Base64 or hex-encoded data.</li>
+          <li><strong>High volume of TXT record requests:</strong> TXT records can carry arbitrary text data. A host making hundreds of TXT queries to the same domain is suspicious. Filter: <code>dns.qry.type == 16</code></li>
+          <li><strong>High query volume to a single domain:</strong> Normal DNS queries are distributed across many domains. Hundreds of queries to one domain in a short period suggests tunneling.</li>
+          <li><strong>Large DNS responses:</strong> Normal DNS responses are small (a few hundred bytes). Tunneling responses carrying exfiltrated data can be much larger.</li>
+        </ul>
+        <div class="callout examiner">
+          <div class="callout-title">🔬 Examiner Note</div>
+          <p>Attackers hide in plain sight. DNS tunneling uses a legitimate protocol on a legitimate port — but the <em>content</em> is anything but normal. Always examine DNS query <em>names</em> and response <em>sizes</em>, not just the fact that DNS traffic exists.</p>
+        </div>
+      </div>
+
+      <!-- Lateral Movement -->
+      <div class="tab-panel" role="tabpanel" id="tab-lateral" aria-labelledby="btn-lateral" hidden>
+        <h4>7.6 Lateral Movement Indicators</h4>
+        <p>After compromising one system, attackers move laterally through the network to reach higher-value targets. Network indicators include:</p>
+        <ul>
+          <li><strong>SMB traffic between workstations:</strong> In most environments, SMB (port 445) traffic flows between workstations and file servers. SMB traffic <em>between two workstations</em> is unusual and may indicate file copying, credential harvesting, or remote execution.</li>
+          <li><strong>Wireshark filter:</strong> <code>tcp.port == 445 &amp;&amp; ip.src == [workstation A] &amp;&amp; ip.dst == [workstation B]</code></li>
+          <li><strong>RDP between internal hosts:</strong> Remote Desktop (port 3389) connections between internal systems — especially from a compromised workstation to a server — suggest lateral movement.</li>
+          <li><strong>Wireshark filter:</strong> <code>tcp.port == 3389 &amp;&amp; ip.src == 192.168.1.0/24 &amp;&amp; ip.dst == 192.168.1.0/24</code></li>
+          <li><strong>PsExec-style remote execution:</strong> PsExec creates an SMB connection, copies a service binary, and starts a remote service. Look for SMB traffic followed by service creation (which would also appear in Windows Event Logs as Event ID 7045).</li>
+          <li><strong>Pass-the-hash / pass-the-ticket:</strong> These attacks use stolen credential hashes or Kerberos tickets to authenticate without knowing the plaintext password. Network indicators include NTLM authentication traffic and Kerberos ticket requests from unexpected hosts.</li>
+        </ul>
+        <div class="callout connection">
+          <div class="callout-title">🔗 Cross-Module Connection — Week 8 Windows Event Logs</div>
+          <p>Lateral movement in PCAPs correlates directly with Windows Event Logs: an RDP connection (port 3389 in the PCAP) should produce Event ID <strong>4624 Logon Type 10</strong> on the destination system. A PsExec execution should produce Event ID <strong>7045</strong> (service installed). Correlating network evidence with host logs strengthens both.</p>
+        </div>
+      </div>
+    </div><!-- end suspicious traffic tabs -->
+
+    <h3>7.7 Putting It Together: The Acme Corp PCAP</h3>
+    <p>Returning to our scenario, here is what a systematic analysis of the Acme Corp PCAP might reveal:</p>
+    <div class="accordion">
+      <button class="accordion-btn" aria-expanded="false" aria-controls="acme-analysis">Acme Corp Analysis Summary (click to expand)</button>
+      <div class="accordion-panel" id="acme-analysis" role="region" aria-hidden="true">
+        <div class="accordion-inner">
+          <ol>
+            <li><strong>Protocol Hierarchy</strong> shows HTTP, DNS, TLS, FTP, and SMB traffic — FTP is unexpected on a web server segment.</li>
+            <li><strong>Conversations</strong> sorted by bytes reveals a large outbound transfer from 192.168.1.105 (web server) to 198.51.100.5 (external IP) over FTP.</li>
+            <li><strong>Display filter</strong> <code>ip.addr == 203.0.113.42</code> isolates the attacker's traffic: a SYN scan at 2:15 AM, followed by HTTP requests starting at 2:22 AM.</li>
+            <li><strong>Following the HTTP stream</strong> reveals SQL injection payloads in GET parameters and a successful webshell upload via POST.</li>
+            <li><strong>DNS queries</strong> from the web server show a lookup for <code>data.evil-c2.com</code> at 2:35 AM — a domain not in any legitimate business records.</li>
+            <li><strong>Beaconing pattern:</strong> The web server sends small HTTPS requests to 198.51.100.5 every 60 seconds starting at 2:40 AM — classic C2 behavior.</li>
+            <li><strong>FTP export:</strong> At 2:47 AM (the time the SOC flagged), an FTP <code>STOR</code> command transfers a 23 MB file named <code>customer_db.sql</code> to 198.51.100.5 — data exfiltration confirmed.</li>
+          </ol>
+          <p>This is the story the PCAP tells. In Module 12.3 you will examine the Apache access logs that show the same attack from the web server's perspective, and in Module 12.4 you will correlate all evidence sources.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================
+     SECTION 8 – KNOWLEDGE CHECK
+================================================================ -->
+<section class="section" id="knowledge-check">
+  <div class="section__heading"><h2><span class="num">8</span> Knowledge Check</h2></div>
+  <div class="section__body">
+
+    <p>Test your understanding of the concepts covered in this module. These questions are <strong>ungraded</strong> — use them to identify areas that need review before Lab 11 and Quiz 3.</p>
+
+    <!-- Question 1 -->
+    <div class="kc-question" id="kc1">
+      <h4>Question 1</h4>
+      <p>Which Wireshark display filter would show <strong>only HTTP POST requests</strong> originating from the IP address <strong>203.0.113.42</strong>?</p>
+      <div class="kc-options">
+        <label><input type="radio" name="kc1" value="a"> <code>http.request.method == "POST" || ip.src == 203.0.113.42</code></label>
+        <label><input type="radio" name="kc1" value="b"> <code>http.request.method == "POST" &amp;&amp; ip.src == 203.0.113.42</code></label>
+        <label><input type="radio" name="kc1" value="c"> <code>tcp.port == 80 &amp;&amp; ip.addr == 203.0.113.42</code></label>
+        <label><input type="radio" name="kc1" value="d"> <code>http.post &amp;&amp; ip.src == 203.0.113.42</code></label>
+      </div>
+      <button class="kc-submit" data-question="kc1" data-correct="b">Check Answer</button>
+      <div class="kc-feedback" id="kc1-correct" role="status">
+        <strong>✅ Correct!</strong> The <code>&amp;&amp;</code> (AND) operator ensures <em>both</em> conditions must be true: the request must be an HTTP POST <em>and</em> the source IP must match. Option A uses <code>||</code> (OR), which would show all POST requests from any IP plus all traffic from 203.0.113.42. Option C filters port 80 traffic but does not specifically isolate POST requests. Option D uses invalid syntax — <code>http.post</code> is not a valid Wireshark filter field.
+      </div>
+      <div class="kc-feedback" id="kc1-incorrect" role="status">
+        <strong>❌ Not quite.</strong> The correct answer is <strong>B</strong>: <code>http.request.method == "POST" &amp;&amp; ip.src == 203.0.113.42</code>. The <code>&amp;&amp;</code> (AND) operator ensures both conditions must be true simultaneously. Option A's <code>||</code> (OR) would be too broad. Option C doesn't filter by HTTP method. Option D uses invalid syntax.
+      </div>
+    </div>
+
+    <!-- Question 2 -->
+    <div class="kc-question" id="kc2">
+      <h4>Question 2</h4>
+      <p>You follow a TCP stream in Wireshark and see the following exchange:</p>
+      <pre><code>USER admin
+331 Password required for admin
+PASS S3cur3P@ss!
+230 User admin logged in</code></pre>
+      <p>What protocol is this, and what is the forensic significance?</p>
+      <div class="kc-options">
+        <label><input type="radio" name="kc2" value="a"> SSH — credentials are encrypted but the session metadata is visible</label>
+        <label><input type="radio" name="kc2" value="b"> HTTP Basic Authentication — credentials are Base64-encoded in the header</label>
+        <label><input type="radio" name="kc2" value="c"> FTP — credentials are transmitted in cleartext, providing the attacker's username and password</label>
+        <label><input type="radio" name="kc2" value="d"> Telnet — the entire session including keystrokes is visible</label>
+      </div>
+      <button class="kc-submit" data-question="kc2" data-correct="c">Check Answer</button>
+      <div class="kc-feedback" id="kc2-correct" role="status">
+        <strong>✅ Correct!</strong> The <code>USER</code> and <code>PASS</code> commands followed by numeric response codes (331, 230) are the signature of the <strong>FTP</strong> protocol. FTP transmits credentials in complete cleartext — no encoding, no encryption. This is a critical forensic finding: you now have the exact username (<code>admin</code>) and password (<code>S3cur3P@ss!</code>) the attacker used. This credential may be reused elsewhere in the environment.
+      </div>
+      <div class="kc-feedback" id="kc2-incorrect" role="status">
+        <strong>❌ Not quite.</strong> The correct answer is <strong>C — FTP</strong>. The <code>USER</code>/<code>PASS</code> commands and numeric response codes (331 = password required, 230 = login successful) are characteristic of the FTP protocol. Unlike SSH (encrypted) or HTTP Basic Auth (Base64-encoded), FTP transmits credentials in complete cleartext. This gives the examiner the exact username and password used.
+      </div>
+    </div>
+
+    <!-- Question 3 -->
+    <div class="kc-question" id="kc3">
+      <h4>Question 3</h4>
+      <p>An internal workstation (192.168.1.50) sends a small HTTPS request to the external IP 198.51.100.5 every <strong>90 seconds</strong>, around the clock, including weekends and overnight. What does this pattern most likely indicate, and what would be your next investigative step?</p>
+      <div class="kc-options">
+        <label><input type="radio" name="kc3" value="a"> Normal software update checks — no action needed</label>
+        <label><input type="radio" name="kc3" value="b"> DNS tunneling — examine DNS TXT record queries for encoded data</label>
+        <label><input type="radio" name="kc3" value="c"> C2 beaconing — correlate with memory forensics (Volatility netscan) to identify the responsible process</label>
+        <label><input type="radio" name="kc3" value="d"> Port scanning — apply the SYN-only filter to identify probed ports</label>
+      </div>
+      <button class="kc-submit" data-question="kc3" data-correct="c">Check Answer</button>
+      <div class="kc-feedback" id="kc3-correct" role="status">
+        <strong>✅ Correct!</strong> Regular-interval outbound connections (every 90 seconds, 24/7) to the same external IP are the hallmark of <strong>C2 (Command-and-Control) beaconing</strong>. The malware "checks in" with its controller at fixed intervals. Your next step should be to <strong>correlate with memory forensics</strong>: use Volatility's <code>netscan</code> plugin on a memory dump of the workstation to identify which process is making these connections. This closes the host-to-network correlation loop from Week 11. You would also check threat intelligence databases for the external IP and examine the TLS certificate for the destination.
+      </div>
+      <div class="kc-feedback" id="kc3-incorrect" role="status">
+        <strong>❌ Not quite.</strong> The correct answer is <strong>C — C2 beaconing</strong>. The key indicators are: (1) fixed interval (every 90 seconds), (2) same destination IP, (3) continuous operation including off-hours. Software updates (A) don't occur every 90 seconds. DNS tunneling (B) uses DNS, not HTTPS. Port scanning (D) involves many destination ports, not repeated connections to one IP. The best next step is correlating with memory forensics to identify the responsible process on the host.
+      </div>
+    </div>
+
+    <!-- Closing -->
+    <div class="callout info" style="margin-top:24px;">
+      <div class="callout-title">📋 What's Next</div>
+      <p>You now have the core Wireshark skills needed for Lab 11: display filters, stream reconstruction, artifact extraction, and suspicious traffic identification. In <strong>Module 12.3</strong> you will turn to the <em>other</em> primary evidence source — web server logs — and learn to identify SQL injection, XSS, directory traversal, and scanner activity. In <strong>Module 12.4</strong> you will tie everything together with firewall logs, IDS alerts, email headers, and cross-source correlation.</p>
+      <p><strong>Lab 11</strong> (Packet Capture Analysis and Web Server Log Investigation) draws primarily on Modules 12.2 and 12.3. Begin working through the lab after completing both modules.</p>
+    </div>
+
+  </div>
+</section>
+
+</main>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+(function(){
+  "use strict";
+
+  /* --- Accordion --- */
+  document.querySelectorAll('.accordion-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var expanded=this.getAttribute('aria-expanded')==='true';
+      this.setAttribute('aria-expanded',String(!expanded));
+      var panel=document.getElementById(this.getAttribute('aria-controls'));
+      if(panel){
+        panel.setAttribute('aria-hidden',String(expanded));
+        if(!expanded){panel.style.maxHeight=panel.scrollHeight+'px';}
+        else{panel.style.maxHeight='0';}
+      }
+    });
+  });
+
+  /* --- Tabs --- */
+  document.querySelectorAll('.tabs').forEach(function(tabGroup){
+    var btns=tabGroup.querySelectorAll('.tab-btn');
+    var panels=tabGroup.querySelectorAll('.tab-panel');
+    btns.forEach(function(btn){
+      btn.addEventListener('click',function(){
+        btns.forEach(function(b){b.setAttribute('aria-selected','false');});
+        panels.forEach(function(p){p.hidden=true;});
+        this.setAttribute('aria-selected','true');
+        var target=document.getElementById(this.getAttribute('aria-controls'));
+        if(target){target.hidden=false;}
+      });
+      btn.addEventListener('keydown',function(e){
+        var idx=Array.from(btns).indexOf(this);
+        var next=-1;
+        if(e.key==='ArrowRight'){next=(idx+1)%btns.length;}
+        else if(e.key==='ArrowLeft'){next=(idx-1+btns.length)%btns.length;}
+        if(next>=0){e.preventDefault();btns[next].focus();btns[next].click();}
+      });
+    });
+  });
+
+  /* --- Reveal buttons --- */
+  document.querySelectorAll('.reveal-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var content=this.nextElementSibling;
+      if(content){
+        var vis=content.classList.toggle('visible');
+        this.setAttribute('aria-expanded',String(vis));
+        this.textContent=vis?'Hide Answer':'Show Model Answer';
+      }
+    });
+  });
+
+  /* --- Copy buttons --- */
+  document.querySelectorAll('.copy-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var text=this.getAttribute('data-copy');
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){
+          btn.textContent='Copied!';
+          setTimeout(function(){btn.textContent='Copy';},1500);
+        });
+      }else{
+        /* Fallback */
+        var ta=document.createElement('textarea');
+        ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+        document.body.appendChild(ta);ta.select();
+        try{document.execCommand('copy');btn.textContent='Copied!';setTimeout(function(){btn.textContent='Copy';},1500);}catch(e){}
+        document.body.removeChild(ta);
+      }
+    });
+  });
+
+  /* --- Knowledge Check --- */
+  document.querySelectorAll('.kc-submit').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var qId=this.getAttribute('data-question');
+      var correct=this.getAttribute('data-correct');
+      var selected=document.querySelector('input[name="'+qId+'"]:checked');
+      /* hide previous feedback */
+      var fbC=document.getElementById(qId+'-correct');
+      var fbI=document.getElementById(qId+'-incorrect');
+      if(fbC)fbC.className='kc-feedback';
+      if(fbI)fbI.className='kc-feedback';
+      if(!selected){
+        /* Create a temporary message */
+        if(fbI){fbI.innerHTML='<strong>⚠️ Please select an answer before checking.</strong>';fbI.className='kc-feedback incorrect';}
+        return;
+      }
+      if(selected.value===correct){
+        if(fbC)fbC.className='kc-feedback correct';
+      }else{
+        if(fbI)fbI.className='kc-feedback incorrect';
+      }
+    });
+  });
+
+})();
+</script>
+
+</body>
+</html>

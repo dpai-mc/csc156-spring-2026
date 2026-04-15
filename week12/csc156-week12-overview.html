@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 12 Overview – Network Forensics | CSC 156</title>
+<style>
+/* ===== CSS RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: 64px; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: #1a1a2e;
+  background: #f5f6fa;
+}
+
+/* ===== SKIP LINK ===== */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 8px;
+  background: #0d47a1;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 0 0 6px 6px;
+  z-index: 9999;
+  font-weight: 600;
+  text-decoration: none;
+}
+.skip-link:focus { top: 0; }
+
+/* ===== STICKY NAV ===== */
+.top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: #0d47a1;
+  box-shadow: 0 2px 6px rgba(0,0,0,.25);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 0 16px;
+  min-height: 52px;
+}
+.top-nav__title {
+  color: #fff;
+  font-weight: 700;
+  font-size: .95rem;
+  margin-right: 24px;
+  white-space: nowrap;
+  padding: 8px 0;
+}
+.top-nav a.nav-link {
+  color: #bbdefb;
+  text-decoration: none;
+  font-size: .85rem;
+  padding: 8px 10px;
+  border-radius: 4px;
+  transition: background .2s, color .2s;
+  white-space: nowrap;
+}
+.top-nav a.nav-link:hover,
+.top-nav a.nav-link:focus {
+  background: rgba(255,255,255,.15);
+  color: #fff;
+  outline: 2px solid #90caf9;
+  outline-offset: -2px;
+}
+
+/* ===== PAGE WRAPPER ===== */
+.page-wrap {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 20px 64px;
+}
+
+/* ===== HEADER ===== */
+.hero {
+  background: linear-gradient(135deg, #0d47a1 0%, #1565c0 50%, #1e88e5 100%);
+  color: #fff;
+  border-radius: 12px;
+  padding: 40px 32px 32px;
+  margin-bottom: 32px;
+}
+.hero__overline {
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  opacity: .85;
+  margin-bottom: 4px;
+}
+.hero h1 {
+  font-size: 1.85rem;
+  line-height: 1.25;
+  margin-bottom: 8px;
+}
+.hero__subtitle {
+  font-size: 1.1rem;
+  opacity: .9;
+  margin-bottom: 16px;
+}
+.hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: .85rem;
+  opacity: .85;
+}
+
+/* ===== SECTION CARDS ===== */
+.section-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  margin-bottom: 28px;
+  overflow: hidden;
+}
+.section-card__heading {
+  background: #e3f2fd;
+  padding: 14px 24px;
+  border-bottom: 3px solid #1565c0;
+}
+.section-card__heading h2 {
+  font-size: 1.2rem;
+  color: #0d47a1;
+}
+.section-card__body {
+  padding: 24px;
+}
+
+/* ===== CALLOUT BOXES ===== */
+.callout {
+  border-left: 5px solid;
+  border-radius: 6px;
+  padding: 16px 20px;
+  margin: 20px 0;
+  font-size: .93rem;
+}
+.callout--alert {
+  border-color: #e65100;
+  background: #fff3e0;
+  color: #bf360c;
+}
+.callout--tip {
+  border-color: #2e7d32;
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+.callout--info {
+  border-color: #1565c0;
+  background: #e3f2fd;
+  color: #0d47a1;
+}
+.callout strong { display: block; margin-bottom: 4px; }
+
+/* ===== LISTS ===== */
+.obj-list, .activity-list, .concept-list {
+  list-style: none;
+  padding: 0;
+}
+.obj-list li, .activity-list li, .concept-list li {
+  padding: 8px 0 8px 28px;
+  position: relative;
+  border-bottom: 1px solid #f0f0f0;
+}
+.obj-list li:last-child, .activity-list li:last-child, .concept-list li:last-child {
+  border-bottom: none;
+}
+.obj-list li::before {
+  content: attr(data-num);
+  position: absolute;
+  left: 0;
+  top: 8px;
+  background: #1565c0;
+  color: #fff;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: .75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.activity-list li::before {
+  content: "📋";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  font-size: 1rem;
+}
+.concept-list li::before {
+  content: "🔑";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  font-size: 1rem;
+}
+
+/* ===== SCHEDULE TABLE ===== */
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .9rem;
+  margin-top: 8px;
+}
+.schedule-table th {
+  background: #0d47a1;
+  color: #fff;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+}
+.schedule-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #e0e0e0;
+  vertical-align: top;
+}
+.schedule-table tr:nth-child(even) td { background: #f8f9fc; }
+.schedule-table .time-col { white-space: nowrap; text-align: center; font-weight: 600; color: #1565c0; }
+
+/* ===== POINTS BADGE ===== */
+.points-badge {
+  display: inline-block;
+  background: #e65100;
+  color: #fff;
+  font-weight: 700;
+  font-size: .82rem;
+  padding: 3px 10px;
+  border-radius: 12px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* ===== LOOKING AHEAD ===== */
+.look-ahead {
+  background: #ede7f6;
+  border-left: 5px solid #5e35b1;
+  border-radius: 6px;
+  padding: 16px 20px;
+  margin-top: 20px;
+  font-size: .93rem;
+  color: #311b92;
+}
+
+/* ===== FOOTER ===== */
+.page-footer {
+  text-align: center;
+  font-size: .8rem;
+  color: #78909c;
+  padding: 24px 16px 32px;
+  border-top: 1px solid #e0e0e0;
+  margin-top: 16px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .hero { padding: 28px 18px 22px; }
+  .hero h1 { font-size: 1.4rem; }
+  .section-card__body { padding: 16px; }
+  .top-nav { padding: 0 8px; }
+  .top-nav a.nav-link { font-size: .78rem; padding: 6px 6px; }
+}
+</style>
+</head>
+<body>
+
+<!-- SKIP LINK -->
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<!-- ===== STICKY NAVIGATION ===== -->
+<nav class="top-nav" aria-label="Page navigation">
+  <span class="top-nav__title">Week 12</span>
+  <a class="nav-link" href="#welcome">Welcome</a>
+  <a class="nav-link" href="#objectives">Objectives</a>
+  <a class="nav-link" href="#activities">Activities</a>
+  <a class="nav-link" href="#concepts">Key Concepts</a>
+  <a class="nav-link" href="#schedule">Schedule</a>
+  <a class="nav-link" href="#ahead">Looking Ahead</a>
+</nav>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main class="page-wrap" id="main-content">
+
+  <!-- HERO HEADER -->
+  <header class="hero" id="welcome">
+    <p class="hero__overline">CSC 156 – Digital Forensics Fundamentals</p>
+    <h1>Week 12: Network Forensics</h1>
+    <p class="hero__subtitle">From Packets to Proof — Analyzing Network Evidence</p>
+    <div class="hero__meta">
+      <span>📅 Week 12 of 17</span>
+      <span>⏱ ~10–12 hours total</span>
+      <span>📊 60 points available</span>
+      <span>🏫 Mendocino College</span>
+    </div>
+  </header>
+
+  <!-- SECTION: WELCOME / INTRODUCTION -->
+  <section class="section-card" aria-labelledby="intro-heading">
+    <div class="section-card__heading"><h2 id="intro-heading">Welcome to Week 12</h2></div>
+    <div class="section-card__body">
+      <p>Welcome to the final major evidence domain before we move into specialized forensics topics. For the past several weeks you have been investigating what happens <strong>on a system</strong> — Windows artifacts, Linux logs, and volatile memory. This week you shift your investigative lens to what happens <strong>between systems</strong>: the network traffic, server logs, and protocol-level indicators that reveal how attackers get in, what they do, and what data they take with them.</p>
+
+      <p>Week 12 integrates packet capture analysis, web server log investigation, firewall and IDS log interpretation, and introductory email header and DNS forensics into a single, fast-paced week. By the end, you will be able to correlate host-based evidence from earlier weeks with network-based evidence — completing the host-to-network investigation loop.</p>
+
+      <div class="callout callout--alert">
+        <strong>⚠️ High-Stakes Week: 60 Points</strong>
+        This week carries two graded assessments worth a combined 60 points — Lab 11 (30 pts) and Quiz 3 (30 pts). Quiz 3 is cumulative, covering Windows Forensics (Weeks 7–8), Linux Forensics (Week 9), Memory Forensics (Week 11), and this week's Network Forensics. Plan your time carefully and start early.
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION: LEARNING OBJECTIVES -->
+  <section class="section-card" id="objectives" aria-labelledby="obj-heading">
+    <div class="section-card__heading"><h2 id="obj-heading">Week 12 Learning Objectives</h2></div>
+    <div class="section-card__body">
+      <p>By the end of this week you should be able to:</p>
+      <ol class="obj-list" role="list">
+        <li data-num="1"><strong>Capture and analyze network packets with Wireshark</strong> — apply display filters, follow TCP streams, and extract transferred objects from PCAP files. <em>(Core network forensics skill)</em></li>
+        <li data-num="2"><strong>Distinguish normal from suspicious network traffic</strong> — recognize reconnaissance scans, command-and-control beaconing, and data exfiltration indicators in packet captures. <em>(Core network forensics skill)</em></li>
+        <li data-num="3"><strong>Analyze web server logs for evidence of compromise</strong> — parse Apache, Nginx, and IIS access and error logs to identify attack signatures. <em>(Core network forensics skill)</em></li>
+        <li data-num="4"><strong>Recognize common web attack indicators in log data</strong> — including SQL injection, directory traversal, cross-site scripting (XSS), and automated scanner signatures. <em>(Core network forensics skill)</em></li>
+        <li data-num="5"><strong>Extract forensic evidence from network and application logs</strong> — including firewall logs, IDS/IPS alerts, and DNS query logs. <em>(Core network forensics skill)</em></li>
+        <li data-num="6"><strong>Interpret email headers and DNS records at an introductory level</strong> — trace an email's routing path and identify forensically relevant DNS record types. <em>(Foundation for Week 16 deep dive)</em></li>
+        <li data-num="7"><strong>Demonstrate readiness for Quiz 3</strong> — synthesize and review concepts from Windows Forensics, Linux Forensics, Memory Forensics, and Network Forensics. <em>(Cumulative assessment preparation)</em></li>
+      </ol>
+
+      <div class="callout callout--info">
+        <strong>ℹ️ CSLO Alignment</strong>
+        This week primarily supports <strong>CSLO 1</strong> (Describe the fundamental concepts of incident response and forensic investigation) and <strong>CSLO 2</strong> (Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data).
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION: REQUIRED ACTIVITIES -->
+  <section class="section-card" id="activities" aria-labelledby="act-heading">
+    <div class="section-card__heading"><h2 id="act-heading">Required Activities This Week</h2></div>
+    <div class="section-card__body">
+      <p>Complete all of the following modules, the lab, and the quiz this week:</p>
+
+      <h3 style="margin:16px 0 8px; font-size:1rem; color:#0d47a1;">Learning Modules</h3>
+      <ul class="activity-list" role="list">
+        <li><strong>Module 12.1</strong> – Networking Foundations and Network Evidence</li>
+        <li><strong>Module 12.2</strong> – Packet Analysis with Wireshark</li>
+        <li><strong>Module 12.3</strong> – Web Server Log Analysis and Web Attack Pattern Recognition</li>
+        <li><strong>Module 12.4</strong> – Beyond Packets: Firewall Logs, IDS Alerts, Email Headers, and DNS Forensics</li>
+        <li><strong>Module 12.5</strong> – Quiz 3 Preparation and Assessment</li>
+      </ul>
+
+      <h3 style="margin:20px 0 8px; font-size:1rem; color:#0d47a1;">Graded Assessments</h3>
+      <ul class="activity-list" role="list">
+        <li><strong>Lab 11:</strong> Packet Capture Analysis and Web Server Log Investigation <span class="points-badge">30 pts</span></li>
+        <li><strong>Quiz 3:</strong> Windows / Linux / Memory / Network Forensics <span class="points-badge">30 pts</span></li>
+      </ul>
+
+      <div class="callout callout--tip">
+        <strong>💡 Reminder</strong>
+        There are no discussion posts or homework assignments this week. Lab 11 and Quiz 3 are your only graded activities. Check Canvas for exact due dates and times.
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION: KEY CONCEPTS -->
+  <section class="section-card" id="concepts" aria-labelledby="conc-heading">
+    <div class="section-card__heading"><h2 id="conc-heading">Key Concepts and Themes</h2></div>
+    <div class="section-card__body">
+      <p>By the end of Week 12, you should be able to explain each of these ideas clearly:</p>
+      <ul class="concept-list" role="list">
+        <li><strong>PCAP as evidence</strong> — A packet capture file is forensic evidence. Hash it, document the chain of custody, and never modify the original.</li>
+        <li><strong>Wireshark display filters</strong> — The examiner's query language for isolating relevant traffic from thousands of packets.</li>
+        <li><strong>TCP stream reconstruction</strong> — Reassembling full conversations (HTTP sessions, FTP transfers, cleartext credentials) from individual packets.</li>
+        <li><strong>Web attack signatures in logs</strong> — Recognizing SQL injection, directory traversal, XSS, and scanner fingerprints in Apache, Nginx, and IIS logs.</li>
+        <li><strong>Suspicious traffic patterns</strong> — Port scanning, C2 beaconing, DNS tunneling, and data exfiltration indicators in network captures.</li>
+        <li><strong>Cross-source correlation</strong> — No single evidence source tells the whole story. Combining host artifacts (memory, event logs) with network evidence (PCAPs, firewall logs) produces a stronger investigation.</li>
+        <li><strong>Email header tracing</strong> — Reading Received headers bottom-to-top to identify an email's true origin (expanded in Week 16).</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- SECTION: SUGGESTED STUDY SCHEDULE -->
+  <section class="section-card" id="schedule" aria-labelledby="sched-heading">
+    <div class="section-card__heading"><h2 id="sched-heading">Suggested Study Schedule</h2></div>
+    <div class="section-card__body">
+      <p>Use the following day-by-day plan to pace yourself through the week. Adjust as needed for your schedule, but aim to begin Quiz 3 review no later than Day 3 if you feel less confident about Weeks 7–11 material.</p>
+
+      <table class="schedule-table" role="table">
+        <thead>
+          <tr>
+            <th scope="col">Day</th>
+            <th scope="col">Recommended Activities</th>
+            <th scope="col">Est. Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="time-col">Day 1</td>
+            <td><strong>Module 12.1</strong> (Networking Foundations) + <strong>Module 12.2</strong> first half (Wireshark Interface, Display Filters)</td>
+            <td class="time-col">2.5–3 hrs</td>
+          </tr>
+          <tr>
+            <td class="time-col">Day 2</td>
+            <td><strong>Module 12.2</strong> complete (TCP Streams, Artifact Extraction, Suspicious Patterns) + <strong>Module 12.3</strong> first half (Web Log Formats, Status Codes)</td>
+            <td class="time-col">2.5–3 hrs</td>
+          </tr>
+          <tr>
+            <td class="time-col">Day 3</td>
+            <td><strong>Module 12.3</strong> complete (Attack Indicators, Correlation) + <strong>Module 12.4</strong> (Firewall Logs, IDS, Email Headers, DNS)</td>
+            <td class="time-col">2.5–3 hrs</td>
+          </tr>
+          <tr>
+            <td class="time-col">Day 4</td>
+            <td>Begin <strong>Lab 11</strong> + Begin <strong>Module 12.5</strong> (Quiz 3 Review)</td>
+            <td class="time-col">3–3.5 hrs</td>
+          </tr>
+          <tr>
+            <td class="time-col">Day 5</td>
+            <td>Complete <strong>Lab 11</strong> + Take <strong>Quiz 3</strong> (Module 12.5)</td>
+            <td class="time-col">3–4 hrs</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td></td>
+            <td style="font-weight:700;">Estimated Weekly Total</td>
+            <td class="time-col" style="font-weight:700;">~13.5–16.5 hrs</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="callout callout--tip">
+        <strong>⏰ Time Management Tip</strong>
+        Modules 12.2 (Wireshark) and 12.3 (Web Server Logs) are the two longest and most hands-on modules — they directly prepare you for Lab 11. Give them your freshest study time. Save Module 12.5 (Quiz Review) for after you have completed the lab, so you can review with practical experience fresh in your mind.
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION: LOOKING AHEAD -->
+  <section class="section-card" id="ahead" aria-labelledby="ahead-heading">
+    <div class="section-card__heading"><h2 id="ahead-heading">Looking Ahead</h2></div>
+    <div class="section-card__body">
+      <p>After this week's network forensics foundation, the course moves into specialized forensics domains:</p>
+      <div class="look-ahead">
+        <ul style="list-style:none; padding:0; margin:0;">
+          <li style="padding:4px 0;">📌 <strong>Week 13</strong> — Malware Forensics: static and dynamic analysis, indicators of compromise. Network C2 indicators from this week connect directly to malware identification.</li>
+          <li style="padding:4px 0;">📌 <strong>Week 14</strong> — Mobile Forensics: Android and iOS data extraction and analysis.</li>
+          <li style="padding:4px 0;">📌 <strong>Week 15</strong> — Cloud and Database Forensics (plus Quiz 4).</li>
+          <li style="padding:4px 0;">📌 <strong>Week 16</strong> — Email Forensics and Anti-Forensics: the email header analysis introduced this week will be expanded in full depth.</li>
+          <li style="padding:4px 0;">📌 <strong>Week 17</strong> — Forensic Report Writing and Final Project presentations.</li>
+        </ul>
+      </div>
+      <p style="margin-top:16px;">The network evidence skills you build this week will serve you throughout the rest of the course — and especially in your Final Project, where you may need to incorporate network artifacts into your investigation report.</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="page-footer">
+  <p>CSC 156 – Digital Forensics Fundamentals | Mendocino College | Computer Science Department</p>
+  <p style="margin-top:4px;">Week 12 Overview Page — Network Forensics</p>
+</footer>
+
+</body>
+</html>

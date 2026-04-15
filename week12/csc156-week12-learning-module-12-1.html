@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 12.1 – Networking Foundations and Network Evidence | CSC 156</title>
+<style>
+/* ============================================================
+   CSC 156 – WEEK 12 TEMPLATE ANCHOR
+   Visual design, palette, typography, callout boxes, navigation,
+   and interactive patterns.  Modules 12.2-12.5 inherit this CSS.
+   ============================================================ */
+
+/* --- Reset & Base --- */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:70px;font-size:16px}
+body{font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.65;color:#1e293b;background:#f8fafc}
+
+/* --- Focus & Accessibility --- */
+*:focus-visible{outline:3px solid #2563eb;outline-offset:2px;border-radius:3px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* --- Sticky Nav --- */
+.top-nav{position:sticky;top:0;z-index:900;background:#0f172a;border-bottom:3px solid #38bdf8;padding:0;display:flex;align-items:center;flex-wrap:wrap}
+.top-nav__brand{color:#38bdf8;font-weight:700;font-size:.95rem;padding:12px 18px;white-space:nowrap;text-decoration:none}
+.top-nav__links{display:flex;flex-wrap:wrap;list-style:none;padding:0 10px;gap:2px}
+.top-nav__links a{color:#e2e8f0;text-decoration:none;font-size:.82rem;padding:10px 11px;display:block;border-radius:4px 4px 0 0;transition:background .2s,color .2s}
+.top-nav__links a:hover,.top-nav__links a:focus-visible{background:#1e293b;color:#38bdf8}
+
+/* --- Layout --- */
+.page-wrap{max-width:960px;margin:0 auto;padding:24px 20px 60px}
+.module-header{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);color:#f0f9ff;border-radius:10px;padding:36px 32px 28px;margin-bottom:30px}
+.module-header h1{font-size:1.65rem;font-weight:700;margin-bottom:6px;line-height:1.3}
+.module-header .subtitle{color:#7dd3fc;font-size:1.05rem;font-weight:400}
+.module-header .meta{display:flex;flex-wrap:wrap;gap:18px;margin-top:16px;font-size:.84rem;color:#bae6fd}
+.module-header .meta span{display:flex;align-items:center;gap:5px}
+
+/* --- Section --- */
+.section{background:#fff;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:24px;overflow:hidden}
+.section__heading{background:#f1f5f9;padding:16px 22px;border-bottom:1px solid #e2e8f0;cursor:default}
+.section__heading h2{font-size:1.18rem;color:#0f172a;display:flex;align-items:center;gap:10px}
+.section__heading h2 .num{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#0f172a;color:#38bdf8;font-size:.82rem;font-weight:700;flex-shrink:0}
+.section__body{padding:22px 24px 26px}
+.section__body p,.section__body li{font-size:.97rem}
+.section__body p+p{margin-top:12px}
+.section__body ul,.section__body ol{margin:10px 0 10px 22px}
+.section__body li+li{margin-top:5px}
+
+/* --- Callout Boxes --- */
+.callout{border-left:4px solid;border-radius:6px;padding:16px 18px;margin:18px 0;font-size:.93rem}
+.callout-title{font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.callout.forensic{background:#f0fdf4;border-color:#22c55e;color:#14532d}
+.callout.forensic .callout-title{color:#15803d}
+.callout.alert{background:#fef2f2;border-color:#ef4444;color:#7f1d1d}
+.callout.alert .callout-title{color:#dc2626}
+.callout.info{background:#eff6ff;border-color:#3b82f6;color:#1e3a5f}
+.callout.info .callout-title{color:#2563eb}
+.callout.connection{background:#faf5ff;border-color:#a855f7;color:#3b0764}
+.callout.connection .callout-title{color:#7c3aed}
+.callout.scenario{background:#fffbeb;border-color:#f59e0b;color:#78350f}
+.callout.scenario .callout-title{color:#d97706}
+
+/* --- Accordion / Toggle --- */
+.accordion{border:1px solid #e2e8f0;border-radius:6px;margin:14px 0;overflow:hidden}
+.accordion+.accordion{margin-top:8px}
+.accordion__btn{width:100%;text-align:left;background:#f8fafc;border:none;padding:14px 18px;font-size:.95rem;font-weight:600;color:#0f172a;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:background .2s}
+.accordion__btn:hover,.accordion__btn:focus-visible{background:#e2e8f0}
+.accordion__btn::after{content:'+';font-size:1.2rem;font-weight:700;color:#64748b;transition:transform .25s}
+.accordion__btn[aria-expanded="true"]::after{content:'−'}
+.accordion__panel{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.accordion__panel__inner{padding:16px 18px;font-size:.93rem;border-top:1px solid #e2e8f0}
+
+/* --- Tabs --- */
+.tabs{margin:16px 0}
+.tab-list{display:flex;flex-wrap:wrap;gap:2px;border-bottom:2px solid #e2e8f0;list-style:none;padding:0}
+.tab-btn{background:none;border:none;padding:10px 18px;font-size:.9rem;font-weight:600;color:#64748b;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:color .2s,border-color .2s}
+.tab-btn:hover{color:#0f172a}
+.tab-btn[aria-selected="true"]{color:#2563eb;border-bottom-color:#2563eb}
+.tab-panel{display:none;padding:18px 4px 8px}
+.tab-panel.active{display:block}
+
+/* --- Tables --- */
+.ref-table{width:100%;border-collapse:collapse;font-size:.88rem;margin:14px 0}
+.ref-table th{background:#0f172a;color:#e0f2fe;padding:10px 12px;text-align:left;font-weight:600;position:sticky;top:62px}
+.ref-table td{padding:9px 12px;border-bottom:1px solid #e2e8f0;vertical-align:top}
+.ref-table tr:nth-child(even){background:#f8fafc}
+.ref-table tr:hover{background:#eff6ff}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:14px 0;border:1px solid #e2e8f0;border-radius:6px}
+
+/* --- Code --- */
+code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:.88rem;color:#b91c1c;font-family:'Cascadia Code','Fira Code','Courier New',monospace}
+pre{background:#0f172a;color:#e2e8f0;padding:16px 18px;border-radius:6px;overflow-x:auto;font-size:.85rem;line-height:1.55;margin:12px 0;white-space:pre}
+pre code{background:none;color:inherit;padding:0}
+
+/* --- Knowledge Check --- */
+.kc-question{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:20px 22px;margin:16px 0}
+.kc-question p.q-stem{font-weight:600;margin-bottom:12px;font-size:.96rem}
+.kc-options{list-style:none;padding:0}
+.kc-options li{margin:6px 0}
+.kc-options label{display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:8px 12px;border-radius:6px;border:2px solid transparent;transition:background .15s,border-color .15s;font-size:.93rem}
+.kc-options label:hover{background:#eff6ff}
+.kc-options input[type="radio"]{margin-top:3px;accent-color:#2563eb}
+.kc-feedback{display:none;margin-top:12px;padding:14px 16px;border-radius:6px;font-size:.91rem;line-height:1.55}
+.kc-feedback.correct{background:#f0fdf4;border:1px solid #86efac;color:#14532d}
+.kc-feedback.incorrect{background:#fef2f2;border:1px solid #fca5a5;color:#7f1d1d}
+.kc-submit{margin-top:12px;padding:9px 22px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:.9rem;font-weight:600;cursor:pointer;transition:background .2s}
+.kc-submit:hover,.kc-submit:focus-visible{background:#1d4ed8}
+.kc-submit:disabled{background:#94a3b8;cursor:not-allowed}
+
+/* --- Evidence Ranking --- */
+.evidence-rank{counter-reset:rank;list-style:none;padding:0;margin:14px 0}
+.evidence-rank li{counter-increment:rank;display:flex;align-items:flex-start;gap:14px;padding:14px 16px;border-left:4px solid #38bdf8;margin-bottom:8px;background:#f8fafc;border-radius:0 6px 6px 0}
+.evidence-rank li::before{content:counter(rank);display:flex;align-items:center;justify-content:center;min-width:28px;height:28px;background:#0f172a;color:#38bdf8;border-radius:50%;font-size:.82rem;font-weight:700;flex-shrink:0}
+
+/* --- OSI Diagram --- */
+.osi-grid{display:grid;gap:0;margin:14px 0;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden}
+.osi-row{display:grid;grid-template-columns:50px 1fr 1fr;border-bottom:1px solid #e2e8f0;font-size:.88rem}
+.osi-row:last-child{border-bottom:none}
+.osi-row.header{background:#0f172a;color:#e0f2fe;font-weight:700}
+.osi-num{display:flex;align-items:center;justify-content:center;font-weight:700;background:#f1f5f9;border-right:1px solid #e2e8f0}
+.osi-row.header .osi-num{background:#0f172a;color:#38bdf8}
+.osi-name{padding:10px 12px;border-right:1px solid #e2e8f0}
+.osi-forensic{padding:10px 12px}
+.osi-highlight{background:#eff6ff}
+
+/* --- Footer --- */
+.page-footer{text-align:center;padding:28px 16px;font-size:.82rem;color:#64748b;border-top:1px solid #e2e8f0;margin-top:40px}
+
+/* --- Responsive --- */
+@media(max-width:640px){
+  .module-header{padding:24px 18px 20px}
+  .module-header h1{font-size:1.3rem}
+  .section__body{padding:16px 16px 20px}
+  .top-nav__links a{font-size:.76rem;padding:8px 7px}
+  .osi-row{grid-template-columns:36px 1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ======== STICKY NAVIGATION ======== -->
+<nav class="top-nav" aria-label="Module navigation">
+  <a href="#top" class="top-nav__brand" aria-label="Back to top">CSC 156 — Module 12.1</a>
+  <ul class="top-nav__links" role="list">
+    <li><a href="#scenario">Scenario</a></li>
+    <li><a href="#osi">OSI Model</a></li>
+    <li><a href="#tcpip">TCP/IP</a></li>
+    <li><a href="#ports">Ports &amp; IPs</a></li>
+    <li><a href="#evidence-types">Evidence Types</a></li>
+    <li><a href="#capture">Capture &amp; Integrity</a></li>
+    <li><a href="#knowledge-check">Knowledge Check</a></li>
+  </ul>
+</nav>
+
+<main class="page-wrap" id="top">
+
+<!-- ======== MODULE HEADER ======== -->
+<header class="module-header">
+  <h1>Module 12.1 – Networking Foundations and Network Evidence</h1>
+  <p class="subtitle">Protocols, Capture, and Integrity</p>
+  <div class="meta">
+    <span>📅 Week 12 of 17</span>
+    <span>⏱ Est. 1.5–2 hrs</span>
+    <span>📚 CSC 156 – Digital Forensics Fundamentals</span>
+  </div>
+  <div class="meta" style="margin-top:8px;">
+    <span>🎯 CSLO 1 &amp; CSLO 2</span>
+    <span>🏫 Mendocino College</span>
+  </div>
+</header>
+
+<!-- ================================================================
+     SECTION 1 – WEEK-LONG INVESTIGATION SCENARIO
+     ================================================================ -->
+<section class="section" id="scenario">
+  <div class="section__heading"><h2><span class="num">1</span> Week-Long Investigation Scenario — Acme Corp SOC</h2></div>
+  <div class="section__body">
+
+    <div class="callout scenario">
+      <div class="callout-title">🔎 Scenario: Acme Corp — SOC Alert #4471</div>
+      <p>You are a forensic analyst on the Security Operations Center (SOC) team at <strong>Acme Corp</strong>, a mid-sized manufacturing company. At <strong>02:14 UTC on Monday</strong>, the IDS flagged a burst of outbound traffic from the internal web server <code>10.10.50.20</code> to an external IP address <code>203.0.113.42</code>. The SIEM correlated this with:</p>
+      <ul style="margin:10px 0 10px 22px;">
+        <li>Unusual <code>POST</code> requests in the Apache access log with SQL injection signatures.</li>
+        <li>A spike in DNS <code>TXT</code> record queries to a domain registered only 48 hours earlier.</li>
+        <li>A new outbound connection on port <strong>8443</strong> that does not match any known application.</li>
+      </ul>
+      <p>Your incident commander has authorized a full network forensic investigation. You have been handed:</p>
+      <ul style="margin:10px 0 10px 22px;">
+        <li>A PCAP file captured by the network TAP between the DMZ and the firewall.</li>
+        <li>Apache access and error logs from <code>10.10.50.20</code>.</li>
+        <li>Firewall logs (iptables) for the incident window.</li>
+        <li>DNS query logs from the internal resolver.</li>
+      </ul>
+      <p><strong>Your mission this week:</strong> Analyze these evidence sources to reconstruct the full attack timeline — from initial exploitation through command-and-control to data exfiltration — and prepare your findings for the incident report.</p>
+    </div>
+
+    <div class="callout connection">
+      <div class="callout-title">🔗 Cross-Module Connection</div>
+      <p>This scenario spans <strong>all five modules</strong> in Week 12. Module 12.1 gives you the networking foundations and evidence-handling framework. Modules 12.2–12.4 walk through the PCAP, web logs, and correlated evidence. Module 12.5 prepares you for Quiz 3.</p>
+    </div>
+
+    <div class="callout info">
+      <div class="callout-title">📌 Where Week 12 Fits</div>
+      <p>In Weeks 7–9 you investigated <em>what happened on a host</em> (disk, registry, logs). In Week 11 you examined <em>volatile memory</em> — including network connections found with Volatility's <code>netscan</code> plugin. This week you shift to <strong>network-layer evidence</strong>: the packets, logs, and protocol artifacts that show what happened <em>between</em> systems. By the end of Week 12 you will be able to correlate host-based and network-based evidence into a unified timeline.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     SECTION 2 – OSI MODEL FOR FORENSIC EXAMINERS
+     ================================================================ -->
+<section class="section" id="osi">
+  <div class="section__heading"><h2><span class="num">2</span> OSI Model for Forensic Examiners</h2></div>
+  <div class="section__body">
+    <p>The Open Systems Interconnection (OSI) model is a seven-layer framework that describes how data moves from an application on one machine to an application on another. As a forensic examiner you do not need to memorize every protocol at every layer, but you <strong>do</strong> need to know which layers produce evidence you can analyze and what that evidence looks like.</p>
+
+    <div class="osi-grid" role="table" aria-label="OSI model with forensic annotations">
+      <div class="osi-row header" role="row">
+        <div class="osi-num" role="columnheader">#</div>
+        <div class="osi-name" role="columnheader">Layer</div>
+        <div class="osi-forensic" role="columnheader">Forensic Relevance</div>
+      </div>
+      <div class="osi-row" role="row">
+        <div class="osi-num" role="cell">7</div>
+        <div class="osi-name" role="cell"><strong>Application</strong><br><small>HTTP, DNS, SMTP, FTP</small></div>
+        <div class="osi-forensic osi-highlight" role="cell">🔍 <strong>High.</strong> Web requests, email headers, DNS queries — the richest forensic content. Web server logs live here.</div>
+      </div>
+      <div class="osi-row" role="row">
+        <div class="osi-num" role="cell">6</div>
+        <div class="osi-name" role="cell"><strong>Presentation</strong><br><small>TLS/SSL, encoding</small></div>
+        <div class="osi-forensic" role="cell">Encryption (TLS) can limit visibility. Examine TLS handshake metadata (SNI, certificate info) even when payload is encrypted.</div>
+      </div>
+      <div class="osi-row" role="row">
+        <div class="osi-num" role="cell">5</div>
+        <div class="osi-name" role="cell"><strong>Session</strong><br><small>Session mgmt</small></div>
+        <div class="osi-forensic" role="cell">Session tokens, SMB sessions, RDP sessions. Useful for tracking lateral movement.</div>
+      </div>
+      <div class="osi-row" role="row">
+        <div class="osi-num" role="cell">4</div>
+        <div class="osi-name" role="cell"><strong>Transport</strong><br><small>TCP, UDP</small></div>
+        <div class="osi-forensic osi-highlight" role="cell">🔍 <strong>High.</strong> TCP flags reveal connection state (SYN scans, RST floods). Port numbers identify services. Sequence numbers enable stream reconstruction.</div>
+      </div>
+      <div class="osi-row" role="row">
+        <div class="osi-num" role="cell">3</div>
+        <div class="osi-name" role="cell"><strong>Network</strong><br><small>IP (v4/v6), ICMP</small></div>
+        <div class="osi-forensic osi-highlight" role="cell">🔍 <strong>High.</strong> Source/destination IP addresses — essential for attribution. TTL values can indicate OS or hop count. GeoIP mapping starts here.</div>
+      </div>
+      <div class="osi-row" role="row">
+        <div class="osi-num" role="cell">2</div>
+        <div class="osi-name" role="cell"><strong>Data Link</strong><br><small>Ethernet, Wi-Fi</small></div>
+        <div class="osi-forensic" role="cell">MAC addresses can identify specific NICs. ARP tables map IPs to MACs. Useful for LAN-level attribution.</div>
+      </div>
+      <div class="osi-row" role="row">
+        <div class="osi-num" role="cell">1</div>
+        <div class="osi-name" role="cell"><strong>Physical</strong><br><small>Cables, signals</small></div>
+        <div class="osi-forensic" role="cell">Where you place your TAP or SPAN port matters. Physical access = capture capability.</div>
+      </div>
+    </div>
+
+    <div class="callout forensic">
+      <div class="callout-title">🧪 Forensic Examiner Note</div>
+      <p>For network forensics, your primary evidence lives at <strong>Layers 3, 4, and 7</strong> — IP addresses, TCP/UDP ports, and application-layer content (HTTP requests, DNS queries, email headers). Keep this mental model as you analyze PCAPs and logs throughout Week 12.</p>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion__btn" aria-expanded="false" aria-controls="osi-tcpip-map">OSI ↔ TCP/IP Model Mapping</button>
+      <div class="accordion__panel" id="osi-tcpip-map" role="region">
+        <div class="accordion__panel__inner">
+          <p>In practice, most network forensics references use the <strong>four-layer TCP/IP model</strong> rather than the seven-layer OSI model. Here is how they map:</p>
+          <div class="table-wrap">
+            <table class="ref-table" aria-label="OSI to TCP/IP mapping">
+              <thead><tr><th scope="col">TCP/IP Layer</th><th scope="col">OSI Layers</th><th scope="col">Key Protocols</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Application</strong></td><td>7, 6, 5</td><td>HTTP, DNS, SMTP, FTP, SSH, TLS</td></tr>
+                <tr><td><strong>Transport</strong></td><td>4</td><td>TCP, UDP</td></tr>
+                <tr><td><strong>Internet</strong></td><td>3</td><td>IPv4, IPv6, ICMP</td></tr>
+                <tr><td><strong>Network Access</strong></td><td>2, 1</td><td>Ethernet, Wi-Fi, ARP</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Both models describe the same reality. The OSI model is useful for precise discussion; the TCP/IP model reflects how protocols are actually implemented. You will encounter both in certification exams (CHFI, GCFE, GCFA).</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion__btn" aria-expanded="false" aria-controls="osi-encap">Encapsulation: How Data Becomes Packets Becomes Frames</button>
+      <div class="accordion__panel" id="osi-encap" role="region">
+        <div class="accordion__panel__inner">
+          <p>When you type a URL in a browser, the HTTP request (Layer 7 data) is wrapped in a TCP segment (Layer 4), then in an IP packet (Layer 3), then in an Ethernet frame (Layer 2). Each layer adds a <strong>header</strong> containing metadata the forensic examiner can analyze.</p>
+<pre><code>Application Data  →  [HTTP GET /index.html]
+       ↓
+TCP Segment       →  [TCP Hdr | HTTP Data]
+       ↓
+IP Packet         →  [IP Hdr | TCP Segment]
+       ↓
+Ethernet Frame    →  [Eth Hdr | IP Packet | Eth Trailer]</code></pre>
+          <p>A PCAP file captures at the frame level — meaning it contains <strong>all</strong> layers. Wireshark decodes each layer for you, which is why it is such a powerful forensic tool.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================
+     SECTION 3 – TCP/IP PROTOCOL SUITE ESSENTIALS
+     ================================================================ -->
+<section class="section" id="tcpip">
+  <div class="section__heading"><h2><span class="num">3</span> TCP/IP Protocol Suite Essentials</h2></div>
+  <div class="section__body">
+    <p>This section covers the protocols you will encounter most often in network forensic investigations. The focus is on <strong>what each protocol tells you as an examiner</strong>, not on network engineering.</p>
+
+    <!-- TCP -->
+    <div class="accordion">
+      <button class="accordion__btn" aria-expanded="false" aria-controls="tcp-detail">TCP — Transmission Control Protocol</button>
+      <div class="accordion__panel" id="tcp-detail" role="region">
+        <div class="accordion__panel__inner">
+          <p><strong>TCP</strong> is a connection-oriented, reliable protocol. Before any data is exchanged, two hosts perform a <strong>three-way handshake</strong>:</p>
+<pre><code>Client → Server :  SYN           (I want to connect)
+Server → Client :  SYN-ACK       (OK, acknowledged)
+Client → Server :  ACK           (Connection established)</code></pre>
+          <p><strong>Why this matters forensically:</strong></p>
+          <ul>
+            <li><strong>SYN-only packets with no ACK follow-up</strong> are a hallmark of <em>port scanning</em> (SYN scan / half-open scan). In the Acme Corp PCAP you may see hundreds of these from a single source IP.</li>
+            <li><strong>Sequence and acknowledgment numbers</strong> let Wireshark reassemble a complete TCP stream — reconstructing an entire HTTP session, file transfer, or even a shell session.</li>
+            <li><strong>RST (Reset) packets</strong> indicate a refused connection. A burst of RSTs from many ports suggests the target was scanned.</li>
+            <li><strong>FIN packets</strong> indicate a graceful connection close. The <em>absence</em> of FINs (connections that just stop) can indicate a crash, kill, or network disruption.</li>
+          </ul>
+          <p><strong>Key TCP flags and their forensic meaning:</strong></p>
+          <div class="table-wrap">
+            <table class="ref-table" aria-label="TCP flags">
+              <thead><tr><th scope="col">Flag</th><th scope="col">Name</th><th scope="col">Forensic Significance</th></tr></thead>
+              <tbody>
+                <tr><td><code>SYN</code></td><td>Synchronize</td><td>Connection initiation. Mass SYN = port scan.</td></tr>
+                <tr><td><code>ACK</code></td><td>Acknowledge</td><td>Confirms receipt. Present in almost all packets after handshake.</td></tr>
+                <tr><td><code>FIN</code></td><td>Finish</td><td>Graceful close. Absence may indicate abnormal termination.</td></tr>
+                <tr><td><code>RST</code></td><td>Reset</td><td>Abrupt close. Closed port response in SYN scans.</td></tr>
+                <tr><td><code>PSH</code></td><td>Push</td><td>Deliver data immediately. Common in interactive sessions (SSH, shell).</td></tr>
+                <tr><td><code>URG</code></td><td>Urgent</td><td>Rarely used legitimately. May appear in crafted attack packets.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UDP -->
+    <div class="accordion">
+      <button class="accordion__btn" aria-expanded="false" aria-controls="udp-detail">UDP — User Datagram Protocol</button>
+      <div class="accordion__panel" id="udp-detail" role="region">
+        <div class="accordion__panel__inner">
+          <p><strong>UDP</strong> is connectionless — there is no handshake and no guaranteed delivery. Packets are sent and (hopefully) received.</p>
+          <p><strong>Forensically important UDP protocols:</strong></p>
+          <ul>
+            <li><strong>DNS (port 53)</strong> — The most forensically valuable UDP protocol. DNS queries reveal what domains a host resolved, and DNS can be abused for tunneling and exfiltration.</li>
+            <li><strong>DHCP (ports 67/68)</strong> — DHCP lease logs map IP addresses to MAC addresses at specific times, critical for attribution.</li>
+            <li><strong>NTP (port 123)</strong> — Time synchronization. NTP manipulation can affect timestamp reliability across evidence sources.</li>
+            <li><strong>Syslog (port 514)</strong> — Remote log forwarding. If a compromised host forwards logs via syslog, those remote copies may survive log tampering on the host.</li>
+          </ul>
+          <p>Because UDP has no connection state, you cannot "follow a UDP stream" the same way you follow a TCP stream. Instead, you filter by source/destination IP and port to group related UDP traffic.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- HTTP -->
+    <div class="accordion">
+      <button class="accordion__btn" aria-expanded="false" aria-controls="http-detail">HTTP/HTTPS — The Web Protocols</button>
+      <div class="accordion__panel" id="http-detail" role="region">
+        <div class="accordion__panel__inner">
+          <p>HTTP is a request/response protocol. Every web interaction generates at least one request and one response — both of which appear in PCAPs and web server logs.</p>
+          <p><strong>Key HTTP methods:</strong></p>
+          <ul>
+            <li><code>GET</code> — Retrieve a resource. Parameters visible in the URL (and in logs). SQL injection payloads often appear in GET parameters.</li>
+            <li><code>POST</code> — Submit data in the request body. Used for form submissions, file uploads, and C2 communication. POST bodies are <strong>not</strong> recorded in standard web server access logs — you need the PCAP to see them.</li>
+            <li><code>PUT</code> / <code>DELETE</code> — Less common; may indicate web shell upload or API abuse.</li>
+          </ul>
+          <p><strong>Key HTTP status codes:</strong></p>
+          <div class="table-wrap">
+            <table class="ref-table" aria-label="HTTP status codes">
+              <thead><tr><th scope="col">Code</th><th scope="col">Meaning</th><th scope="col">Forensic Context</th></tr></thead>
+              <tbody>
+                <tr><td><code>200</code></td><td>OK</td><td>Successful request. A 200 to a SQL injection URL means the attack may have succeeded.</td></tr>
+                <tr><td><code>301/302</code></td><td>Redirect</td><td>May indicate server-side redirect after successful login or exploitation.</td></tr>
+                <tr><td><code>403</code></td><td>Forbidden</td><td>Access denied. Many 403s from one IP = directory enumeration.</td></tr>
+                <tr><td><code>404</code></td><td>Not Found</td><td>Many 404s from one IP = path/file scanning (DirBuster, Gobuster).</td></tr>
+                <tr><td><code>500</code></td><td>Internal Server Error</td><td>May indicate a successful injection that caused an application error.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p><strong>HTTPS:</strong> When traffic is encrypted with TLS, you cannot read the HTTP payload in a PCAP. However, you <em>can</em> still see: the TLS handshake, the Server Name Indication (SNI) field (which reveals the requested hostname), and the certificate details. Web server logs record the <em>decrypted</em> request because the server terminates TLS — so web logs remain valuable even when PCAP content is encrypted.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- DNS -->
+    <div class="accordion">
+      <button class="accordion__btn" aria-expanded="false" aria-controls="dns-detail">DNS — Domain Name System</button>
+      <div class="accordion__panel" id="dns-detail" role="region">
+        <div class="accordion__panel__inner">
+          <p>DNS translates domain names to IP addresses. For a forensic examiner, DNS is one of the most valuable network artifacts because <strong>nearly every network action begins with a DNS query</strong>.</p>
+          <p><strong>Key DNS record types:</strong></p>
+          <ul>
+            <li><code>A</code> / <code>AAAA</code> — Maps a domain to an IPv4 / IPv6 address.</li>
+            <li><code>MX</code> — Mail exchange server. Relevant to email forensics (Week 16).</li>
+            <li><code>TXT</code> — Text records. Used for SPF/DKIM/DMARC (email authentication) but also <strong>abused for DNS tunneling and exfiltration</strong>.</li>
+            <li><code>CNAME</code> — Alias. Can reveal CDN or hosting infrastructure.</li>
+            <li><code>NS</code> — Authoritative nameserver. Useful for investigating domain infrastructure.</li>
+          </ul>
+          <p><strong>DNS as an attack channel:</strong> In the Acme Corp scenario, the IDS flagged a spike in <code>TXT</code> record queries to a recently registered domain. This is a classic indicator of <strong>DNS tunneling</strong> — data encoded in DNS subdomain labels (e.g., <code>dXNlcm5hbWU9YWRtaW4=.evil.com</code>) to exfiltrate information through a protocol that is almost never blocked by firewalls.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- IPv4 vs IPv6 -->
+    <div class="accordion">
+      <button class="accordion__btn" aria-expanded="false" aria-controls="ip-versions">IPv4 vs. IPv6 — Forensic Considerations</button>
+      <div class="accordion__panel" id="ip-versions" role="region">
+        <div class="accordion__panel__inner">
+          <p><strong>IPv4</strong> uses 32-bit addresses (e.g., <code>192.168.1.105</code>) and remains the most common in forensic investigations. <strong>IPv6</strong> uses 128-bit addresses (e.g., <code>2001:0db8:85a3::8a2e:0370:7334</code>) and is increasingly present on modern networks.</p>
+          <p><strong>Forensic implications of IPv6:</strong></p>
+          <ul>
+            <li>IPv6 addresses may be <strong>auto-generated from the MAC address</strong> (EUI-64 format), which can link a network connection directly to a physical NIC — powerful for attribution.</li>
+            <li>Many networks run <strong>dual-stack</strong> (IPv4 + IPv6). An attacker may use IPv6 to evade monitoring tools that only inspect IPv4 traffic.</li>
+            <li>IPv6 has no NAT by default — every device can have a globally routable address, simplifying attribution but expanding the attack surface.</li>
+            <li>Ensure your Wireshark filters account for both: <code>ip.addr</code> (IPv4) vs. <code>ipv6.addr</code> (IPv6).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================
+     SECTION 4 – COMMON PORTS, IP ADDRESSING, AND GeoIP
+     ================================================================ -->
+<section class="section" id="ports">
+  <div class="section__heading"><h2><span class="num">4</span> Common Ports &amp; Services, IP Addressing, and GeoIP</h2></div>
+  <div class="section__body">
+
+    <p>Knowing which port numbers map to which services is essential for reading PCAPs and logs. Below is a forensic quick-reference. Use the tabs to switch between the port table, IP addressing basics, and GeoIP concepts.</p>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <ul class="tab-list" role="tablist">
+        <li><button class="tab-btn" role="tab" aria-selected="true" aria-controls="tab-ports" id="btn-ports">Ports &amp; Services</button></li>
+        <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-ip" id="btn-ip">IP Addressing</button></li>
+        <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-geoip" id="btn-geoip">GeoIP</button></li>
+      </ul>
+
+      <!-- Tab: Ports -->
+      <div class="tab-panel active" role="tabpanel" id="tab-ports" aria-labelledby="btn-ports">
+        <div class="table-wrap">
+          <table class="ref-table" aria-label="Common ports and forensic significance">
+            <thead><tr><th scope="col">Port</th><th scope="col">Protocol</th><th scope="col">Service</th><th scope="col">Forensic Significance</th></tr></thead>
+            <tbody>
+              <tr><td>20/21</td><td>TCP</td><td>FTP</td><td>File transfers. Credentials sent in cleartext. Check for exfiltration.</td></tr>
+              <tr><td>22</td><td>TCP</td><td>SSH</td><td>Encrypted remote access. Brute-force attempts visible in auth logs. Authorized-key persistence (Week 9).</td></tr>
+              <tr><td>23</td><td>TCP</td><td>Telnet</td><td>Cleartext remote access. Credentials and commands fully visible in PCAP.</td></tr>
+              <tr><td>25</td><td>TCP</td><td>SMTP</td><td>Email sending. Expanded in Week 16. Headers contain routing IPs.</td></tr>
+              <tr><td>53</td><td>TCP/UDP</td><td>DNS</td><td>Name resolution. DNS tunneling and exfiltration. High-value forensic source.</td></tr>
+              <tr><td>80</td><td>TCP</td><td>HTTP</td><td>Unencrypted web. Full request/response visible in PCAP.</td></tr>
+              <tr><td>110</td><td>TCP</td><td>POP3</td><td>Email retrieval. Cleartext credentials if not using TLS.</td></tr>
+              <tr><td>143</td><td>TCP</td><td>IMAP</td><td>Email retrieval. Cleartext credentials if not using TLS.</td></tr>
+              <tr><td>443</td><td>TCP</td><td>HTTPS</td><td>Encrypted web. Payload hidden but TLS metadata (SNI, certs) still visible.</td></tr>
+              <tr><td>445</td><td>TCP</td><td>SMB</td><td>File sharing. Lateral movement indicator when seen between workstations.</td></tr>
+              <tr><td>3389</td><td>TCP</td><td>RDP</td><td>Remote Desktop. Internal RDP between workstations = lateral movement red flag.</td></tr>
+              <tr><td>8080/8443</td><td>TCP</td><td>Alt HTTP/S</td><td>Alternate web ports. C2 servers often use non-standard ports like 8443.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout forensic">
+          <div class="callout-title">🧪 Forensic Examiner Note</div>
+          <p><strong>Ephemeral (source) ports</strong> are typically in the range 49152–65535 and are assigned dynamically by the operating system. In a PCAP, the <em>destination</em> port usually tells you the service; the <em>source</em> port tells you which client session. If you see a well-known service port (e.g., 443) used as a <em>source</em> port from an internal host, that is suspicious — the host may be running an unauthorized server.</p>
+        </div>
+      </div>
+
+      <!-- Tab: IP Addressing -->
+      <div class="tab-panel" role="tabpanel" id="tab-ip" aria-labelledby="btn-ip">
+        <p><strong>IPv4 addresses</strong> are 32-bit numbers written in dotted-decimal notation: <code>192.168.1.105</code>. For forensic work, the most important distinction is <strong>private vs. public</strong>.</p>
+
+        <h3 style="margin:14px 0 8px;font-size:1rem;">RFC 1918 Private Address Ranges</h3>
+        <div class="table-wrap">
+          <table class="ref-table" aria-label="RFC 1918 private IP ranges">
+            <thead><tr><th scope="col">Range</th><th scope="col">CIDR</th><th scope="col">Typical Use</th></tr></thead>
+            <tbody>
+              <tr><td><code>10.0.0.0</code> – <code>10.255.255.255</code></td><td>10.0.0.0/8</td><td>Large enterprises, cloud VPCs</td></tr>
+              <tr><td><code>172.16.0.0</code> – <code>172.31.255.255</code></td><td>172.16.0.0/12</td><td>Mid-size networks</td></tr>
+              <tr><td><code>192.168.0.0</code> – <code>192.168.255.255</code></td><td>192.168.0.0/16</td><td>Home/small office networks</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p><strong>Why this matters:</strong></p>
+        <ul>
+          <li><strong>Private IPs</strong> appear in internal logs and PCAPs. They identify hosts <em>within</em> the network but are not routable on the Internet.</li>
+          <li><strong>Public IPs</strong> are routable and can be traced to an ISP, organization, or geographic region via GeoIP and WHOIS.</li>
+          <li>When you see traffic from an internal private IP to an external public IP (like <code>10.10.50.20</code> → <code>203.0.113.42</code> in the Acme scenario), you know data is leaving the network.</li>
+          <li><strong>NAT (Network Address Translation)</strong> maps private IPs to a public IP at the firewall. Firewall NAT logs are essential for linking an internal host to its external traffic.</li>
+        </ul>
+
+        <div class="callout info">
+          <div class="callout-title">💡 Quick Tip</div>
+          <p>The IP range <code>203.0.113.0/24</code> is reserved for documentation and examples (RFC 5737). In real investigations, you would run WHOIS and GeoIP lookups on the actual external IP. In our Acme scenario, treat <code>203.0.113.42</code> as the attacker's external IP.</p>
+        </div>
+      </div>
+
+      <!-- Tab: GeoIP -->
+      <div class="tab-panel" role="tabpanel" id="tab-geoip" aria-labelledby="btn-geoip">
+        <p><strong>GeoIP</strong> is the process of mapping an IP address to an approximate geographic location — typically a country, region, and city. Forensic examiners use GeoIP to:</p>
+        <ul>
+          <li><strong>Identify the likely origin of an attack.</strong> If your company operates only in the US and you see SSH brute-force attempts from an IP geolocated to a country where you have no business, that is an immediate red flag.</li>
+          <li><strong>Detect impossible travel.</strong> If a user authenticates from New York at 10:00 AM and from Eastern Europe at 10:15 AM, the account is likely compromised.</li>
+          <li><strong>Prioritize investigation leads.</strong> Connections to IPs in known hosting regions for C2 infrastructure (certain data centers, bulletproof hosting providers) warrant closer scrutiny.</li>
+        </ul>
+        <p><strong>Limitations of GeoIP:</strong></p>
+        <ul>
+          <li>GeoIP databases are <strong>approximate</strong> — accuracy varies from city-level to country-level depending on the ISP and region.</li>
+          <li><strong>VPNs, Tor, and proxies</strong> can mask the true origin. An IP geolocated to the Netherlands may actually be a VPN exit node used by someone anywhere in the world.</li>
+          <li>GeoIP data changes over time. IP blocks are reassigned between ISPs and regions. Use a <strong>current</strong> GeoIP database for active investigations.</li>
+        </ul>
+        <p>Common GeoIP tools include MaxMind GeoLite2 (free database), Wireshark's built-in GeoIP integration, and online lookup services. WHOIS queries provide registrant and ISP information that complements GeoIP data.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================
+     SECTION 5 – TYPES OF NETWORK EVIDENCE
+     ================================================================ -->
+<section class="section" id="evidence-types">
+  <div class="section__heading"><h2><span class="num">5</span> Types of Network Evidence</h2></div>
+  <div class="section__body">
+    <p>Not all network evidence is created equal. The following ranking orders evidence types from <strong>richest</strong> (most complete, most forensically valuable) to <strong>least rich</strong> (summarized, less detail). Understanding this hierarchy helps you know what to request first when responding to an incident.</p>
+
+    <ol class="evidence-rank">
+      <li>
+        <div>
+          <strong>Full Packet Capture (PCAP)</strong><br>
+          Complete copy of every packet — headers <em>and</em> payload. Allows full reconstruction of sessions, file extraction, credential recovery (if unencrypted), and protocol analysis. This is the gold standard of network evidence.<br>
+          <em>Tool: Wireshark, tcpdump, NetworkMiner</em>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Session / Flow Data (NetFlow, sFlow, IPFIX)</strong><br>
+          Summarized metadata about connections: source/destination IP, ports, protocol, byte count, duration, timestamps. No payload content. Useful for identifying communication patterns, beaconing, and data volume anomalies when full PCAP is unavailable.<br>
+          <em>Tool: nfdump, SiLK, Wireshark Statistics</em>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Application Logs (Web Server, DNS, Email)</strong><br>
+          Structured records of application-layer events. Web server logs capture every HTTP request (minus POST bodies). DNS logs capture every query. These are often the most <em>available</em> evidence because most servers enable logging by default.<br>
+          <em>Tool: grep, awk, Splunk, ELK Stack</em>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Infrastructure Logs (Firewall, Router, DHCP)</strong><br>
+          Record allow/deny decisions, routing events, and address assignments. Essential for correlating internal IPs with external traffic and establishing timelines. Quality varies by device configuration.<br>
+          <em>Tool: grep, awk, Splunk, vendor-specific consoles</em>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>IDS/IPS Alerts</strong><br>
+          Pre-analyzed events triggered by signature matches. Useful as starting points but require validation — false positives are common. Alert data alone cannot reconstruct an attack.<br>
+          <em>Tool: Snort, Suricata, vendor SIEM</em>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>SIEM Aggregated Events</strong><br>
+          Correlated, normalized events from multiple sources. Provides a high-level overview but abstracts away raw detail. Always go back to the original source (PCAP, raw logs) for forensic conclusions.<br>
+          <em>Tool: Splunk, QRadar, Elastic SIEM</em>
+        </div>
+      </li>
+    </ol>
+
+    <div class="callout forensic">
+      <div class="callout-title">🧪 Forensic Examiner Note</div>
+      <p>In the Acme Corp scenario, you have evidence at <strong>three levels</strong>: full PCAP (richest), application logs (Apache), and infrastructure logs (firewall). This is an excellent evidence set. In many real investigations, you may only have flow data or logs — making PCAP preservation all the more critical when it is available.</p>
+    </div>
+
+    <div class="callout connection">
+      <div class="callout-title">🔗 Cross-Module Connection</div>
+      <p>In <strong>Module 12.2</strong>, you will open the Acme Corp PCAP in Wireshark and apply the display filters and stream-following techniques introduced in this module. In <strong>Module 12.3</strong>, you will parse the Apache and firewall logs. In <strong>Module 12.4</strong>, you will correlate all three evidence sources into a unified attack timeline.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     SECTION 6 – NETWORK EVIDENCE CAPTURE AND INTEGRITY
+     ================================================================ -->
+<section class="section" id="capture">
+  <div class="section__heading"><h2><span class="num">6</span> Network Evidence Capture and Integrity</h2></div>
+  <div class="section__body">
+
+    <p>Just as you learned in Week 6 that disk images must be forensically sound, network evidence must also be captured, stored, and documented with integrity. A PCAP file is evidence — and it must be treated with the same chain-of-custody rigor as a forensic disk image.</p>
+
+    <!-- Capture Methods -->
+    <div class="accordion">
+      <button class="accordion__btn" aria-expanded="false" aria-controls="capture-methods">Capture Methods and Placement</button>
+      <div class="accordion__panel" id="capture-methods" role="region">
+        <div class="accordion__panel__inner">
+          <p><strong>Where you capture determines what you see.</strong> Placement of your capture point is a critical decision:</p>
+          <ul>
+            <li><strong>Network TAP (Test Access Point):</strong> A hardware device inserted inline on a network cable that copies all traffic to a monitoring port. TAPs are passive — they do not alter traffic and do not introduce a point of failure. This is the gold standard for forensic capture.</li>
+            <li><strong>SPAN / Mirror Port:</strong> A switch feature that copies traffic from one or more ports to a designated monitoring port. Easier to set up than a TAP but can drop packets under heavy load. Acceptable for forensic use with documentation of limitations.</li>
+            <li><strong>Host-based capture:</strong> Running <code>tcpdump</code> or Wireshark directly on a host. Captures only traffic to/from that host. Useful when network-level capture is unavailable, but the capture tool runs on the potentially compromised system — which raises integrity concerns.</li>
+          </ul>
+          <p><strong>Placement considerations for the Acme scenario:</strong></p>
+          <ul>
+            <li>A TAP between the DMZ and the firewall captures all traffic entering and leaving the web server segment — this is where the Acme PCAP was captured.</li>
+            <li>A TAP on the internal LAN side of the firewall would capture lateral movement traffic.</li>
+            <li>Capturing at both points provides the most complete picture.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tools -->
+    <div class="accordion">
+      <button class="accordion__btn" aria-expanded="false" aria-controls="capture-tools">Capture Tools: Wireshark and tcpdump</button>
+      <div class="accordion__panel" id="capture-tools" role="region">
+        <div class="accordion__panel__inner">
+          <p><strong>Wireshark</strong> — GUI-based packet analyzer. Best for interactive analysis of existing PCAP files. Can also perform live capture, but is typically used on an analyst workstation rather than on the monitored host.</p>
+          <p><strong>tcpdump</strong> — Command-line packet capture tool available on virtually every Linux/Unix system. Preferred for:</p>
+          <ul>
+            <li>Capturing on headless servers (no GUI available).</li>
+            <li>Scripted or automated capture.</li>
+            <li>Remote capture via SSH.</li>
+          </ul>
+          <p><strong>Basic tcpdump examples:</strong></p>
+<pre><code># Capture all traffic on eth0, write to file
+tcpdump -i eth0 -w /evidence/capture_20260413.pcap
+
+# Capture only traffic to/from a specific host
+tcpdump -i eth0 host 203.0.113.42 -w /evidence/suspect_host.pcap
+
+# Read a PCAP and filter for HTTP traffic
+tcpdump -r capture.pcap tcp port 80</code></pre>
+          <p><strong>PCAP vs. PCAPNG:</strong> PCAP is the classic format. PCAPNG (PCAP Next Generation) supports multiple interfaces, annotations, and richer metadata. Wireshark saves in PCAPNG by default. Both are widely supported by forensic tools.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Integrity -->
+    <div class="accordion">
+      <button class="accordion__btn" aria-expanded="false" aria-controls="capture-integrity">PCAP Integrity: Hashing and Chain of Custody</button>
+      <div class="accordion__panel" id="capture-integrity" role="region">
+        <div class="accordion__panel__inner">
+          <p>A PCAP file is a forensic artifact. Apply the <strong>same integrity procedures</strong> you learned in Week 6 for disk images:</p>
+          <ol>
+            <li><strong>Hash immediately after capture.</strong> Compute both MD5 and SHA-256 hashes of the PCAP file as soon as capture is complete:
+<pre><code>md5sum /evidence/capture_20260413.pcap > capture_20260413.md5
+sha256sum /evidence/capture_20260413.pcap > capture_20260413.sha256</code></pre>
+            </li>
+            <li><strong>Document the capture in your chain of custody form.</strong> Record:
+              <ul>
+                <li><strong>Who</strong> initiated the capture (analyst name, badge/ID).</li>
+                <li><strong>When</strong> the capture started and stopped (UTC timestamps).</li>
+                <li><strong>Where</strong> the capture point was (TAP location, SPAN port, host).</li>
+                <li><strong>What</strong> was captured (interface, filter applied, file name, file size).</li>
+                <li><strong>How</strong> (tool and version: e.g., tcpdump 4.99.4).</li>
+                <li><strong>Hash values</strong> (MD5 and SHA-256).</li>
+              </ul>
+            </li>
+            <li><strong>Store the original PCAP as read-only.</strong> Work on a copy for analysis. If your analysis tool modifies the file (e.g., adding annotations), the copy's hash will change — but the original's hash remains your integrity anchor.</li>
+            <li><strong>Verify hashes before analysis and before submission.</strong> Re-hash the original file at each stage to confirm it has not been altered.</li>
+          </ol>
+
+          <div class="callout alert">
+            <div class="callout-title">⚠️ Critical Reminder</div>
+            <p>If you cannot demonstrate that a PCAP file has not been modified since capture, its evidentiary value is severely diminished. Defense attorneys <em>will</em> challenge the integrity of digital evidence. Your hash documentation and chain of custody form are your proof.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legal -->
+    <div class="accordion">
+      <button class="accordion__btn" aria-expanded="false" aria-controls="capture-legal">Legal Considerations for Packet Capture</button>
+      <div class="accordion__panel" id="capture-legal" role="region">
+        <div class="accordion__panel__inner">
+          <p>Capturing network traffic raises legal and ethical considerations you first encountered in Week 3:</p>
+          <ul>
+            <li><strong>Wiretap laws:</strong> In the United States, the federal Wiretap Act (18 U.S.C. § 2511) generally prohibits intercepting electronic communications. Key exceptions relevant to forensics:
+              <ul>
+                <li><strong>Provider exception:</strong> An organization may monitor its own network to protect its rights and property.</li>
+                <li><strong>Consent exception:</strong> If users have consented to monitoring (e.g., via an acceptable use policy or login banner), capture is permissible.</li>
+                <li><strong>Law enforcement:</strong> Requires a court order or warrant.</li>
+              </ul>
+            </li>
+            <li><strong>Corporate policy:</strong> Ensure your organization has an acceptable use policy that notifies users their network activity may be monitored. This policy is your legal foundation for packet capture during incident response.</li>
+            <li><strong>Scope limitation:</strong> Capture only what is necessary for the investigation. Avoid collecting unrelated personal communications when possible (minimization principle).</li>
+          </ul>
+          <p>In the Acme Corp scenario, the incident commander has <strong>authorized</strong> the investigation, and Acme's acceptable use policy includes a monitoring notice. You are operating within legal bounds.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout connection">
+      <div class="callout-title">🔗 Week 6 Connection</div>
+      <p>The integrity workflow for PCAP files directly mirrors what you learned for forensic disk images in Week 6: <strong>hash → document → preserve original → work on copy → re-verify</strong>. The evidence type changes; the principle does not.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================
+     SECTION 7 – KNOWLEDGE CHECK
+     ================================================================ -->
+<section class="section" id="knowledge-check">
+  <div class="section__heading"><h2><span class="num">7</span> Knowledge Check <span style="font-weight:400;font-size:.85rem;color:#64748b;">(Ungraded)</span></h2></div>
+  <div class="section__body">
+    <p>Test your understanding of Module 12.1 concepts. Select the best answer for each question, then click <strong>Check Answer</strong> to see explanatory feedback. These questions are <strong>not graded</strong> and do not affect your course score.</p>
+
+    <!-- Question 1 -->
+    <div class="kc-question" data-correct="c" id="kc1">
+      <p class="q-stem">1. In the OSI model, which three layers are <strong>most</strong> important for network forensic analysis?</p>
+      <ul class="kc-options">
+        <li><label><input type="radio" name="kc1" value="a"> Layers 1, 2, and 3 (Physical, Data Link, Network)</label></li>
+        <li><label><input type="radio" name="kc1" value="b"> Layers 5, 6, and 7 (Session, Presentation, Application)</label></li>
+        <li><label><input type="radio" name="kc1" value="c"> Layers 3, 4, and 7 (Network, Transport, Application)</label></li>
+        <li><label><input type="radio" name="kc1" value="d"> Layers 2, 4, and 6 (Data Link, Transport, Presentation)</label></li>
+      </ul>
+      <button class="kc-submit" onclick="checkAnswer('kc1')">Check Answer</button>
+      <div class="kc-feedback correct" aria-live="polite" id="kc1-correct">
+        <strong>✅ Correct!</strong> Layers 3 (IP addresses for attribution), 4 (TCP/UDP ports and connection state), and 7 (application content like HTTP requests and DNS queries) provide the richest forensic evidence. This is the "forensic focus" highlighted in the OSI table above.
+      </div>
+      <div class="kc-feedback incorrect" aria-live="polite" id="kc1-incorrect">
+        <strong>❌ Not quite.</strong> The correct answer is <strong>Layers 3, 4, and 7</strong>. Layer 3 (Network) gives you IP addresses for attribution. Layer 4 (Transport) gives you TCP/UDP ports and connection state (SYN scans, stream reconstruction). Layer 7 (Application) gives you the richest content — HTTP requests, DNS queries, email headers. While other layers have forensic value, these three are where most network forensic analysis occurs.
+      </div>
+    </div>
+
+    <!-- Question 2 -->
+    <div class="kc-question" data-correct="b" id="kc2">
+      <p class="q-stem">2. You capture a PCAP file during an incident response engagement. What is the <strong>first</strong> action you should take after the capture is complete?</p>
+      <ul class="kc-options">
+        <li><label><input type="radio" name="kc2" value="a"> Open the PCAP in Wireshark and begin applying display filters.</label></li>
+        <li><label><input type="radio" name="kc2" value="b"> Compute cryptographic hashes (MD5 and SHA-256) of the PCAP file and document the capture details.</label></li>
+        <li><label><input type="radio" name="kc2" value="c"> Upload the PCAP to the SIEM for automated alert correlation.</label></li>
+        <li><label><input type="radio" name="kc2" value="d"> Email the PCAP to the legal team for review.</label></li>
+      </ul>
+      <button class="kc-submit" onclick="checkAnswer('kc2')">Check Answer</button>
+      <div class="kc-feedback correct" aria-live="polite" id="kc2-correct">
+        <strong>✅ Correct!</strong> Just like forensic disk images (Week 6), the first step after capturing network evidence is to establish its integrity by computing hash values and documenting the capture in the chain of custody. You then work on a <em>copy</em> for analysis while preserving the hashed original.
+      </div>
+      <div class="kc-feedback incorrect" aria-live="polite" id="kc2-incorrect">
+        <strong>❌ Not quite.</strong> The correct answer is <strong>B — compute hashes and document</strong>. Before you analyze, share, or process the PCAP in any way, you must establish its integrity baseline. This is the same principle from Week 6 (forensic imaging): <strong>hash → document → preserve original → work on copy</strong>. Without this step, the evidentiary value of the PCAP can be challenged.
+      </div>
+    </div>
+
+    <!-- Question 3 -->
+    <div class="kc-question" data-correct="d" id="kc3">
+      <p class="q-stem">3. In the network evidence hierarchy, which evidence type is the <strong>richest</strong> (most complete and most forensically valuable)?</p>
+      <ul class="kc-options">
+        <li><label><input type="radio" name="kc3" value="a"> IDS/IPS alerts</label></li>
+        <li><label><input type="radio" name="kc3" value="b"> NetFlow / session data</label></li>
+        <li><label><input type="radio" name="kc3" value="c"> SIEM aggregated events</label></li>
+        <li><label><input type="radio" name="kc3" value="d"> Full packet capture (PCAP)</label></li>
+      </ul>
+      <button class="kc-submit" onclick="checkAnswer('kc3')">Check Answer</button>
+      <div class="kc-feedback correct" aria-live="polite" id="kc3-correct">
+        <strong>✅ Correct!</strong> Full packet capture (PCAP) is the gold standard of network evidence. It contains complete copies of every packet — both headers and payload — allowing full session reconstruction, file extraction, and protocol analysis. All other evidence types are derived from or are summaries of what PCAP contains.
+      </div>
+      <div class="kc-feedback incorrect" aria-live="polite" id="kc3-incorrect">
+        <strong>❌ Not quite.</strong> The correct answer is <strong>D — Full packet capture (PCAP)</strong>. PCAP contains complete packet headers <em>and</em> payload data, making it the richest evidence source. NetFlow provides only metadata (no content). IDS alerts are pre-filtered and may contain false positives. SIEM events are aggregated summaries. When available, always prioritize PCAP as your primary evidence source.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ======== FOOTER ======== -->
+<footer class="page-footer">
+  <p><strong>CSC 156 – Digital Forensics Fundamentals</strong> | Mendocino College | Computer Science Department</p>
+  <p>Week 12, Module 12.1 | Spring 2026</p>
+  <p style="margin-top:6px;"><em>Up next: Module 12.2 — Packet Capture and Analysis with Wireshark</em></p>
+</footer>
+
+</main><!-- /.page-wrap -->
+
+<!-- ======== JAVASCRIPT ======== -->
+<script>
+/* --- Accordion toggle --- */
+/* Initialize all panels as hidden from assistive technology */
+document.querySelectorAll('.accordion__panel').forEach(function(panel){
+  panel.setAttribute('aria-hidden','true');
+  panel.setAttribute('inert','');
+});
+document.querySelectorAll('.accordion__btn').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var expanded=this.getAttribute('aria-expanded')==='true';
+    this.setAttribute('aria-expanded',String(!expanded));
+    var panel=this.nextElementSibling;
+    if(!expanded){
+      panel.style.maxHeight=panel.scrollHeight+'px';
+      panel.removeAttribute('aria-hidden');
+      panel.removeAttribute('inert');
+    }else{
+      panel.style.maxHeight='0';
+      panel.setAttribute('aria-hidden','true');
+      panel.setAttribute('inert','');
+    }
+  });
+  btn.addEventListener('keydown',function(e){
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();this.click();}
+  });
+});
+
+/* --- Tabs --- */
+document.querySelectorAll('.tab-btn').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var tabList=this.closest('.tabs');
+    tabList.querySelectorAll('.tab-btn').forEach(function(b){b.setAttribute('aria-selected','false');});
+    tabList.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
+    this.setAttribute('aria-selected','true');
+    var panel=tabList.querySelector('#'+this.getAttribute('aria-controls'));
+    if(panel){panel.classList.add('active');}
+  });
+  btn.addEventListener('keydown',function(e){
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();this.click();}
+    var btns=Array.from(this.closest('.tab-list').querySelectorAll('.tab-btn'));
+    var idx=btns.indexOf(this);
+    if(e.key==='ArrowRight'){e.preventDefault();btns[(idx+1)%btns.length].focus();btns[(idx+1)%btns.length].click();}
+    if(e.key==='ArrowLeft'){e.preventDefault();btns[(idx-1+btns.length)%btns.length].focus();btns[(idx-1+btns.length)%btns.length].click();}
+  });
+});
+
+/* --- Knowledge Check --- */
+function checkAnswer(qId){
+  var container=document.getElementById(qId);
+  var correct=container.getAttribute('data-correct');
+  var selected=container.querySelector('input[name="'+qId+'"]:checked');
+  if(!selected){return;}
+  var fbCorrect=document.getElementById(qId+'-correct');
+  var fbIncorrect=document.getElementById(qId+'-incorrect');
+  fbCorrect.style.display='none';
+  fbIncorrect.style.display='none';
+  container.querySelectorAll('.kc-options label').forEach(function(l){l.style.borderColor='transparent';});
+  if(selected.value===correct){
+    fbCorrect.style.display='block';
+    selected.closest('label').style.borderColor='#22c55e';
+  }else{
+    fbIncorrect.style.display='block';
+    selected.closest('label').style.borderColor='#ef4444';
+  }
+  container.querySelector('.kc-submit').disabled=true;
+}
+</script>
+</body>
+</html>

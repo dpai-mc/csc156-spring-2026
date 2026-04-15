@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 11 – Packet Capture Analysis and Web Server Log Investigation | CSC 156</title>
+<style>
+/* ===== RESET & BASE ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.6;color:#1a1a2e;background:#f5f6fa}
+img{max-width:100%;height:auto}
+a{color:#1b4f72;text-decoration:underline}
+a:focus-visible,button:focus-visible,textarea:focus-visible{outline:3px solid #f39c12;outline-offset:2px}
+h1{font-size:1.65rem;line-height:1.25}
+h2{font-size:1.35rem;line-height:1.3}
+h3{font-size:1.12rem;line-height:1.35}
+
+/* ===== STICKY NAV ===== */
+.topnav{position:sticky;top:0;z-index:900;background:#1a1a2e;padding:6px 12px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
+.topnav a{color:#ecf0f1;font-size:.82rem;text-decoration:none;padding:4px 7px;border-radius:3px;white-space:nowrap}
+.topnav a:hover,.topnav a:focus-visible{background:#2c3e6b;outline-color:#f39c12}
+.topnav__title{color:#f1c40f;font-weight:700;font-size:.85rem;margin-right:6px}
+
+/* ===== PAGE WRAPPER ===== */
+.page-wrap{max-width:960px;margin:0 auto;padding:20px 18px 40px}
+
+/* ===== HEADER ===== */
+.lab-header{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);color:#fff;padding:28px 24px;border-radius:8px;margin-bottom:24px}
+.lab-header .course-tag{font-size:.8rem;letter-spacing:.5px;text-transform:uppercase;color:#f1c40f;margin-bottom:4px}
+.lab-header h1{margin:6px 0 8px;color:#fff}
+.lab-header .meta{font-size:.88rem;color:#d5dbe3;line-height:1.5}
+.lab-header .meta strong{color:#f1c40f}
+
+/* ===== SECTIONS ===== */
+.section{background:#fff;border-radius:8px;padding:24px 22px;margin-bottom:20px;border:1px solid #dde1e6}
+.section__heading h2{color:#1a1a2e;border-bottom:3px solid #2980b9;padding-bottom:6px;margin-bottom:14px}
+.section__heading h2 .num{display:inline-block;background:#2980b9;color:#fff;width:28px;height:28px;text-align:center;line-height:28px;border-radius:50%;font-size:.85rem;margin-right:6px;vertical-align:middle}
+
+/* ===== CALLOUT BOXES ===== */
+.callout{border-left:4px solid #2980b9;background:#eaf2f8;padding:14px 16px;border-radius:0 6px 6px 0;margin:14px 0;font-size:.93rem}
+.callout.warning{border-left-color:#e67e22;background:#fef5e7}
+.callout.danger{border-left-color:#e74c3c;background:#fdedec}
+.callout.success{border-left-color:#27ae60;background:#eafaf1}
+.callout.connection{border-left-color:#8e44ad;background:#f4ecf7}
+.callout-title{font-weight:700;margin-bottom:4px}
+
+/* ===== RUBRIC TABLE ===== */
+.rubric-table{width:100%;border-collapse:collapse;margin:10px 0 14px;font-size:.92rem}
+.rubric-table th,.rubric-table td{border:1px solid #bdc3c7;padding:8px 10px;text-align:left}
+.rubric-table th{background:#1a1a2e;color:#fff;font-weight:600}
+.rubric-table tr:nth-child(even){background:#f9f9fb}
+.rubric-table .pts{font-weight:700;color:#2980b9;text-align:center;width:70px}
+.rubric-total{background:#eaf2f8 !important;font-weight:700}
+
+/* ===== TASK CARDS ===== */
+.task-card{border:1px solid #d5dbdf;border-radius:6px;padding:16px 18px;margin:14px 0;background:#fafbfc}
+.task-card h3{color:#16213e;margin-bottom:8px}
+.task-card .task-label{display:inline-block;background:#2980b9;color:#fff;font-size:.75rem;padding:2px 8px;border-radius:3px;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+
+/* ===== TEXTAREA FIELDS ===== */
+.response-group{margin:12px 0}
+.response-group label{display:block;font-weight:600;margin-bottom:4px;font-size:.93rem}
+.response-group textarea{width:100%;min-height:90px;padding:10px;font-family:inherit;font-size:.92rem;border:1px solid #aab2bd;border-radius:4px;resize:vertical;background:#fff}
+.response-group textarea:focus{border-color:#2980b9;box-shadow:0 0 0 2px rgba(41,128,185,.25)}
+.response-group .hint{font-size:.82rem;color:#636e72;margin-top:2px}
+textarea.large{min-height:180px}
+textarea.medium{min-height:120px}
+
+/* ===== PHASE HEADER ===== */
+.phase-header{background:#16213e;color:#fff;padding:12px 16px;border-radius:6px 6px 0 0;margin-top:20px}
+.phase-header h2{color:#f1c40f;border:none;padding:0;margin:0;font-size:1.2rem}
+.phase-header p{color:#d5dbe3;font-size:.88rem;margin-top:2px}
+
+/* ===== ACCORDION (hints) ===== */
+.accordion{margin:14px 0}
+.accordion__btn{display:block;width:100%;text-align:left;background:#eaf2f8;border:1px solid #bdc3c7;padding:10px 14px;font-size:.95rem;font-weight:600;cursor:pointer;border-radius:5px;color:#1a1a2e;position:relative;padding-right:36px}
+.accordion__btn::after{content:'+';position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:1.2rem;font-weight:700;color:#2980b9}
+.accordion__btn[aria-expanded="true"]::after{content:'−'}
+.accordion__btn:hover{background:#d6eaf8}
+.accordion__panel{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.accordion__panel__inner{padding:12px 14px;font-size:.92rem;border:1px solid #bdc3c7;border-top:none;border-radius:0 0 5px 5px;background:#fff}
+
+/* ===== CHECKLIST ===== */
+.checklist{list-style:none;padding:0}
+.checklist li{padding:4px 0 4px 26px;position:relative;font-size:.92rem}
+.checklist li::before{content:'☐';position:absolute;left:0;color:#2980b9;font-size:1.05rem}
+
+/* ===== CODE ===== */
+code{background:#ecf0f1;padding:1px 5px;border-radius:3px;font-size:.88em;font-family:'Cascadia Code','Fira Code',Consolas,monospace}
+pre{background:#1a1a2e;color:#ecf0f1;padding:14px 16px;border-radius:5px;overflow-x:auto;font-size:.86rem;line-height:1.5;margin:10px 0}
+pre code{background:none;padding:0;color:inherit}
+
+/* ===== BUTTONS ===== */
+.btn{display:inline-block;padding:10px 20px;font-size:.95rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;text-align:center}
+.btn-primary{background:#2980b9;color:#fff}
+.btn-primary:hover{background:#1f6da0}
+.btn-print{background:#27ae60;color:#fff;margin-top:10px}
+.btn-print:hover{background:#1e8c4c}
+
+/* ===== FOOTER ===== */
+.page-footer{text-align:center;padding:18px 10px;font-size:.82rem;color:#636e72;border-top:1px solid #dde1e6;margin-top:30px}
+
+/* ===== OL / UL inside sections ===== */
+.section ul,.section ol{margin:8px 0 8px 22px}
+.section li{margin-bottom:4px}
+
+/* ===== PRINT STYLES ===== */
+@media print{
+  .topnav,.btn-print,.accordion__btn::after,.no-print{display:none!important}
+  body{background:#fff;font-size:11pt;color:#000}
+  .page-wrap{max-width:100%;padding:0}
+  .lab-header{background:#1a1a2e!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .section{break-inside:avoid;border:1px solid #999;margin-bottom:12px}
+  .phase-header{background:#16213e!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .rubric-table th{background:#1a1a2e!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  textarea{border:1px solid #999!important;min-height:60px!important;white-space:pre-wrap}
+  .accordion__panel{max-height:none!important;overflow:visible!important}
+  .callout{break-inside:avoid}
+  a{color:#000;text-decoration:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== STICKY NAVIGATION ===== -->
+<nav class="topnav" aria-label="Lab page navigation">
+  <span class="topnav__title">Lab 11</span>
+  <a href="#overview">Overview</a>
+  <a href="#rubric">Rubric</a>
+  <a href="#prelab">Pre-Lab</a>
+  <a href="#phase1">Phase 1: PCAP</a>
+  <a href="#phase2">Phase 2: Logs</a>
+  <a href="#phase3">Phase 3: Correlation</a>
+  <a href="#reflection">Reflection</a>
+  <a href="#deliverables">Deliverables</a>
+  <a href="#hints">Hints</a>
+</nav>
+
+<main class="page-wrap">
+
+<!-- ===== LAB HEADER ===== -->
+<header class="lab-header" id="overview">
+  <p class="course-tag">CSC 156 – Digital Forensics Fundamentals &bull; Week 12</p>
+  <h1>Lab 11 – Packet Capture Analysis and Web Server Log Investigation</h1>
+  <div class="meta">
+    <strong>Points:</strong> 30 &nbsp;|&nbsp;
+    <strong>CSLO Alignment:</strong> CSLO 1, CSLO 2 &nbsp;|&nbsp;
+    <strong>Due:</strong> End of Week 12 (see Canvas for exact date/time)<br>
+    <strong>Tools:</strong> Wireshark, tcpdump (optional), grep/awk, text editor &nbsp;|&nbsp;
+    <strong>Estimated Time:</strong> 3 – 4 hours
+  </div>
+</header>
+
+<!-- ===== OVERVIEW SECTION ===== -->
+<section class="section" id="lab-overview">
+  <div class="section__heading"><h2><span class="num">1</span> Lab Overview and Objectives</h2></div>
+  <div class="section__body">
+    <p>In this lab you will act as a forensic examiner investigating a network security incident at <strong>Acme Corp</strong>. You have been provided with two primary evidence sources:</p>
+    <ol>
+      <li>A <strong>PCAP file</strong> captured from the network segment of Acme Corp's web server during the incident window.</li>
+      <li>A set of <strong>Apache/Nginx access logs</strong> from the same web server covering the same timeframe.</li>
+    </ol>
+    <p>Your objectives are to:</p>
+    <ul>
+      <li>Apply Wireshark display filters to isolate and examine suspicious network traffic (Module 12.2 skills).</li>
+      <li>Reconstruct TCP streams and extract artifacts from packet data.</li>
+      <li>Parse web server logs to identify attack indicators — SQL injection, directory traversal, XSS, scanner signatures, and brute-force patterns (Module 12.3 skills).</li>
+      <li>Correlate findings across PCAP and log evidence to build a unified attack timeline (Module 12.4 skills).</li>
+      <li>Document your investigation with professional forensic rigor (CSLO 4 connection).</li>
+    </ul>
+
+    <div class="callout connection">
+      <div class="callout-title">&#128279; Scenario Connection</div>
+      <p>This lab continues the <strong>Acme Corp investigation</strong> introduced in Module 12.1. The SOC flagged unusual outbound traffic from the web server at 2:47 AM. You now have the evidence — determine what happened, who did it, and what data (if any) left the building.</p>
+    </div>
+
+    <div class="callout info">
+      <div class="callout-title">&#128218; CSLO Alignment</div>
+      <p><strong>CSLO 1:</strong> Describe the fundamental concepts of incident response and forensic investigation.<br>
+      <strong>CSLO 2:</strong> Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== RUBRIC SECTION ===== -->
+<section class="section" id="rubric">
+  <div class="section__heading"><h2><span class="num">2</span> Grading Rubric</h2></div>
+  <div class="section__body">
+    <p>Your work is evaluated across four categories. Review these criteria <strong>before</strong> you begin.</p>
+    <table class="rubric-table">
+      <thead>
+        <tr><th>Category</th><th>What Is Evaluated</th><th class="pts">Points</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Preparation</strong></td>
+          <td>Pre-lab questions completed accurately; demonstrates readiness with Wireshark filter syntax and web server log field identification.</td>
+          <td class="pts">3</td>
+        </tr>
+        <tr>
+          <td><strong>Execution</strong></td>
+          <td>Correct application of Wireshark filters; TCP stream reconstruction; artifact extraction from PCAP; identification of attack indicators in web logs; cross-source correlation; accurate timeline construction.</td>
+          <td class="pts">18</td>
+        </tr>
+        <tr>
+          <td><strong>Documentation</strong></td>
+          <td>Lab notebook maintained with screenshots, filter queries used, observations, and chain-of-evidence notes. Professional, objective language throughout.</td>
+          <td class="pts">6</td>
+        </tr>
+        <tr>
+          <td><strong>Submission</strong></td>
+          <td>Lab report submitted on time with all required components: completed response fields, investigation summary, and supporting evidence artifacts.</td>
+          <td class="pts">3</td>
+        </tr>
+        <tr class="rubric-total">
+          <td colspan="2">Total</td>
+          <td class="pts">30</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== DOCUMENTATION REMINDER ===== -->
+<div class="callout warning" style="margin:0 0 20px">
+  <div class="callout-title">&#128221; Documentation Reminder (6 pts)</div>
+  <p>Throughout this lab, maintain a <strong>lab notebook</strong> (digital document or the response fields on this page) that includes:</p>
+  <ul style="margin:6px 0 0 18px">
+    <li>Screenshots of key Wireshark views (filtered results, TCP streams, exported objects).</li>
+    <li>Every display filter and command-line query you use — copy the exact syntax.</li>
+    <li>Timestamped observations written in professional, objective language.</li>
+    <li>Hash values if you export any files from the PCAP.</li>
+  </ul>
+  <p style="margin-top:6px">Your documentation quality is worth <strong>6 of 30 points</strong>. Treat your notes as if they could be presented in court.</p>
+</div>
+
+<!-- ===== PRE-LAB PREPARATION ===== -->
+<section class="section" id="prelab">
+  <div class="section__heading"><h2><span class="num">3</span> Pre-Lab Preparation (3 pts)</h2></div>
+  <div class="section__body">
+    <p>Complete the following readiness questions <strong>before</strong> beginning the main investigation tasks. These verify that you have the foundational knowledge from Modules 12.1 – 12.3 needed to succeed in this lab.</p>
+
+    <div class="task-card">
+      <span class="task-label">Pre-Lab Q1 — Wireshark Display Filters</span>
+      <h3>Write Wireshark Display Filters</h3>
+      <p>Write the exact Wireshark display filter syntax for each of the following scenarios:</p>
+      <ol>
+        <li>Show only HTTP traffic from IP address <code>203.0.113.42</code>.</li>
+        <li>Show only DNS queries that contain the string "acme" in the query name.</li>
+        <li>Show only TCP SYN packets (no SYN-ACK) — a port scan indicator.</li>
+        <li>Exclude all traffic to or from IP <code>10.0.0.1</code> (the default gateway).</li>
+      </ol>
+      <div class="response-group">
+        <label for="prelab-q1">Your Filters:</label>
+        <textarea id="prelab-q1" placeholder="1. &#10;2. &#10;3. &#10;4. "></textarea>
+      </div>
+    </div>
+
+    <div class="task-card">
+      <span class="task-label">Pre-Lab Q2 — Web Server Log Fields</span>
+      <h3>Identify Apache Combined Log Format Fields</h3>
+      <p>Examine the following Apache access log entry and identify each numbered field:</p>
+      <pre><code>203.0.113.42 - - [15/Apr/2026:02:22:11 +0000] "GET /admin/config.php HTTP/1.1" 200 4823 "http://acme.com/" "Mozilla/5.0"
+  ──[A]──       [B]  [C]             [D]                         [E]                [F] [G]       [H]              [I]</code></pre>
+      <div class="response-group">
+        <label for="prelab-q2">Identify fields A through I:</label>
+        <textarea id="prelab-q2" placeholder="A: &#10;B: &#10;C: &#10;D: &#10;E: &#10;F: &#10;G: &#10;H: &#10;I: "></textarea>
+      </div>
+    </div>
+
+    <div class="task-card">
+      <span class="task-label">Pre-Lab Q3 — Suspicious Indicators</span>
+      <h3>Attack Indicator Recognition</h3>
+      <p>For each of the following strings found in a web server log request URI, identify the <strong>attack type</strong> it represents:</p>
+      <ol>
+        <li><code>/search?q=1' OR '1'='1</code></li>
+        <li><code>/page?file=../../../../etc/passwd</code></li>
+        <li><code>/comment?msg=&lt;script&gt;alert('xss')&lt;/script&gt;</code></li>
+      </ol>
+      <div class="response-group">
+        <label for="prelab-q3">Your Answers:</label>
+        <textarea id="prelab-q3" placeholder="1. &#10;2. &#10;3. "></textarea>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     PHASE 1 — PACKET CAPTURE ANALYSIS
+     ================================================================ -->
+<div class="phase-header" id="phase1">
+  <h2>Phase 1: Packet Capture Analysis</h2>
+  <p>Wireshark PCAP Investigation &bull; Execution points: part of 18 pts</p>
+</div>
+
+<section class="section">
+  <div class="section__body">
+    <p>Open the provided PCAP file in Wireshark. Follow the tasks below in order. Record every filter you apply and every observation you make.</p>
+
+    <!-- Task 1.1 -->
+    <div class="task-card">
+      <span class="task-label">Task 1.1</span>
+      <h3>Initial PCAP Integrity Verification</h3>
+      <p>Before analysis, verify the integrity of the PCAP file. Compute both MD5 and SHA-256 hashes of the file and record them below. Compare your hashes against the values provided by the instructor (if applicable).</p>
+      <div class="response-group">
+        <label for="t1-1-hash">Hash Values and Verification Notes:</label>
+        <textarea id="t1-1-hash" placeholder="MD5: &#10;SHA-256: &#10;Match instructor-provided values? (Yes/No): &#10;Tool used: "></textarea>
+        <p class="hint">Example tools: md5sum, sha256sum, Get-FileHash (PowerShell), FTK Imager</p>
+      </div>
+    </div>
+
+    <!-- Task 1.2 -->
+    <div class="task-card">
+      <span class="task-label">Task 1.2</span>
+      <h3>Protocol Hierarchy and Traffic Overview</h3>
+      <p>Use Wireshark's <strong>Statistics → Protocol Hierarchy</strong> to get an overview of the traffic in the capture. Also check <strong>Statistics → Conversations</strong> and <strong>Statistics → Endpoints</strong>.</p>
+      <ol>
+        <li>What protocols are present in the capture? List the top 5 by percentage of packets.</li>
+        <li>How many unique source IP addresses are in the capture?</li>
+        <li>How many unique destination IP addresses?</li>
+        <li>Which IP pair has the highest packet count?</li>
+      </ol>
+      <div class="response-group">
+        <label for="t1-2">Protocol Hierarchy and Conversation Summary:</label>
+        <textarea id="t1-2" placeholder="Top 5 protocols: &#10;1. &#10;2. &#10;3. &#10;4. &#10;5. &#10;&#10;Unique source IPs: &#10;Unique destination IPs: &#10;Highest-volume IP pair: "></textarea>
+      </div>
+    </div>
+
+    <!-- Task 1.3 -->
+    <div class="task-card">
+      <span class="task-label">Task 1.3</span>
+      <h3>Identify Suspicious Hosts</h3>
+      <p>Based on your Protocol Hierarchy and Conversations analysis, identify any IP addresses that appear suspicious. Consider:</p>
+      <ul>
+        <li>External IPs communicating with the web server on unexpected ports.</li>
+        <li>IPs with unusually high packet counts or data volumes.</li>
+        <li>IPs initiating connections on multiple ports (scanning behavior).</li>
+      </ul>
+      <p>Apply display filters to isolate traffic from each suspicious IP. Document the filters used.</p>
+      <div class="response-group">
+        <label for="t1-3">Suspicious Hosts and Filter Syntax:</label>
+        <textarea id="t1-3" class="medium" placeholder="Suspicious IP #1: &#10;  Reason: &#10;  Filter used: &#10;  Observations: &#10;&#10;Suspicious IP #2: &#10;  Reason: &#10;  Filter used: &#10;  Observations: "></textarea>
+      </div>
+    </div>
+
+    <!-- Task 1.4 -->
+    <div class="task-card">
+      <span class="task-label">Task 1.4</span>
+      <h3>Port Scan Detection</h3>
+      <p>Apply a display filter to detect potential port scanning activity (SYN-only packets). Record the filter and your findings.</p>
+      <div class="response-group">
+        <label for="t1-4">Port Scan Analysis:</label>
+        <textarea id="t1-4" placeholder="Display filter used: &#10;&#10;Were port scans detected? (Yes/No): &#10;Source IP(s) of scan: &#10;Number of unique destination ports targeted: &#10;Timeframe of scanning activity: &#10;Notable ports targeted: "></textarea>
+      </div>
+    </div>
+
+    <!-- Task 1.5 -->
+    <div class="task-card">
+      <span class="task-label">Task 1.5</span>
+      <h3>TCP Stream Reconstruction</h3>
+      <p>Select the most suspicious HTTP conversation you identified and use <strong>Right-click → Follow → TCP Stream</strong> to reconstruct the session. Examine the full request/response exchange.</p>
+      <ol>
+        <li>What HTTP method was used (GET, POST, etc.)?</li>
+        <li>What URI was requested?</li>
+        <li>What was the server's response code and content?</li>
+        <li>Does the request contain any attack payload? If so, what type?</li>
+        <li>Were any credentials visible in the stream?</li>
+      </ol>
+      <div class="response-group">
+        <label for="t1-5">TCP Stream Analysis:</label>
+        <textarea id="t1-5" class="medium" placeholder="Stream index #: &#10;Client IP → Server IP: &#10;HTTP Method: &#10;URI Requested: &#10;Response Code: &#10;Response Content Summary: &#10;Attack Payload Identified: &#10;Credentials Observed: &#10;&#10;Additional Observations: "></textarea>
+        <p class="hint">Take a screenshot of the TCP stream window and include it in your lab notebook.</p>
+      </div>
+    </div>
+
+    <!-- Task 1.6 -->
+    <div class="task-card">
+      <span class="task-label">Task 1.6</span>
+      <h3>Artifact Extraction from PCAP</h3>
+      <p>Use <strong>File → Export Objects → HTTP</strong> to examine files transferred during the capture.</p>
+      <ol>
+        <li>List all files available for export (filename, content type, size).</li>
+        <li>Export any suspicious files. Compute their hashes.</li>
+        <li>Examine file content — do any appear to be web shells, scripts, or exfiltrated data?</li>
+      </ol>
+      <div class="response-group">
+        <label for="t1-6">Exported Objects and Analysis:</label>
+        <textarea id="t1-6" class="medium" placeholder="Exported files: &#10;  Filename | Content-Type | Size | MD5 Hash&#10;  ─────────────────────────────────────────&#10;  1. &#10;  2. &#10;  3. &#10;&#10;Suspicious file analysis: &#10;  Filename: &#10;  Content summary: &#10;  Forensic significance: "></textarea>
+      </div>
+    </div>
+
+    <!-- Task 1.7 -->
+    <div class="task-card">
+      <span class="task-label">Task 1.7</span>
+      <h3>Beaconing and C2 Detection</h3>
+      <p>Examine the PCAP for indicators of Command-and-Control (C2) communication:</p>
+      <ul>
+        <li>Look for periodic outbound connections at regular intervals.</li>
+        <li>Check for DNS queries to unusual domains or high-volume TXT record requests.</li>
+        <li>Identify any outbound connections on non-standard ports.</li>
+      </ul>
+      <div class="response-group">
+        <label for="t1-7">C2 / Beaconing Analysis:</label>
+        <textarea id="t1-7" placeholder="Beaconing detected? (Yes/No): &#10;Destination IP/Domain: &#10;Interval observed: &#10;Protocol/Port used: &#10;Filter(s) applied: &#10;&#10;DNS anomalies observed: &#10;&#10;Exfiltration indicators: "></textarea>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================
+     PHASE 2 — WEB SERVER LOG INVESTIGATION
+     ================================================================ -->
+<div class="phase-header" id="phase2">
+  <h2>Phase 2: Web Server Log Investigation</h2>
+  <p>Apache / Nginx Access Log Analysis &bull; Execution points: part of 18 pts</p>
+</div>
+
+<section class="section">
+  <div class="section__body">
+    <p>Open the provided web server access log file(s) in a text editor or use command-line tools (<code>grep</code>, <code>awk</code>, <code>sort</code>, <code>uniq</code>). Work through the tasks below systematically.</p>
+
+    <!-- Task 2.1 -->
+    <div class="task-card">
+      <span class="task-label">Task 2.1</span>
+      <h3>Log Overview and Statistics</h3>
+      <p>Gather baseline statistics from the log file:</p>
+      <ol>
+        <li>Total number of log entries.</li>
+        <li>Time range covered (earliest and latest timestamps).</li>
+        <li>Top 5 source IP addresses by request count.</li>
+        <li>Top 5 most-requested URIs.</li>
+        <li>Distribution of HTTP status codes (count of 200s, 301s, 403s, 404s, 500s).</li>
+      </ol>
+      <div class="response-group">
+        <label for="t2-1">Log Statistics:</label>
+        <textarea id="t2-1" class="medium" placeholder="Total entries: &#10;Time range: &#10;&#10;Top 5 Source IPs: &#10;  1. IP — count&#10;  2. &#10;  3. &#10;  4. &#10;  5. &#10;&#10;Top 5 URIs: &#10;  1. URI — count&#10;  2. &#10;  3. &#10;  4. &#10;  5. &#10;&#10;Status Code Distribution: &#10;  200: &#10;  301/302: &#10;  403: &#10;  404: &#10;  500: "></textarea>
+        <p class="hint">Useful commands: <code>wc -l access.log</code> &nbsp; <code>awk '{print $1}' access.log | sort | uniq -c | sort -rn | head -5</code></p>
+      </div>
+    </div>
+
+    <!-- Task 2.2 -->
+    <div class="task-card">
+      <span class="task-label">Task 2.2</span>
+      <h3>Scanner and Automated Tool Detection</h3>
+      <p>Search the logs for User-Agent strings associated with known scanning tools (e.g., <code>sqlmap</code>, <code>Nikto</code>, <code>DirBuster</code>, <code>Gobuster</code>, <code>Nmap</code>).</p>
+      <div class="response-group">
+        <label for="t2-2">Scanner Detection Findings:</label>
+        <textarea id="t2-2" placeholder="Search command(s) used: &#10;&#10;Scanner User-Agents found: &#10;  Tool: &#10;  Source IP: &#10;  Number of requests: &#10;  Time range of activity: &#10;&#10;Additional observations: "></textarea>
+        <p class="hint">Example: <code>grep -i "sqlmap\|nikto\|dirbuster\|gobuster\|nmap" access.log</code></p>
+      </div>
+    </div>
+
+    <!-- Task 2.3 -->
+    <div class="task-card">
+      <span class="task-label">Task 2.3</span>
+      <h3>SQL Injection Indicator Detection</h3>
+      <p>Search the logs for SQL injection indicators: <code>UNION</code>, <code>SELECT</code>, <code>OR 1=1</code>, single quotes (<code>'</code> or <code>%27</code>), semicolons (<code>%3B</code>), and comment sequences (<code>--</code> or <code>%2D%2D</code>).</p>
+      <div class="response-group">
+        <label for="t2-3">SQL Injection Findings:</label>
+        <textarea id="t2-3" class="medium" placeholder="Search command(s) used: &#10;&#10;SQLi indicators found: &#10;  Log entry #1: &#10;  Log entry #2: &#10;  Log entry #3: &#10;&#10;Source IP(s) involved: &#10;HTTP status codes returned: &#10;Were any attempts successful (200 with large byte count)? &#10;&#10;Analysis: "></textarea>
+      </div>
+    </div>
+
+    <!-- Task 2.4 -->
+    <div class="task-card">
+      <span class="task-label">Task 2.4</span>
+      <h3>Directory Traversal and XSS Detection</h3>
+      <p>Search for directory traversal patterns (<code>../</code>, <code>..%2F</code>, <code>%2e%2e</code>) and XSS payloads (<code>&lt;script</code>, <code>%3Cscript</code>, <code>onerror=</code>, <code>alert(</code>).</p>
+      <div class="response-group">
+        <label for="t2-4">Traversal and XSS Findings:</label>
+        <textarea id="t2-4" placeholder="Search command(s) used: &#10;&#10;Directory traversal attempts: &#10;  Log entry: &#10;  Target file: &#10;  Status code: &#10;&#10;XSS attempts: &#10;  Log entry: &#10;  Payload: &#10;  Status code: &#10;&#10;Analysis: "></textarea>
+      </div>
+    </div>
+
+    <!-- Task 2.5 -->
+    <div class="task-card">
+      <span class="task-label">Task 2.5</span>
+      <h3>Brute-Force and Authentication Attack Detection</h3>
+      <p>Look for indicators of brute-force attacks against login endpoints: many <code>POST</code> requests to authentication URIs (e.g., <code>/login</code>, <code>/admin</code>, <code>/wp-login.php</code>) with high rates of 401 or 403 responses followed by a 200.</p>
+      <div class="response-group">
+        <label for="t2-5">Brute-Force Analysis:</label>
+        <textarea id="t2-5" placeholder="Search command(s) used: &#10;&#10;Login endpoint(s) targeted: &#10;Source IP(s): &#10;Number of failed attempts (401/403): &#10;Was a successful login (200) observed after failures? &#10;Timeframe of attack: &#10;&#10;Analysis: "></textarea>
+      </div>
+    </div>
+
+    <!-- Task 2.6 -->
+    <div class="task-card">
+      <span class="task-label">Task 2.6</span>
+      <h3>Web Attack Timeline Reconstruction</h3>
+      <p>Using the attacker IP address(es) you identified, filter and sort all log entries chronologically. Reconstruct the attacker's session from initial reconnaissance through exploitation.</p>
+      <p>Identify these phases in the log data:</p>
+      <ol>
+        <li><strong>Reconnaissance:</strong> Directory enumeration, 404 responses, scanner activity.</li>
+        <li><strong>Weaponization / Exploitation:</strong> SQL injection attempts, traversal attempts, other attack payloads.</li>
+        <li><strong>Post-Exploitation:</strong> Successful access (200 codes), file uploads, large data responses.</li>
+      </ol>
+      <div class="response-group">
+        <label for="t2-6">Attack Timeline from Web Logs:</label>
+        <textarea id="t2-6" class="large" placeholder="Attacker IP: &#10;Command used to filter: &#10;&#10;TIMELINE:&#10;──────────&#10;[Timestamp] Phase: Reconnaissance&#10;  Request: &#10;  Status: &#10;  Notes: &#10;&#10;[Timestamp] Phase: Exploitation&#10;  Request: &#10;  Status: &#10;  Notes: &#10;&#10;[Timestamp] Phase: Post-Exploitation&#10;  Request: &#10;  Status: &#10;  Notes: &#10;&#10;Summary of attack progression: "></textarea>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================
+     PHASE 3 — CROSS-SOURCE CORRELATION
+     ================================================================ -->
+<div class="phase-header" id="phase3">
+  <h2>Phase 3: Cross-Source Correlation</h2>
+  <p>Connecting PCAP, Web Logs, and Other Evidence &bull; Execution points: part of 18 pts</p>
+</div>
+
+<section class="section">
+  <div class="section__body">
+    <div class="callout connection">
+      <div class="callout-title">&#128279; Why Correlation Matters</div>
+      <p>No single evidence source tells the complete story. Forensic strength comes from corroborating findings across multiple independent sources. In this phase you connect what you found in the PCAP (Phase 1) with what you found in the web server logs (Phase 2) — and any other evidence sources available — to build a unified attack narrative.</p>
+    </div>
+
+    <!-- Task 3.1 -->
+    <div class="task-card">
+      <span class="task-label">Task 3.1</span>
+      <h3>IP Address Correlation</h3>
+      <p>Compare the suspicious IP addresses identified in the PCAP (Phase 1, Task 1.3) with those found in the web server logs (Phase 2). Do the same attacker IPs appear in both sources?</p>
+      <div class="response-group">
+        <label for="t3-1">IP Correlation Findings:</label>
+        <textarea id="t3-1" placeholder="IPs found in PCAP only: &#10;IPs found in logs only: &#10;IPs found in BOTH sources: &#10;&#10;What does this overlap (or lack thereof) tell you? "></textarea>
+      </div>
+    </div>
+
+    <!-- Task 3.2 -->
+    <div class="task-card">
+      <span class="task-label">Task 3.2</span>
+      <h3>Timestamp Alignment</h3>
+      <p>Compare timestamps between the PCAP and web server logs for the same events. Verify that the clocks are synchronized (or note any offset). Align key events across both sources.</p>
+      <div class="response-group">
+        <label for="t3-2">Timestamp Alignment:</label>
+        <textarea id="t3-2" placeholder="PCAP time zone: &#10;Log file time zone: &#10;Clock offset observed (if any): &#10;&#10;Key event timestamp comparison:&#10;  Event description | PCAP timestamp | Log timestamp&#10;  ──────────────────────────────────────────────────&#10;  1. &#10;  2. &#10;  3. "></textarea>
+      </div>
+    </div>
+
+    <!-- Task 3.3 -->
+    <div class="task-card">
+      <span class="task-label">Task 3.3</span>
+      <h3>Attack Confirmation Across Sources</h3>
+      <p>For each attack type identified in Phase 2 (SQL injection, traversal, brute force, etc.), find the corresponding packets in the PCAP that confirm the attack. Does the PCAP reveal anything the logs did not (e.g., response body content, additional requests not logged)?</p>
+      <div class="response-group">
+        <label for="t3-3">Cross-Source Attack Confirmation:</label>
+        <textarea id="t3-3" class="medium" placeholder="Attack Type #1: &#10;  Log evidence: &#10;  PCAP evidence (stream #, filter): &#10;  Additional detail from PCAP not in logs: &#10;&#10;Attack Type #2: &#10;  Log evidence: &#10;  PCAP evidence: &#10;  Additional detail: &#10;&#10;Discrepancies between sources: "></textarea>
+      </div>
+    </div>
+
+    <!-- Task 3.4 -->
+    <div class="task-card">
+      <span class="task-label">Task 3.4</span>
+      <h3>Unified Attack Timeline</h3>
+      <p>Combine your findings from Phase 1 and Phase 2 into a single, chronologically ordered attack timeline. For each event, note the <strong>evidence source(s)</strong> that support it.</p>
+      <div class="response-group">
+        <label for="t3-4">Unified Attack Timeline:</label>
+        <textarea id="t3-4" class="large" placeholder="UNIFIED ATTACK TIMELINE&#10;═══════════════════════&#10;&#10;[Timestamp] Event description&#10;  Source(s): PCAP / Web Log / Both&#10;  Details: &#10;&#10;[Timestamp] Event description&#10;  Source(s): &#10;  Details: &#10;&#10;[Timestamp] Event description&#10;  Source(s): &#10;  Details: &#10;&#10;[Timestamp] Event description&#10;  Source(s): &#10;  Details: &#10;&#10;(Continue as needed)"></textarea>
+      </div>
+    </div>
+
+    <!-- Task 3.5 -->
+    <div class="task-card">
+      <span class="task-label">Task 3.5</span>
+      <h3>Connection to Prior Week Evidence (Optional Bonus Context)</h3>
+      <p>If your instructor has provided additional evidence from prior weeks (e.g., Volatility memory analysis output from Week 11, Windows Event Logs from Week 8, Linux auth.log from Week 9), note any connections here. How does the network evidence from this lab corroborate or extend findings from host-based analysis?</p>
+      <div class="response-group">
+        <label for="t3-5">Host-to-Network Correlation Notes:</label>
+        <textarea id="t3-5" placeholder="Prior evidence source referenced: &#10;Connection to PCAP findings: &#10;Connection to web log findings: &#10;&#10;How does network evidence strengthen the overall case? "></textarea>
+        <p class="hint">This task connects to Module 12.4, Section 5 (Cross-Source Evidence Correlation) and the Week 11 Volatility netscan ↔ PCAP correlation concept.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ===== REFLECTION / INVESTIGATIVE SUMMARY ===== -->
+<section class="section" id="reflection">
+  <div class="section__heading"><h2><span class="num">4</span> Investigative Summary and Reflection</h2></div>
+  <div class="section__body">
+    <p>Write a concise investigative summary that answers the core questions of the Acme Corp investigation. This summary should be written in professional language suitable for inclusion in a forensic report (connecting to CSLO 4 and Week 17 report-writing skills).</p>
+
+    <div class="task-card">
+      <span class="task-label">Summary</span>
+      <h3>Investigative Summary</h3>
+      <p>Address the following in your summary:</p>
+      <ol>
+        <li><strong>What happened?</strong> Describe the attack in narrative form.</li>
+        <li><strong>Who did it?</strong> Identify the attacker IP(s) and any identifying information (User-Agent, tools used).</li>
+        <li><strong>When did it happen?</strong> Provide the timeframe with key timestamps.</li>
+        <li><strong>How did they do it?</strong> Describe the attack methodology (reconnaissance → exploitation → post-exploitation).</li>
+        <li><strong>What data (if any) left the building?</strong> Describe any evidence of data exfiltration.</li>
+        <li><strong>What evidence supports your conclusions?</strong> Reference specific PCAP streams, log entries, and artifacts.</li>
+      </ol>
+      <div class="response-group">
+        <label for="summary">Your Investigative Summary:</label>
+        <textarea id="summary" class="large" placeholder="INVESTIGATIVE SUMMARY&#10;═════════════════════&#10;&#10;Incident Overview:&#10;&#10;&#10;Attacker Identification:&#10;&#10;&#10;Attack Timeline:&#10;&#10;&#10;Attack Methodology:&#10;&#10;&#10;Data Exfiltration Assessment:&#10;&#10;&#10;Supporting Evidence:&#10;&#10;&#10;Recommendations:&#10;"></textarea>
+      </div>
+    </div>
+
+    <div class="task-card">
+      <span class="task-label">Reflection</span>
+      <h3>Personal Reflection</h3>
+      <p>Briefly reflect on your experience with this investigation:</p>
+      <ul>
+        <li>What was the most challenging aspect of the analysis?</li>
+        <li>What would you do differently if you could start over?</li>
+        <li>How did correlating multiple evidence sources change your understanding of the incident?</li>
+        <li>What additional evidence sources would you want if this were a real investigation?</li>
+      </ul>
+      <div class="response-group">
+        <label for="reflect">Your Reflection:</label>
+        <textarea id="reflect" class="medium" placeholder="Write your reflection here..."></textarea>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== DELIVERABLES & SUBMISSION ===== -->
+<section class="section" id="deliverables">
+  <div class="section__heading"><h2><span class="num">5</span> Deliverables and Submission</h2></div>
+  <div class="section__body">
+
+    <h3>Required Deliverables</h3>
+    <ul class="checklist">
+      <li>Completed Pre-Lab Preparation questions (Section 3).</li>
+      <li>All Phase 1 task responses with filter syntax and observations.</li>
+      <li>All Phase 2 task responses with search commands and findings.</li>
+      <li>All Phase 3 correlation responses including unified attack timeline.</li>
+      <li>Investigative Summary (Section 4).</li>
+      <li>Personal Reflection (Section 4).</li>
+      <li>Lab notebook with screenshots, filter queries, and timestamped observations (may be embedded in responses above or submitted as a separate document).</li>
+    </ul>
+
+    <h3 style="margin-top:14px">Submission Instructions</h3>
+    <ol>
+      <li>Complete all response fields on this page.</li>
+      <li>Click the <strong>"Save as PDF"</strong> button below to generate a PDF of your completed lab.</li>
+      <li>Review the PDF to ensure all your responses and any pasted screenshots are captured.</li>
+      <li>Submit the PDF to the <strong>Lab 11 Assignment</strong> in Canvas.</li>
+      <li>If you have a separate lab notebook document or additional screenshot files, attach those as well.</li>
+    </ol>
+
+    <div class="callout warning">
+      <div class="callout-title">&#9888;&#65039; Submission Reminders</div>
+      <ul style="margin:4px 0 0 18px">
+        <li>Late submissions are subject to the course late policy described in the syllabus.</li>
+        <li>Verify that your PDF is readable and complete before submitting.</li>
+        <li>Do <strong>not</strong> submit the raw PCAP or log files unless specifically requested by the instructor.</li>
+      </ul>
+    </div>
+
+    <button class="btn btn-print" onclick="window.print()" aria-label="Save this page as a PDF using your browser's print dialog">&#128424; Save as PDF</button>
+
+  </div>
+</section>
+
+<!-- ===== HINTS & COMMON PITFALLS ===== -->
+<section class="section" id="hints">
+  <div class="section__heading"><h2><span class="num">6</span> Hints and Common Pitfalls</h2></div>
+  <div class="section__body">
+
+    <div class="accordion">
+      <button class="accordion__btn" aria-expanded="false" aria-controls="hint-panel-1">&#128161; Hint: Wireshark Display Filter Troubleshooting</button>
+      <div class="accordion__panel" id="hint-panel-1" role="region">
+        <div class="accordion__panel__inner">
+          <ul>
+            <li>Wireshark display filters are <strong>case-sensitive</strong> for string values. <code>http.request.method == "POST"</code> works; <code>"post"</code> does not.</li>
+            <li>Use <code>==</code> for exact match, <code>contains</code> for substring match. Example: <code>dns.qry.name contains "acme"</code>.</li>
+            <li>Combine filters with <code>&amp;&amp;</code> (AND), <code>||</code> (OR), <code>!</code> (NOT). Parentheses help with complex expressions.</li>
+            <li>If your filter bar turns <span style="color:#c0392b;font-weight:700">red</span>, the syntax is invalid. Check field names in the Wireshark Display Filter Reference.</li>
+            <li>Remember: <code>ip.addr</code> matches both source and destination. Use <code>ip.src</code> or <code>ip.dst</code> for one direction.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion__btn" aria-expanded="false" aria-controls="hint-panel-2">&#128161; Hint: grep Commands for Log Analysis</button>
+      <div class="accordion__panel" id="hint-panel-2" role="region">
+        <div class="accordion__panel__inner">
+          <ul>
+            <li>Use <code>grep -i</code> for case-insensitive search: <code>grep -i "union.*select" access.log</code>.</li>
+            <li>Use <code>grep -c</code> to count matches: <code>grep -c "403" access.log</code>.</li>
+            <li>Chain grep with <code>awk</code> for field extraction: <code>awk '{print $1}' access.log | sort | uniq -c | sort -rn</code> gives IP frequency.</li>
+            <li>Filter by attacker IP first, then search for attack patterns: <code>grep "203.0.113.42" access.log | grep -i "union"</code>.</li>
+            <li>URL-encoded characters are common in attacks. Search for both decoded and encoded forms: <code>grep -E "(\.\./|%2e%2e)" access.log</code>.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion__btn" aria-expanded="false" aria-controls="hint-panel-3">&#128161; Hint: Common Pitfalls to Avoid</button>
+      <div class="accordion__panel" id="hint-panel-3" role="region">
+        <div class="accordion__panel__inner">
+          <ul>
+            <li><strong>Forgetting to verify PCAP integrity:</strong> Always hash the PCAP before analysis. This is a forensic evidence file.</li>
+            <li><strong>Ignoring time zones:</strong> PCAP timestamps may be in UTC while log timestamps may be in local time. Check and note any offset.</li>
+            <li><strong>Focusing on one source only:</strong> The highest-scoring submissions will show clear correlation between PCAP and log findings.</li>
+            <li><strong>Vague observations:</strong> "Traffic looks suspicious" is not sufficient. State <em>what</em> is suspicious, <em>why</em>, and cite the specific packet number or log line.</li>
+            <li><strong>Missing documentation:</strong> Every filter you type and every observation you make should be recorded. 6 of 30 points depend on documentation quality.</li>
+            <li><strong>Not checking the error log:</strong> If an Apache/Nginx error log is provided, it may reveal server-side errors triggered by attack payloads that the access log alone does not show.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion__btn" aria-expanded="false" aria-controls="hint-panel-4">&#128161; Hint: Building the Unified Timeline</button>
+      <div class="accordion__panel" id="hint-panel-4" role="region">
+        <div class="accordion__panel__inner">
+          <p>A strong unified timeline follows this structure:</p>
+          <ol>
+            <li>List every significant event with its timestamp.</li>
+            <li>Note which evidence source(s) confirm each event.</li>
+            <li>Organize chronologically — the story should read like a narrative.</li>
+            <li>Group events into phases: <strong>Reconnaissance → Exploitation → Post-Exploitation → Exfiltration</strong>.</li>
+            <li>Note gaps — if there is a period with no evidence, say so. Gaps can indicate encrypted activity or log deletion.</li>
+          </ol>
+          <p>Refer to Module 12.4, Section 5 (Cross-Source Evidence Correlation) for the correlation framework diagram.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="page-footer">
+  <p><strong>CSC 156 – Digital Forensics Fundamentals</strong> | Mendocino College | Computer Science Department</p>
+  <p>Week 12 – Lab 11 | Spring 2026</p>
+  <p style="margin-top:4px"><em>This lab assesses <strong>CSLO 1</strong> and <strong>CSLO 2</strong>.</em></p>
+</footer>
+
+</main>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+/* --- Accordion toggle --- */
+document.querySelectorAll('.accordion__panel').forEach(function(p){
+  p.setAttribute('aria-hidden','true');
+  p.setAttribute('inert','');
+});
+document.querySelectorAll('.accordion__btn').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var expanded=this.getAttribute('aria-expanded')==='true';
+    this.setAttribute('aria-expanded',String(!expanded));
+    var panel=this.nextElementSibling;
+    if(!expanded){
+      panel.style.maxHeight=panel.scrollHeight+'px';
+      panel.removeAttribute('aria-hidden');
+      panel.removeAttribute('inert');
+    }else{
+      panel.style.maxHeight='0';
+      panel.setAttribute('aria-hidden','true');
+      panel.setAttribute('inert','');
+    }
+  });
+});
+
+/* --- Expand all accordions before print so content is captured --- */
+window.addEventListener('beforeprint',function(){
+  document.querySelectorAll('.accordion__btn').forEach(function(btn){
+    btn.setAttribute('aria-expanded','true');
+    var panel=btn.nextElementSibling;
+    panel.style.maxHeight='none';
+    panel.removeAttribute('aria-hidden');
+    panel.removeAttribute('inert');
+  });
+});
+window.addEventListener('afterprint',function(){
+  document.querySelectorAll('.accordion__btn').forEach(function(btn){
+    btn.setAttribute('aria-expanded','false');
+    var panel=btn.nextElementSibling;
+    panel.style.maxHeight='0';
+    panel.setAttribute('aria-hidden','true');
+    panel.setAttribute('inert','');
+  });
+});
+</script>
+</body>
+</html>

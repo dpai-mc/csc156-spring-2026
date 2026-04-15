@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 12.4 – Beyond Packets: Firewall Logs, IDS Alerts, Email Headers, and DNS Forensics</title>
+<style>
+:root{
+--primary:#003366;
+--primary-light:#004a99;
+--accent:#c75b12;
+--accent-light:#e8a84c;
+--bg:#ffffff;
+--bg-alt:#f5f7fa;
+--bg-code:#f0f2f5;
+--text:#212529;
+--text-light:#495057;
+--border:#d0d4d9;
+--success:#28734b;
+--success-bg:#e6f4ec;
+--danger:#a83232;
+--danger-bg:#fce8e8;
+--info:#1a6b8a;
+--info-bg:#e3f2f8;
+--warning:#7a5e00;
+--warning-bg:#fff8e1;
+--purple:#5b3480;
+--purple-bg:#f3edf9;
+--nav-height:54px;
+--radius:6px;
+--shadow:0 2px 6px rgba(0,0,0,.1);
+}
+*,*::before,*::after{box-sizing:border-box;}
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--nav-height) + 18px);}
+body{
+margin:0;padding:0;
+font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+font-size:1rem;line-height:1.65;color:var(--text);background:var(--bg);
+}
+/* ── NAV ── */
+nav.top-nav{
+position:sticky;top:0;z-index:1000;
+background:var(--primary);
+display:flex;flex-wrap:wrap;align-items:center;
+padding:0 1rem;min-height:var(--nav-height);
+box-shadow:0 2px 4px rgba(0,0,0,.25);
+}
+nav.top-nav a{
+color:#fff;text-decoration:none;font-size:.84rem;
+padding:.55rem .65rem;border-radius:var(--radius);
+white-space:nowrap;transition:background .2s;
+}
+nav.top-nav a:hover,nav.top-nav a:focus-visible{background:var(--primary-light);outline:2px solid var(--accent-light);outline-offset:1px;}
+/* ── LAYOUT ── */
+.page-wrap{max-width:960px;margin:0 auto;padding:1.5rem 1.25rem 3rem;}
+h1{font-size:1.75rem;color:var(--primary);margin:.6rem 0 .2rem;border-bottom:3px solid var(--accent);padding-bottom:.45rem;}
+.subtitle{font-size:1.05rem;color:var(--text-light);margin-bottom:1.5rem;}
+h2{font-size:1.4rem;color:var(--primary);margin:2rem 0 .6rem;border-left:4px solid var(--accent);padding-left:.6rem;}
+h3{font-size:1.15rem;color:var(--primary-light);margin:1.3rem 0 .4rem;}
+h4{font-size:1.02rem;color:var(--text);margin:1rem 0 .3rem;}
+p,ul,ol{margin:.45rem 0 .85rem;}
+ul,ol{padding-left:1.4rem;}
+li{margin-bottom:.3rem;}
+a{color:var(--primary-light);}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px;}
+strong{color:var(--text);}
+code{font-family:'Consolas','Courier New',monospace;font-size:.92em;background:var(--bg-code);padding:.12em .35em;border-radius:3px;}
+pre{
+background:var(--bg-code);border:1px solid var(--border);border-radius:var(--radius);
+padding:1rem;overflow-x:auto;font-size:.88rem;line-height:1.55;margin:.6rem 0 1rem;
+}
+pre code{background:none;padding:0;}
+/* ── CALLOUT BOXES ── */
+.callout{border-left:4px solid;border-radius:var(--radius);padding:.85rem 1rem;margin:1rem 0;}
+.callout-title{font-weight:700;margin-bottom:.25rem;display:flex;align-items:center;gap:.4rem;}
+.callout-forensic{border-color:var(--accent);background:#fef6ee;}
+.callout-forensic .callout-title{color:var(--accent);}
+.callout-info{border-color:var(--info);background:var(--info-bg);}
+.callout-info .callout-title{color:var(--info);}
+.callout-warning{border-color:var(--warning);background:var(--warning-bg);}
+.callout-warning .callout-title{color:var(--warning);}
+.callout-success{border-color:var(--success);background:var(--success-bg);}
+.callout-success .callout-title{color:var(--success);}
+.callout-danger{border-color:var(--danger);background:var(--danger-bg);}
+.callout-danger .callout-title{color:var(--danger);}
+.callout-connection{border-color:var(--purple);background:var(--purple-bg);}
+.callout-connection .callout-title{color:var(--purple);}
+.callout-scope{border-color:var(--info);background:#eef6fb;border-width:4px;}
+.callout-scope .callout-title{color:var(--info);}
+/* ── TABLES ── */
+table{width:100%;border-collapse:collapse;margin:.7rem 0 1.1rem;font-size:.93rem;}
+th,td{border:1px solid var(--border);padding:.55rem .7rem;text-align:left;vertical-align:top;}
+th{background:var(--primary);color:#fff;font-weight:600;}
+tr:nth-child(even){background:var(--bg-alt);}
+caption{font-weight:700;margin-bottom:.35rem;text-align:left;color:var(--primary);font-size:1rem;}
+/* ── COLLAPSIBLE ── */
+details{border:1px solid var(--border);border-radius:var(--radius);margin:.7rem 0;background:var(--bg);}
+details[open]{box-shadow:var(--shadow);}
+summary{
+cursor:pointer;font-weight:700;padding:.7rem 1rem;
+background:var(--bg-alt);border-radius:var(--radius);
+list-style:none;display:flex;align-items:center;gap:.5rem;
+color:var(--primary);font-size:1.02rem;
+}
+summary::-webkit-details-marker{display:none;}
+summary::before{content:'▸';display:inline-block;transition:transform .2s;font-size:1.1rem;}
+details[open]>summary::before{transform:rotate(90deg);}
+summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.details-body{padding:.8rem 1rem 1rem;}
+/* ── ANNOTATED LOG ── */
+.annotated-log{position:relative;margin:1rem 0;}
+.log-line{font-family:'Consolas','Courier New',monospace;font-size:.88rem;line-height:2;background:var(--bg-code);padding:.6rem .8rem;border:1px solid var(--border);border-radius:var(--radius);overflow-x:auto;white-space:nowrap;}
+.log-line .field{padding:.15em .3em;border-radius:3px;cursor:default;position:relative;white-space:nowrap;}
+.f-ts{background:#cce5ff;border-bottom:2px solid #0066cc;}
+.f-action{background:#d4edda;border-bottom:2px solid var(--success);}
+.f-deny{background:#f8d7da;border-bottom:2px solid var(--danger);}
+.f-proto{background:#fff3cd;border-bottom:2px solid #cc9900;}
+.f-src{background:#e2d9f3;border-bottom:2px solid var(--purple);}
+.f-dst{background:#fce4cc;border-bottom:2px solid var(--accent);}
+.f-port{background:#d1ecf1;border-bottom:2px solid var(--info);}
+.f-rule{background:#e0e0e0;border-bottom:2px solid #666;}
+.f-sid{background:#dce6f1;border-bottom:2px solid #336699;}
+.f-sev{background:#f8d7da;border-bottom:2px solid var(--danger);}
+.f-msg{background:#fff3cd;border-bottom:2px solid #cc9900;}
+.f-class{background:#d4edda;border-bottom:2px solid var(--success);}
+.annotation-key{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0 .8rem;font-size:.85rem;}
+.annotation-key span{padding:.2em .55em;border-radius:3px;font-family:'Consolas',monospace;font-size:.85em;}
+/* ── DIAGRAM ── */
+.corr-diagram{border:2px solid var(--primary);border-radius:var(--radius);padding:1.2rem;margin:1.2rem 0;background:var(--bg-alt);overflow-x:auto;}
+.corr-row{display:flex;align-items:center;gap:.4rem;margin:.35rem 0;flex-wrap:wrap;}
+.corr-box{
+padding:.45rem .7rem;border-radius:var(--radius);font-size:.85rem;font-weight:600;
+text-align:center;white-space:nowrap;border:2px solid;min-width:110px;
+}
+.corr-arrow{font-size:1.1rem;color:var(--text-light);flex-shrink:0;}
+.cb-pcap{background:#cce5ff;border-color:#0066cc;color:#003d7a;}
+.cb-fw{background:#d4edda;border-color:var(--success);color:#1a4a2e;}
+.cb-ids{background:#f8d7da;border-color:var(--danger);color:#6b1a1a;}
+.cb-web{background:#fff3cd;border-color:#cc9900;color:#5c4400;}
+.cb-dns{background:#e2d9f3;border-color:var(--purple);color:#3a1d5c;}
+.cb-host{background:#fce4cc;border-color:var(--accent);color:#6b3000;}
+.cb-time{background:#e0e0e0;border-color:#666;color:#333;}
+.corr-label{font-size:.8rem;color:var(--text-light);min-width:90px;font-weight:600;}
+/* ── MATRIX TABLE ── */
+.matrix-table th{font-size:.88rem;}
+.matrix-table td{font-size:.87rem;}
+/* ── TIMELINE ── */
+.timeline{position:relative;margin:1.2rem 0 1.5rem 1.2rem;padding-left:1.6rem;border-left:3px solid var(--primary);}
+.tl-entry{position:relative;margin-bottom:1.2rem;}
+.tl-entry::before{
+content:'';position:absolute;left:-1.95rem;top:.35rem;
+width:14px;height:14px;border-radius:50%;
+background:var(--accent);border:2px solid var(--primary);
+}
+.tl-time{font-weight:700;font-size:.88rem;color:var(--primary);font-family:'Consolas',monospace;}
+.tl-source{display:inline-block;font-size:.78rem;padding:.1em .45em;border-radius:3px;margin-left:.4rem;font-weight:600;}
+.tl-desc{margin:.15rem 0 0;font-size:.93rem;}
+/* ── QUIZ ── */
+.quiz-wrap{background:var(--bg-alt);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.2rem;margin:1rem 0;}
+.quiz-q{font-weight:700;margin:.8rem 0 .4rem;color:var(--primary);}
+.quiz-opts label{display:block;padding:.3rem .5rem;margin:.2rem 0;border-radius:var(--radius);cursor:pointer;transition:background .15s;}
+.quiz-opts label:hover{background:#e9ecef;}
+.quiz-opts input[type="radio"]{margin-right:.5rem;}
+.quiz-btn{
+margin:.6rem 0 .3rem;padding:.45rem 1.1rem;
+background:var(--primary);color:#fff;border:none;border-radius:var(--radius);
+cursor:pointer;font-size:.92rem;font-weight:600;transition:background .2s;
+}
+.quiz-btn:hover,.quiz-btn:focus-visible{background:var(--primary-light);outline:2px solid var(--accent);outline-offset:2px;}
+.quiz-feedback{margin:.5rem 0;padding:.6rem .8rem;border-radius:var(--radius);font-size:.92rem;display:none;}
+.qf-correct{background:var(--success-bg);border:1px solid var(--success);color:var(--success);}
+.qf-incorrect{background:var(--danger-bg);border:1px solid var(--danger);color:var(--danger);}
+/* ── RESPONSIVE ── */
+@media(max-width:700px){
+nav.top-nav{padding:0 .4rem;}
+nav.top-nav a{font-size:.76rem;padding:.45rem .4rem;}
+.page-wrap{padding:1rem .7rem 2rem;}
+h1{font-size:1.4rem;}
+pre{font-size:.82rem;padding:.7rem;}
+.corr-row{flex-direction:column;align-items:flex-start;}
+.corr-arrow{transform:rotate(90deg);}
+}
+/* ── PRINT ── */
+@media print{
+nav.top-nav{display:none;}
+details{border:none;}
+details>summary{display:none;}
+.details-body{display:block!important;padding:0;}
+.page-wrap{max-width:100%;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ NAVIGATION ═══════════════ -->
+<nav class="top-nav" aria-label="Module 12.4 Section Navigation">
+<a href="#firewall">Firewall Logs</a>
+<a href="#ids">IDS/IPS Alerts</a>
+<a href="#dns">DNS Forensics</a>
+<a href="#router">Router &amp; Switch</a>
+<a href="#email">Email Headers</a>
+<a href="#correlation">Correlation</a>
+<a href="#knowledge-check">Knowledge Check</a>
+</nav>
+
+<div class="page-wrap">
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<h1>Module 12.4 – Beyond Packets: Firewall Logs, IDS Alerts, Email Headers, and DNS Forensics</h1>
+<p class="subtitle">Week 12 &bull; CSC 156 – Digital Forensics Fundamentals &bull; Survey-Level Overview</p>
+
+<div class="callout callout-info">
+<div class="callout-title" role="heading" aria-level="3">&#x1F3AF; Module Purpose</div>
+<p>PCAPs and web server logs (Modules 12.1–12.3) capture rich detail, but investigations rarely rely on a single evidence source. This module surveys the broader <strong>network evidence ecosystem</strong> — firewall logs, IDS/IPS alerts, DNS records, infrastructure logs, and email headers — and shows how correlating across sources builds a defensible investigative timeline.</p>
+<p>This is a <strong>survey-level</strong> module: we emphasize breadth, forensic relevance, and cross-source correlation rather than deep hands-on exercises.</p>
+</div>
+
+<div class="callout callout-forensic">
+<div class="callout-title" role="heading" aria-level="3">&#x1F50D; CSLO Alignment</div>
+<ul style="margin-bottom:0;">
+<li><strong>CSLO 3</strong> – Collect and analyze network-based evidence, including packet captures, logs, and network flows, to trace unauthorized access or data exfiltration.</li>
+<li><strong>CSLO 2</strong> – Identify, collect, and preserve digital evidence from storage media, file systems, and operating systems using forensically sound procedures.</li>
+</ul>
+</div>
+
+<!-- ═══════════════ SECTION 1: FIREWALL LOGS ═══════════════ -->
+<h2 id="firewall">1. Firewall Log Analysis</h2>
+
+<details open>
+<summary>1.1 &nbsp;What Firewalls Record and Why It Matters</summary>
+<div class="details-body">
+<p>Every enterprise network routes traffic through at least one firewall — a chokepoint that decides what enters and leaves the network. Because firewalls sit at the boundary, their logs provide a <strong>high-level chronological record</strong> of allowed and denied connections. While a PCAP captures full packet content, a firewall log captures <em>decisions</em>: was this traffic permitted or blocked, and by which rule?</p>
+
+<h3>Common Firewall Log Fields</h3>
+<table>
+<caption>Table 1 – Typical Fields in a Firewall Log Entry</caption>
+<thead>
+<tr><th>Field</th><th>Description</th><th>Forensic Value</th></tr>
+</thead>
+<tbody>
+<tr><td><code>Timestamp</code></td><td>Date and time the event was recorded</td><td>Anchors events on the investigation timeline; must be normalized to UTC</td></tr>
+<tr><td><code>Action</code></td><td><code>ALLOW</code>, <code>DENY</code>, <code>DROP</code>, <code>REJECT</code></td><td>Shows whether traffic succeeded — a denied connection still proves the <em>attempt</em></td></tr>
+<tr><td><code>Protocol</code></td><td>TCP, UDP, ICMP, etc.</td><td>Identifies service type; unexpected protocols (e.g., ICMP tunneling) are red flags</td></tr>
+<tr><td><code>Source IP</code></td><td>Originating IP address</td><td>Identifies attacker or compromised host</td></tr>
+<tr><td><code>Source Port</code></td><td>Ephemeral port on the source</td><td>Correlates with PCAP session tracking</td></tr>
+<tr><td><code>Destination IP</code></td><td>Target IP address</td><td>Identifies the targeted internal asset</td></tr>
+<tr><td><code>Destination Port</code></td><td>Service port (80, 443, 22, 3389, etc.)</td><td>Reveals targeted service; unusual ports suggest backdoors or tunneling</td></tr>
+<tr><td><code>Rule / Policy ID</code></td><td>Which firewall rule matched</td><td>Shows which policy permitted or blocked the traffic; useful for gap analysis</td></tr>
+<tr><td><code>Bytes / Packets</code></td><td>Volume transferred (if logged)</td><td>Large outbound transfers may indicate exfiltration</td></tr>
+<tr><td><code>Interface / Zone</code></td><td>Which network segment</td><td>Tracks lateral movement between zones (DMZ → internal)</td></tr>
+</tbody>
+</table>
+</div>
+</details>
+
+<details>
+<summary>1.2 &nbsp;Annotated Firewall Log Entry</summary>
+<div class="details-body">
+<p>Below is a single line from a <strong>pfSense / iptables-style</strong> firewall log. Each field is color-coded and labeled.</p>
+
+<div class="annotated-log" role="figure" aria-label="Annotated firewall log entry with color-coded fields">
+<div class="log-line">
+<span class="field f-ts" title="Timestamp">2026-04-12T03:14:22Z</span>&nbsp;
+<span class="field f-action" title="Action">ALLOW</span>&nbsp;
+<span class="field f-proto" title="Protocol">TCP</span>&nbsp;
+<span class="field f-src" title="Source IP">198.51.100.47</span>:<span class="field f-port" title="Source Port">49832</span>&nbsp;→&nbsp;
+<span class="field f-dst" title="Destination IP">10.0.1.25</span>:<span class="field f-port" title="Destination Port">443</span>&nbsp;
+<span class="field f-rule" title="Rule ID">rule=12</span>&nbsp;
+bytes=<span class="field f-dst" title="Bytes transferred">234891</span>
+</div>
+<div class="annotation-key" aria-label="Legend for color-coded fields">
+<span class="f-ts">Timestamp</span>
+<span class="f-action">Action</span>
+<span class="f-proto">Protocol</span>
+<span class="f-src">Source IP</span>
+<span class="f-port">Port</span>
+<span class="f-dst">Dest IP / Bytes</span>
+<span class="f-rule">Rule ID</span>
+</div>
+</div>
+
+<p><strong>Reading this entry:</strong> On April 12, 2026 at 03:14:22 UTC, the firewall <em>allowed</em> a TCP connection from external IP <code>198.51.100.47</code> (ephemeral port 49832) to internal host <code>10.0.1.25</code> on port 443 (HTTPS). Rule 12 matched. Approximately 235 KB were transferred.</p>
+
+<h3>Now Consider a Denied Entry</h3>
+<div class="annotated-log" role="figure" aria-label="Annotated denied firewall log entry">
+<div class="log-line">
+<span class="field f-ts" title="Timestamp">2026-04-12T03:14:58Z</span>&nbsp;
+<span class="field f-deny" title="Action – Denied">DENY</span>&nbsp;
+<span class="field f-proto" title="Protocol">TCP</span>&nbsp;
+<span class="field f-src" title="Source IP">198.51.100.47</span>:<span class="field f-port" title="Source Port">49840</span>&nbsp;→&nbsp;
+<span class="field f-dst" title="Destination IP">10.0.1.25</span>:<span class="field f-port" title="Destination Port">3389</span>&nbsp;
+<span class="field f-rule" title="Rule ID">rule=default-deny</span>
+</div>
+</div>
+
+<p><strong>Forensic insight:</strong> The same external IP, just 36 seconds later, attempted to reach port <strong>3389 (RDP)</strong> on the same internal host — and was <em>denied</em> by the default-deny rule. This pattern (successful HTTPS followed by an RDP probe) suggests <strong>reconnaissance or lateral movement attempt</strong> after initial access. The denied connection proves the <em>intent</em> even though the traffic never reached the target.</p>
+
+<div class="callout callout-forensic">
+<div class="callout-title" role="heading" aria-level="4">&#x1F50D; Forensic Principle — Denied ≠ Irrelevant</div>
+<p>Denied connections are some of the most forensically valuable entries. They reveal what the attacker <em>tried</em> to do — scanning activity, blocked lateral movement, and failed exfiltration attempts. Always include denied traffic in your analysis.</p>
+</div>
+</div>
+</details>
+
+<details>
+<summary>1.3 &nbsp;Common Forensic Patterns in Firewall Logs</summary>
+<div class="details-body">
+<ul>
+<li><strong>Port scanning:</strong> Many denied connections from a single source to sequential ports on one or more targets, often within seconds.</li>
+<li><strong>Beaconing:</strong> Periodic outbound ALLOW entries to the same external IP at regular intervals (e.g., every 60 seconds) — characteristic of command-and-control (C2) callbacks.</li>
+<li><strong>Large outbound transfers:</strong> Unusually high byte counts on allowed outbound connections, especially to IP addresses not associated with normal business traffic — potential data exfiltration.</li>
+<li><strong>Protocol anomalies:</strong> Allowed traffic on unexpected protocols (DNS over TCP with large payloads, ICMP with unusual sizes) may indicate tunneling.</li>
+<li><strong>Rule-change artifacts:</strong> A connection that was previously denied suddenly being allowed may indicate the attacker modified firewall rules (check admin logs).</li>
+</ul>
+</div>
+</details>
+
+<!-- ═══════════════ SECTION 2: IDS/IPS ═══════════════ -->
+<h2 id="ids">2. IDS/IPS Alert Analysis</h2>
+
+<details open>
+<summary>2.1 &nbsp;IDS vs. IPS — Detection vs. Prevention</summary>
+<div class="details-body">
+<p>An <strong>Intrusion Detection System (IDS)</strong> passively monitors network traffic and generates alerts when patterns match known attack signatures or statistical anomalies. An <strong>Intrusion Prevention System (IPS)</strong> sits inline and can actively <em>block</em> traffic matching its rules. Many modern tools (Snort, Suricata) operate in either mode.</p>
+
+<table>
+<caption>Table 2 – IDS vs. IPS Comparison</caption>
+<thead><tr><th>Feature</th><th>IDS</th><th>IPS</th></tr></thead>
+<tbody>
+<tr><td>Position</td><td>Passive tap / SPAN port</td><td>Inline (traffic flows through it)</td></tr>
+<tr><td>Action on match</td><td>Alert only</td><td>Alert + block / drop / reset</td></tr>
+<tr><td>Risk of false positive</td><td>Alert noise, no traffic impact</td><td>Legitimate traffic may be blocked</td></tr>
+<tr><td>Forensic value</td><td>Record of suspicious activity</td><td>Record + evidence that traffic was stopped</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-danger">
+<div class="callout-title" role="heading" aria-level="4">⚠️ Critical Concept — An IDS Alert Is a Hypothesis, Not a Conclusion</div>
+<p>An IDS alert means the traffic <em>matched a pattern</em> — it does <strong>not</strong> confirm that an attack succeeded. Alerts must be <strong>validated</strong> against other evidence sources: Did the firewall allow the traffic? Does the target host show signs of compromise in its event logs or memory? Was the vulnerability even present on the target? Treating an unvalidated alert as proof of compromise is a common and serious analytical error.</p>
+</div>
+</div>
+</details>
+
+<details>
+<summary>2.2 &nbsp;Reading a Snort/Suricata Alert (Conceptual)</summary>
+<div class="details-body">
+<p>Snort and Suricata are the most widely deployed open-source IDS/IPS engines. Their alert format follows a consistent structure. You do not need to write rules for this course, but you must be able to <strong>read and interpret</strong> an alert.</p>
+
+<h3>Annotated Snort Alert</h3>
+<div class="annotated-log" role="figure" aria-label="Annotated Snort IDS alert with color-coded fields">
+<div class="log-line">
+[<span class="field f-sev" title="Priority/Severity">1</span>]
+[<span class="field f-sid" title="Signature ID">1:2024897:3</span>]
+<span class="field f-msg" title="Alert message">ET TROJAN Possible Cobalt Strike Beacon Activity</span>
+[<span class="field f-class" title="Classification">A Network Trojan was Detected</span>]
+[<span class="field f-sev" title="Priority">Priority: 1</span>]
+<span class="field f-ts" title="Timestamp">04/12-03:14:25.003421</span>
+<span class="field f-src" title="Source">10.0.1.25:443</span> -&gt;
+<span class="field f-dst" title="Destination">198.51.100.47:49832</span>
+</div>
+<div class="annotation-key" aria-label="Legend for Snort alert fields">
+<span class="f-sev">Severity</span>
+<span class="f-sid">Signature ID (SID)</span>
+<span class="f-msg">Alert Message</span>
+<span class="f-class">Classification</span>
+<span class="f-ts">Timestamp</span>
+<span class="f-src">Source</span>
+<span class="f-dst">Destination</span>
+</div>
+</div>
+
+<h3>Breaking Down the Fields</h3>
+<ul>
+<li><strong>Signature ID (SID) <code>1:2024897:3</code>:</strong> Generator ID 1 (Snort), rule 2024897, revision 3. The "ET" prefix indicates the rule comes from the Emerging Threats community ruleset.</li>
+<li><strong>Alert Message:</strong> Human-readable description — here, suspected Cobalt Strike C2 beacon traffic.</li>
+<li><strong>Classification:</strong> Broad category assigned by the rule author — "A Network Trojan was Detected."</li>
+<li><strong>Priority 1:</strong> Highest severity. Priorities typically range from 1 (critical) to 4 (informational).</li>
+<li><strong>Timestamp:</strong> When the packet that triggered the alert was observed. Note this is in the IDS sensor's local time — you must know the sensor's time zone to correlate with other logs.</li>
+<li><strong>Source → Destination:</strong> Here, the <em>response</em> traffic from the internal server (10.0.1.25:443) going back to the external IP. The IDS flagged the <em>outbound</em> payload as matching C2 beacon patterns.</li>
+</ul>
+
+<h3>True Positives, False Positives, and Validation</h3>
+<table>
+<caption>Table 3 – Alert Classification Matrix</caption>
+<thead><tr><th></th><th>Attack Actually Occurred</th><th>No Attack Occurred</th></tr></thead>
+<tbody>
+<tr><td><strong>Alert Fired</strong></td><td style="background:var(--success-bg);">True Positive (TP)</td><td style="background:var(--danger-bg);">False Positive (FP)</td></tr>
+<tr><td><strong>No Alert</strong></td><td style="background:var(--danger-bg);">False Negative (FN)</td><td style="background:var(--success-bg);">True Negative (TN)</td></tr>
+</tbody>
+</table>
+<p><strong>Validation steps for an IDS alert:</strong></p>
+<ol>
+<li><strong>Check the firewall log</strong> — Was this traffic allowed or denied?</li>
+<li><strong>Check the target host</strong> — Does the OS/application have the vulnerability the rule targets?</li>
+<li><strong>Examine the PCAP</strong> — Does the full packet content confirm malicious payload, or was the signature match coincidental?</li>
+<li><strong>Check host artifacts</strong> — Event logs, running processes (memory forensics), file system changes.</li>
+</ol>
+</div>
+</details>
+
+<div class="callout callout-connection">
+<div class="callout-title" role="heading" aria-level="3">&#x1F517; Cross-Module Connection — Memory Forensics <code>netscan</code></div>
+<p>In <strong>Week 11 (Memory Forensics)</strong>, you used Volatility's <code>netscan</code> plugin to list active and recently closed network connections from a memory image. An IDS alert showing C2 beacon traffic to <code>198.51.100.47</code> can be correlated with a <code>netscan</code> result showing an <code>ESTABLISHED</code> connection from the same host to that IP — providing host-side confirmation of the network-side alert.</p>
+</div>
+
+<!-- ═══════════════ SECTION 3: DNS ═══════════════ -->
+<h2 id="dns">3. DNS Query Logs and DNS Forensics</h2>
+
+<details open>
+<summary>3.1 &nbsp;Why DNS Matters in Forensics</summary>
+<div class="details-body">
+<p>The Domain Name System (DNS) is involved in virtually every network connection. Before a host connects to <code>evil-c2-server.example.com</code>, it must resolve that name to an IP address. DNS query logs — from internal DNS servers, endpoint DNS caches, or passive DNS databases — provide a <strong>map of every domain the network communicated with</strong>, often including traffic that was encrypted and invisible to content-level inspection.</p>
+
+<h3>Key DNS Record Types for Forensics</h3>
+<table>
+<caption>Table 4 – DNS Record Types and Forensic Relevance</caption>
+<thead><tr><th>Record Type</th><th>Purpose</th><th>Forensic Relevance</th></tr></thead>
+<tbody>
+<tr><td><code>A</code></td><td>Maps domain → IPv4 address</td><td>Core resolution record; reveals which IPs a domain pointed to at query time</td></tr>
+<tr><td><code>AAAA</code></td><td>Maps domain → IPv6 address</td><td>Same as A record for IPv6; attackers may use IPv6 to bypass IPv4-only monitoring</td></tr>
+<tr><td><code>MX</code></td><td>Mail exchange server for a domain</td><td>Identifies mail infrastructure; relevant in phishing and BEC investigations</td></tr>
+<tr><td><code>TXT</code></td><td>Arbitrary text (SPF, DKIM, DMARC, etc.)</td><td>SPF/DKIM/DMARC records validate email authenticity; also abused for DNS tunneling data exfiltration</td></tr>
+<tr><td><code>CNAME</code></td><td>Canonical name alias</td><td>Can chain to malicious infrastructure; used in domain fronting</td></tr>
+<tr><td><code>NS</code></td><td>Authoritative name server for a zone</td><td>NS record changes may indicate domain hijacking</td></tr>
+</tbody>
+</table>
+</div>
+</details>
+
+<details>
+<summary>3.2 &nbsp;Suspicious DNS Activity and Tunneling Indicators</summary>
+<div class="details-body">
+<h3>Red Flags in DNS Logs</h3>
+<ul>
+<li><strong>Queries to newly registered domains (NRDs):</strong> Domains registered within the past 30 days are disproportionately associated with malicious activity.</li>
+<li><strong>High query volume to a single domain:</strong> Normal DNS involves diverse queries; hundreds of queries per minute to one domain may indicate C2 beaconing or tunneling.</li>
+<li><strong>Unusually long subdomain labels:</strong> DNS tunneling encodes data in subdomain names, producing queries like <code>aGVsbG8gd29ybGQ.tunnel.evil.com</code>. Normal subdomains rarely exceed 20–30 characters; tunneling labels often reach the 63-character per-label limit.</li>
+<li><strong>High volume of <code>TXT</code> record queries:</strong> TXT records can carry larger payloads than A records, making them preferred for DNS tunneling data return channels.</li>
+<li><strong>Queries to known-bad domains:</strong> Threat intelligence feeds maintain blocklists of domains associated with malware, phishing, and C2.</li>
+<li><strong><code>NXDOMAIN</code> floods:</strong> Many queries returning "no such domain" may indicate a domain generation algorithm (DGA) — malware generating random domain names hoping one resolves to an active C2 server.</li>
+</ul>
+
+<h3>DNS Tunneling — Conceptual Overview</h3>
+<p>DNS tunneling encodes arbitrary data (commands, exfiltrated files) within DNS queries and responses. Because DNS traffic (port 53) is almost universally allowed through firewalls, it provides a covert channel even in tightly controlled networks.</p>
+<pre><code>Normal query:    www.example.com                    → A record → 93.184.216.34
+Tunneling query: dGhpcyBpcyBhIHRlc3Q.c2.evil.com   → TXT record → [encoded response data]</code></pre>
+<p>The Base64-like subdomain label carries exfiltrated data; the TXT response carries C2 commands. Detection relies on statistical analysis: label length, query frequency, entropy of subdomain strings, and ratio of TXT queries.</p>
+
+<h3>WHOIS and Passive DNS</h3>
+<ul>
+<li><strong>WHOIS:</strong> A protocol for querying domain registration databases. Returns registrant information (often privacy-protected), registration/expiration dates, and name servers. Forensically useful for identifying domain ownership and registration recency.</li>
+<li><strong>Passive DNS (pDNS):</strong> Databases that record historical DNS resolution data — "what IP did this domain resolve to on a given date?" Unlike active DNS queries that return only the <em>current</em> answer, passive DNS preserves the historical record, which is critical when attackers rotate infrastructure.</li>
+</ul>
+</div>
+</details>
+
+<div class="callout callout-connection">
+<div class="callout-title" role="heading" aria-level="3">&#x1F517; Cross-Module Connection — Windows DNS Cache (Week 8)</div>
+<p>In <strong>Week 8 (Windows Forensics)</strong>, you examined the local DNS resolver cache using <code>ipconfig /displaydns</code> as a host-based artifact. That cache provides a snapshot of recently resolved domains <em>from the endpoint's perspective</em>. Correlating the host DNS cache with the network DNS server logs lets you confirm which machine made a suspicious query — the server log shows the query source IP, and the host cache confirms the resolution was cached locally.</p>
+</div>
+
+<!-- ═══════════════ SECTION 4: ROUTER & SWITCH ═══════════════ -->
+<h2 id="router">4. Router and Switch Logs</h2>
+
+<details open>
+<summary>4.1 &nbsp;Infrastructure Logs — Syslog, MAC Tables, ARP, and DHCP</summary>
+<div class="details-body">
+<p>Routers and switches form the internal plumbing of the network. While they typically do not perform deep packet inspection, they generate <strong>syslog messages</strong> and maintain tables that are essential for one of the most fundamental forensic questions: <em>Which physical device had this IP address at this time?</em></p>
+
+<h3>Key Evidence Sources from Network Infrastructure</h3>
+<table>
+<caption>Table 5 – Router/Switch Evidence Sources</caption>
+<thead><tr><th>Source</th><th>What It Records</th><th>Forensic Use</th></tr></thead>
+<tbody>
+<tr>
+<td><strong>Syslog</strong></td>
+<td>Timestamped messages: interface up/down, authentication events, configuration changes, routing changes</td>
+<td>Detects unauthorized configuration changes, identifies when links went down (anti-forensic activity such as disconnecting a device), admin login events</td>
+</tr>
+<tr>
+<td><strong>MAC Address Table</strong></td>
+<td>Maps MAC addresses to switch ports (volatile — entries age out)</td>
+<td>Identifies which physical switch port (and therefore which network jack / location) a device was connected to</td>
+</tr>
+<tr>
+<td><strong>ARP Table</strong></td>
+<td>Maps IP addresses to MAC addresses (volatile — entries expire)</td>
+<td>Resolves "which MAC address had IP 10.0.1.25?" — bridges the gap between Layer 3 (IP) and Layer 2 (MAC)</td>
+</tr>
+<tr>
+<td><strong>DHCP Lease Logs</strong></td>
+<td>Records IP address assignments: MAC address, assigned IP, lease start/end time, hostname</td>
+<td><strong>Critical for host identification:</strong> When a firewall log shows traffic from IP 10.0.1.25, the DHCP lease log tells you which device (by MAC address and hostname) held that IP at that specific time</td>
+</tr>
+</tbody>
+</table>
+
+<div class="callout callout-warning">
+<div class="callout-title" role="heading" aria-level="4">⏳ Volatility Warning — Collect Early</div>
+<p>MAC address tables and ARP tables are <strong>volatile</strong> — entries age out in minutes. DHCP lease logs are more persistent but may be overwritten by rotation. In an incident, capturing these tables early (or ensuring centralized syslog collection) is essential. By the time a forensic examiner arrives days later, the ARP and MAC tables will have changed.</p>
+</div>
+
+<h3>DHCP Lease Log — The IP-to-Device Rosetta Stone</h3>
+<p>Consider this scenario: A firewall log shows suspicious outbound traffic from <code>10.0.1.25</code> at 03:14 UTC. But IP addresses are assigned dynamically — <code>10.0.1.25</code> could be a different device tomorrow. The DHCP lease log resolves this:</p>
+<pre><code>2026-04-12 02:58:11 DHCPACK  10.0.1.25  MAC=a4:83:e7:2b:11:f0  Host=ACCT-WS-042  Lease=3600s</code></pre>
+<p>This confirms that at 02:58 UTC (16 minutes before the suspicious traffic), IP <code>10.0.1.25</code> was assigned to MAC address <code>a4:83:e7:2b:11:f0</code>, hostname <code>ACCT-WS-042</code>, with a one-hour lease. The suspicious traffic at 03:14 falls within this lease period, so the device is identified.</p>
+</div>
+</details>
+
+<!-- ═══════════════ SECTION 5: EMAIL HEADERS ═══════════════ -->
+<h2 id="email">5. Email Header Analysis <span style="font-size:.85rem;color:var(--info);font-weight:normal;">(Introduction Only)</span></h2>
+
+<div class="callout callout-scope">
+<div class="callout-title" role="heading" aria-level="3">&#x1F4CB; Scope Notice — Introduction Only</div>
+<p>This section provides a <strong>conceptual introduction</strong> to email header analysis. Full hands-on email forensics — including detailed header parsing, tracing email routing paths, and analyzing phishing campaigns — is covered in <strong>Week 16: Email and Messaging Forensics</strong>. The goal here is to understand what email headers contain and why they matter as a network evidence source.</p>
+</div>
+
+<details open>
+<summary>5.1 &nbsp;Email Header Structure</summary>
+<div class="details-body">
+<p>Every email message contains <strong>headers</strong> — metadata prepended to the message body by each mail server that handles the message. While most email clients hide headers by default, they contain a wealth of forensic information.</p>
+
+<h3>Key Header Fields</h3>
+<table>
+<caption>Table 6 – Important Email Header Fields</caption>
+<thead><tr><th>Header Field</th><th>Description</th><th>Forensic Note</th></tr></thead>
+<tbody>
+<tr><td><code>From:</code></td><td>Displayed sender address</td><td>Easily spoofed — do <strong>not</strong> trust at face value</td></tr>
+<tr><td><code>Return-Path:</code></td><td>Envelope sender (where bounces go)</td><td>May differ from <code>From:</code> in spoofed emails</td></tr>
+<tr><td><code>Received:</code></td><td>Added by each mail server in the delivery chain</td><td>Read <strong>bottom-to-top</strong> to trace the actual routing path; includes server IPs and timestamps</td></tr>
+<tr><td><code>Message-ID:</code></td><td>Unique identifier assigned by the originating server</td><td>Useful for correlating related messages and detecting forgeries</td></tr>
+<tr><td><code>Date:</code></td><td>Timestamp set by the sending client</td><td>Can be forged; compare with <code>Received:</code> timestamps for consistency</td></tr>
+<tr><td><code>X-Originating-IP:</code></td><td>IP of the sending client (if added by the mail service)</td><td>May reveal the sender's actual IP address</td></tr>
+</tbody>
+</table>
+
+<h3>The <code>Received:</code> Chain</h3>
+<p>The <code>Received:</code> headers form a chain that traces the email's path from origin to destination. Each server that handles the message prepends its own <code>Received:</code> header at the top. To trace the route chronologically, <strong>read from bottom to top</strong>:</p>
+<pre><code>Received: from mail-gateway.victim.com (10.0.2.5)
+    by mail-store.victim.com; Sun, 12 Apr 2026 03:15:02 +0000
+Received: from relay.external-provider.net (203.0.113.50)
+    by mail-gateway.victim.com; Sun, 12 Apr 2026 03:14:58 +0000
+Received: from sender-smtp.suspicious-domain.com (198.51.100.80)
+    by relay.external-provider.net; Sun, 12 Apr 2026 03:14:44 +0000</code></pre>
+<p><strong>Reading bottom-to-top:</strong> The email originated from <code>198.51.100.80</code> (suspicious-domain.com), passed through an external relay at <code>203.0.113.50</code>, entered the victim's mail gateway, and was delivered to the mail store.</p>
+
+<h3>SPF, DKIM, and DMARC — Authentication Concepts</h3>
+<ul>
+<li><strong>SPF (Sender Policy Framework):</strong> A DNS TXT record that lists which IP addresses are authorized to send email for a domain. If the sending server's IP is not in the SPF record, the email may be spoofed.</li>
+<li><strong>DKIM (DomainKeys Identified Mail):</strong> A cryptographic signature added to the email header by the sending server. The receiving server verifies it against a public key published in DNS. A valid DKIM signature confirms the message was not altered in transit.</li>
+<li><strong>DMARC (Domain-based Message Authentication, Reporting, and Conformance):</strong> A policy framework that combines SPF and DKIM results and tells receiving servers what to do with messages that fail authentication (none, quarantine, or reject).</li>
+</ul>
+
+<h3>Red Flags in Email Headers</h3>
+<ul>
+<li><code>From:</code> domain does not match <code>Return-Path:</code> domain</li>
+<li>SPF result: <code>fail</code> or <code>softfail</code></li>
+<li>DKIM result: <code>fail</code> or absent when the domain publishes DKIM</li>
+<li>Inconsistent timestamps between <code>Received:</code> hops</li>
+<li><code>X-Originating-IP</code> from an unexpected geographic region</li>
+<li>Unusually short or broken <code>Received:</code> chain</li>
+</ul>
+
+<div class="callout callout-info">
+<div class="callout-title" role="heading" aria-level="4">&#x1F4D6; Preview — Week 16</div>
+<p>In <strong>Week 16: Email and Messaging Forensics</strong>, you will perform hands-on header analysis, trace multi-hop email routing, analyze phishing emails with spoofed headers, and use SPF/DKIM/DMARC results to assess email authenticity. This introduction gives you the vocabulary and conceptual framework you will build on.</p>
+</div>
+</div>
+</details>
+
+<!-- ═══════════════ SECTION 6: CORRELATION ═══════════════ -->
+<h2 id="correlation">6. Host-to-Network Evidence Correlation</h2>
+
+<p>Individual evidence sources tell partial stories. The power of digital forensics lies in <strong>correlating evidence across sources</strong> to build a coherent, defensible narrative. This section is the capstone of the network forensics unit — it ties together everything from Weeks 8, 11, and 12.</p>
+
+<details open>
+<summary>6.1 &nbsp;Evidence Correlation Matrix</summary>
+<div class="details-body">
+<p>The matrix below maps host-based artifacts to their network-based counterparts. When both sides agree, confidence in the finding increases dramatically.</p>
+
+<table class="matrix-table">
+<caption>Table 7 – Host-to-Network Evidence Correlation Matrix</caption>
+<thead>
+<tr>
+<th>Host Artifact</th>
+<th>Network Artifact</th>
+<th>Correlation Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Volatility <code>netscan</code> — active connections from memory image</td>
+<td>PCAP sessions showing matching src/dst IP:port tuples</td>
+<td>Confirms the connection existed on both the host and the wire; memory shows the process responsible</td>
+</tr>
+<tr>
+<td>Windows Event Log <strong>4624 Type 10</strong> (Remote Interactive / RDP logon)</td>
+<td>Firewall log ALLOW entry for source IP → target:3389</td>
+<td>Confirms the RDP session was permitted through the firewall and the logon succeeded on the host</td>
+</tr>
+<tr>
+<td>Linux <code>auth.log</code> — SSH <code>Accepted publickey</code> entries</td>
+<td>PCAP SSH traffic (encrypted, but connection metadata visible)</td>
+<td>Correlates SSH session start times and source IPs between host authentication logs and network traffic</td>
+</tr>
+<tr>
+<td>Windows DNS cache (<code>ipconfig /displaydns</code>)</td>
+<td>DNS server query logs showing the same domain resolution</td>
+<td>Confirms which endpoint queried a suspicious domain; cache provides the host-side view, server log provides the network-side view with timestamps</td>
+</tr>
+<tr>
+<td>Browser history / web cache (host file system)</td>
+<td>Web server access logs (Module 12.3)</td>
+<td>Browser history shows user intent; server log shows what was actually served; differences may reveal MITM or redirect attacks</td>
+</tr>
+<tr>
+<td>Prefetch / Shimcache (evidence of program execution)</td>
+<td>IDS alert for malware C2 traffic</td>
+<td>Host shows the malicious executable ran; IDS shows the resulting network communication — together they prove execution <em>and</em> communication</td>
+</tr>
+<tr>
+<td>DHCP client lease (host-side, e.g., Windows Event 1020)</td>
+<td>DHCP server lease log</td>
+<td>Both sides confirm the IP assignment; essential when the host's IP is the only identifier in network logs</td>
+</tr>
+</tbody>
+</table>
+</div>
+</details>
+
+<details>
+<summary>6.2 &nbsp;Timeline Integration and Time Zone Normalization</summary>
+<div class="details-body">
+<p>Correlation depends on accurate timestamps. Different evidence sources may record time in different formats and time zones:</p>
+
+<table>
+<caption>Table 8 – Common Timestamp Formats Across Evidence Sources</caption>
+<thead><tr><th>Source</th><th>Typical Time Format</th><th>Time Zone Consideration</th></tr></thead>
+<tbody>
+<tr><td>Firewall logs</td><td>ISO 8601 or syslog format</td><td>Usually UTC, but verify configuration</td></tr>
+<tr><td>IDS alerts (Snort)</td><td><code>MM/DD-HH:MM:SS.microsec</code></td><td>Sensor local time — must determine offset</td></tr>
+<tr><td>Web server logs</td><td>CLF: <code>[dd/Mon/yyyy:HH:MM:SS ±HHMM]</code></td><td>Offset explicitly included in CLF format</td></tr>
+<tr><td>Windows Event Logs</td><td>Stored in UTC internally; displayed in local time by Event Viewer</td><td>Export in UTC; be cautious of tools that convert to local</td></tr>
+<tr><td>Linux syslog / auth.log</td><td><code>Mon DD HH:MM:SS</code> (no year!)</td><td>System local time; no year field — infer from file metadata</td></tr>
+<tr><td>PCAP timestamps</td><td>Unix epoch (seconds.microseconds)</td><td>Depends on capture system clock; Wireshark displays in analyst's local time by default</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-warning">
+<div class="callout-title" role="heading" aria-level="4">&#x23F0; Best Practice — Normalize Everything to UTC</div>
+<p>Before correlating events across sources, convert <strong>all timestamps to UTC</strong>. Document the original time zone of each source and the conversion applied. A one-hour time zone error can make events appear to happen in the wrong order, destroying the investigative timeline.</p>
+</div>
+</div>
+</details>
+
+<details>
+<summary>6.3 &nbsp;Cross-Source Correlation Diagram</summary>
+<div class="details-body">
+<p>The diagram below illustrates how different evidence sources connect to form a correlated investigation. Each source provides a different perspective on the same events.</p>
+
+<div class="corr-diagram" role="figure" aria-label="Cross-source evidence correlation diagram showing how PCAP, firewall logs, web server logs, IDS alerts, DNS logs, and host artifacts connect through a unified timeline">
+
+<p style="font-weight:700;color:var(--primary);margin:0 0 .8rem;font-size:1.05rem;text-align:center;">Evidence Correlation Model — From Network Boundary to Host</p>
+
+<div class="corr-row">
+<span class="corr-label">Perimeter:</span>
+<span class="corr-box cb-fw">Firewall Log<br><span style="font-weight:400;font-size:.78rem;">Allow/Deny + IPs + Ports</span></span>
+<span class="corr-arrow" aria-hidden="true">⟶</span>
+<span class="corr-box cb-ids">IDS/IPS Alert<br><span style="font-weight:400;font-size:.78rem;">Signature Match + Severity</span></span>
+<span class="corr-arrow" aria-hidden="true">⟶</span>
+<span class="corr-box cb-pcap">PCAP Capture<br><span style="font-weight:400;font-size:.78rem;">Full Packet Content</span></span>
+</div>
+
+<div class="corr-row">
+<span class="corr-label">Services:</span>
+<span class="corr-box cb-dns">DNS Server Log<br><span style="font-weight:400;font-size:.78rem;">Query + Response + Client IP</span></span>
+<span class="corr-arrow" aria-hidden="true">⟶</span>
+<span class="corr-box cb-web">Web Server Log<br><span style="font-weight:400;font-size:.78rem;">URI + Status + User-Agent</span></span>
+<span class="corr-arrow" aria-hidden="true">⟶</span>
+<span class="corr-box cb-fw">DHCP Lease Log<br><span style="font-weight:400;font-size:.78rem;">IP ↔ MAC ↔ Hostname</span></span>
+</div>
+
+<div class="corr-row">
+<span class="corr-label">Host:</span>
+<span class="corr-box cb-host">Windows Event Log<br><span style="font-weight:400;font-size:.78rem;">4624, 4625, 4688, etc.</span></span>
+<span class="corr-arrow" aria-hidden="true">⟶</span>
+<span class="corr-box cb-host">Memory (netscan)<br><span style="font-weight:400;font-size:.78rem;">Active Connections + PIDs</span></span>
+<span class="corr-arrow" aria-hidden="true">⟶</span>
+<span class="corr-box cb-host">File System<br><span style="font-weight:400;font-size:.78rem;">Malware, Prefetch, Logs</span></span>
+</div>
+
+<div class="corr-row" style="margin-top:.8rem;">
+<span class="corr-label">Timeline:</span>
+<span class="corr-box cb-time" style="flex-grow:1;text-align:center;">
+&#x23F0; Unified UTC Timeline — All Sources Normalized and Correlated
+</span>
+</div>
+
+<p style="font-size:.88rem;color:var(--text-light);margin:.8rem 0 0;text-align:center;">
+<strong>Arrows indicate correlation paths:</strong> A firewall ALLOW for source IP X is validated by an IDS alert for the same session, confirmed by PCAP content, tied to a DNS query that resolved the C2 domain, matched to a web server log entry, linked to a DHCP lease identifying the host, and corroborated by Windows Event Log entries and memory artifacts on that host.
+</p>
+</div>
+</div>
+</details>
+
+<details open>
+<summary>6.4 &nbsp;Mini-Case Study — Tracing an Attack from Entry to Exfiltration</summary>
+<div class="details-body">
+
+<div class="callout callout-info">
+<div class="callout-title" role="heading" aria-level="4">&#x1F4A1; Purpose</div>
+<p>This mini-case demonstrates cross-source correlation by tracing a simulated attack through four evidence sources: DNS logs, firewall logs, an IDS alert, and web server logs. It directly scaffolds the skills you will apply in <strong>Lab 11</strong>.</p>
+</div>
+
+<h3>Scenario</h3>
+<p>An analyst at Initech Corporation notices an IDS alert for suspected Cobalt Strike beacon activity. The SOC initiates an investigation. Available evidence sources: firewall logs, IDS alerts, DNS server logs, web server access logs, and DHCP lease records.</p>
+
+<h3>Correlated Timeline</h3>
+
+<div class="timeline" role="list" aria-label="Attack timeline with correlated evidence sources">
+
+<div class="tl-entry" role="listitem">
+<span class="tl-time">03:12:05 UTC</span>
+<span class="tl-source" style="background:#e2d9f3;color:#3a1d5c;">DNS Log</span>
+<p class="tl-desc">Internal DNS server records a query from <code>10.0.1.25</code> for <code>update-service.suspicious-domain.com</code> → resolves to <code>198.51.100.47</code>. This domain was registered only 6 days ago (per passive DNS / WHOIS).</p>
+</div>
+
+<div class="tl-entry" role="listitem">
+<span class="tl-time">03:12:06 UTC</span>
+<span class="tl-source" style="background:#d4edda;color:#1a4a2e;">Firewall Log</span>
+<p class="tl-desc"><code>ALLOW TCP 10.0.1.25:49830 → 198.51.100.47:443 rule=12 bytes=1204</code> — Outbound HTTPS connection from the internal host to the newly resolved IP is permitted by the firewall.</p>
+</div>
+
+<div class="tl-entry" role="listitem">
+<span class="tl-time">03:14:22 UTC</span>
+<span class="tl-source" style="background:#d4edda;color:#1a4a2e;">Firewall Log</span>
+<p class="tl-desc"><code>ALLOW TCP 198.51.100.47:49832 → 10.0.1.25:443 rule=12 bytes=234891</code> — A second connection, this time <em>inbound</em> from the external IP. ~235 KB transferred. (Note: This is the return traffic of the C2 channel.)</p>
+</div>
+
+<div class="tl-entry" role="listitem">
+<span class="tl-time">03:14:25 UTC</span>
+<span class="tl-source" style="background:#f8d7da;color:#6b1a1a;">IDS Alert</span>
+<p class="tl-desc"><code>[1:2024897:3] ET TROJAN Possible Cobalt Strike Beacon Activity</code> — Priority 1. Source: <code>10.0.1.25:443</code> → Dest: <code>198.51.100.47:49832</code>. The IDS flagged the outbound payload pattern as matching known Cobalt Strike beacon encoding.</p>
+</div>
+
+<div class="tl-entry" role="listitem">
+<span class="tl-time">03:14:58 UTC</span>
+<span class="tl-source" style="background:#d4edda;color:#1a4a2e;">Firewall Log</span>
+<p class="tl-desc"><code>DENY TCP 198.51.100.47:49840 → 10.0.1.25:3389 rule=default-deny</code> — The external IP attempts RDP access to the same host. Blocked by default-deny. This suggests the attacker attempted to pivot to direct remote access after establishing the C2 channel.</p>
+</div>
+
+<div class="tl-entry" role="listitem">
+<span class="tl-time">03:18:44 UTC</span>
+<span class="tl-source" style="background:#e2d9f3;color:#3a1d5c;">DNS Log</span>
+<p class="tl-desc">Burst of 47 TXT record queries from <code>10.0.1.25</code> for subdomains of <code>exfil.suspicious-domain.com</code> — subdomain labels are 50+ characters of Base64-encoded data. Consistent with DNS tunneling exfiltration.</p>
+</div>
+
+<div class="tl-entry" role="listitem">
+<span class="tl-time">03:19:02 UTC</span>
+<span class="tl-source" style="background:#fff3cd;color:#5c4400;">Web Server Log</span>
+<p class="tl-desc">Internal web server (<code>10.0.2.10</code>) logs: <code>10.0.1.25 - - "GET /internal/hr/salary-data.csv HTTP/1.1" 200 1482039</code> — The compromised host downloaded a 1.4 MB salary data file from an internal web application. This is the data being exfiltrated via DNS tunneling.</p>
+</div>
+
+<div class="tl-entry" role="listitem">
+<span class="tl-time">Cross-reference</span>
+<span class="tl-source" style="background:#fce4cc;color:#6b3000;">DHCP Lease</span>
+<p class="tl-desc">DHCP server log confirms: <code>10.0.1.25</code> was assigned to MAC <code>a4:83:e7:2b:11:f0</code>, hostname <code>ACCT-WS-042</code> (Accounting workstation 042), lease active from 02:58 to 03:58 UTC. The compromised device is now identified.</p>
+</div>
+
+</div>
+
+<h3>Correlation Summary</h3>
+<table>
+<caption>Table 9 – Mini-Case Evidence Correlation Summary</caption>
+<thead><tr><th>Finding</th><th>Evidence Sources</th></tr></thead>
+<tbody>
+<tr><td>C2 domain resolved by compromised host</td><td>DNS log (query from 10.0.1.25) + passive DNS (domain age: 6 days)</td></tr>
+<tr><td>C2 connection established</td><td>Firewall log (ALLOW to 198.51.100.47:443) + IDS alert (Cobalt Strike signature)</td></tr>
+<tr><td>Lateral movement attempted</td><td>Firewall log (DENY RDP from same external IP)</td></tr>
+<tr><td>Internal data accessed</td><td>Web server log (GET salary-data.csv, 200 OK, 1.4 MB)</td></tr>
+<tr><td>Data exfiltrated via DNS tunneling</td><td>DNS log (47 TXT queries with long Base64 subdomains)</td></tr>
+<tr><td>Host identified</td><td>DHCP lease log (10.0.1.25 = ACCT-WS-042)</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-forensic">
+<div class="callout-title" role="heading" aria-level="4">&#x1F50D; Key Takeaway — No Single Source Tells the Whole Story</div>
+<p>The IDS alert alone told us "possible Cobalt Strike." Only by correlating with the DNS log (newly registered domain), firewall log (allowed connection + blocked RDP pivot), web server log (internal data access), and DHCP lease (host identification) could we reconstruct the full attack chain: <strong>initial C2 establishment → failed lateral movement → internal data theft → DNS tunneling exfiltration</strong>.</p>
+</div>
+</div>
+</details>
+
+<div class="callout callout-connection">
+<div class="callout-title" role="heading" aria-level="3">&#x1F517; Cross-Module Connection — Windows Event ID 4624 Type 10 (Week 8)</div>
+<p>In <strong>Week 8 (Windows Forensics)</strong>, you analyzed Windows Security Event Log entries including <strong>Event ID 4624, Logon Type 10</strong> (Remote Interactive / RDP). In the mini-case above, the attacker's RDP attempt was blocked by the firewall — so no 4624 Type 10 event would appear on the target host. The <em>absence</em> of the host event, combined with the firewall DENY entry, confirms the lateral movement was prevented. If the firewall had allowed it, you would expect to see a 4624 Type 10 event on <code>ACCT-WS-042</code> with the source IP <code>198.51.100.47</code>.</p>
+</div>
+
+<!-- ═══════════════ SECTION 7: KNOWLEDGE CHECK ═══════════════ -->
+<h2 id="knowledge-check">7. Knowledge Check</h2>
+
+<div class="callout callout-info">
+<div class="callout-title" role="heading" aria-level="3">&#x2705; Ungraded Self-Assessment</div>
+<p>These questions are <strong>not graded</strong>. They are designed to reinforce cross-source correlation concepts from this module. Select an answer and click "Check Answer" for immediate explanatory feedback.</p>
+</div>
+
+<div class="quiz-wrap">
+
+<!-- Question 1 -->
+<div class="quiz-q" id="q1-label">Question 1 of 3</div>
+<p>An IDS generates a Priority 1 alert: <em>"ET EXPLOIT Possible SQL Injection Attempt"</em> targeting your web server at <code>10.0.2.10:80</code>. The firewall log shows the traffic was <strong>ALLOWED</strong>. Which additional evidence source would <strong>best</strong> help you determine whether the SQL injection actually succeeded?</p>
+<div class="quiz-opts" role="radiogroup" aria-labelledby="q1-label">
+<label><input type="radio" name="q1" value="a"> A. The DHCP lease log for the attacker's IP address</label>
+<label><input type="radio" name="q1" value="b"> B. The web server access log showing the request URI and HTTP status code</label>
+<label><input type="radio" name="q1" value="c"> C. A WHOIS lookup on the attacker's IP address</label>
+<label><input type="radio" name="q1" value="d"> D. The switch MAC address table for the web server's port</label>
+</div>
+<button class="quiz-btn" onclick="checkAnswer('q1','b','q1-fb')" aria-describedby="q1-fb">Check Answer</button>
+<div id="q1-fb" class="quiz-feedback" role="status" aria-live="polite"></div>
+
+<!-- Question 2 -->
+<div class="quiz-q" id="q2-label">Question 2 of 3</div>
+<p>During an investigation, you find that a firewall log entry at <code>03:14:22 UTC</code> shows an ALLOW for traffic from <code>10.0.1.25</code> to an external IP. The corresponding IDS alert for the same traffic shows a timestamp of <code>03:14:25</code> with no time zone indicator. The IDS sensor is configured in US Eastern Time (UTC−4 in April). What is the <strong>actual UTC time</strong> of the IDS alert, and does it align with the firewall entry?</p>
+<div class="quiz-opts" role="radiogroup" aria-labelledby="q2-label">
+<label><input type="radio" name="q2" value="a"> A. The IDS alert is at 03:14:25 UTC — it aligns (3 seconds after the firewall entry)</label>
+<label><input type="radio" name="q2" value="b"> B. The IDS alert is at 07:14:25 UTC — it does NOT align; the events are 4 hours apart</label>
+<label><input type="radio" name="q2" value="c"> C. The IDS alert is at 23:14:25 UTC (previous day) — it does NOT align</label>
+<label><input type="radio" name="q2" value="d"> D. Time zone conversion is unnecessary because both devices are on the same network</label>
+</div>
+<button class="quiz-btn" onclick="checkAnswer('q2','b','q2-fb')" aria-describedby="q2-fb">Check Answer</button>
+<div id="q2-fb" class="quiz-feedback" role="status" aria-live="polite"></div>
+
+<!-- Question 3 -->
+<div class="quiz-q" id="q3-label">Question 3 of 3</div>
+<p>A DNS server log shows that host <code>10.0.1.25</code> made 53 TXT record queries to subdomains of <code>data-sync.example.com</code> in a 90-second window. The subdomain labels are 55–63 characters long and appear to be Base64-encoded. The firewall log shows all queries were ALLOWED on port 53. An IDS alert flags "Possible DNS Tunneling." Which combination of additional evidence would <strong>most strengthen</strong> the conclusion that data was exfiltrated?</p>
+<div class="quiz-opts" role="radiogroup" aria-labelledby="q3-label">
+<label><input type="radio" name="q3" value="a"> A. WHOIS data showing the domain registrant, plus the switch MAC table</label>
+<label><input type="radio" name="q3" value="b"> B. Web server logs from the internal application showing recent large file downloads by <code>10.0.1.25</code>, plus a DHCP lease log confirming the host identity</label>
+<label><input type="radio" name="q3" value="c"> C. A second IDS alert from a different sensor confirming the same signature</label>
+<label><input type="radio" name="q3" value="d"> D. An email header analysis showing a phishing email was sent to the user of <code>10.0.1.25</code></label>
+</div>
+<button class="quiz-btn" onclick="checkAnswer('q3','b','q3-fb')" aria-describedby="q3-fb">Check Answer</button>
+<div id="q3-fb" class="quiz-feedback" role="status" aria-live="polite"></div>
+
+</div>
+
+<!-- ═══════════════ MODULE SUMMARY ═══════════════ -->
+<h2 id="summary">Module 12.4 Summary</h2>
+
+<div class="callout callout-success">
+<div class="callout-title" role="heading" aria-level="3">&#x1F4D7; Key Takeaways</div>
+<ul>
+<li><strong>Firewall logs</strong> record allow/deny decisions at the network boundary — denied entries prove attempted activity even when traffic was blocked.</li>
+<li><strong>IDS/IPS alerts</strong> are hypotheses based on signature matches — they must be validated against other evidence sources before drawing conclusions.</li>
+<li><strong>DNS logs</strong> reveal every domain the network communicated with; suspicious patterns include newly registered domains, long subdomain labels (tunneling), TXT query bursts, and DGA-style NXDOMAIN floods.</li>
+<li><strong>Router/switch logs and DHCP leases</strong> bridge the gap between IP addresses and physical devices — essential for host identification.</li>
+<li><strong>Email headers</strong> contain routing metadata (Received chain) and authentication results (SPF/DKIM/DMARC) that are foundational to email forensics (covered in depth in Week 16).</li>
+<li><strong>Cross-source correlation</strong> is the core forensic skill: no single evidence source tells the complete story. Normalize timestamps to UTC, map host artifacts to network artifacts, and build a unified timeline.</li>
+</ul>
+</div>
+
+<div class="callout callout-forensic">
+<div class="callout-title" role="heading" aria-level="3">&#x1F6E0;️ Looking Ahead</div>
+<p>The cross-source correlation skills from this module are directly applied in <strong>Lab 11</strong>, where you will analyze a multi-source evidence set and reconstruct an attack timeline. Continue to <strong>Module 12.5</strong> for the Week 12 summary and lab preparation guidance.</p>
+</div>
+
+</div><!-- end page-wrap -->
+
+<script>
+var feedbackData={
+q1:{
+correct:"<strong>Correct!</strong> The web server access log is the best next step. It shows the actual HTTP request URI (which would contain the SQL injection payload), the HTTP status code (200 OK vs. 400/500 error), and the response size. A 200 OK with a large response to a URI containing SQL syntax strongly suggests the injection returned data. The IDS alert tells you the attempt was made; the firewall confirms it reached the server; the web server log reveals whether the server actually processed it successfully. DHCP and WHOIS provide useful context but don't answer whether the attack <em>succeeded</em>.",
+incorrect:"<strong>Not quite.</strong> The best answer is <strong>B — the web server access log</strong>. The IDS alert tells you an injection was <em>attempted</em>, and the firewall confirms the traffic reached the server. But to determine if it <em>succeeded</em>, you need the web server's own record: the request URI (containing the payload), the HTTP status code (200 = processed vs. error), and the response size (a large response may indicate data was returned). DHCP identifies the attacker's device, WHOIS provides registration info, and the MAC table confirms the physical port — all useful context, but none directly answer whether the SQL injection worked."
+},
+q2:{
+correct:"<strong>Correct!</strong> Since the IDS sensor is in US Eastern Time (UTC−4 in April due to daylight saving time), its local time of 03:14:25 converts to <strong>07:14:25 UTC</strong> (add 4 hours). The firewall entry is at 03:14:22 UTC. These events appear nearly 4 hours apart — they do <strong>not</strong> align as recorded. This is exactly why time zone normalization is critical: without converting to UTC, you might mistakenly assume these events are 3 seconds apart when they are actually separated by almost 4 hours. Always determine each source's time zone before correlating.",
+incorrect:"<strong>Not quite.</strong> The correct answer is <strong>B</strong>. The IDS sensor records in Eastern Time (UTC−4 in April). To convert to UTC, <em>add</em> 4 hours: 03:14:25 ET → <strong>07:14:25 UTC</strong>. Compared to the firewall entry at 03:14:22 UTC, these events are nearly 4 hours apart — they do NOT align as you might assume from the similar-looking timestamps. Answer D is wrong because being on the same network does not mean devices use the same time zone configuration. This illustrates why normalizing all timestamps to UTC is a mandatory first step in cross-source correlation."
+},
+q3:{
+correct:"<strong>Correct!</strong> Answer B provides the strongest corroborating evidence through cross-source correlation. The web server log showing large file downloads by 10.0.1.25 establishes <em>what data</em> was accessed (the potential exfiltration payload). The DHCP lease log confirms <em>which physical device</em> held that IP address. Together with the DNS tunneling indicators (long Base64 subdomains, TXT query burst) and the IDS alert, you can build a complete narrative: identified host → accessed sensitive data → exfiltrated via DNS tunneling. A second IDS alert (C) just repeats the same hypothesis without independent validation. WHOIS (A) and email headers (D) provide useful investigation context but don't directly strengthen the exfiltration conclusion.",
+incorrect:"<strong>Not quite.</strong> The best answer is <strong>B</strong>. Effective cross-source correlation requires evidence that addresses different parts of the narrative. The DNS log and IDS alert already establish the <em>tunneling activity</em>. What's missing is: (1) what data was potentially exfiltrated, and (2) which device did it. The internal web server log showing large file downloads by 10.0.1.25 identifies the data source, and the DHCP lease log identifies the physical device. A second IDS alert (C) merely repeats the same type of evidence without adding a new perspective. WHOIS (A) helps with threat intelligence but doesn't prove exfiltration. Email analysis (D) might explain the initial compromise vector but doesn't confirm data left the network."
+}
+};
+function checkAnswer(qName,correctVal,fbId){
+var sel=document.querySelector('input[name="'+qName+'"]:checked');
+var fb=document.getElementById(fbId);
+if(!sel){fb.style.display='block';fb.className='quiz-feedback qf-incorrect';fb.innerHTML='<strong>Please select an answer before checking.</strong>';return;}
+var isCorrect=sel.value===correctVal;
+fb.style.display='block';
+if(isCorrect){fb.className='quiz-feedback qf-correct';fb.innerHTML=feedbackData[qName].correct;}
+else{fb.className='quiz-feedback qf-incorrect';fb.innerHTML=feedbackData[qName].incorrect;}
+}
+</script>
+
+</body>
+</html>
