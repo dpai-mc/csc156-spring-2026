@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 13.2 – Static Analysis: Examining Malware Without Execution</title>
+<style>
+:root {
+  --primary: #1a5276;
+  --primary-light: #2980b9;
+  --primary-dark: #0e2f44;
+  --accent: #e67e22;
+  --accent-light: #f39c12;
+  --success: #27ae60;
+  --success-light: #eafaf1;
+  --danger: #c0392b;
+  --danger-light: #fdedec;
+  --warning: #f39c12;
+  --warning-light: #fef9e7;
+  --info: #2980b9;
+  --info-light: #ebf5fb;
+  --gray-50: #f8f9fa;
+  --gray-100: #f0f1f3;
+  --gray-200: #d5d8dc;
+  --gray-300: #abb2b9;
+  --gray-400: #808b96;
+  --gray-600: #566573;
+  --gray-700: #2c3e50;
+  --gray-800: #1c2833;
+  --white: #ffffff;
+  --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --font-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.15);
+  --radius: 8px;
+  --radius-sm: 4px;
+  --max-width: 960px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-main);
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--gray-700);
+  background: var(--gray-50);
+}
+
+.page-wrapper {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  background: var(--white);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ── Top Navigation ── */
+.top-nav {
+  background: var(--primary-dark);
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.top-nav ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+}
+.top-nav li { margin: 0; }
+.top-nav a {
+  display: block;
+  color: var(--gray-200);
+  text-decoration: none;
+  padding: 12px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s;
+}
+.top-nav a:hover, .top-nav a:focus {
+  background: var(--primary);
+  color: var(--white);
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* ── Header ── */
+.module-header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: var(--white);
+  padding: 48px 40px 40px;
+}
+.module-header .label {
+  display: inline-block;
+  background: var(--accent);
+  color: var(--white);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 14px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+.module-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 8px;
+}
+.module-header .subtitle {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  font-weight: 400;
+  margin-bottom: 16px;
+}
+.header-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  font-size: 0.88rem;
+  opacity: 0.85;
+  margin-top: 12px;
+}
+.header-meta span { display: flex; align-items: center; gap: 6px; }
+
+/* ── Main Content ── */
+.content { padding: 40px; }
+
+h2 {
+  font-size: 1.55rem;
+  color: var(--primary);
+  margin: 48px 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 3px solid var(--accent);
+}
+h2:first-child { margin-top: 0; }
+
+h3 {
+  font-size: 1.2rem;
+  color: var(--primary-dark);
+  margin: 32px 0 12px;
+}
+
+h4 {
+  font-size: 1.05rem;
+  color: var(--gray-700);
+  margin: 20px 0 8px;
+  font-weight: 600;
+}
+
+p { margin-bottom: 14px; }
+
+/* ── Callout Boxes ── */
+.callout {
+  border-left: 5px solid;
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin: 24px 0;
+  font-size: 0.95rem;
+}
+.callout-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.callout-forensic { border-color: var(--primary-light); background: var(--info-light); }
+.callout-forensic .callout-title { color: var(--primary); }
+.callout-warning { border-color: var(--danger); background: var(--danger-light); }
+.callout-warning .callout-title { color: var(--danger); }
+.callout-tip { border-color: var(--success); background: var(--success-light); }
+.callout-tip .callout-title { color: var(--success); }
+.callout-scenario { border-color: var(--accent); background: var(--warning-light); }
+.callout-scenario .callout-title { color: var(--accent); }
+.callout-connection { border-color: #8e44ad; background: #f5eef8; }
+.callout-connection .callout-title { color: #8e44ad; }
+
+/* ── Code Blocks ── */
+code {
+  font-family: var(--font-mono);
+  background: var(--gray-100);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9em;
+  color: var(--danger);
+}
+pre {
+  background: var(--gray-800);
+  color: #ecf0f1;
+  padding: 20px 24px;
+  border-radius: var(--radius);
+  overflow-x: auto;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  margin: 16px 0;
+}
+pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+}
+
+/* ── Tables ── */
+.table-wrapper {
+  overflow-x: auto;
+  margin: 20px 0;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+thead { background: var(--primary); color: var(--white); }
+th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+}
+td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--gray-200);
+  vertical-align: top;
+}
+tbody tr:nth-child(even) { background: var(--gray-50); }
+tbody tr:hover { background: #eaf2f8; }
+
+/* ── Accordion / Toggle ── */
+.accordion { margin: 20px 0; }
+.accordion-item {
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.accordion-btn {
+  width: 100%;
+  background: var(--gray-50);
+  border: none;
+  padding: 14px 20px;
+  text-align: left;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background 0.2s;
+  font-family: var(--font-main);
+}
+.accordion-btn:hover, .accordion-btn:focus {
+  background: var(--info-light);
+  outline: 2px solid var(--primary-light);
+  outline-offset: -2px;
+}
+.accordion-btn::after {
+  content: '+';
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent);
+  transition: transform 0.25s;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+.accordion-btn[aria-expanded="true"]::after {
+  content: '−';
+}
+.accordion-panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease;
+  padding: 0 20px;
+}
+.accordion-panel[aria-hidden="false"] {
+  padding: 16px 20px;
+}
+.accordion-panel .panel-inner { padding-bottom: 4px; }
+
+/* ── Knowledge Check ── */
+.kc-block {
+  background: var(--gray-50);
+  border: 2px solid var(--primary-light);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin: 32px 0;
+}
+.kc-block h3 { color: var(--primary); margin-top: 0; }
+.kc-question {
+  margin: 24px 0;
+  padding: 16px 20px;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+.kc-question p.q-text {
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: 12px;
+}
+.kc-options { list-style: none; padding: 0; margin: 0 0 12px; }
+.kc-options li { margin-bottom: 6px; }
+.kc-options label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.kc-options label:hover { background: var(--gray-100); }
+.kc-options input[type="radio"] { margin-top: 4px; flex-shrink: 0; }
+.kc-feedback {
+  display: none;
+  padding: 14px 18px;
+  border-radius: var(--radius-sm);
+  margin-top: 10px;
+  font-size: 0.93rem;
+  line-height: 1.55;
+}
+.kc-feedback.correct { background: var(--success-light); border-left: 4px solid var(--success); }
+.kc-feedback.incorrect { background: var(--danger-light); border-left: 4px solid var(--danger); }
+.kc-check-btn {
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  padding: 10px 24px;
+  border-radius: var(--radius-sm);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-main);
+  transition: background 0.2s;
+}
+.kc-check-btn:hover, .kc-check-btn:focus {
+  background: var(--primary-dark);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Diagram Boxes ── */
+.diagram-box {
+  background: var(--gray-50);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin: 24px 0;
+  overflow-x: auto;
+}
+.diagram-box pre {
+  background: none;
+  color: var(--gray-700);
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.diagram-box pre code { color: var(--gray-700); }
+.diagram-caption {
+  text-align: center;
+  font-size: 0.88rem;
+  font-style: italic;
+  color: var(--gray-400);
+  margin-top: 10px;
+}
+
+/* ── Highlight List ── */
+ul, ol { margin: 0 0 16px 24px; }
+li { margin-bottom: 6px; }
+
+/* ── Inline Badge ── */
+.badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 10px;
+  border-radius: 12px;
+  vertical-align: middle;
+}
+.badge-tool { background: #d5f5e3; color: #1e8449; }
+.badge-concept { background: #d6eaf8; color: #21618c; }
+.badge-lab { background: #fdebd0; color: #b9770e; }
+
+/* ── Section Divider ── */
+.section-divider {
+  border: none;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  margin: 48px 0 40px;
+}
+
+/* ── Footer ── */
+.module-footer {
+  background: var(--gray-100);
+  padding: 24px 40px;
+  font-size: 0.85rem;
+  color: var(--gray-400);
+  text-align: center;
+  border-top: 1px solid var(--gray-200);
+}
+
+/* ── Responsive ── */
+@media (max-width: 680px) {
+  .module-header { padding: 32px 20px 28px; }
+  .module-header h1 { font-size: 1.5rem; }
+  .content { padding: 24px 18px; }
+  .top-nav a { padding: 10px 12px; font-size: 0.78rem; }
+  pre { font-size: 0.8rem; padding: 14px; }
+  th, td { padding: 8px 10px; font-size: 0.85rem; }
+}
+</style>
+</head>
+<body>
+<div class="page-wrapper">
+
+<!-- ════════════ TOP NAVIGATION ════════════ -->
+<nav class="top-nav" aria-label="Module sections">
+  <ul role="menubar">
+    <li role="none"><a role="menuitem" href="#scenario">Scenario</a></li>
+    <li role="none"><a role="menuitem" href="#file-id">File&nbsp;ID</a></li>
+    <li role="none"><a role="menuitem" href="#strings">Strings</a></li>
+    <li role="none"><a role="menuitem" href="#pe-header">PE&nbsp;Header</a></li>
+    <li role="none"><a role="menuitem" href="#elf">ELF</a></li>
+    <li role="none"><a role="menuitem" href="#knowledge-check">Knowledge&nbsp;Check</a></li>
+  </ul>
+</nav>
+
+<!-- ════════════ HEADER ════════════ -->
+<header class="module-header">
+  <span class="label">Module 13.2</span>
+  <h1>Static Analysis: Examining Malware Without Execution</h1>
+  <p class="subtitle">Hashing, String Extraction, PE Header Analysis, and Import Table Review</p>
+  <div class="header-meta">
+    <span>⏱ Estimated Time: 2.0 – 2.5 hours</span>
+    <span>📅 Week 13 — Malware Forensics</span>
+    <span>🎯 Objective 2</span>
+  </div>
+</header>
+
+<!-- ════════════ MAIN CONTENT ════════════ -->
+<main class="content">
+
+<!-- ──────── SECTION 1: SCENARIO ──────── -->
+<section id="scenario">
+<h2>1 &nbsp;Scenario Continuation — From Triage to Analysis</h2>
+
+<div class="callout callout-scenario">
+  <p class="callout-title">🔎 Continuing Investigation — svchost_update.exe</p>
+  <p>In Module&nbsp;13.1 you classified the suspicious file <code>svchost_update.exe</code>, established your isolated analysis VM, and took a clean snapshot. The triage phase is complete. Now it is time to learn everything the file can tell you <strong>without ever running it</strong>.</p>
+  <p>Your goals for this module:</p>
+  <ol>
+    <li>Generate cryptographic hashes and check the file's reputation.</li>
+    <li>Confirm the true file type using magic bytes.</li>
+    <li>Extract readable strings for early intelligence.</li>
+    <li>Examine the PE header structure, compile timestamp, and section entropy.</li>
+    <li>Review the import table for suspicious Windows API calls.</li>
+  </ol>
+  <p>Every finding you make here will become a hypothesis you test during dynamic analysis in Module&nbsp;13.3.</p>
+</div>
+
+<h3>What Is Static Analysis?</h3>
+<p><strong>Static analysis</strong> is the examination of a file without executing it. You inspect the file's metadata, structure, and embedded content to form an initial understanding of its purpose and capabilities.</p>
+
+<div class="table-wrapper">
+<table>
+  <thead><tr><th>Aspect</th><th>Advantages</th><th>Limitations</th></tr></thead>
+  <tbody>
+    <tr><td>Safety</td><td>No risk of infection — the file never runs</td><td>Cannot observe actual runtime behavior</td></tr>
+    <tr><td>Repeatability</td><td>Results are deterministic; any analyst gets the same output</td><td>Packed or encrypted payloads hide their contents</td></tr>
+    <tr><td>Speed</td><td>Quick first-pass triage in minutes</td><td>Obfuscated strings and code require advanced tools</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout callout-forensic">
+  <p class="callout-title">🔬 Forensic Principle</p>
+  <p><strong>Always perform static analysis before dynamic analysis.</strong> Static findings generate hypotheses (e.g., "the import table suggests network communication"). Dynamic analysis then confirms or refutes those hypotheses. This ordered workflow is both safer and more methodical.</p>
+</div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ──────── SECTION 2: FILE IDENTIFICATION ──────── -->
+<section id="file-id">
+<h2>2 &nbsp;File Identification and Triage</h2>
+
+<div class="callout callout-connection">
+  <p class="callout-title">🔗 Building on Week&nbsp;6</p>
+  <p>You already know how to generate MD5 and SHA-256 hashes for <em>evidence integrity verification</em>. In malware forensics, hashing serves a second purpose — <strong>identification</strong>. The same hash algorithms you used to verify forensic images now help you identify known malware samples and look up their reputation in threat intelligence databases.</p>
+</div>
+
+<h3>2.1 &nbsp;Hash Generation</h3>
+<p>Generating cryptographic hashes is the first thing you do with any suspicious file. The hash uniquely identifies the sample and allows you to search global databases for prior analysis.</p>
+
+<h4>Commands</h4>
+<pre><code># Linux / macOS
+md5sum svchost_update.exe
+sha256sum svchost_update.exe
+
+# Windows PowerShell
+Get-FileHash .\svchost_update.exe -Algorithm MD5
+Get-FileHash .\svchost_update.exe -Algorithm SHA256</code></pre>
+
+<p>Record <strong>all three common hashes</strong> (MD5, SHA-1, SHA-256) in your analysis notes. Different databases index by different algorithms.</p>
+
+<h3>2.2 &nbsp;Hash-Based Reputation Lookup</h3>
+
+<div class="table-wrapper">
+<table>
+  <thead><tr><th>Resource</th><th>Type</th><th>Use Case</th></tr></thead>
+  <tbody>
+    <tr><td><strong>VirusTotal</strong></td><td>Online multi-scanner</td><td>Submit a hash (not the file) to check if any AV engine has flagged it</td></tr>
+    <tr><td><strong>NSRL</strong> (National Software Reference Library)</td><td>Known-good hash set</td><td>If the hash appears in NSRL, the file is a known legitimate application — not malware</td></tr>
+    <tr><td><strong>Threat intelligence feeds</strong></td><td>IOC databases</td><td>Organizational or commercial feeds that catalog known-bad hashes</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout callout-warning">
+  <p class="callout-title">⚠️ OPSEC Warning — VirusTotal</p>
+  <p>Uploading a <em>file</em> to VirusTotal makes it available to every subscriber, including the attacker. In sensitive investigations, <strong>submit only the hash</strong>, never the file itself. If the hash returns no results, you still learn something: the sample may be novel or targeted. Discuss with your team before uploading any sample to a public service.</p>
+</div>
+
+<h3>2.3 &nbsp;File Type Identification — Magic Bytes</h3>
+
+<div class="callout callout-connection">
+  <p class="callout-title">🔗 Building on Week&nbsp;5</p>
+  <p>In Week&nbsp;5 you learned that every file format begins with a characteristic byte sequence called a <strong>file signature</strong> or <strong>magic bytes</strong>. The <code>file</code> command on Linux reads these bytes to determine the true file type — regardless of the file extension.</p>
+</div>
+
+<pre><code>file svchost_update.exe</code></pre>
+<p>Expected output for a Windows executable:</p>
+<pre><code>svchost_update.exe: PE32 executable (GUI) Intel 80386, for MS Windows</code></pre>
+
+<h4>Common Magic Bytes Reference</h4>
+<div class="table-wrapper">
+<table>
+  <thead><tr><th>Magic Bytes (Hex)</th><th>ASCII</th><th>File Type</th></tr></thead>
+  <tbody>
+    <tr><td><code>4D 5A</code></td><td><code>MZ</code></td><td>Windows PE executable (.exe, .dll)</td></tr>
+    <tr><td><code>7F 45 4C 46</code></td><td><code>.ELF</code></td><td>Linux ELF executable</td></tr>
+    <tr><td><code>50 4B 03 04</code></td><td><code>PK</code></td><td>ZIP archive (also .docx, .apk)</td></tr>
+    <tr><td><code>25 50 44 46</code></td><td><code>%PDF</code></td><td>PDF document</td></tr>
+    <tr><td><code>D0 CF 11 E0</code></td><td>—</td><td>OLE2 Compound (legacy .doc, .xls)</td></tr>
+    <tr><td><code>FF D8 FF</code></td><td>—</td><td>JPEG image</td></tr>
+    <tr><td><code>89 50 4E 47</code></td><td><code>.PNG</code></td><td>PNG image</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout callout-forensic">
+  <p class="callout-title">🔬 Mismatch Detection</p>
+  <p>A file named <code>document.pdf</code> whose magic bytes are <code>4D 5A</code> (MZ) is <strong>not a PDF</strong> — it is a Windows executable masquerading as a document. Extension-to-magic-byte mismatches are a strong indicator of social engineering or deliberate deception. Always verify the true file type; never trust the extension alone.</p>
+</div>
+
+<h3>2.4 &nbsp;Fuzzy Hashing with ssdeep</h3>
+<p>Cryptographic hashes are <em>exact</em>: change one byte and the hash changes completely. <strong>Fuzzy hashing</strong> (also called context-triggered piecewise hashing) produces a similarity score, allowing you to identify files that are <em>nearly</em> identical.</p>
+
+<pre><code># Generate a fuzzy hash
+ssdeep svchost_update.exe
+
+# Compare two samples for similarity
+ssdeep -d sample_a.exe sample_b.exe</code></pre>
+
+<p><strong>Use case:</strong> An attacker recompiles malware with a minor change to evade signature detection. The SHA-256 hash is completely different, but <code>ssdeep</code> reports a high similarity score (e.g., 87%), linking the variant to the known family.</p>
+
+<div class="callout callout-tip">
+  <p class="callout-title">💡 Concept Check</p>
+  <p>Think of cryptographic hashing as asking "Is this the <em>exact same</em> file?" and fuzzy hashing as asking "Does this file <em>look like</em> a known file?" Both questions are valuable in malware forensics.</p>
+</div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ──────── SECTION 3: STRING EXTRACTION ──────── -->
+<section id="strings">
+<h2>3 &nbsp;String Extraction</h2>
+<p>Strings are sequences of printable characters embedded in a binary file. Even compiled executables contain human-readable text — error messages, file paths, URLs, registry keys, and more. Extracting these strings is one of the fastest ways to gain intelligence about a sample's purpose.</p>
+
+<h3>3.1 &nbsp;The <code>strings</code> Command</h3>
+<pre><code># ASCII strings (default, minimum length 4)
+strings svchost_update.exe > strings_ascii.txt
+
+# Unicode (UTF-16LE) strings — common in Windows malware
+strings -el svchost_update.exe > strings_unicode.txt</code></pre>
+
+<p>On Windows, the Sysinternals <code>strings</code> utility provides similar functionality:</p>
+<pre><code>strings.exe -n 6 svchost_update.exe</code></pre>
+<p>The <code>-n 6</code> flag sets the minimum string length to 6 characters, reducing noise from random byte sequences that happen to be printable.</p>
+
+<div class="callout callout-tip">
+  <p class="callout-title">💡 Practical Tip</p>
+  <p>Always extract <strong>both</strong> ASCII and Unicode strings. Windows APIs heavily use Unicode (UTF-16LE), so many malware artifacts — registry paths, file paths, URLs — appear only in the Unicode output.</p>
+</div>
+
+<h3>3.2 &nbsp;What to Look For — String Categories Reference Card</h3>
+<div class="table-wrapper">
+<table>
+  <thead><tr><th>Category</th><th>Examples</th><th>Forensic Significance</th></tr></thead>
+  <tbody>
+    <tr><td><strong>IP addresses &amp; domains</strong></td><td><code>198.51.100.42</code>, <code>evil-update.example.com</code></td><td>Potential C2 servers — cross-reference with Week&nbsp;12 PCAP findings</td></tr>
+    <tr><td><strong>URLs</strong></td><td><code>http://evil-update.example.com/gate.php</code></td><td>Download or exfiltration endpoints</td></tr>
+    <tr><td><strong>File paths</strong></td><td><code>C:\Windows\Temp\payload.dll</code></td><td>Dropped files, staging locations</td></tr>
+    <tr><td><strong>Registry keys</strong></td><td><code>Software\Microsoft\Windows\CurrentVersion\Run</code></td><td>Persistence mechanism — connects to Week&nbsp;7 registry analysis</td></tr>
+    <tr><td><strong>API function names</strong></td><td><code>VirtualAlloc</code>, <code>CreateRemoteThread</code></td><td>Capability indicators (injection, network, crypto)</td></tr>
+    <tr><td><strong>Error / debug messages</strong></td><td><code>Failed to connect</code>, <code>[DEBUG] stage2 loaded</code></td><td>Developer artifacts revealing internal logic</td></tr>
+    <tr><td><strong>Usernames / passwords</strong></td><td><code>admin</code>, <code>P@ssw0rd</code></td><td>Hard-coded credentials for lateral movement</td></tr>
+    <tr><td><strong>Crypto constants</strong></td><td><code>AES</code>, long hex key strings</td><td>Encryption capability — possible ransomware indicator</td></tr>
+    <tr><td><strong>Command-line arguments</strong></td><td><code>--install</code>, <code>-silent</code></td><td>Execution modes, installer behavior</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h4>Scenario Application</h4>
+<p>Running <code>strings</code> on <code>svchost_update.exe</code> might reveal output like:</p>
+<pre><code>evil-update.example.com
+/gate.php?id=%s
+Software\Microsoft\Windows\CurrentVersion\Run
+svchost_update
+cmd.exe /c del %s
+VirtualAlloc
+WriteProcessMemory
+InternetOpenUrlA
+Mozilla/5.0 (compatible; UpdateAgent/1.0)</code></pre>
+
+<p>Even without executing the file, these strings suggest: C2 communication (<code>evil-update.example.com</code>), persistence via the Registry Run key, self-deletion (<code>cmd.exe /c del</code>), process injection (<code>VirtualAlloc</code> + <code>WriteProcessMemory</code>), and a fake User-Agent string. Each of these becomes a hypothesis for dynamic analysis in Module&nbsp;13.3.</p>
+
+<h3>3.3 &nbsp;FLOSS — Defeating Obfuscated Strings</h3>
+<p><span class="badge badge-concept">Concept</span> Malware authors know that analysts use <code>strings</code>. To evade detection, they <strong>obfuscate</strong> strings using XOR encoding, Base64, stack-string construction, or custom encryption. The basic <code>strings</code> command cannot recover these.</p>
+
+<p><strong>FLOSS</strong> (FLARE Obfuscated String Solver), developed by Mandiant, automatically detects and decodes obfuscated strings by emulating the malware's decoding routines without full execution.</p>
+
+<pre><code>floss svchost_update.exe</code></pre>
+
+<p>FLOSS outputs three categories: static strings (same as <code>strings</code>), stack strings (built character-by-character at runtime), and decoded strings (XOR/Base64 deobfuscated). If basic <code>strings</code> output seems unusually sparse for the file's size, obfuscation is likely, and FLOSS is the next tool to try.</p>
+
+<div class="callout callout-forensic">
+  <p class="callout-title">🔬 Forensic Insight</p>
+  <p>A binary with very few readable strings relative to its size is itself suspicious. Legitimate software typically contains abundant strings (error messages, UI text, help strings). A 500&nbsp;KB executable with only a handful of strings likely uses packing or obfuscation — a finding you will explore further in Module&nbsp;13.4 (Anti-Analysis Techniques).</p>
+</div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ──────── SECTION 4: PE HEADER ANALYSIS ──────── -->
+<section id="pe-header">
+<h2>4 &nbsp;PE Header Analysis</h2>
+<p>The <strong>Portable Executable (PE)</strong> format is the standard executable format for Windows. Every <code>.exe</code> and <code>.dll</code> file follows this structure. The PE header contains rich metadata that reveals when the file was compiled, what OS features it requires, and what Windows API functions it calls — all without executing a single instruction.</p>
+
+<h3>4.1 &nbsp;PE Structure Overview</h3>
+<div class="diagram-box" role="img" aria-label="Diagram of PE file structure showing DOS Header, PE Signature, COFF Header, Optional Header, Section Table, and Sections">
+<pre><code>┌──────────────────────────────────────────────────────────────┐
+│  DOS Header                                                  │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │ e_magic: 0x5A4D ("MZ")    ← Magic bytes (Week 5)      │  │
+│  │ e_lfanew: offset to PE signature                       │  │
+│  └────────────────────────────────────────────────────────┘  │
+├──────────────────────────────────────────────────────────────┤
+│  DOS Stub  ("This program cannot be run in DOS mode.")       │
+├──────────────────────────────────────────────────────────────┤
+│  PE Signature: 0x50450000 ("PE\0\0")                         │
+├──────────────────────────────────────────────────────────────┤
+│  COFF Header                                                 │
+│    • Machine type (x86 / x64)                                │
+│    • Number of sections                                      │
+│    • ★ TimeDateStamp  ← Compile time (forensic gold)        │
+├──────────────────────────────────────────────────────────────┤
+│  Optional Header                                             │
+│    • AddressOfEntryPoint                                     │
+│    • ★ Subsystem (GUI / Console)                            │
+│    • Data Directories (Import Table, Export Table, etc.)      │
+├──────────────────────────────────────────────────────────────┤
+│  Section Table                                               │
+│    .text  │ .data  │ .rsrc  │ .reloc │ (or custom names)    │
+├──────────┬────────┬────────┬────────┬───────────────────────┤
+│ .text    │ .data  │ .rsrc  │ .reloc │  ...                  │
+│ (code)   │ (data) │ (res.) │ (reloc)│                       │
+└──────────┴────────┴────────┴────────┴───────────────────────┘
+  ★ = Key forensic fields</code></pre>
+  <p class="diagram-caption">Figure 1 — Simplified PE file structure with key forensic fields highlighted</p>
+</div>
+
+<h3>4.2 &nbsp;Key Forensic Fields</h3>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <button class="accordion-btn" aria-expanded="false" aria-controls="acc-timestamp">Compile Timestamp (TimeDateStamp)</button>
+    <div class="accordion-panel" id="acc-timestamp" role="region" aria-hidden="true">
+      <div class="panel-inner">
+        <p>The <strong>TimeDateStamp</strong> field in the COFF header records when the binary was compiled, stored as a Unix epoch value (seconds since January&nbsp;1, 1970).</p>
+        <p><strong>Forensic value:</strong></p>
+        <ul>
+          <li>A compile time that predates the investigation timeline may indicate a pre-staged tool.</li>
+          <li>A compile time far in the future (e.g., year 2038) is a strong indicator of timestamp manipulation.</li>
+          <li>Compile times in specific time zones can hint at the developer's geographic region.</li>
+        </ul>
+        <p><strong>Caveat:</strong> This field is trivially faked. Treat it as one data point, never as sole evidence.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion-item">
+    <button class="accordion-btn" aria-expanded="false" aria-controls="acc-subsystem">Subsystem</button>
+    <div class="accordion-panel" id="acc-subsystem" role="region" aria-hidden="true">
+      <div class="panel-inner">
+        <p>The <strong>Subsystem</strong> field indicates whether the executable is a GUI application or a console application.</p>
+        <ul>
+          <li><code>IMAGE_SUBSYSTEM_WINDOWS_GUI (2)</code> — runs without a visible console window. Most malware uses this to remain invisible to the user.</li>
+          <li><code>IMAGE_SUBSYSTEM_WINDOWS_CUI (3)</code> — opens a console window. Less common for malware unless it is a command-line tool or dropper.</li>
+        </ul>
+        <p>A file named <code>svchost_update.exe</code> that is a GUI subsystem application is consistent with malware that wants to run silently.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion-item">
+    <button class="accordion-btn" aria-expanded="false" aria-controls="acc-sections">Section Names and Entropy</button>
+    <div class="accordion-panel" id="acc-sections" role="region" aria-hidden="true">
+      <div class="panel-inner">
+        <p>PE executables are divided into <strong>sections</strong>, each with a name and characteristics:</p>
+        <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Section</th><th>Typical Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>.text</code></td><td>Executable code</td></tr>
+            <tr><td><code>.data</code></td><td>Initialized data (global variables)</td></tr>
+            <tr><td><code>.rsrc</code></td><td>Resources (icons, dialogs, embedded files)</td></tr>
+            <tr><td><code>.reloc</code></td><td>Relocation information</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p><strong>Suspicious indicators:</strong></p>
+        <ul>
+          <li><strong>Unusual section names</strong> — <code>UPX0</code>, <code>UPX1</code>, <code>.ndata</code>, or random-looking names indicate packing or custom tools.</li>
+          <li><strong>High entropy</strong> — Entropy measures randomness on a 0–8 scale. Normal compiled code has entropy around 5.0–6.5. Entropy above 7.0 strongly suggests the section is encrypted or compressed (packed). A <code>.text</code> section at 7.8 entropy is a red flag.</li>
+          <li><strong>Executable + writable sections</strong> — A section marked both writable and executable is unusual in legitimate software and common in self-modifying or unpacking code.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3>4.3 &nbsp;Import Table Analysis</h3>
+<p>The <strong>import table</strong> lists the Windows API functions the executable calls. This is one of the most powerful static analysis data points because it reveals the program's <em>capabilities</em> — what it can do to the system, the network, and other processes.</p>
+
+<h4>Suspicious API Categories Reference</h4>
+<div class="table-wrapper">
+<table>
+  <thead><tr><th>Category</th><th>Suspicious APIs</th><th>Forensic Implication</th></tr></thead>
+  <tbody>
+    <tr><td><strong>File operations</strong></td><td><code>CreateFile</code>, <code>WriteFile</code>, <code>DeleteFile</code>, <code>CopyFile</code></td><td>File manipulation, payload dropping, self-deletion</td></tr>
+    <tr><td><strong>Registry</strong></td><td><code>RegSetValueEx</code>, <code>RegCreateKeyEx</code></td><td>Persistence via Registry (Week&nbsp;7 Run keys)</td></tr>
+    <tr><td><strong>Process manipulation</strong></td><td><code>CreateProcess</code>, <code>VirtualAlloc</code>, <code>VirtualAllocEx</code>, <code>WriteProcessMemory</code>, <code>CreateRemoteThread</code></td><td>Process injection — connects to Week&nbsp;11 malfind detections</td></tr>
+    <tr><td><strong>Network</strong></td><td><code>WSAStartup</code>, <code>connect</code>, <code>send</code>, <code>recv</code>, <code>InternetOpenUrl</code></td><td>Network communication, C2 callback, data exfiltration</td></tr>
+    <tr><td><strong>Cryptography</strong></td><td><code>CryptEncrypt</code>, <code>CryptDecrypt</code>, <code>CryptGenKey</code></td><td>Ransomware encryption or encrypted C2 channel</td></tr>
+    <tr><td><strong>Anti-debug</strong></td><td><code>IsDebuggerPresent</code>, <code>CheckRemoteDebuggerPresent</code></td><td>Anti-analysis awareness (Module&nbsp;13.4)</td></tr>
+    <tr><td><strong>Service management</strong></td><td><code>CreateService</code>, <code>StartService</code></td><td>Persistence via Windows service installation (Week&nbsp;8 Event ID 7045)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout callout-forensic">
+  <p class="callout-title">🔬 Forensic Insight — Connecting Imports to Memory Forensics</p>
+  <p>If you see <code>VirtualAllocEx</code> and <code>WriteProcessMemory</code> in the import table, the malware likely performs <strong>process injection</strong> — allocating memory inside another process and writing code into it. This is exactly the behavior that Volatility's <code>malfind</code> plugin detects in memory dumps (Week&nbsp;11). Static analysis of imports and memory forensics with <code>malfind</code> are two sides of the same coin.</p>
+</div>
+
+<div class="callout callout-warning">
+  <p class="callout-title">⚠️ Small Import Table = Red Flag</p>
+  <p>If a PE file imports only <code>LoadLibrary</code> and <code>GetProcAddress</code> (and very little else), it is almost certainly <strong>packed</strong>. These two APIs allow the unpacking stub to dynamically load all other required functions at runtime, hiding the true import table from static analysis. You will explore this further in Module&nbsp;13.4.</p>
+</div>
+
+<h3>4.4 &nbsp;Tool Walk-Through: pestudio</h3>
+<p><span class="badge badge-tool">Tool</span> <strong>pestudio</strong> is a free Windows application purpose-built for initial static assessment of PE files. It automatically highlights suspicious indicators, saving analysts significant manual effort.</p>
+
+<h4>pestudio Key Views</h4>
+<div class="accordion">
+  <div class="accordion-item">
+    <button class="accordion-btn" aria-expanded="false" aria-controls="acc-ps-indicators">Indicators View</button>
+    <div class="accordion-panel" id="acc-ps-indicators" role="region" aria-hidden="true">
+      <div class="panel-inner">
+        <p>pestudio assigns a <strong>risk score</strong> to the file and lists specific indicators that contributed to the score. Items flagged in red deserve immediate attention. For <code>svchost_update.exe</code>, you might see flags for: suspicious imports, high section entropy, and a compile timestamp inconsistency.</p>
+      </div>
+    </div>
+  </div>
+  <div class="accordion-item">
+    <button class="accordion-btn" aria-expanded="false" aria-controls="acc-ps-strings">Strings View</button>
+    <div class="accordion-panel" id="acc-ps-strings" role="region" aria-hidden="true">
+      <div class="panel-inner">
+        <p>pestudio extracts strings and cross-references them against known blacklists (URLs, IP patterns, registry paths). Strings flagged as suspicious are highlighted, letting you quickly focus on the most forensically relevant entries rather than scrolling through thousands of lines.</p>
+      </div>
+    </div>
+  </div>
+  <div class="accordion-item">
+    <button class="accordion-btn" aria-expanded="false" aria-controls="acc-ps-imports">Imports View</button>
+    <div class="accordion-panel" id="acc-ps-imports" role="region" aria-hidden="true">
+      <div class="panel-inner">
+        <p>The imports view lists every DLL and function the executable imports, with suspicious APIs highlighted in red. You can quickly identify whether the file imports networking functions, cryptographic functions, process injection APIs, or anti-debugging calls — all without manually parsing the PE header.</p>
+      </div>
+    </div>
+  </div>
+  <div class="accordion-item">
+    <button class="accordion-btn" aria-expanded="false" aria-controls="acc-ps-sections">Sections View</button>
+    <div class="accordion-panel" id="acc-ps-sections" role="region" aria-hidden="true">
+      <div class="panel-inner">
+        <p>Displays each section's name, virtual size, raw size, entropy, and characteristics (readable, writable, executable). Sections with entropy above 7.0 are flagged. Sections that are both writable and executable are flagged. Unusual section names are flagged.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h4>Other PE Analysis Tools</h4>
+<div class="table-wrapper">
+<table>
+  <thead><tr><th>Tool</th><th>Platform</th><th>Strengths</th></tr></thead>
+  <tbody>
+    <tr><td><strong>pefile</strong></td><td>Python library</td><td>Scriptable PE parsing — ideal for batch analysis or automation</td></tr>
+    <tr><td><strong>PE-bear</strong></td><td>Windows / Linux</td><td>Visual PE structure viewer with hex editor integration</td></tr>
+    <tr><td><strong>CFF Explorer</strong></td><td>Windows</td><td>Detailed PE structure editor with resource viewer</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h4>Scenario Application — Putting It Together</h4>
+<p>Using pestudio on <code>svchost_update.exe</code>, your static analysis might yield findings like:</p>
+<div class="table-wrapper">
+<table>
+  <thead><tr><th>Finding</th><th>Value</th><th>Assessment</th></tr></thead>
+  <tbody>
+    <tr><td>Compile timestamp</td><td>2026-03-10 04:12:33 UTC</td><td>Recent — consistent with active campaign</td></tr>
+    <tr><td>Subsystem</td><td>GUI (no console window)</td><td>Designed to run silently</td></tr>
+    <tr><td><code>.text</code> entropy</td><td>6.2</td><td>Normal — not packed</td></tr>
+    <tr><td><code>.rsrc</code> entropy</td><td>7.6</td><td>High — likely contains encrypted/compressed payload</td></tr>
+    <tr><td>Key imports</td><td><code>VirtualAllocEx</code>, <code>WriteProcessMemory</code>, <code>InternetOpenUrlA</code>, <code>RegSetValueExA</code></td><td>Process injection + C2 + persistence</td></tr>
+    <tr><td>Import count</td><td>47 functions from 6 DLLs</td><td>Normal count — not packed (packed files show 2–5 imports)</td></tr>
+  </tbody>
+</table>
+</div>
+<p>These findings form your hypotheses for dynamic analysis: the malware likely injects code into another process, communicates with a remote server, and establishes registry-based persistence.</p>
+</section>
+
+<hr class="section-divider">
+
+<!-- ──────── SECTION 5: ELF ANALYSIS ──────── -->
+<section id="elf">
+<h2>5 &nbsp;ELF Binary Analysis (Linux Context)</h2>
+
+<div class="callout callout-tip">
+  <p class="callout-title">📌 Supplementary Section</p>
+  <p>The primary focus of this module is PE analysis for Windows executables. This section provides a brief parallel for Linux ELF binaries. If malware was persisted on a Linux system via <code>cron</code>, <code>systemd</code>, or a SUID binary (Week&nbsp;9), the payload is likely an ELF executable, and these tools apply.</p>
+</div>
+
+<h3>5.1 &nbsp;ELF Header Inspection</h3>
+<pre><code># Display ELF header
+readelf -h suspicious_binary
+
+# Display section headers
+readelf -S suspicious_binary</code></pre>
+
+<p>Key fields to examine:</p>
+<ul>
+  <li><strong>Magic bytes:</strong> <code>7f 45 4c 46</code> confirms ELF format.</li>
+  <li><strong>Class:</strong> ELF32 vs. ELF64 — indicates target architecture.</li>
+  <li><strong>Type:</strong> <code>EXEC</code> (standalone executable) vs. <code>DYN</code> (shared library / position-independent executable).</li>
+  <li><strong>Entry point address:</strong> where execution begins.</li>
+</ul>
+
+<h3>5.2 &nbsp;Detailed Header Dump</h3>
+<pre><code># Comprehensive header information
+objdump -x suspicious_binary | head -80</code></pre>
+
+<h3>5.3 &nbsp;Shared Library Dependencies</h3>
+<pre><code># Static analysis of dependencies (safe — does not execute the file)
+readelf -d suspicious_binary | grep NEEDED</code></pre>
+
+<div class="callout callout-warning">
+  <p class="callout-title">⚠️ Do Not Use <code>ldd</code> on Untrusted Binaries</p>
+  <p>The <code>ldd</code> command may <strong>execute</strong> the binary to resolve dependencies. On untrusted files, always use <code>readelf -d</code> instead, which reads the ELF header statically without execution.</p>
+</div>
+
+<h3>5.4 &nbsp;String Extraction for ELF</h3>
+<p>The <code>strings</code> command works identically on ELF binaries. The same categories from the reference card in Section&nbsp;3.2 apply — look for IP addresses, file paths (now Linux paths like <code>/tmp/</code>, <code>/etc/cron.d/</code>), shell commands, and encoded data.</p>
+</section>
+
+<hr class="section-divider">
+
+<!-- ──────── SECTION 6: KNOWLEDGE CHECK ──────── -->
+<section id="knowledge-check">
+<h2>6 &nbsp;Knowledge Check</h2>
+
+<div class="kc-block">
+<h3>Self-Assessment — Static Analysis Fundamentals</h3>
+<p>These questions are <strong>ungraded</strong>. Use them to confirm your understanding before proceeding to Module&nbsp;13.3 (Dynamic Analysis) and Lab&nbsp;12.</p>
+
+<!-- Question 1 -->
+<div class="kc-question" id="kc-q1">
+  <p class="q-text">1. You generate a SHA-256 hash of a suspicious file and submit it to VirusTotal. The hash returns zero results — no antivirus engine has ever seen this file. What does this tell you, and what should you do next?</p>
+  <ul class="kc-options">
+    <li><label><input type="radio" name="q1" value="a"> A. The file is safe because no AV engine flagged it. You can execute it on your workstation.</label></li>
+    <li><label><input type="radio" name="q1" value="b"> B. The file may be novel, targeted, or recently compiled malware. Continue with static analysis (strings, PE headers) and then dynamic analysis in an isolated environment.</label></li>
+    <li><label><input type="radio" name="q1" value="c"> C. VirusTotal is unreliable. Discard the hash results and skip to dynamic analysis immediately.</label></li>
+    <li><label><input type="radio" name="q1" value="d"> D. The file is a known-good application listed in the NSRL. No further analysis is needed.</label></li>
+  </ul>
+  <button class="kc-check-btn" onclick="checkAnswer('q1','b')" aria-label="Check answer for question 1">Check Answer</button>
+  <div class="kc-feedback correct" id="kc-q1-correct">
+    <strong>✓ Correct.</strong> A zero-result hash on VirusTotal does <em>not</em> mean the file is safe — it means no AV vendor has analyzed it yet. This is common with targeted malware, newly compiled samples, or polymorphic variants. The correct response is to continue your static analysis workflow (strings, PE header, import table) and then proceed to dynamic analysis in your isolated VM. Never execute an unknown file on a production system based on the absence of AV detections.
+  </div>
+  <div class="kc-feedback incorrect" id="kc-q1-incorrect">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>B</strong>. A zero-result hash means no AV engine has seen this file before — it does <em>not</em> mean the file is safe. Targeted malware, newly compiled samples, and polymorphic variants routinely evade signature-based detection. The proper response is to continue your static analysis (strings, PE headers, imports) to build hypotheses, then test them in dynamic analysis within your isolated VM. Option A is dangerous; Option C discards useful data; Option D describes NSRL, not VirusTotal.
+  </div>
+</div>
+
+<!-- Question 2 -->
+<div class="kc-question" id="kc-q2">
+  <p class="q-text">2. You examine a PE file with pestudio and observe the following: the <code>.text</code> section has an entropy of 7.8, and the import table contains only two functions — <code>LoadLibraryA</code> and <code>GetProcAddress</code>. What do these two findings, taken together, indicate?</p>
+  <ul class="kc-options">
+    <li><label><input type="radio" name="q2" value="a"> A. The file is a legitimate Windows system utility with a small code footprint.</label></li>
+    <li><label><input type="radio" name="q2" value="b"> B. The file is corrupted and cannot be analyzed further.</label></li>
+    <li><label><input type="radio" name="q2" value="c"> C. The file is almost certainly packed. The high entropy indicates encrypted or compressed content, and the minimal import table shows the unpacking stub uses <code>LoadLibrary</code> and <code>GetProcAddress</code> to dynamically resolve the real imports at runtime.</label></li>
+    <li><label><input type="radio" name="q2" value="d"> D. The file uses only two API calls, so it has very limited functionality and is low risk.</label></li>
+  </ul>
+  <button class="kc-check-btn" onclick="checkAnswer('q2','c')" aria-label="Check answer for question 2">Check Answer</button>
+  <div class="kc-feedback correct" id="kc-q2-correct">
+    <strong>✓ Correct.</strong> This is a classic indicator of a <strong>packed executable</strong>. Entropy above 7.0 (on a 0–8 scale) indicates the section content is encrypted or compressed — not normal compiled code. A minimal import table containing only <code>LoadLibraryA</code> and <code>GetProcAddress</code> is the hallmark of a packing stub: these two functions are sufficient to dynamically load any DLL and resolve any API function at runtime, effectively hiding the true import table from static analysis. When you encounter this pattern, note "likely packed" in your analysis and consider using a tool like UPX (<code>upx -d</code>) or proceeding to dynamic analysis where the unpacked code will be visible in memory.
+  </div>
+  <div class="kc-feedback incorrect" id="kc-q2-incorrect">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>C</strong>. High entropy (7.8 out of 8.0) in the <code>.text</code> section means the code is encrypted or compressed — not normal compiled instructions. Combined with an import table containing <em>only</em> <code>LoadLibraryA</code> and <code>GetProcAddress</code>, this is the classic signature of a <strong>packed executable</strong>. The packing stub uses those two functions to dynamically resolve all other API calls at runtime, hiding the malware's true capabilities from static analysis. This is not corruption (B), not a small utility (A), and definitely not low risk (D).
+  </div>
+</div>
+
+<!-- Question 3 -->
+<div class="kc-question" id="kc-q3">
+  <p class="q-text">3. During static analysis of <code>svchost_update.exe</code>, you extract strings and find the text <code>Software\Microsoft\Windows\CurrentVersion\Run</code> and the API imports <code>RegSetValueExA</code> and <code>InternetOpenUrlA</code>. A colleague from Week&nbsp;11 memory analysis found that Volatility's <code>netscan</code> plugin showed an established connection from a process named <code>svchost_update.exe</code> to IP <code>198.51.100.42</code>. How do the static analysis findings and the memory forensics findings corroborate each other?</p>
+  <ul class="kc-options">
+    <li><label><input type="radio" name="q3" value="a"> A. They are unrelated — static analysis and memory forensics examine different evidence types and cannot be correlated.</label></li>
+    <li><label><input type="radio" name="q3" value="b"> B. The static analysis shows the malware has the <em>capability</em> for network communication (<code>InternetOpenUrlA</code>) and registry persistence (<code>RegSetValueExA</code> + Run key path). The memory forensics <code>netscan</code> result <em>confirms</em> the network capability was actually exercised at runtime. Together, they provide stronger evidence than either source alone.</label></li>
+    <li><label><input type="radio" name="q3" value="c"> C. The memory forensics finding is sufficient on its own. The static analysis is redundant.</label></li>
+    <li><label><input type="radio" name="q3" value="d"> D. The static analysis finding is sufficient on its own. Memory forensics cannot confirm static findings.</label></li>
+  </ul>
+  <button class="kc-check-btn" onclick="checkAnswer('q3','b')" aria-label="Check answer for question 3">Check Answer</button>
+  <div class="kc-feedback correct" id="kc-q3-correct">
+    <strong>✓ Correct.</strong> This is a textbook example of <strong>cross-domain correlation</strong> — one of the most important principles in digital forensics. Static analysis reveals <em>capability</em>: the import table shows the malware <em>can</em> make network connections and <em>can</em> write to the Registry. Memory forensics reveals <em>activity</em>: the <code>netscan</code> output proves the malware <em>did</em> make a network connection to <code>198.51.100.42</code>. Neither finding alone is as powerful as both together. The static analysis explains <em>how</em> the connection was made (via <code>InternetOpenUrlA</code>); the memory forensics proves <em>that</em> it was made. This corroboration strengthens your report and supports the IOC documentation you will create in Module&nbsp;13.3.
+  </div>
+  <div class="kc-feedback incorrect" id="kc-q3-incorrect">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>B</strong>. Static analysis and memory forensics are complementary, not redundant or unrelated. Static analysis reveals <em>capability</em> — the malware's import table shows it <em>can</em> communicate over the network (<code>InternetOpenUrlA</code>) and <em>can</em> write registry persistence (<code>RegSetValueExA</code> targeting the Run key). Memory forensics reveals <em>activity</em> — Volatility's <code>netscan</code> proves the malware <em>did</em> establish a connection to <code>198.51.100.42</code>. Corroborating findings across domains is a core forensic principle. Neither source alone tells the complete story.
+  </div>
+</div>
+
+</div><!-- end kc-block -->
+</section>
+
+<hr class="section-divider">
+
+<!-- ──────── WRAP-UP ──────── -->
+<section id="wrapup">
+<h2>Looking Ahead</h2>
+<p>You have now completed the static analysis phase of the malware forensics workflow. From <code>svchost_update.exe</code> — without ever executing it — you have:</p>
+<ul>
+  <li>Generated cryptographic hashes for identification and reputation lookup.</li>
+  <li>Verified the true file type using magic bytes.</li>
+  <li>Extracted strings revealing C2 domains, registry persistence paths, and a fake User-Agent.</li>
+  <li>Analyzed the PE header: compile timestamp, subsystem, section entropy, and import table.</li>
+  <li>Formed specific hypotheses: process injection, C2 communication, and registry-based persistence.</li>
+</ul>
+
+<div class="callout callout-scenario">
+  <p class="callout-title">⏭ Next Step — Module 13.3</p>
+  <p>In <strong>Module&nbsp;13.3 (Dynamic Analysis and IOC Extraction)</strong>, you will execute <code>svchost_update.exe</code> inside your isolated analysis VM and observe its actual behavior using Process Monitor, Wireshark, and sandbox tools. Every hypothesis from this module becomes a test case: Does it really contact <code>evil-update.example.com</code>? Does it write to the Run key? Does it inject into another process? You will also extract structured Indicators of Compromise (IOCs) from your combined static and dynamic findings.</p>
+</div>
+
+<div class="callout callout-connection">
+  <p class="callout-title">🔗 Lab 12 Connection</p>
+  <p><strong>Lab&nbsp;12 (Static and Dynamic Malware Analysis)</strong> requires you to perform the exact techniques covered in this module: hash generation, string extraction, PE header examination, and import table analysis on provided sample(s). The import table suspicious API categories reference table above maps directly to the lab's requirement to identify suspicious API calls. Complete this module thoroughly before beginning Lab&nbsp;12's static analysis tasks.</p>
+</div>
+</section>
+
+</main>
+
+<!-- ════════════ FOOTER ════════════ -->
+<footer class="module-footer">
+  <p>CSC 156 – Digital Forensics Fundamentals | Mendocino College | Week 13 – Module 13.2</p>
+  <p>This module supports CSLO 2 and Week 13 Objective 2. Content is instructional and ungraded.</p>
+</footer>
+
+</div><!-- end page-wrapper -->
+
+<!-- ════════════ JAVASCRIPT ════════════ -->
+<script>
+/* ── Accordion Toggle ── */
+document.querySelectorAll('.accordion-btn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var expanded = this.getAttribute('aria-expanded') === 'true';
+    var panel = document.getElementById(this.getAttribute('aria-controls'));
+    if(expanded){
+      this.setAttribute('aria-expanded','false');
+      panel.setAttribute('aria-hidden','true');
+      panel.style.maxHeight = null;
+    } else {
+      this.setAttribute('aria-expanded','true');
+      panel.setAttribute('aria-hidden','false');
+      panel.style.maxHeight = panel.scrollHeight + 'px';
+    }
+  });
+  btn.addEventListener('keydown', function(e){
+    if(e.key === 'Enter' || e.key === ' '){
+      e.preventDefault();
+      this.click();
+    }
+  });
+});
+
+/* ── Knowledge Check ── */
+function checkAnswer(qName, correctVal){
+  var radios = document.getElementsByName(qName);
+  var selected = null;
+  for(var i = 0; i < radios.length; i++){
+    if(radios[i].checked){ selected = radios[i].value; break; }
+  }
+  if(!selected){
+    alert('Please select an answer before checking.');
+    return;
+  }
+  var qBlock = document.getElementById('kc-' + qName);
+  var correctFb = document.getElementById('kc-' + qName + '-correct');
+  var incorrectFb = document.getElementById('kc-' + qName + '-incorrect');
+  correctFb.style.display = 'none';
+  incorrectFb.style.display = 'none';
+  if(selected === correctVal){
+    correctFb.style.display = 'block';
+    correctFb.focus();
+  } else {
+    incorrectFb.style.display = 'block';
+    incorrectFb.focus();
+  }
+}
+
+/* ── Smooth Scroll for Nav ── */
+document.querySelectorAll('.top-nav a').forEach(function(link){
+  link.addEventListener('click', function(e){
+    var href = this.getAttribute('href');
+    if(href && href.charAt(0) === '#'){
+      e.preventDefault();
+      var target = document.querySelector(href);
+      if(target){
+        target.scrollIntoView({behavior:'smooth', block:'start'});
+        target.setAttribute('tabindex','-1');
+        target.focus({preventScroll:true});
+      }
+    }
+  });
+});
+</script>
+</body>
+</html>

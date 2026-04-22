@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 13.3 – Dynamic Analysis and Indicators of Compromise: Observing Malware in Action</title>
+<style>
+/* ===== CSS Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+  color: #1e1e1e;
+  background: #f8f9fa;
+  padding: 0;
+  margin: 0;
+}
+
+/* ===== Skip Link ===== */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 1rem;
+  background: #0055a2;
+  color: #fff;
+  padding: 0.6rem 1.2rem;
+  z-index: 1000;
+  border-radius: 0 0 4px 4px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.skip-link:focus { top: 0; }
+
+/* ===== Navigation Bar ===== */
+.module-nav {
+  background: linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 100%);
+  padding: 0.8rem 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 3px solid #e63946;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 1rem;
+}
+.module-nav a {
+  color: #c8d6e5;
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 0.35rem 0.7rem;
+  border-radius: 4px;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+.module-nav a:hover,
+.module-nav a:focus {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  outline: 2px solid #e63946;
+  outline-offset: 1px;
+}
+.nav-label {
+  color: #e63946;
+  font-weight: 700;
+  font-size: 0.82rem;
+  margin-right: 0.5rem;
+  white-space: nowrap;
+}
+
+/* ===== Main Container ===== */
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 3rem;
+}
+
+/* ===== Module Header ===== */
+.module-header {
+  background: linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 100%);
+  color: #fff;
+  padding: 2rem 2rem 1.8rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  border-left: 6px solid #e63946;
+}
+.module-header .module-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #e63946;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 0.3rem;
+}
+.module-header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 0.6rem;
+}
+.module-header .subtitle {
+  font-size: 1rem;
+  color: #c8d6e5;
+  line-height: 1.5;
+}
+.module-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: #a0b0c0;
+}
+.module-meta span { display: inline-flex; align-items: center; gap: 0.3rem; }
+
+/* ===== Section Headings ===== */
+.section { margin-bottom: 2.5rem; }
+.section h2 {
+  font-size: 1.35rem;
+  color: #0d1b2a;
+  border-bottom: 3px solid #e63946;
+  padding-bottom: 0.4rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+.section h3 {
+  font-size: 1.1rem;
+  color: #1b2a4a;
+  margin: 1.4rem 0 0.6rem;
+  font-weight: 700;
+}
+.section h4 {
+  font-size: 0.95rem;
+  color: #344563;
+  margin: 1rem 0 0.5rem;
+  font-weight: 700;
+}
+
+/* ===== Paragraphs & Lists ===== */
+.section p { margin-bottom: 0.85rem; }
+.section ul, .section ol { margin: 0.5rem 0 1rem 1.5rem; }
+.section li { margin-bottom: 0.4rem; }
+
+/* ===== Callout Boxes ===== */
+.callout {
+  border-radius: 6px;
+  padding: 1rem 1.2rem;
+  margin: 1.2rem 0;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+.callout-title {
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.callout.forensic-note {
+  background: #e8f4f8;
+  border-left: 5px solid #0077b6;
+}
+.callout.forensic-note .callout-title { color: #0077b6; }
+
+.callout.safety-warning {
+  background: #fef3e2;
+  border-left: 5px solid #e76f00;
+}
+.callout.safety-warning .callout-title { color: #e76f00; }
+
+.callout.key-concept {
+  background: #f0fdf4;
+  border-left: 5px solid #2d6a4f;
+}
+.callout.key-concept .callout-title { color: #2d6a4f; }
+
+.callout.connection {
+  background: #f3f0ff;
+  border-left: 5px solid #6c47b8;
+}
+.callout.connection .callout-title { color: #6c47b8; }
+
+.callout.opsec-warning {
+  background: #fff0f0;
+  border-left: 5px solid #c1121f;
+}
+.callout.opsec-warning .callout-title { color: #c1121f; }
+
+.callout.scenario {
+  background: #1b2a4a;
+  border-left: 5px solid #e63946;
+  color: #e0e8f0;
+}
+.callout.scenario .callout-title { color: #e63946; }
+.callout.scenario code { color: #ffd166; background: rgba(255,255,255,0.1); }
+
+.callout.hypothesis {
+  background: #fdf6e3;
+  border-left: 5px solid #b58900;
+}
+.callout.hypothesis .callout-title { color: #b58900; }
+
+/* ===== Tables ===== */
+.table-wrap { overflow-x: auto; margin: 1rem 0; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+th, td {
+  border: 1px solid #d0d7de;
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  background: #0d1b2a;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+tr:nth-child(even) { background: #f4f6f9; }
+caption {
+  caption-side: top;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #1b2a4a;
+  text-align: left;
+  margin-bottom: 0.4rem;
+}
+
+/* ===== Code Blocks ===== */
+code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.88em;
+  background: #e9ecef;
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+  color: #c7254e;
+}
+pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1rem 1.2rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  margin: 1rem 0;
+}
+pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+}
+.code-caption {
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: -0.6rem;
+  margin-bottom: 0.8rem;
+}
+
+/* ===== Interactive Elements ===== */
+.interactive-activity {
+  background: #fff;
+  border: 2px solid #0077b6;
+  border-radius: 8px;
+  padding: 1.2rem 1.4rem;
+  margin: 1.5rem 0;
+}
+.interactive-activity h3 {
+  color: #0077b6;
+  margin-top: 0;
+}
+
+/* Knowledge Check */
+.knowledge-check {
+  background: #fff;
+  border: 2px solid #2d6a4f;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+}
+.knowledge-check h2 {
+  color: #2d6a4f;
+  border-bottom-color: #2d6a4f;
+}
+.kc-question {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+.kc-question:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.kc-question p.q-stem {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #1b2a4a;
+}
+.kc-options { list-style: none; margin: 0.5rem 0 0.7rem 0; padding: 0; }
+.kc-options li { margin-bottom: 0.3rem; }
+.kc-options label {
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+.kc-options label:hover { background: #f0fdf4; }
+.kc-options input[type="radio"] { margin-top: 0.25rem; flex-shrink: 0; }
+
+.kc-feedback {
+  display: none;
+  padding: 0.8rem 1rem;
+  border-radius: 5px;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+.kc-feedback.correct {
+  background: #d4edda;
+  border: 1px solid #2d6a4f;
+  color: #155724;
+}
+.kc-feedback.incorrect {
+  background: #f8d7da;
+  border: 1px solid #c1121f;
+  color: #721c24;
+}
+.kc-feedback.info {
+  background: #e8f4f8;
+  border: 1px solid #0077b6;
+  color: #0a3d62;
+}
+
+.btn-check {
+  background: #2d6a4f;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1.3rem;
+  border-radius: 5px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-check:hover, .btn-check:focus {
+  background: #1b4332;
+  outline: 2px solid #2d6a4f;
+  outline-offset: 2px;
+}
+
+/* IOC Table Fill Exercise */
+.ioc-exercise table input[type="text"] {
+  width: 100%;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #adb5bd;
+  border-radius: 3px;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+.ioc-exercise table input[type="text"]:focus {
+  outline: 2px solid #0077b6;
+  border-color: #0077b6;
+}
+
+/* ===== Checklist ===== */
+.checklist {
+  background: #fff;
+  border: 2px solid #0d1b2a;
+  border-radius: 8px;
+  padding: 1.2rem 1.4rem;
+  margin: 1.2rem 0;
+}
+.checklist h3 { color: #0d1b2a; margin-top: 0; }
+.checklist ul { list-style: none; padding: 0; margin: 0.5rem 0 0; }
+.checklist li {
+  padding: 0.35rem 0 0.35rem 1.6rem;
+  position: relative;
+  font-size: 0.92rem;
+}
+.checklist li::before {
+  content: "☐";
+  position: absolute;
+  left: 0;
+  font-size: 1.1rem;
+  color: #e63946;
+}
+
+/* ===== Behavioral Profile Template ===== */
+.profile-template {
+  background: #fff;
+  border: 2px dashed #6c47b8;
+  border-radius: 8px;
+  padding: 1.2rem 1.4rem;
+  margin: 1.2rem 0;
+}
+.profile-template h3 { color: #6c47b8; margin-top: 0; }
+
+/* ===== IOC Reference Card ===== */
+.reference-card {
+  background: #fff;
+  border: 2px solid #0077b6;
+  border-radius: 8px;
+  padding: 1.2rem 1.4rem;
+  margin: 1.2rem 0;
+}
+.reference-card h3 { color: #0077b6; margin-top: 0; }
+
+/* ===== Collapsible Details ===== */
+details {
+  background: #fff;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  margin: 0.8rem 0;
+  padding: 0;
+}
+details summary {
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: #1b2a4a;
+  font-size: 0.92rem;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+details summary::before {
+  content: "▸";
+  font-size: 0.9rem;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+details[open] summary::before { transform: rotate(90deg); }
+details summary:focus {
+  outline: 2px solid #0077b6;
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+details .details-content { padding: 0.2rem 1rem 1rem; font-size: 0.92rem; }
+
+/* ===== Diagram / Visual Boxes ===== */
+.diagram-box {
+  background: #fff;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  padding: 1.2rem;
+  margin: 1.2rem 0;
+  text-align: center;
+}
+.diagram-box pre {
+  text-align: left;
+  display: inline-block;
+  font-size: 0.78rem;
+  background: #f8f9fa;
+  color: #1e1e1e;
+  border: 1px solid #d0d7de;
+}
+
+/* ===== Footer ===== */
+.module-footer {
+  margin-top: 3rem;
+  padding-top: 1.2rem;
+  border-top: 2px solid #d0d7de;
+  font-size: 0.82rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 640px) {
+  .container { padding: 1rem; }
+  .module-header { padding: 1.4rem 1.2rem; }
+  .module-header h1 { font-size: 1.35rem; }
+  .module-nav { padding: 0.6rem 0.8rem; }
+  .module-nav a { font-size: 0.76rem; padding: 0.3rem 0.5rem; }
+  table { font-size: 0.8rem; }
+  th, td { padding: 0.4rem 0.5rem; }
+  pre { font-size: 0.78rem; padding: 0.8rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Skip Link -->
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<!-- Navigation Bar -->
+<nav class="module-nav" aria-label="Module 13.3 section navigation">
+  <span class="nav-label">Module 13.3:</span>
+  <a href="#scenario">Scenario</a>
+  <a href="#hypothesis">Hypothesis Bridge</a>
+  <a href="#setup">Dynamic Setup</a>
+  <a href="#monitoring">Behavioral Monitoring</a>
+  <a href="#interpreting">Interpreting Results</a>
+  <a href="#ioc">IOC Extraction</a>
+  <a href="#knowledge-check">Knowledge Check</a>
+</nav>
+
+<!-- Main Content -->
+<main id="main-content" class="container">
+
+  <!-- Module Header -->
+  <header class="module-header">
+    <span class="module-label">Week 13 &bull; Module 13.3</span>
+    <h1>Dynamic Analysis and Indicators of Compromise: Observing Malware in Action</h1>
+    <p class="subtitle">Execute the suspect in a controlled cage, watch every move it makes, and extract the fingerprints that let you hunt it across an enterprise.</p>
+    <div class="module-meta">
+      <span>&#128337; Est.&nbsp;Time: 2.0&ndash;2.5 hours</span>
+      <span>&#128218; Objectives: 3, 4</span>
+      <span>&#127919; Prepares: Lab&nbsp;12</span>
+    </div>
+  </header>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 1: Scenario Continuation                             -->
+  <!-- ============================================================ -->
+  <section class="section" id="scenario">
+    <h2>1. Scenario Continuation &mdash; From Hypotheses to Execution</h2>
+
+    <div class="callout scenario">
+      <div class="callout-title">&#128270; Continuing Investigation &mdash; svchost_update.exe</div>
+      <p>Your static analysis of <code>svchost_update.exe</code> in Module&nbsp;13.2 revealed:</p>
+      <ul style="margin-top:0.5rem;">
+        <li>Imported network APIs: <code>WSAStartup</code>, <code>connect</code>, <code>send</code>, <code>recv</code></li>
+        <li>Imported registry API: <code>RegSetValueEx</code></li>
+        <li>Imported process API: <code>CreateProcess</code></li>
+        <li>Extracted string: <code>http://198.51.100.42/beacon</code></li>
+        <li>Extracted string: <code>Software\Microsoft\Windows\CurrentVersion\Run</code></li>
+        <li>Extracted string: <code>%TEMP%\payload.dll</code></li>
+        <li>PE compile timestamp: 3&nbsp;days before the incident</li>
+        <li>Section entropy: 7.4 for <code>.text</code> &mdash; possible packing</li>
+      </ul>
+      <p style="margin-top:0.8rem;">You have hypotheses. Now it is time to <strong>confirm or refute them</strong> by watching the malware run.</p>
+    </div>
+
+    <p>Static analysis tells you what a file <em>could</em> do. Dynamic analysis tells you what it <em>actually does</em>. The gap between the two is critical: imported APIs may never be called, strings may be decoys, and packed code may unpack into something entirely different from what the PE header suggested.</p>
+    <p>In this module you will learn to safely execute a suspect binary, monitor its behavior across four domains (file&nbsp;system, registry, processes, network), and then distill your observations into structured <strong>Indicators of Compromise (IOCs)</strong> &mdash; the actionable output that turns a single-sample analysis into an enterprise-wide hunt.</p>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 2: Hypothesis Bridge                                 -->
+  <!-- ============================================================ -->
+  <section class="section" id="hypothesis">
+    <h2>2. Hypothesis Framework &mdash; Bridging Static to Dynamic</h2>
+
+    <p>Before you press &ldquo;run,&rdquo; document what you <em>expect</em> to see. This is not guessing &mdash; it is the scientific method applied to malware analysis. Your static analysis findings generate testable predictions; dynamic analysis is the experiment.</p>
+
+    <div class="callout hypothesis">
+      <div class="callout-title">&#128161; Hypothesis Template &mdash; svchost_update.exe</div>
+      <div class="table-wrap">
+        <table>
+          <caption>Pre-Execution Hypothesis Table</caption>
+          <thead>
+            <tr>
+              <th>Static Finding</th>
+              <th>Hypothesis (Expected Dynamic Behavior)</th>
+              <th>What to Monitor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>WSAStartup</code>, <code>connect</code>, <code>send</code> imports</td>
+              <td>Malware will initiate outbound network connections</td>
+              <td>Wireshark &mdash; TCP SYN to external IPs</td>
+            </tr>
+            <tr>
+              <td>String: <code>http://198.51.100.42/beacon</code></td>
+              <td>Malware will attempt DNS resolution and/or HTTP GET/POST to 198.51.100.42</td>
+              <td>Wireshark &mdash; DNS queries, HTTP requests; INetSim logs</td>
+            </tr>
+            <tr>
+              <td><code>RegSetValueEx</code> import + Run key string</td>
+              <td>Malware will write a value to <code>HKCU\...\Run</code> for persistence</td>
+              <td>ProcMon &mdash; RegSetValue operations</td>
+            </tr>
+            <tr>
+              <td>String: <code>%TEMP%\payload.dll</code></td>
+              <td>Malware will drop a DLL file into the user&rsquo;s Temp folder</td>
+              <td>ProcMon &mdash; CreateFile in <code>%TEMP%</code></td>
+            </tr>
+            <tr>
+              <td><code>CreateProcess</code> import</td>
+              <td>Malware will spawn a child process (possibly to load the dropped DLL)</td>
+              <td>Process Explorer &mdash; process tree; ProcMon &mdash; Process Create</td>
+            </tr>
+            <tr>
+              <td>High section entropy (7.4)</td>
+              <td>Malware may unpack itself at runtime; early file-system/memory activity may differ from PE header expectations</td>
+              <td>ProcMon &mdash; early WriteFile / VirtualAlloc calls</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:0.6rem;"><strong>Why this matters:</strong> If dynamic analysis <em>confirms</em> a hypothesis, your confidence in that finding is high. If it <em>refutes</em> one, you have learned something equally valuable &mdash; perhaps the API is imported but never called, or the string is a decoy. Either outcome advances the investigation.</p>
+    </div>
+
+    <div class="callout connection">
+      <div class="callout-title">&#128279; Connection to Module 13.2</div>
+      <p>If you have not completed Module&nbsp;13.2 (Static Analysis), do so before continuing. Dynamic analysis depends on the hypotheses you build during static analysis. Running a sample &ldquo;blind&rdquo; without static context means you will not know what to look for or how to interpret what you see.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 3: Dynamic Analysis Setup                            -->
+  <!-- ============================================================ -->
+  <section class="section" id="setup">
+    <h2>3. Dynamic Analysis Setup &mdash; The Controlled Cage</h2>
+
+    <h3>3.1 What Is Dynamic Analysis?</h3>
+    <p><strong>Dynamic analysis</strong> is the process of executing malware in a controlled environment and systematically observing its runtime behavior. Where static analysis examines the file at rest, dynamic analysis watches it in motion.</p>
+
+    <div class="table-wrap">
+      <table>
+        <caption>Static vs. Dynamic Analysis Comparison</caption>
+        <thead>
+          <tr><th>Dimension</th><th>Static Analysis</th><th>Dynamic Analysis</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Execution</td><td>File is <strong>not</strong> executed</td><td>File <strong>is</strong> executed</td></tr>
+          <tr><td>Risk level</td><td>Minimal &mdash; no infection possible</td><td>Higher &mdash; requires strict isolation</td></tr>
+          <tr><td>Defeats packing?</td><td>No &mdash; packed code hides content</td><td>Yes &mdash; code unpacks at runtime</td></tr>
+          <tr><td>Reveals actual behavior?</td><td>Inferred from imports/strings</td><td>Directly observed</td></tr>
+          <tr><td>Reproducibility</td><td>Fully reproducible</td><td>May vary by environment (anti-VM checks)</td></tr>
+          <tr><td>Typical order</td><td>Always <strong>first</strong></td><td>Always <strong>second</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>3.2 Pre-Execution Checklist</h3>
+    <p>Before detonating any sample, every item on this checklist must be confirmed. Skipping a step can compromise your host system, contaminate evidence, or destroy your analysis environment.</p>
+
+    <div class="checklist">
+      <h3>&#9745; Pre-Execution Safety Checklist</h3>
+      <ul>
+        <li><strong>Isolated VM confirmed:</strong> Guest OS is running in VirtualBox or VMware with no shared folders, no shared clipboard, and no USB passthrough enabled.</li>
+        <li><strong>Network isolation verified:</strong> VM is on <strong>host-only</strong> networking or connected only to a network simulation tool (INetSim or FakeNet-NG). No route to the real internet.</li>
+        <li><strong>Clean snapshot taken:</strong> A &ldquo;pre-detonation&rdquo; snapshot exists so you can revert to a known-clean state after analysis.</li>
+        <li><strong>Monitoring tools launched:</strong> ProcMon (with filters set), Process Explorer, and Wireshark are running and capturing <em>before</em> the sample is executed.</li>
+        <li><strong>Hypothesis table documented:</strong> Static analysis predictions are recorded (Section&nbsp;2 above) so you know what to watch for.</li>
+        <li><strong>Timestamp noted:</strong> Record the exact time of execution in your analysis notes for timeline correlation.</li>
+        <li><strong>No real credentials present:</strong> The analysis VM contains no real usernames, passwords, API keys, or sensitive data.</li>
+        <li><strong>Host OS patched and hardened:</strong> The hypervisor and host OS are up to date to minimize VM escape risk.</li>
+      </ul>
+    </div>
+
+    <div class="callout safety-warning">
+      <div class="callout-title">&#9888;&#65039; Safety Rule &mdash; Absolute</div>
+      <p><strong>Never execute malware on a production system, your personal computer, or any machine connected to a real network.</strong> Even in a classroom lab, all malware execution occurs inside isolated virtual machines with snapshotted, disposable guest operating systems. If you are unsure whether your environment is properly isolated, <em>stop and ask your instructor</em>.</p>
+    </div>
+
+    <h3>3.3 Network Simulation Tools</h3>
+    <p>Malware frequently requires internet connectivity to function &mdash; it may attempt DNS lookups, contact C2 servers, or download second-stage payloads. If the network is completely dead, the malware may stall, fail to activate, or behave differently than it would in the wild. Network simulation tools solve this problem by faking internet services inside your isolated lab.</p>
+
+    <h4>INetSim (Internet Services Simulation Suite)</h4>
+    <ul>
+      <li>Linux-based tool that simulates HTTP, HTTPS, DNS, SMTP, FTP, and other common services</li>
+      <li>Responds to any DNS query with its own IP, so the malware &ldquo;thinks&rdquo; it has resolved its C2 domain</li>
+      <li>Logs every request the malware makes &mdash; a rich source of network IOCs</li>
+      <li>Typical setup: INetSim runs on the host or a second VM; the analysis VM&rsquo;s DNS is pointed to INetSim&rsquo;s IP</li>
+    </ul>
+
+    <h4>FakeNet-NG</h4>
+    <ul>
+      <li>Windows-based alternative developed by Mandiant (FLARE team)</li>
+      <li>Runs directly on the analysis VM &mdash; intercepts all network calls locally</li>
+      <li>Supports DNS, HTTP, SMTP, and custom protocol simulation</li>
+      <li>Easier single-VM setup but slightly less realistic than INetSim</li>
+    </ul>
+
+    <div class="callout key-concept">
+      <div class="callout-title">&#128273; Key Concept &mdash; Why Simulate, Not Connect?</div>
+      <p>Connecting a malware analysis VM to the real internet creates two risks: (1)&nbsp;the malware could attack other systems on the internet, making <em>you</em> liable; (2)&nbsp;the malware could download updated payloads or receive C2 instructions that change its behavior unpredictably. Simulation gives you control while still triggering the malware&rsquo;s network behavior.</p>
+    </div>
+
+    <h3>3.4 Execution Methods</h3>
+    <p>How you launch the sample depends on the file type:</p>
+    <ul>
+      <li><strong>PE executable (.exe):</strong> Double-click or run from the command line. Command-line execution lets you pass arguments if static analysis revealed expected parameters.</li>
+      <li><strong>DLL:</strong> Use <code>rundll32.exe malicious.dll,ExportName</code> &mdash; requires knowing the export function name from static analysis.</li>
+      <li><strong>Script (PowerShell, VBScript, JavaScript):</strong> Execute with the appropriate interpreter. For PowerShell: <code>powershell -ExecutionPolicy Bypass -File script.ps1</code></li>
+      <li><strong>Document with macro:</strong> Open in the target application (Word, Excel) with macros enabled.</li>
+    </ul>
+    <p>For our scenario, <code>svchost_update.exe</code> is a PE executable. We will execute it from the command line after all monitoring tools are running.</p>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 4: Behavioral Monitoring Tools                       -->
+  <!-- ============================================================ -->
+  <section class="section" id="monitoring">
+    <h2>4. Behavioral Monitoring &mdash; Watching Every Move</h2>
+
+    <p>During dynamic analysis, you monitor four domains simultaneously: <strong>processes</strong>, <strong>file system</strong>, <strong>registry</strong>, and <strong>network</strong>. Each domain has a primary tool, and together they give you a complete picture of the malware&rsquo;s behavior.</p>
+
+    <div class="diagram-box">
+      <p style="font-weight:700; color:#1b2a4a; margin-bottom:0.8rem;">Four Domains of Behavioral Monitoring</p>
+<pre style="font-size:0.8rem; line-height:1.5;">
+┌────────────────────────────────────────────────────────────────────┐
+│                    MALWARE EXECUTION                               │
+│                   svchost_update.exe                                │
+└───────┬──────────────┬──────────────┬──────────────┬───────────────┘
+        │              │              │              │
+   ┌────▼────┐   ┌─────▼─────┐  ┌────▼────┐   ┌────▼─────┐
+   │ PROCESS │   │ FILE      │  │REGISTRY │   │ NETWORK  │
+   │ ACTIVITY│   │ SYSTEM    │  │ CHANGES │   │ TRAFFIC  │
+   ├─────────┤   ├───────────┤  ├─────────┤   ├──────────┤
+   │Process  │   │ProcMon    │  │ProcMon  │   │Wireshark │
+   │Explorer │   │(CreateFile│  │(RegSet  │   │(DNS,HTTP,│
+   │ProcMon  │   │ WriteFile │  │ RegCreate│  │ TCP,UDP) │
+   │(Process │   │ DeleteFile│  │ RegDelete│  │INetSim / │
+   │ Create) │   │ events)   │  │ events) │   │FakeNet-NG│
+   └─────────┘   └───────────┘  └─────────┘   └──────────┘
+</pre>
+    </div>
+
+    <h3>4.1 Process Monitor (ProcMon) &mdash; The Primary Behavioral Tool</h3>
+    <p>ProcMon (from Microsoft Sysinternals) captures real-time file system, registry, process, and network activity on a Windows system. It is the single most important tool for dynamic malware analysis on Windows.</p>
+
+    <h4>Essential ProcMon Filters for Malware Analysis</h4>
+    <p>Without filters, ProcMon captures <em>thousands</em> of events per second from all processes on the system. Effective filtering is critical:</p>
+
+    <div class="table-wrap">
+      <table>
+        <caption>Key ProcMon Filters for Malware Analysis</caption>
+        <thead>
+          <tr><th>Filter</th><th>Column</th><th>Relation</th><th>Value</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Isolate malware process</td>
+            <td>Process Name</td>
+            <td>is</td>
+            <td><code>svchost_update.exe</code></td>
+            <td>Show only events from the suspect process</td>
+          </tr>
+          <tr>
+            <td>Registry writes</td>
+            <td>Operation</td>
+            <td>is</td>
+            <td><code>RegSetValue</code></td>
+            <td>Detect persistence and configuration changes</td>
+          </tr>
+          <tr>
+            <td>File creates</td>
+            <td>Operation</td>
+            <td>is</td>
+            <td><code>CreateFile</code></td>
+            <td>Detect dropped files and payloads</td>
+          </tr>
+          <tr>
+            <td>Process creation</td>
+            <td>Operation</td>
+            <td>is</td>
+            <td><code>Process Create</code></td>
+            <td>Detect child processes spawned by malware</td>
+          </tr>
+          <tr>
+            <td>Write operations</td>
+            <td>Operation</td>
+            <td>is</td>
+            <td><code>WriteFile</code></td>
+            <td>Detect data being written to disk</td>
+          </tr>
+          <tr>
+            <td>Focus on Temp folder</td>
+            <td>Path</td>
+            <td>contains</td>
+            <td><code>Temp</code></td>
+            <td>Malware frequently drops files here</td>
+          </tr>
+          <tr>
+            <td>Focus on Run keys</td>
+            <td>Path</td>
+            <td>contains</td>
+            <td><code>CurrentVersion\Run</code></td>
+            <td>Detect autostart persistence</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout forensic-note">
+      <div class="callout-title">&#128269; Forensic Tip &mdash; Filter Strategy</div>
+      <p>Start with a broad filter (Process Name = malware) and review the event stream. Then add targeted filters for specific operations. Save your filter set &mdash; you will reuse it across samples. Also include child processes: if the malware spawns <code>cmd.exe</code> or <code>powershell.exe</code>, add those process names to your filter.</p>
+    </div>
+
+    <h4>Key ProcMon Events and What They Mean</h4>
+    <p>When monitoring <code>svchost_update.exe</code>, here is what a typical malicious execution sequence looks like in ProcMon:</p>
+
+<pre>
+<code># Sequence of ProcMon events for svchost_update.exe (simplified)
+
+10:15:01  Process Create    svchost_update.exe    PID: 4892
+10:15:01  CreateFile        C:\Users\analyst\AppData\Local\Temp\payload.dll    SUCCESS
+10:15:01  WriteFile         C:\Users\analyst\AppData\Local\Temp\payload.dll    SUCCESS  (245,760 bytes)
+10:15:02  RegSetValue       HKCU\Software\Microsoft\Windows\CurrentVersion\Run\WinUpdate    SUCCESS
+                            Type: REG_SZ  Data: "C:\Users\analyst\AppData\Local\Temp\payload.dll"
+10:15:02  Process Create    rundll32.exe  payload.dll,ServiceMain    PID: 5104
+10:15:03  TCP Connect       198.51.100.42:80    SUCCESS</code>
+</pre>
+    <p class="code-caption">Simplified ProcMon output showing the behavioral sequence of svchost_update.exe</p>
+
+    <p>Reading this sequence, we can reconstruct the malware&rsquo;s behavior:</p>
+    <ol>
+      <li><strong>Drops a file:</strong> Creates and writes <code>payload.dll</code> to the Temp folder (245&nbsp;KB)</li>
+      <li><strong>Establishes persistence:</strong> Writes a Run key so <code>payload.dll</code> loads at every login</li>
+      <li><strong>Launches payload:</strong> Spawns <code>rundll32.exe</code> to execute the dropped DLL</li>
+      <li><strong>Initiates C2:</strong> Connects to 198.51.100.42 on port 80</li>
+    </ol>
+
+    <div class="callout connection">
+      <div class="callout-title">&#128279; Connection to Weeks 7&ndash;8 (Windows Forensics)</div>
+      <p>The registry key <code>HKCU\Software\Microsoft\Windows\CurrentVersion\Run</code> is the same persistence location you analyzed with RegRipper in Week&nbsp;7. In that context, you were examining artifacts <em>after the fact</em>. Here you are watching the malware <em>create</em> those artifacts in real time. Same evidence, different perspective &mdash; this is the power of connecting malware analysis to OS forensics.</p>
+    </div>
+
+    <h3>4.2 Process Explorer &mdash; The Process Tree View</h3>
+    <p>While ProcMon captures granular events, Process Explorer (also Sysinternals) provides a real-time <strong>process tree</strong> that shows parent-child relationships.</p>
+    <p>What to watch for during malware execution:</p>
+    <ul>
+      <li><strong>Child processes:</strong> Does the malware spawn <code>cmd.exe</code>, <code>powershell.exe</code>, <code>rundll32.exe</code>, or other executables?</li>
+      <li><strong>Process names:</strong> Does it try to disguise itself (e.g., naming itself <code>svchost.exe</code> but running from the wrong directory)?</li>
+      <li><strong>Resource usage:</strong> Sudden CPU or memory spikes may indicate encryption (ransomware) or cryptomining</li>
+      <li><strong>Network connections:</strong> The TCP/IP tab in Process Explorer shows active connections per process</li>
+    </ul>
+
+    <div class="callout connection">
+      <div class="callout-title">&#128279; Connection to Week 11 (Memory Forensics)</div>
+      <p>In Week&nbsp;11, you used Volatility&rsquo;s <code>pslist</code> and <code>pstree</code> to examine process hierarchies in a memory dump. Process Explorer shows you the same information <em>live</em>. If <code>svchost_update.exe</code> spawns <code>rundll32.exe</code>, that parent-child relationship would also appear in a memory dump analyzed with Volatility. The skills transfer directly.</p>
+    </div>
+
+    <h3>4.3 Wireshark &mdash; Network Monitoring During Execution</h3>
+    <p>Start Wireshark capturing on the analysis VM&rsquo;s network interface <em>before</em> executing the sample. After execution, apply filters to isolate the malware&rsquo;s traffic.</p>
+
+    <h4>Key Filters for Malware Network Analysis</h4>
+    <div class="table-wrap">
+      <table>
+        <caption>Wireshark Filters for Dynamic Malware Analysis</caption>
+        <thead>
+          <tr><th>Purpose</th><th>Display Filter</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>DNS queries from the malware</td><td><code>dns.qry.name contains "evil-update"</code></td></tr>
+          <tr><td>HTTP traffic to C2 IP</td><td><code>ip.addr == 198.51.100.42 &amp;&amp; http</code></td></tr>
+          <tr><td>All traffic from malware PID (if captured with process info)</td><td><code>ip.src == [VM_IP] &amp;&amp; tcp</code></td></tr>
+          <tr><td>Beaconing pattern (regular interval connections)</td><td><code>ip.dst == 198.51.100.42</code> then examine timestamps</td></tr>
+          <tr><td>Data exfiltration (large outbound transfers)</td><td><code>ip.src == [VM_IP] &amp;&amp; tcp.len > 1000</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout connection">
+      <div class="callout-title">&#128279; Connection to Week 12 (Network Forensics)</div>
+      <p>These are the same Wireshark display filter skills you developed in Module&nbsp;12.2. In Week&nbsp;12, you analyzed PCAPs captured from a network TAP during an incident. Here, you are the one <em>generating</em> the PCAP by executing malware in a lab. The analytical techniques are identical &mdash; only the source of the capture differs.</p>
+    </div>
+
+    <h3>4.4 File System Monitoring</h3>
+    <p>ProcMon handles file system monitoring, but knowing <em>where</em> to look is equally important. Malware commonly targets these locations:</p>
+
+    <div class="table-wrap">
+      <table>
+        <caption>Common Malware File Drop Locations (Windows)</caption>
+        <thead>
+          <tr><th>Location</th><th>Why Malware Uses It</th><th>ProcMon Filter</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>%TEMP%</code></td><td>User-writable, often overlooked by users</td><td>Path contains <code>Temp</code></td></tr>
+          <tr><td><code>%APPDATA%</code></td><td>Per-user, persists across reboots</td><td>Path contains <code>AppData\Roaming</code></td></tr>
+          <tr><td><code>C:\Windows\System32</code></td><td>Blends with legitimate system files (requires elevation)</td><td>Path contains <code>System32</code></td></tr>
+          <tr><td><code>C:\ProgramData</code></td><td>Hidden by default, writable by all users</td><td>Path contains <code>ProgramData</code></td></tr>
+          <tr><td>Startup folder</td><td>Persistence &mdash; auto-executes at login</td><td>Path contains <code>Start Menu\Programs\Startup</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>4.5 Registry Monitoring</h3>
+    <p>Beyond the Run key, malware modifies the registry for many purposes:</p>
+    <ul>
+      <li><strong>Persistence:</strong> <code>Run</code>, <code>RunOnce</code>, <code>Services</code>, <code>Winlogon\Shell</code></li>
+      <li><strong>Configuration storage:</strong> Custom keys to store C2 addresses, encryption keys, or campaign IDs</li>
+      <li><strong>Security weakening:</strong> Disabling Windows Defender (<code>DisableAntiSpyware</code>), disabling UAC, modifying firewall rules</li>
+    </ul>
+
+    <div class="callout forensic-note">
+      <div class="callout-title">&#128269; Forensic Tip &mdash; Before and After</div>
+      <p>Export a baseline of key registry locations <em>before</em> execution using <code>reg export</code>. After execution, export again and use a diff tool to identify exactly what changed. This is especially useful when ProcMon captures too many events to review manually.</p>
+    </div>
+
+    <h3>4.6 Automated Sandbox Platforms (Concept Introduction)</h3>
+    <p>Manual dynamic analysis with ProcMon, Process Explorer, and Wireshark gives you maximum control and understanding. But automated sandbox platforms can process samples faster and generate structured reports.</p>
+
+    <div class="table-wrap">
+      <table>
+        <caption>Automated Sandbox Platforms &mdash; Overview</caption>
+        <thead>
+          <tr><th>Platform</th><th>Type</th><th>Key Features</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Cuckoo Sandbox</strong></td>
+            <td>Open source, self-hosted</td>
+            <td>Automated execution, API call logging, network capture, behavioral scoring, report generation</td>
+          </tr>
+          <tr>
+            <td><strong>Any.Run</strong></td>
+            <td>Cloud-based (free tier)</td>
+            <td>Interactive execution (you can click and type), real-time process tree, network visualization</td>
+          </tr>
+          <tr>
+            <td><strong>Hybrid Analysis</strong></td>
+            <td>Cloud-based (free)</td>
+            <td>Automated static + dynamic analysis, VirusTotal integration, detailed reports</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout opsec-warning">
+      <div class="callout-title">&#128680; OPSEC Warning &mdash; Online Sandboxes</div>
+      <p><strong>Uploading samples to online sandboxes (Any.Run, Hybrid Analysis, VirusTotal) makes them publicly accessible.</strong> If the malware is from a targeted attack against your organization, uploading it tells the attacker that you have discovered their tool and are analyzing it. In sensitive investigations, use only local/self-hosted analysis environments (your own VM or Cuckoo). In this course, Lab&nbsp;12 uses a local VM environment &mdash; you will not upload samples to online services.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 5: Interpreting Results                              -->
+  <!-- ============================================================ -->
+  <section class="section" id="interpreting">
+    <h2>5. Interpreting Dynamic Analysis Results</h2>
+
+    <p>Raw ProcMon logs and Wireshark captures can contain tens of thousands of events. The skill is not in <em>collecting</em> data &mdash; it is in <em>interpreting</em> it. A structured behavioral profile helps you organize observations into a coherent narrative.</p>
+
+    <h3>5.1 Behavioral Profile Observation Template</h3>
+    <p>Use this template to document your dynamic analysis findings. You will use this same format in Lab&nbsp;12.</p>
+
+    <div class="profile-template">
+      <h3>&#128203; Behavioral Profile &mdash; Observation Template</h3>
+
+      <h4>Sample Information</h4>
+      <ul>
+        <li><strong>File name:</strong> <em>[original filename]</em></li>
+        <li><strong>SHA-256:</strong> <em>[hash]</em></li>
+        <li><strong>Execution time:</strong> <em>[timestamp]</em></li>
+        <li><strong>Analysis VM:</strong> <em>[OS version, tools running]</em></li>
+        <li><strong>Network config:</strong> <em>[host-only / INetSim / FakeNet-NG]</em></li>
+      </ul>
+
+      <h4>1. File System Activity</h4>
+      <ul>
+        <li>Files created: <em>[path, size, hash of each]</em></li>
+        <li>Files modified: <em>[path, what changed]</em></li>
+        <li>Files deleted: <em>[path &mdash; note: deletion may indicate anti-forensics]</em></li>
+      </ul>
+
+      <h4>2. Registry Activity</h4>
+      <ul>
+        <li>Keys created: <em>[full path, value name, value data]</em></li>
+        <li>Keys modified: <em>[full path, old value → new value]</em></li>
+        <li>Persistence mechanism: <em>[Run key / Service / Scheduled Task / other]</em></li>
+      </ul>
+
+      <h4>3. Process Activity</h4>
+      <ul>
+        <li>Child processes spawned: <em>[name, PID, command line]</em></li>
+        <li>Process injection detected: <em>[target process, method if identifiable]</em></li>
+        <li>Parent-child tree: <em>[draw or describe]</em></li>
+      </ul>
+
+      <h4>4. Network Activity</h4>
+      <ul>
+        <li>DNS queries: <em>[domain names resolved]</em></li>
+        <li>HTTP/HTTPS connections: <em>[URL, method, User-Agent]</em></li>
+        <li>Raw TCP/UDP connections: <em>[destination IP:port, protocol]</em></li>
+        <li>Beaconing pattern: <em>[interval, consistency]</em></li>
+        <li>Data sent: <em>[size, content summary if cleartext]</em></li>
+      </ul>
+
+      <h4>5. Hypothesis Confirmation</h4>
+      <ul>
+        <li>Confirmed: <em>[list hypotheses confirmed by dynamic analysis]</em></li>
+        <li>Refuted: <em>[list hypotheses not supported]</em></li>
+        <li>New findings: <em>[behaviors not predicted by static analysis]</em></li>
+      </ul>
+    </div>
+
+    <h3>5.2 Applying the Template &mdash; svchost_update.exe Results</h3>
+    <p>After executing <code>svchost_update.exe</code> in our isolated VM, here is what the monitoring tools revealed:</p>
+
+    <details>
+      <summary>File System Observations (ProcMon)</summary>
+      <div class="details-content">
+        <ul>
+          <li><strong>Created:</strong> <code>C:\Users\analyst\AppData\Local\Temp\payload.dll</code> (245,760&nbsp;bytes, SHA-256: <code>d4e5f6...</code>)</li>
+          <li><strong>Created:</strong> <code>C:\Users\analyst\AppData\Local\Temp\config.dat</code> (1,024&nbsp;bytes &mdash; likely encrypted configuration)</li>
+          <li><strong>Deleted:</strong> <code>svchost_update.exe</code> deleted itself after dropping <code>payload.dll</code> &mdash; <strong>self-deletion is an anti-forensics technique</strong></li>
+        </ul>
+        <p><strong>Hypothesis check:</strong> &#9989; Confirmed &mdash; static analysis predicted a file drop to <code>%TEMP%</code>. The additional <code>config.dat</code> was <em>not</em> predicted (new finding).</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Registry Observations (ProcMon)</summary>
+      <div class="details-content">
+        <ul>
+          <li><strong>Created:</strong> <code>HKCU\Software\Microsoft\Windows\CurrentVersion\Run\WinUpdate</code></li>
+          <li><strong>Value:</strong> <code>"rundll32.exe C:\Users\analyst\AppData\Local\Temp\payload.dll,ServiceMain"</code></li>
+        </ul>
+        <p><strong>Hypothesis check:</strong> &#9989; Confirmed &mdash; persistence via Run key exactly as predicted from the <code>RegSetValueEx</code> import and the Run key string.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Process Observations (Process Explorer + ProcMon)</summary>
+      <div class="details-content">
+        <ul>
+          <li><code>svchost_update.exe</code> (PID 4892) spawned <code>rundll32.exe</code> (PID 5104)</li>
+          <li><code>rundll32.exe</code> loaded <code>payload.dll</code> and called the <code>ServiceMain</code> export</li>
+          <li>After spawning <code>rundll32.exe</code>, the parent process (<code>svchost_update.exe</code>) terminated and deleted itself</li>
+        </ul>
+        <p><strong>Hypothesis check:</strong> &#9989; Confirmed &mdash; <code>CreateProcess</code> import predicted child process creation. The self-deletion was a <em>new finding</em>.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Network Observations (Wireshark + INetSim)</summary>
+      <div class="details-content">
+        <ul>
+          <li><strong>DNS query:</strong> <code>evil-update.example.com</code> &rarr; resolved by INetSim to its own IP</li>
+          <li><strong>HTTP GET:</strong> <code>http://198.51.100.42/beacon?id=DESKTOP-LAB01&amp;v=1.2</code></li>
+          <li><strong>Beaconing:</strong> HTTP GET repeated every 60&nbsp;seconds with consistent URL pattern</li>
+          <li><strong>HTTP POST:</strong> After 3rd beacon, a POST to <code>/exfil</code> with 4,096&nbsp;bytes of base64-encoded data</li>
+          <li><strong>User-Agent:</strong> <code>Mozilla/5.0 (compatible; MSIE 10.0)</code> &mdash; outdated, likely hardcoded</li>
+        </ul>
+        <p><strong>Hypothesis check:</strong> &#9989; Confirmed &mdash; network communication to 198.51.100.42 as predicted. The 60-second beaconing interval and the exfiltration POST were <em>new findings</em> not visible in static analysis.</p>
+      </div>
+    </details>
+
+    <h3>5.3 Correlating Dynamic with Static Findings</h3>
+    <div class="table-wrap">
+      <table>
+        <caption>Hypothesis Confirmation Summary &mdash; svchost_update.exe</caption>
+        <thead>
+          <tr><th>Static Hypothesis</th><th>Dynamic Result</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Outbound network connections</td><td>HTTP GET/POST to 198.51.100.42 every 60s</td><td>&#9989; Confirmed</td></tr>
+          <tr><td>C2 at <code>198.51.100.42/beacon</code></td><td>Exact URL contacted; also resolved <code>evil-update.example.com</code></td><td>&#9989; Confirmed + expanded</td></tr>
+          <tr><td>Registry Run key persistence</td><td><code>WinUpdate</code> value written to Run key</td><td>&#9989; Confirmed</td></tr>
+          <tr><td>File drop to <code>%TEMP%</code></td><td><code>payload.dll</code> + unexpected <code>config.dat</code></td><td>&#9989; Confirmed + expanded</td></tr>
+          <tr><td>Child process creation</td><td><code>rundll32.exe</code> spawned to load DLL</td><td>&#9989; Confirmed</td></tr>
+          <tr><td>High entropy = possible packing</td><td>Malware functioned normally; unpacking was transparent at runtime</td><td>&#9989; Confirmed (packed, auto-unpacked)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout key-concept">
+      <div class="callout-title">&#128273; Key Concept &mdash; New Findings Are Normal</div>
+      <p>Dynamic analysis almost always reveals behaviors that static analysis could not predict. The self-deletion, the <code>config.dat</code> file, the 60-second beacon interval, and the exfiltration POST were all invisible during static analysis. This is exactly why both phases are necessary &mdash; and why you should never skip one in favor of the other.</p>
+    </div>
+
+    <!-- Interactive Activity: Interpreting ProcMon Output -->
+    <div class="interactive-activity">
+      <h3>&#9997;&#65039; Scenario Exercise &mdash; Interpreting ProcMon Output</h3>
+      <p>A colleague sends you the following ProcMon events captured during execution of a different suspicious file, <code>update_helper.exe</code>:</p>
+<pre>
+<code>14:22:05  Process Create    update_helper.exe         PID: 3201
+14:22:05  CreateFile        C:\Windows\System32\drivers\netmon.sys    SUCCESS
+14:22:05  WriteFile         C:\Windows\System32\drivers\netmon.sys    SUCCESS (89,088 bytes)
+14:22:06  RegSetValue       HKLM\SYSTEM\CurrentControlSet\Services\NetMonitor    SUCCESS
+                            Type: REG_DWORD  ImagePath: "C:\Windows\System32\drivers\netmon.sys"
+                            Start: 0x01 (SERVICE_KERNEL_DRIVER, auto-start)
+14:22:06  RegSetValue       HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\NetMon    SUCCESS
+                            Data: "rundll32.exe netmon.sys,Init"
+14:22:07  TCP Connect       203.0.113.99:443    SUCCESS
+14:22:07  Process Create    cmd.exe /c del update_helper.exe    PID: 3340</code>
+</pre>
+
+      <details>
+        <summary>What type of malware is this, and what are the key behaviors?</summary>
+        <div class="details-content">
+          <p><strong>Analysis:</strong></p>
+          <ul>
+            <li><strong>Malware type:</strong> This appears to be a <strong>rootkit dropper</strong>. It drops a kernel-mode driver (<code>.sys</code> file) into the System32\drivers directory and registers it as a kernel driver service with auto-start &mdash; this will load at boot before most security tools.</li>
+            <li><strong>Persistence (dual):</strong> Both a kernel driver service (<code>HKLM\...\Services</code>) <em>and</em> a Run key &mdash; redundant persistence mechanisms.</li>
+            <li><strong>Network C2:</strong> Connects to 203.0.113.99 on port 443 (HTTPS) &mdash; encrypted C2 channel.</li>
+            <li><strong>Anti-forensics:</strong> Self-deletes via <code>cmd.exe /c del</code> after dropping the payload.</li>
+            <li><strong>Privilege level:</strong> Writing to <code>System32\drivers</code> and <code>HKLM</code> requires administrator privileges &mdash; this malware either exploited a vulnerability or was run with elevated credentials.</li>
+          </ul>
+          <p><strong>Connection to prior weeks:</strong> The service registration in <code>HKLM\SYSTEM\CurrentControlSet\Services</code> would appear as Windows Event ID 7045 (new service installed) &mdash; a key artifact from Week&nbsp;8. The network connection to 203.0.113.99:443 would be visible in both a memory dump (<code>netscan</code> in Volatility, Week&nbsp;11) and a PCAP (Wireshark, Week&nbsp;12).</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 6: IOC Extraction                                    -->
+  <!-- ============================================================ -->
+  <section class="section" id="ioc">
+    <h2>6. Indicators of Compromise (IOCs)</h2>
+
+    <h3>6.1 What Are IOCs?</h3>
+    <p><strong>Indicators of Compromise (IOCs)</strong> are observable artifacts &mdash; file hashes, IP addresses, domain names, registry keys, process names &mdash; that indicate a system has been compromised. They are the <em>actionable output</em> of malware analysis: once you have IOCs, you can search for them across every system in your environment to determine the scope of the compromise.</p>
+
+    <p>Think of IOCs as the malware&rsquo;s <strong>fingerprints</strong>. Just as a crime scene investigator lifts fingerprints to identify a suspect across multiple crime scenes, a digital forensic analyst extracts IOCs to identify the same malware across multiple systems.</p>
+
+    <div class="callout key-concept">
+      <div class="callout-title">&#128273; Key Concept &mdash; IOCs Bridge Analysis and Response</div>
+      <p>Malware analysis answers: <em>&ldquo;What does this file do?&rdquo;</em> IOCs answer: <em>&ldquo;Where else has this happened?&rdquo;</em> Without IOC extraction, your analysis helps only the single system you are examining. With IOCs, your analysis protects the entire organization.</p>
+    </div>
+
+    <h3>6.2 IOC Categories</h3>
+    <p>IOCs fall into three broad categories. The reference card below summarizes each with examples from our <code>svchost_update.exe</code> analysis.</p>
+
+    <div class="reference-card">
+      <h3>&#128196; IOC Categories Reference Card</h3>
+
+      <h4>Network IOCs</h4>
+      <p>Artifacts observable in network traffic (PCAPs, firewall logs, DNS logs, proxy logs).</p>
+      <ul>
+        <li><strong>IP addresses:</strong> C2 servers, exfiltration destinations (e.g., <code>198.51.100.42</code>)</li>
+        <li><strong>Domain names:</strong> C2 domains, staging servers (e.g., <code>evil-update.example.com</code>)</li>
+        <li><strong>URLs:</strong> Specific paths contacted (e.g., <code>/beacon?id=...&amp;v=1.2</code>)</li>
+        <li><strong>User-Agent strings:</strong> Hardcoded or unusual agents (e.g., <code>MSIE 10.0</code>)</li>
+        <li><strong>JA3/JA3S hashes:</strong> TLS client/server fingerprints (concept &mdash; unique hash of TLS handshake parameters that identifies specific malware families even over encrypted connections)</li>
+      </ul>
+
+      <h4>Host-Based IOCs</h4>
+      <p>Artifacts observable on the compromised system (disk, registry, memory, event logs).</p>
+      <ul>
+        <li><strong>File hashes:</strong> MD5, SHA-1, SHA-256 of malware and dropped files</li>
+        <li><strong>File names and paths:</strong> <code>payload.dll</code> in <code>%TEMP%</code>, <code>config.dat</code></li>
+        <li><strong>Registry keys/values:</strong> <code>HKCU\...\Run\WinUpdate</code></li>
+        <li><strong>Mutex names:</strong> Named mutexes malware creates to prevent multiple instances (e.g., <code>Global\XYZ123</code>)</li>
+        <li><strong>Scheduled tasks / service names:</strong> Persistence mechanisms</li>
+        <li><strong>Process names and command lines:</strong> <code>rundll32.exe payload.dll,ServiceMain</code></li>
+      </ul>
+
+      <h4>Email IOCs</h4>
+      <p>Artifacts from the delivery mechanism (email headers, attachments).</p>
+      <ul>
+        <li><strong>Sender addresses/domains:</strong> Phishing source</li>
+        <li><strong>Subject lines:</strong> Lure text patterns</li>
+        <li><strong>Attachment names and hashes:</strong> The initial delivery file</li>
+        <li><strong>Embedded URLs:</strong> Links in the email body</li>
+      </ul>
+      <p><em>Note: Email IOCs connect to Week&nbsp;16 (Email Forensics), where you will analyze email headers and phishing campaigns in depth.</em></p>
+    </div>
+
+    <h3>6.3 Structured IOC Documentation Format</h3>
+    <p>IOCs must be documented in a structured, consistent format so they can be shared with other analysts, fed into security tools, and referenced in reports. The table below shows the format you will use in Lab&nbsp;12.</p>
+
+    <div class="table-wrap">
+      <table>
+        <caption>IOC Documentation Table &mdash; svchost_update.exe (Complete)</caption>
+        <thead>
+          <tr>
+            <th>IOC Type</th>
+            <th>Value</th>
+            <th>Context</th>
+            <th>Source</th>
+            <th>Confidence</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>SHA-256</td>
+            <td><code>a1b2c3d4e5f6...</code></td>
+            <td>Initial dropper executable</td>
+            <td>Static analysis</td>
+            <td>High</td>
+          </tr>
+          <tr>
+            <td>SHA-256</td>
+            <td><code>d4e5f6a7b8c9...</code></td>
+            <td>Dropped DLL payload</td>
+            <td>Dynamic analysis</td>
+            <td>High</td>
+          </tr>
+          <tr>
+            <td>Domain</td>
+            <td><code>evil-update.example.com</code></td>
+            <td>C2 domain (DNS query)</td>
+            <td>Dynamic &mdash; Wireshark</td>
+            <td>High</td>
+          </tr>
+          <tr>
+            <td>IP Address</td>
+            <td><code>198.51.100.42</code></td>
+            <td>C2 server</td>
+            <td>Static (string) + Dynamic (connection)</td>
+            <td>High</td>
+          </tr>
+          <tr>
+            <td>URL</td>
+            <td><code>/beacon?id=*&amp;v=1.2</code></td>
+            <td>C2 beacon path pattern</td>
+            <td>Dynamic &mdash; Wireshark</td>
+            <td>High</td>
+          </tr>
+          <tr>
+            <td>User-Agent</td>
+            <td><code>Mozilla/5.0 (compatible; MSIE 10.0)</code></td>
+            <td>Hardcoded C2 User-Agent</td>
+            <td>Dynamic &mdash; Wireshark</td>
+            <td>Medium</td>
+          </tr>
+          <tr>
+            <td>File Path</td>
+            <td><code>%TEMP%\payload.dll</code></td>
+            <td>Dropped payload location</td>
+            <td>Dynamic &mdash; ProcMon</td>
+            <td>High</td>
+          </tr>
+          <tr>
+            <td>File Path</td>
+            <td><code>%TEMP%\config.dat</code></td>
+            <td>Encrypted configuration file</td>
+            <td>Dynamic &mdash; ProcMon</td>
+            <td>High</td>
+          </tr>
+          <tr>
+            <td>Registry Key</td>
+            <td><code>HKCU\...\Run\WinUpdate</code></td>
+            <td>Persistence mechanism</td>
+            <td>Dynamic &mdash; ProcMon</td>
+            <td>High</td>
+          </tr>
+          <tr>
+            <td>Process</td>
+            <td><code>rundll32.exe payload.dll,ServiceMain</code></td>
+            <td>Payload execution method</td>
+            <td>Dynamic &mdash; Process Explorer</td>
+            <td>High</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout forensic-note">
+      <div class="callout-title">&#128269; Forensic Tip &mdash; Confidence Levels</div>
+      <p><strong>High confidence:</strong> The IOC is unique to this malware and unlikely to cause false positives (e.g., file hash, specific C2 URL path). <strong>Medium confidence:</strong> The IOC may appear in legitimate contexts (e.g., a common User-Agent string, a shared hosting IP). <strong>Low confidence:</strong> The IOC is generic and will generate many false positives (e.g., &ldquo;connects to port 443&rdquo;). Always document confidence so analysts using your IOCs can prioritize their searches.</p>
+    </div>
+
+    <h3>6.4 YARA Rules &mdash; Concept Introduction</h3>
+    <p><strong>YARA</strong> is a pattern-matching tool used to identify and classify malware. Analysts write YARA rules that describe textual or binary patterns found in malware samples; the rules can then be used to scan file systems, memory dumps, or network traffic for matches.</p>
+
+    <p>You will not write YARA rules in this course, but you should understand their structure and purpose &mdash; they are a standard tool in the malware analyst&rsquo;s toolkit.</p>
+
+<pre>
+<code>rule svchost_update_trojan {
+    meta:
+        description = "Detects svchost_update.exe dropper"
+        author      = "CSC 156 Analyst"
+        date        = "2026-04-22"
+
+    strings:
+        $c2_url     = "http://198.51.100.42/beacon"
+        $mutex      = "Global\\XYZ123"
+        $reg_key    = "Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+        $ua_string  = "MSIE 10.0"
+
+    condition:
+        uint16(0) == 0x5A4D and   // MZ header (PE file)
+        3 of ($c2_url, $mutex, $reg_key, $ua_string)
+}</code>
+</pre>
+    <p class="code-caption">Example YARA rule &mdash; matches PE files containing at least 3 of the 4 defined strings</p>
+
+    <p><strong>How to read this rule:</strong></p>
+    <ul>
+      <li><strong><code>meta:</code></strong> Descriptive metadata (not used for matching)</li>
+      <li><strong><code>strings:</code></strong> Patterns to search for in the file</li>
+      <li><strong><code>condition:</code></strong> Logic that must be true for a match &mdash; here, the file must start with <code>MZ</code> (PE executable) and contain at least 3 of the 4 strings</li>
+    </ul>
+
+    <div class="callout key-concept">
+      <div class="callout-title">&#128273; Key Concept &mdash; YARA in Practice</div>
+      <p>YARA rules are the bridge between <em>one analyst&rsquo;s findings</em> and <em>automated detection at scale</em>. After you extract IOCs and identify unique strings, a YARA rule encodes that knowledge into a machine-readable format that can scan thousands of files in minutes. Think of it as turning your analysis notes into a search warrant that a computer can execute.</p>
+    </div>
+
+    <h3>6.5 STIX/TAXII &mdash; Concept Introduction</h3>
+    <p>While YARA rules help you <em>find</em> malware, <strong>STIX</strong> and <strong>TAXII</strong> help you <em>share</em> threat intelligence about it.</p>
+
+    <ul>
+      <li><strong>STIX (Structured Threat Information eXpression):</strong> A standardized language (JSON format) for describing cyber threat information &mdash; including IOCs, threat actors, attack patterns, and campaigns. Your IOC table could be expressed as a STIX bundle.</li>
+      <li><strong>TAXII (Trusted Automated eXchange of Intelligence Information):</strong> A transport protocol for sharing STIX data between organizations. Think of STIX as the <em>language</em> and TAXII as the <em>delivery truck</em>.</li>
+    </ul>
+
+    <div class="diagram-box">
+      <p style="font-weight:700; color:#1b2a4a; margin-bottom:0.5rem;">STIX/TAXII Conceptual Flow</p>
+<pre style="font-size:0.8rem; line-height:1.5;">
+┌──────────────────┐       ┌──────────────────┐       ┌──────────────────┐
+│   YOUR ANALYSIS  │       │   STIX BUNDLE    │       │  OTHER ORGS /    │
+│                  │       │                  │       │  SECURITY TOOLS  │
+│ IOC Table        │──────▶│ JSON document    │──────▶│                  │
+│ Behavioral       │ encode│ with IOCs,       │ share │ SIEM ingestion   │
+│ Profile          │       │ malware object,  │ via   │ Firewall rules   │
+│ YARA Rule        │       │ attack pattern   │ TAXII │ Endpoint scans   │
+└──────────────────┘       └──────────────────┘       └──────────────────┘
+</pre>
+    </div>
+
+    <p>You will not create STIX documents in this course, but understanding that these standards exist is important: they represent the professional ecosystem your IOC documentation feeds into.</p>
+
+    <h3>6.6 Using IOCs in the Broader Investigation</h3>
+    <p>IOCs are not an end in themselves &mdash; they are the starting point for enterprise-wide hunting. Here is how the IOCs from <code>svchost_update.exe</code> connect back to skills from prior weeks:</p>
+
+    <div class="table-wrap">
+      <table>
+        <caption>IOC Cross-Domain Correlation Map</caption>
+        <thead>
+          <tr><th>IOC</th><th>Where to Search</th><th>Prior Week Skill</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>C2 IP: <code>198.51.100.42</code></td>
+            <td>PCAPs, firewall logs, proxy logs</td>
+            <td>Week 12 &mdash; Wireshark filters, firewall log analysis</td>
+          </tr>
+          <tr>
+            <td>C2 IP: <code>198.51.100.42</code></td>
+            <td>Memory dumps (<code>netscan</code>)</td>
+            <td>Week 11 &mdash; Volatility netscan plugin</td>
+          </tr>
+          <tr>
+            <td>Registry: <code>Run\WinUpdate</code></td>
+            <td>Registry hives (NTUSER.DAT)</td>
+            <td>Week 7 &mdash; RegRipper, Registry Explorer</td>
+          </tr>
+          <tr>
+            <td>File: <code>payload.dll</code> hash</td>
+            <td>Forensic disk images</td>
+            <td>Week 5 &mdash; File system analysis, file carving</td>
+          </tr>
+          <tr>
+            <td>Service install event</td>
+            <td>Windows Event Logs (Event ID 7045)</td>
+            <td>Week 8 &mdash; Event Log analysis</td>
+          </tr>
+          <tr>
+            <td>Process: <code>rundll32.exe payload.dll</code></td>
+            <td>Memory dumps (<code>cmdline</code>)</td>
+            <td>Week 11 &mdash; Volatility cmdline plugin</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout connection">
+      <div class="callout-title">&#128279; The Big Picture</div>
+      <p>This table illustrates why digital forensics is not a collection of isolated skills &mdash; it is an integrated discipline. The C2 IP address you extracted from a malware sample in Week&nbsp;13 is the same IP address you would find in a Week&nbsp;12 PCAP, a Week&nbsp;11 memory dump, and a Week&nbsp;8 Windows Event Log. Each source corroborates the others, building a stronger case. In Lab&nbsp;12, you will practice making at least one of these cross-domain connections.</p>
+    </div>
+
+    <!-- Interactive Activity: IOC Table Fill -->
+    <div class="interactive-activity ioc-exercise" id="ioc-exercise">
+      <h3>&#9997;&#65039; Practice Exercise &mdash; Complete the IOC Table</h3>
+      <p>Based on the <code>update_helper.exe</code> scenario from Section&nbsp;5, fill in the missing cells in this IOC table. After completing your answers, expand the solution to check your work.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>IOC Type</th><th>Value</th><th>Context</th><th>Confidence</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>SHA-256</td>
+              <td><em>[hash of update_helper.exe]</em></td>
+              <td><input type="text" aria-label="Context for update_helper.exe hash" placeholder="What is this file?"></td>
+              <td>High</td>
+            </tr>
+            <tr>
+              <td><input type="text" aria-label="IOC type for netmon.sys" placeholder="IOC Type?"></td>
+              <td><code>C:\Windows\System32\drivers\netmon.sys</code></td>
+              <td>Dropped kernel driver</td>
+              <td>High</td>
+            </tr>
+            <tr>
+              <td>IP Address</td>
+              <td><input type="text" aria-label="C2 IP address" placeholder="IP address?"></td>
+              <td>C2 server (HTTPS)</td>
+              <td>High</td>
+            </tr>
+            <tr>
+              <td>Registry Key</td>
+              <td><code>HKLM\SYSTEM\CurrentControlSet\Services\NetMonitor</code></td>
+              <td><input type="text" aria-label="Context for registry service key" placeholder="What does this achieve?"></td>
+              <td>High</td>
+            </tr>
+            <tr>
+              <td><input type="text" aria-label="IOC type for Run key" placeholder="IOC Type?"></td>
+              <td><code>HKLM\...\Run\NetMon</code></td>
+              <td>Redundant persistence (user-mode)</td>
+              <td>High</td>
+            </tr>
+            <tr>
+              <td>Process</td>
+              <td><input type="text" aria-label="Command line for payload execution" placeholder="Command line?"></td>
+              <td>Payload execution method</td>
+              <td>High</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <details>
+        <summary>Reveal Solution</summary>
+        <div class="details-content">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>IOC Type</th><th>Value</th><th>Context</th><th>Confidence</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>SHA-256</td>
+                  <td><em>[hash of update_helper.exe]</em></td>
+                  <td><strong>Initial dropper executable</strong></td>
+                  <td>High</td>
+                </tr>
+                <tr>
+                  <td><strong>File Path</strong></td>
+                  <td><code>C:\Windows\System32\drivers\netmon.sys</code></td>
+                  <td>Dropped kernel driver</td>
+                  <td>High</td>
+                </tr>
+                <tr>
+                  <td>IP Address</td>
+                  <td><strong><code>203.0.113.99</code></strong></td>
+                  <td>C2 server (HTTPS)</td>
+                  <td>High</td>
+                </tr>
+                <tr>
+                  <td>Registry Key</td>
+                  <td><code>HKLM\...\Services\NetMonitor</code></td>
+                  <td><strong>Kernel driver persistence (auto-start service)</strong></td>
+                  <td>High</td>
+                </tr>
+                <tr>
+                  <td><strong>Registry Key</strong></td>
+                  <td><code>HKLM\...\Run\NetMon</code></td>
+                  <td>Redundant persistence (user-mode)</td>
+                  <td>High</td>
+                </tr>
+                <tr>
+                  <td>Process</td>
+                  <td><strong><code>rundll32.exe netmon.sys,Init</code></strong></td>
+                  <td>Payload execution method</td>
+                  <td>High</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p><strong>Key learning:</strong> Every observable artifact from dynamic analysis can become an IOC. The structured table format ensures nothing is missed and every IOC includes context (what it means) and confidence (how reliable it is for detection). This is the exact format you will use in Lab&nbsp;12.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 7: Knowledge Check                                   -->
+  <!-- ============================================================ -->
+  <section class="knowledge-check section" id="knowledge-check">
+    <h2>&#9989; Knowledge Check &mdash; Module 13.3 (Ungraded)</h2>
+    <p>Test your understanding of dynamic analysis and IOC extraction. Select your answer and click <strong>Check Answer</strong> for immediate feedback.</p>
+
+    <!-- Question 1 -->
+    <div class="kc-question" id="kc-q1">
+      <p class="q-stem">1. You are about to execute a suspicious PE file in your analysis VM. Your ProcMon is running, Wireshark is capturing, and you have taken a snapshot. However, you realize the VM is configured with NAT networking (connected to the real internet through the host). What should you do?</p>
+      <ul class="kc-options">
+        <li><label><input type="radio" name="q1" value="a"> Proceed with execution &mdash; Wireshark will capture everything you need regardless of network configuration.</label></li>
+        <li><label><input type="radio" name="q1" value="b"> Stop. Switch the VM to host-only networking or enable a network simulation tool (INetSim/FakeNet-NG) before executing the sample.</label></li>
+        <li><label><input type="radio" name="q1" value="c"> Disconnect the host machine from the internet, then proceed with NAT networking.</label></li>
+        <li><label><input type="radio" name="q1" value="d"> Proceed, but monitor the host&rsquo;s firewall logs to ensure nothing malicious leaves the network.</label></li>
+      </ul>
+      <button class="btn-check" onclick="checkAnswer('q1','b')" aria-label="Check answer for question 1">Check Answer</button>
+      <div class="kc-feedback correct" id="kc-q1-correct">
+        <strong>&#9989; Correct.</strong> NAT networking routes the VM&rsquo;s traffic through your host to the real internet. This means the malware could contact its actual C2 server, download additional payloads, attack other systems, or alert the attacker that analysis is underway. Always switch to <strong>host-only networking</strong> with a network simulator (INetSim or FakeNet-NG) before detonation. The simulator will capture the malware&rsquo;s network requests without any traffic leaving your lab.
+      </div>
+      <div class="kc-feedback incorrect" id="kc-q1-incorrect">
+        <strong>&#10060; Not quite.</strong> The correct answer is <strong>B</strong>. NAT networking gives the malware a path to the real internet, which creates serious risks: the malware could attack other systems (making you liable), download unpredictable payloads, or notify the attacker. Simply disconnecting the host or monitoring the firewall is insufficient &mdash; you need <strong>host-only networking</strong> with a network simulation tool to safely trigger and capture the malware&rsquo;s network behavior.
+      </div>
+    </div>
+
+    <!-- Question 2 -->
+    <div class="kc-question" id="kc-q2">
+      <p class="q-stem">2. During dynamic analysis of a trojan, ProcMon shows the following event:<br>
+      <code>RegSetValue &nbsp; HKCU\Software\Microsoft\Windows\CurrentVersion\Run\SysHelper &nbsp; Data: "C:\Users\victim\AppData\Roaming\helper.exe"</code><br>
+      What does this event indicate, and which prior-week skill would you use to find this artifact on another compromised system?</p>
+      <ul class="kc-options">
+        <li><label><input type="radio" name="q2" value="a"> The malware is reading existing Run key values to discover what software is installed. Use Wireshark (Week 12) to find this on other systems.</label></li>
+        <li><label><input type="radio" name="q2" value="b"> The malware is establishing persistence by adding itself to the Run key so it executes at every user login. Use Registry analysis with RegRipper (Week 7) to find this on other systems.</label></li>
+        <li><label><input type="radio" name="q2" value="c"> The malware is deleting a registry value to disable a security tool. Use Volatility malfind (Week 11) to detect this.</label></li>
+        <li><label><input type="radio" name="q2" value="d"> The malware is creating a Windows service for kernel-level persistence. Use Event Log analysis for Event ID 7045 (Week 8) to find this.</label></li>
+      </ul>
+      <button class="btn-check" onclick="checkAnswer('q2','b')" aria-label="Check answer for question 2">Check Answer</button>
+      <div class="kc-feedback correct" id="kc-q2-correct">
+        <strong>&#9989; Correct.</strong> <code>RegSetValue</code> on a <code>CurrentVersion\Run</code> key is a classic <strong>persistence mechanism</strong> &mdash; the value ensures <code>helper.exe</code> launches every time the user logs in. To find this on other systems, you would examine the <code>NTUSER.DAT</code> registry hive using <strong>RegRipper</strong> or Registry Explorer, exactly as you learned in Week&nbsp;7. This is a perfect example of how dynamic analysis (Week&nbsp;13) and OS forensics (Week&nbsp;7) connect: you see the malware <em>create</em> the artifact in real time, then use Week&nbsp;7 skills to <em>find</em> it on other machines.
+      </div>
+      <div class="kc-feedback incorrect" id="kc-q2-incorrect">
+        <strong>&#10060; Not quite.</strong> The correct answer is <strong>B</strong>. <code>RegSetValue</code> is a <em>write</em> operation, not a read or delete. The <code>CurrentVersion\Run</code> key is a well-known <strong>persistence location</strong> &mdash; any value placed here causes the referenced program to execute at user login. This is not a service installation (that would be under <code>HKLM\SYSTEM\CurrentControlSet\Services</code> and generate Event ID 7045). To hunt for this IOC on other systems, you would use <strong>RegRipper</strong> (Week&nbsp;7) to examine the <code>NTUSER.DAT</code> hive for the <code>SysHelper</code> value.
+      </div>
+    </div>
+
+    <!-- Question 3 -->
+    <div class="kc-question" id="kc-q3">
+      <p class="q-stem">3. After completing your analysis of a malware sample, you extract the following IOCs. For each row, identify whether the confidence level should be <strong>High</strong>, <strong>Medium</strong>, or <strong>Low</strong>, and briefly explain why.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>IOC Type</th><th>Value</th><th>Your Confidence Rating</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>SHA-256</td><td><code>a1b2c3d4...</code> (hash of the malware binary)</td><td><em>_____</em></td></tr>
+            <tr><td>IP Address</td><td><code>8.8.8.8</code> (Google DNS, queried during execution)</td><td><em>_____</em></td></tr>
+            <tr><td>URL Path</td><td><code>/gate.php?bot_id=DESKTOP-LAB01&amp;cmd=get</code></td><td><em>_____</em></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <button class="btn-check" onclick="showFeedback('q3')" aria-label="Check answer for question 3">Reveal Explanation</button>
+      <div class="kc-feedback info" id="kc-q3-info" style="display:none;">
+        <strong>&#128161; Explanation:</strong>
+        <ul style="margin-top:0.5rem;">
+          <li><strong>SHA-256 of the malware binary &rarr; High confidence.</strong> A cryptographic hash is unique to that exact file. Searching for this hash will match only this specific malware sample (or an identical copy). Virtually zero false positives.</li>
+          <li><strong>IP <code>8.8.8.8</code> &rarr; Low confidence (likely not a useful IOC).</strong> 8.8.8.8 is Google&rsquo;s public DNS server. Millions of legitimate systems query it every second. Using this as an IOC would generate overwhelming false positives. The malware likely used it for a connectivity check, not as a C2 server. Document it in your notes but do <em>not</em> include it in your IOC list for enterprise hunting.</li>
+          <li><strong>URL path <code>/gate.php?bot_id=...&amp;cmd=get</code> &rarr; High confidence.</strong> This URL path structure is highly specific to this malware&rsquo;s C2 protocol. The parameter names (<code>bot_id</code>, <code>cmd</code>) and the filename (<code>gate.php</code>) are characteristic of botnet C2 panels. Searching proxy or web logs for this pattern is very likely to identify other infected systems with minimal false positives.</li>
+        </ul>
+        <p style="margin-top:0.6rem;"><strong>Key takeaway:</strong> Not every artifact observed during dynamic analysis is a useful IOC. The best IOCs are <em>specific to the threat</em> and <em>unlikely to match legitimate activity</em>. Always evaluate confidence before including an artifact in your IOC documentation.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- Looking Ahead                                                -->
+  <!-- ============================================================ -->
+  <section class="section">
+    <h2>Looking Ahead</h2>
+    <div class="callout key-concept">
+      <div class="callout-title">&#128640; What Comes Next</div>
+      <p><strong>Module 13.4</strong> covers <strong>anti-analysis techniques and cross-domain integration</strong> &mdash; how malware authors try to prevent the kind of analysis you just learned, and how you connect your malware findings to the full scope of a forensic investigation.</p>
+      <p style="margin-top:0.5rem;"><strong>Lab 12</strong> puts everything from Modules 13.1&ndash;13.4 into practice. You will perform static analysis, execute a sample in a sandbox, document your behavioral observations using the profile template from this module, and extract IOCs using the structured table format introduced in Section&nbsp;6.3. The hypothesis framework from Section&nbsp;2 and the IOC documentation format from Section&nbsp;6.3 are the two structures you will use most directly in the lab.</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="module-footer">
+    <p>CSC 156 &ndash; Digital Forensics Fundamentals &bull; Week 13, Module 13.3<br>
+    Mendocino College &bull; Computer Science Department<br>
+    &copy; 2026. Content developed for educational use.</p>
+  </footer>
+
+</main>
+
+<!-- ===== JavaScript ===== -->
+<script>
+function checkAnswer(qId, correctVal) {
+  var radios = document.getElementsByName(qId);
+  var selected = null;
+  for (var i = 0; i < radios.length; i++) {
+    if (radios[i].checked) { selected = radios[i].value; break; }
+  }
+  if (!selected) { alert("Please select an answer before checking."); return; }
+  var correctEl = document.getElementById("kc-" + qId + "-correct");
+  var incorrectEl = document.getElementById("kc-" + qId + "-incorrect");
+  if (selected === correctVal) {
+    correctEl.style.display = "block";
+    incorrectEl.style.display = "none";
+  } else {
+    correctEl.style.display = "none";
+    incorrectEl.style.display = "block";
+  }
+}
+function showFeedback(qId) {
+  var el = document.getElementById("kc-" + qId + "-info");
+  if (el) { el.style.display = (el.style.display === "none" || el.style.display === "") ? "block" : "none"; }
+}
+</script>
+
+</body>
+</html>

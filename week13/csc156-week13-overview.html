@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 13 Overview – Malware Forensics | CSC 156</title>
+<style>
+/* ============================================================
+   CSS RESET & BASE
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  line-height:1.6;color:#1a1a2e;background:#f5f5fa}
+
+/* ============================================================
+   LAYOUT CONTAINER
+   ============================================================ */
+.page-wrap{max-width:960px;margin:0 auto;padding:1.25rem 1rem 3rem}
+
+/* ============================================================
+   OVERVIEW BANNER
+   ============================================================ */
+.overview-banner{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);
+  color:#fff;border-radius:12px;padding:2.25rem 2rem 1.75rem;margin-bottom:2rem}
+.overview-banner .course-tag{font-size:.85rem;letter-spacing:.04em;opacity:.85;margin-bottom:.25rem}
+.overview-banner h1{font-size:1.75rem;font-weight:700;line-height:1.25;margin-bottom:.5rem}
+.overview-banner .week-subtitle{font-size:1.05rem;font-weight:400;opacity:.9;margin-bottom:1rem}
+.overview-banner .points-badge{display:inline-block;background:rgba(255,255,255,.15);
+  border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:.3rem .75rem;font-size:.85rem}
+
+/* ============================================================
+   SECTION CARDS
+   ============================================================ */
+.section-card{background:#fff;border:1px solid #dde;border-radius:10px;
+  padding:1.5rem 1.75rem;margin-bottom:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.section-card h2{font-size:1.2rem;color:#0f3460;margin-bottom:.85rem;border-bottom:2px solid #e8e8f0;padding-bottom:.45rem}
+
+/* ============================================================
+   WELCOME PARAGRAPH
+   ============================================================ */
+.welcome p{font-size:1.02rem;margin-bottom:.75rem}
+.welcome .highlight{background:#eef4ff;border-left:4px solid #0f3460;padding:.75rem 1rem;
+  border-radius:0 6px 6px 0;margin-top:.5rem;font-size:.97rem}
+
+/* ============================================================
+   GOAL LIST (styled as prose-friendly blocks, not numbered)
+   ============================================================ */
+.goal-list{list-style:none;padding:0}
+.goal-list li{position:relative;padding:.55rem 0 .55rem 1.75rem;font-size:.97rem}
+.goal-list li::before{content:"🎯";position:absolute;left:0;top:.55rem;font-size:.95rem}
+
+/* ============================================================
+   ACTIVITY TABLE
+   ============================================================ */
+.activity-table{width:100%;border-collapse:collapse;margin-top:.5rem;font-size:.95rem}
+.activity-table th,.activity-table td{text-align:left;padding:.6rem .75rem;border-bottom:1px solid #e8e8f0}
+.activity-table thead th{background:#f0f2f8;font-weight:600;color:#1a1a2e}
+.activity-table tbody tr:last-child td{border-bottom:none}
+.activity-table .pts{text-align:center;font-weight:600}
+
+/* ============================================================
+   TAG PILLS
+   ============================================================ */
+.pill{display:inline-block;border-radius:4px;padding:.15rem .55rem;font-size:.78rem;font-weight:600;margin-right:.35rem}
+.pill-tool{background:#e0f2fe;color:#0369a1}
+.pill-concept{background:#fef3c7;color:#92400e}
+
+/* ============================================================
+   CONCEPT / TOOL GRID
+   ============================================================ */
+.tag-grid{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.5rem}
+
+/* ============================================================
+   CONNECTION CALLOUT
+   ============================================================ */
+.connection-box{background:#f8f9fc;border:1px solid #d4d8e8;border-radius:8px;padding:1.1rem 1.25rem;margin-top:.65rem}
+.connection-box h3{font-size:1rem;color:#0f3460;margin-bottom:.5rem}
+.connection-box ul{margin-left:1.25rem;font-size:.95rem}
+.connection-box ul li{margin-bottom:.35rem}
+
+/* ============================================================
+   LOOKING AHEAD
+   ============================================================ */
+.ahead-box{background:linear-gradient(135deg,#f0f4ff 0%,#faf5ff 100%);
+  border:1px solid #d4d8e8;border-radius:8px;padding:1.1rem 1.25rem;margin-top:.65rem}
+.ahead-box h3{font-size:1rem;color:#4c1d95;margin-bottom:.5rem}
+.ahead-box ul{margin-left:1.25rem;font-size:.95rem}
+.ahead-box ul li{margin-bottom:.35rem}
+
+/* ============================================================
+   COLLAPSIBLE "WHY THIS WEEK MATTERS"
+   ============================================================ */
+.collapsible-wrap{margin-top:.75rem}
+.collapsible-toggle{background:#0f3460;color:#fff;border:none;border-radius:6px;
+  padding:.6rem 1.15rem;font-size:.95rem;font-weight:600;cursor:pointer;width:100%;text-align:left;
+  display:flex;justify-content:space-between;align-items:center}
+.collapsible-toggle:hover,.collapsible-toggle:focus{background:#16213e;outline:2px solid #5b9bd5;outline-offset:2px}
+.collapsible-toggle .arrow{transition:transform .25s ease;font-size:1.1rem}
+.collapsible-toggle[aria-expanded="true"] .arrow{transform:rotate(180deg)}
+.collapsible-body{max-height:0;overflow:hidden;transition:max-height .35s ease;
+  background:#f8f9fc;border:1px solid #d4d8e8;border-top:none;border-radius:0 0 8px 8px;padding:0 1.25rem}
+.collapsible-body.open{max-height:600px;padding:1rem 1.25rem}
+.collapsible-body p{font-size:.95rem;margin-bottom:.6rem}
+
+/* ============================================================
+   CHECKLIST
+   ============================================================ */
+.checklist{list-style:none;padding:0;margin-top:.5rem}
+.checklist li{display:flex;align-items:flex-start;gap:.6rem;padding:.4rem 0;font-size:.95rem}
+.checklist input[type="checkbox"]{margin-top:.25rem;width:1.1em;height:1.1em;accent-color:#0f3460;flex-shrink:0}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.page-footer{text-align:center;font-size:.8rem;color:#777;margin-top:2rem;padding-top:1rem;border-top:1px solid #e8e8f0}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media(max-width:600px){
+  .overview-banner{padding:1.5rem 1.15rem 1.25rem}
+  .overview-banner h1{font-size:1.35rem}
+  .section-card{padding:1.15rem 1rem}
+}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- ============================================================
+       OVERVIEW BANNER
+       ============================================================ -->
+  <header class="overview-banner">
+    <div class="course-tag">CSC 156 – Digital Forensics Fundamentals</div>
+    <h1>Week 13: Malware Forensics</h1>
+    <p class="week-subtitle">From examining artifacts left behind &mdash; to examining the malicious tool itself.</p>
+    <span class="points-badge">30 Points This Week &nbsp;|&nbsp; Lab 12</span>
+  </header>
+
+  <!-- ============================================================
+       WELCOME
+       ============================================================ -->
+  <section class="section-card welcome" aria-label="Welcome">
+    <h2>Welcome to Week 13</h2>
+    <p>For the past several weeks you have been reconstructing <em>what happened</em> on a system &mdash; parsing registry hives, reading event logs, recovering deleted files, analyzing memory dumps, and tracing network traffic. This week the analytical lens shifts: instead of studying the traces an attacker left behind, you will study <strong>the weapon itself</strong>.</p>
+    <p>Malware forensics asks a different set of questions. <em>What does this executable do? How does it persist? What network infrastructure does it contact? How can we detect it on every other machine in the enterprise?</em> Answering those questions requires a blend of the skills you have already built &mdash; and a new, disciplined methodology for safely examining hostile code.</p>
+    <div class="highlight" role="note">
+      <strong>Key shift:</strong> Weeks 7–12 focused on artifacts produced by activity. Week 13 focuses on analyzing the artifact that <em>is</em> the threat &mdash; the malware sample itself.
+    </div>
+  </section>
+
+  <!-- ============================================================
+       LEARNING GOALS
+       ============================================================ -->
+  <section class="section-card" aria-label="Learning goals">
+    <h2>What You Will Be Able to Do</h2>
+    <p>By the end of this week you should be comfortable with the following:</p>
+    <ul class="goal-list">
+      <li>Classify a piece of malware by type and behavior &mdash; virus, worm, trojan, ransomware, RAT, rootkit, or fileless &mdash; and explain what each type means for your investigation.</li>
+      <li>Perform static analysis on a suspicious file: extract strings, examine PE headers, review import tables, and look up file hashes for known threats.</li>
+      <li>Set up an isolated sandbox environment and conduct dynamic analysis, observing what the malware actually does when it runs &mdash; file changes, registry writes, process creation, and network calls.</li>
+      <li>Extract and document Indicators of Compromise (IOCs) in a structured format that could be shared with an incident-response team.</li>
+      <li>Recognize common anti-analysis techniques &mdash; packers, obfuscation, anti-VM checks, and anti-debugging &mdash; and understand how analysts detect and work around them.</li>
+      <li>Connect your malware findings back to evidence from earlier forensic domains: memory dumps, packet captures, Windows and Linux system artifacts.</li>
+    </ul>
+  </section>
+
+  <!-- ============================================================
+       REQUIRED ACTIVITIES
+       ============================================================ -->
+  <section class="section-card" aria-label="Required activities">
+    <h2>Required Activities</h2>
+    <p>Complete the following modules and lab in order. Each module builds on the one before it.</p>
+    <table class="activity-table" role="table">
+      <thead>
+        <tr><th scope="col">Activity</th><th scope="col">Description</th><th scope="col" class="pts">Points</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Module 13.1</td><td>Malware types, the analysis workflow, and safe lab setup</td><td class="pts">&mdash;</td></tr>
+        <tr><td>Module 13.2</td><td>Static analysis &mdash; strings, PE headers, imports, and hash lookups</td><td class="pts">&mdash;</td></tr>
+        <tr><td>Module 13.3</td><td>Dynamic analysis &mdash; sandbox execution and behavioral monitoring</td><td class="pts">&mdash;</td></tr>
+        <tr><td>Module 13.4</td><td>IOCs, anti-analysis techniques, and cross-domain correlation</td><td class="pts">&mdash;</td></tr>
+        <tr style="background:#f0f4ff;font-weight:600"><td>Lab 12</td><td>Static and Dynamic Malware Analysis (hands-on investigation)</td><td class="pts">30</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:.88rem;color:#555;margin-top:.5rem;">Lab 12 is the sole graded activity this week. There are no discussion posts or quizzes for Week 13.</p>
+  </section>
+
+  <!-- ============================================================
+       KEY CONCEPTS & TOOLS
+       ============================================================ -->
+  <section class="section-card" aria-label="Key concepts and tools">
+    <h2>Key Concepts and Tools This Week</h2>
+    <p><strong>Concepts you will work with:</strong></p>
+    <div class="tag-grid" style="margin-bottom:.75rem">
+      <span class="pill pill-concept">Static Analysis</span>
+      <span class="pill pill-concept">Dynamic Analysis</span>
+      <span class="pill pill-concept">PE Headers</span>
+      <span class="pill pill-concept">Import / Export Tables</span>
+      <span class="pill pill-concept">Indicators of Compromise (IOCs)</span>
+      <span class="pill pill-concept">Sandboxing</span>
+      <span class="pill pill-concept">Packers &amp; Obfuscation</span>
+      <span class="pill pill-concept">Anti-VM / Anti-Debug</span>
+      <span class="pill pill-concept">Malware Classification</span>
+      <span class="pill pill-concept">YARA Rules (intro)</span>
+      <span class="pill pill-concept">STIX / TAXII (intro)</span>
+    </div>
+    <p><strong>Tools you will encounter:</strong></p>
+    <div class="tag-grid">
+      <span class="pill pill-tool">pestudio</span>
+      <span class="pill pill-tool">strings / FLOSS</span>
+      <span class="pill pill-tool">ProcMon</span>
+      <span class="pill pill-tool">Wireshark (in sandbox)</span>
+      <span class="pill pill-tool">INetSim / FakeNet-NG</span>
+      <span class="pill pill-tool">Cuckoo Sandbox</span>
+      <span class="pill pill-tool">VirusTotal</span>
+      <span class="pill pill-tool">pefile (Python)</span>
+      <span class="pill pill-tool">ssdeep</span>
+      <span class="pill pill-tool">readelf / objdump</span>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       CONNECTIONS TO PRIOR WEEKS
+       ============================================================ -->
+  <section class="section-card" aria-label="Connections to prior weeks">
+    <h2>Building on What You Already Know</h2>
+    <p>Week 13 does not start from scratch. You already have a strong foundation &mdash; this week applies it in a new context.</p>
+
+    <div class="connection-box">
+      <h3>Week 11 &ndash; Memory Forensics</h3>
+      <ul>
+        <li>You used Volatility&rsquo;s <em>malfind</em> plugin to detect injected code and suspicious processes in RAM. This week you take the next step: once a suspicious file is identified, how do you analyze it?</li>
+        <li>Volatility&rsquo;s <em>netscan</em> and <em>cmdline</em> output will help you correlate memory-resident artifacts with the malware sample&rsquo;s behavior.</li>
+      </ul>
+    </div>
+
+    <div class="connection-box">
+      <h3>Week 12 &ndash; Network Forensics</h3>
+      <ul>
+        <li>You identified C2 beaconing, data exfiltration patterns, and suspicious DNS queries in PCAPs. This week you connect those network indicators to the malware that generated them.</li>
+        <li>The same Wireshark skills from Module 12.2 apply directly when you monitor sandbox network traffic during dynamic analysis.</li>
+      </ul>
+    </div>
+
+    <div class="connection-box">
+      <h3>Weeks 7–9 &ndash; Windows &amp; Linux Forensics</h3>
+      <ul>
+        <li>Registry Run keys, scheduled tasks, cron jobs, systemd units, SUID binaries &mdash; you already know these as persistence artifacts. Now you will watch malware <em>create</em> them in real time during dynamic analysis.</li>
+        <li>PE header analysis builds on the file-header and magic-byte concepts from Week 5, and hash verification reuses the integrity skills from Week 6.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       LOOKING AHEAD
+       ============================================================ -->
+  <section class="section-card" aria-label="Looking ahead">
+    <h2>Looking Ahead</h2>
+    <div class="ahead-box">
+      <h3>Where Week 13 Skills Lead</h3>
+      <ul>
+        <li><strong>Week 14 &ndash; Mobile Forensics:</strong> Mobile malware shares many characteristics with desktop malware but operates in sandboxed mobile environments. The static and dynamic analysis methodology you learn this week transfers directly.</li>
+        <li><strong>Week 16 &ndash; Anti-Forensics:</strong> The anti-analysis techniques you encounter this week (packers, obfuscation, VM detection) are part of the broader anti-forensics landscape explored in Week 16.</li>
+        <li><strong>Week 17 &ndash; Final Project:</strong> If you choose a malware-focused investigation scenario, your Week 13 skills will drive the technical-findings section of your report. Even if you choose a different scenario, IOC documentation practices will strengthen your report writing.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       COLLAPSIBLE: WHY THIS WEEK MATTERS
+       ============================================================ -->
+  <section class="section-card" aria-label="Why this week matters">
+    <h2>Going Deeper</h2>
+    <div class="collapsible-wrap">
+      <button class="collapsible-toggle" id="whyToggle" aria-expanded="false" aria-controls="whyBody">
+        <span>Why This Week Matters for Your Career</span>
+        <span class="arrow" aria-hidden="true">&#9660;</span>
+      </button>
+      <div class="collapsible-body" id="whyBody" role="region" aria-labelledby="whyToggle">
+        <p>Malware is involved in the vast majority of security incidents that lead to forensic investigations. Ransomware, remote-access trojans, and info-stealers are not abstract threats &mdash; they are the artifacts you will encounter on compromised hard drives, in memory dumps, and in packet captures throughout your career.</p>
+        <p>Organizations need analysts who can go beyond running an antivirus scan. They need people who can determine <em>what</em> a piece of malware does, <em>how</em> it persists, <em>what data</em> it accessed, and <em>how</em> to detect it on every other endpoint. That is exactly the skill set you are building this week.</p>
+        <p>This week&rsquo;s methodology &mdash; triage, static analysis, dynamic analysis, IOC extraction &mdash; is the same workflow used by analysts at incident-response firms, government agencies, and corporate security teams worldwide. It also directly supports the EC-Council CHFI and GIAC GCFA certification objectives covered in this course.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       ORIENTATION CHECKLIST
+       ============================================================ -->
+  <section class="section-card" aria-label="Weekly checklist">
+    <h2>Week 13 Orientation Checklist</h2>
+    <p>Use this checklist to track your progress through the week. (Checkboxes are for your own use and are not saved or graded.)</p>
+    <ul class="checklist">
+      <li><input type="checkbox" id="ck1" aria-label="Read this overview page"><label for="ck1">Read this Week 13 Overview page</label></li>
+      <li><input type="checkbox" id="ck2" aria-label="Complete Module 13.1"><label for="ck2">Complete Module 13.1 &ndash; Malware types, workflow, and lab safety</label></li>
+      <li><input type="checkbox" id="ck3" aria-label="Complete Module 13.2"><label for="ck3">Complete Module 13.2 &ndash; Static analysis techniques</label></li>
+      <li><input type="checkbox" id="ck4" aria-label="Complete Module 13.3"><label for="ck4">Complete Module 13.3 &ndash; Dynamic analysis in a sandbox</label></li>
+      <li><input type="checkbox" id="ck5" aria-label="Complete Module 13.4"><label for="ck5">Complete Module 13.4 &ndash; IOCs, anti-analysis, and cross-domain correlation</label></li>
+      <li><input type="checkbox" id="ck6" aria-label="Complete Lab 12"><label for="ck6">Complete and submit Lab 12 &ndash; Static and Dynamic Malware Analysis (30 pts)</label></li>
+    </ul>
+  </section>
+
+  <!-- ============================================================
+       FOOTER
+       ============================================================ -->
+  <footer class="page-footer">
+    CSC 156 &ndash; Digital Forensics Fundamentals &nbsp;|&nbsp; Mendocino College &nbsp;|&nbsp; Computer Science Department
+  </footer>
+
+</div><!-- /.page-wrap -->
+
+<!-- ============================================================
+     JAVASCRIPT – Collapsible toggle (keyboard accessible)
+     ============================================================ -->
+<script>
+(function(){
+  var btn = document.getElementById('whyToggle');
+  var body = document.getElementById('whyBody');
+  if(!btn || !body) return;
+  btn.addEventListener('click', function(){
+    var expanded = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', String(!expanded));
+    if(!expanded){
+      body.classList.add('open');
+    } else {
+      body.classList.remove('open');
+    }
+  });
+  btn.addEventListener('keydown', function(e){
+    if(e.key === 'Enter' || e.key === ' '){
+      e.preventDefault();
+      btn.click();
+    }
+  });
+})();
+</script>
+</body>
+</html>

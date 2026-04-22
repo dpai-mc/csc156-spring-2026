@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 13.1 – Malware Forensics Orientation: Types, Workflow, and Safe Analysis Practices</title>
+<style>
+/* ============================================================
+   CSC 156 – WEEK 13 TEMPLATE ANCHOR
+   Module 13.1 – Malware Forensics Orientation
+   Color Palette, Typography, Layout, Component Library
+   All Week 13 modules (13.2–13.4) inherit this stylesheet.
+   ============================================================ */
+
+/* --- CSS Reset & Base --- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+
+body {
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+  color: #1e1e1e;
+  background: #f5f6fa;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 16px 64px;
+}
+
+/* --- Color Tokens --- */
+:root {
+  --c-primary: #6a1b9a;
+  --c-primary-light: #f3e5f5;
+  --c-primary-dark: #4a148c;
+  --c-accent: #00897b;
+  --c-accent-light: #e0f2f1;
+  --c-danger: #c62828;
+  --c-danger-light: #ffebee;
+  --c-danger-border: #e53935;
+  --c-warning: #e65100;
+  --c-warning-light: #fff3e0;
+  --c-warning-border: #ef6c00;
+  --c-info: #1565c0;
+  --c-info-light: #e3f2fd;
+  --c-info-border: #1e88e5;
+  --c-success: #2e7d32;
+  --c-success-light: #e8f5e9;
+  --c-surface: #ffffff;
+  --c-muted: #546e7a;
+  --c-border: #cfd8dc;
+  --c-bg: #f5f6fa;
+  --radius: 8px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.1);
+  --shadow-md: 0 2px 8px rgba(0,0,0,.12);
+}
+
+/* --- Typography --- */
+h1, h2, h3, h4 { font-weight: 700; color: var(--c-primary-dark); }
+h1 { font-size: 1.75rem; line-height: 1.25; margin-bottom: .35em; }
+h2 { font-size: 1.4rem; margin: 2rem 0 .75rem; padding-bottom: .35em; border-bottom: 3px solid var(--c-primary); }
+h3 { font-size: 1.15rem; margin: 1.4rem 0 .5rem; color: var(--c-primary); }
+h4 { font-size: 1.02rem; margin: 1rem 0 .4rem; }
+p, li { margin-bottom: .55em; }
+ul, ol { padding-left: 1.5em; }
+a { color: var(--c-primary); text-decoration: underline; }
+a:focus-visible { outline: 3px solid var(--c-accent); outline-offset: 2px; border-radius: 2px; }
+strong { color: #1e1e1e; }
+code { font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: .92em; background: #eceff1; color: #263238; padding: 1px 5px; border-radius: 3px; }
+.scenario code { background: rgba(0,0,0,.28); color: #fff; }
+
+/* --- Navigation Bar --- */
+.nav-bar {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--c-primary-dark);
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 6px 12px;
+  display: flex; flex-wrap: wrap; gap: 4px 6px;
+  box-shadow: var(--shadow-md);
+}
+.nav-bar a {
+  color: #fff; text-decoration: none;
+  font-size: .82rem; font-weight: 600;
+  padding: 5px 10px; border-radius: 4px;
+  white-space: nowrap;
+  transition: background .15s;
+}
+.nav-bar a:hover, .nav-bar a:focus-visible {
+  background: rgba(255,255,255,.2);
+  outline: 2px solid #fff; outline-offset: 1px;
+}
+
+/* --- Module Header Banner --- */
+.mod-banner {
+  background: linear-gradient(135deg, var(--c-primary-dark), var(--c-primary));
+  color: #fff; padding: 28px 24px; border-radius: var(--radius);
+  margin: 16px 0 24px; box-shadow: var(--shadow-md);
+}
+.mod-banner .mod-id { font-size: .85rem; text-transform: uppercase; letter-spacing: 1.5px; opacity: .85; }
+.mod-banner h1 { color: #fff; margin-top: 4px; }
+.mod-banner .mod-meta { font-size: .88rem; opacity: .9; margin-top: 6px; }
+
+/* --- Content Card --- */
+.card {
+  background: var(--c-surface); border-radius: var(--radius);
+  padding: 24px 28px; margin-bottom: 24px;
+  box-shadow: var(--shadow-sm); border: 1px solid var(--c-border);
+}
+
+/* --- Callout Boxes --- */
+.callout {
+  border-left: 5px solid; border-radius: var(--radius);
+  padding: 16px 18px; margin: 18px 0;
+  font-size: .95rem;
+}
+.callout-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+.callout-info    { border-color: var(--c-info-border); background: var(--c-info-light); }
+.callout-info .callout-title { color: var(--c-info); }
+.callout-danger  { border-color: var(--c-danger-border); background: var(--c-danger-light); }
+.callout-danger .callout-title { color: var(--c-danger); }
+.callout-warning { border-color: var(--c-warning-border); background: var(--c-warning-light); }
+.callout-warning .callout-title { color: var(--c-warning); }
+.callout-tip     { border-color: var(--c-accent); background: var(--c-accent-light); }
+.callout-tip .callout-title { color: var(--c-accent); }
+.callout-forensic { border-color: var(--c-primary); background: var(--c-primary-light); }
+.callout-forensic .callout-title { color: var(--c-primary-dark); }
+
+/* --- Safety Banner (Critical) --- */
+.safety-banner {
+  background: var(--c-danger-light);
+  border: 3px solid var(--c-danger-border);
+  border-radius: var(--radius);
+  padding: 22px 24px; margin: 22px 0;
+  box-shadow: var(--shadow-md);
+}
+.safety-banner .safety-heading {
+  font-size: 1.15rem; font-weight: 800; color: var(--c-danger);
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+}
+.safety-banner ul { margin-top: 6px; }
+.safety-banner li { margin-bottom: .45em; }
+
+/* --- Reference Cards / Tables --- */
+.ref-table { width: 100%; border-collapse: collapse; margin: 14px 0 18px; font-size: .93rem; }
+.ref-table th {
+  background: var(--c-primary-dark); color: #fff;
+  text-align: left; padding: 10px 12px; font-weight: 600;
+}
+.ref-table td { padding: 9px 12px; border-bottom: 1px solid var(--c-border); vertical-align: top; }
+.ref-table tr:nth-child(even) td { background: #f9f9fc; }
+.ref-table tr:hover td { background: var(--c-primary-light); }
+
+/* --- Collapsible / Toggle Sections --- */
+details {
+  border: 1px solid var(--c-border); border-radius: var(--radius);
+  margin: 12px 0; background: var(--c-surface);
+}
+details summary {
+  cursor: pointer; padding: 12px 16px;
+  font-weight: 700; font-size: .97rem;
+  color: var(--c-primary-dark);
+  list-style: none; display: flex; align-items: center; gap: 8px;
+  user-select: none;
+}
+details summary::before {
+  content: '▸'; display: inline-block; transition: transform .2s;
+  font-size: 1.1rem; flex-shrink: 0;
+}
+details[open] summary::before { transform: rotate(90deg); }
+details summary:focus-visible { outline: 3px solid var(--c-accent); outline-offset: -2px; border-radius: var(--radius); }
+details .detail-body { padding: 4px 18px 16px; }
+
+/* --- Flowchart (CSS-based) --- */
+.flow { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0; margin: 18px 0; }
+.flow-step {
+  background: var(--c-primary); color: #fff;
+  padding: 12px 18px; border-radius: var(--radius);
+  font-weight: 700; font-size: .92rem; text-align: center;
+  min-width: 140px; box-shadow: var(--shadow-sm);
+}
+.flow-arrow { font-size: 1.4rem; color: var(--c-primary); padding: 0 6px; font-weight: 700; }
+@media(max-width:600px){
+  .flow { flex-direction: column; align-items: center; }
+  .flow-arrow { transform: rotate(90deg); }
+}
+
+/* --- Scenario Box --- */
+.scenario {
+  background: linear-gradient(135deg, #1a237e, #283593);
+  color: #e8eaf6; border-radius: var(--radius);
+  padding: 22px 24px; margin: 18px 0;
+  border-left: 6px solid #ffd54f;
+  box-shadow: var(--shadow-md);
+}
+.scenario .scenario-label {
+  font-size: .8rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: #ffd54f; font-weight: 700; margin-bottom: 6px;
+}
+.scenario p { color: #e8eaf6; margin-bottom: .4em; }
+.scenario strong { color: #fff; }
+
+/* --- Table overflow wrapper --- */
+.table-wrap { overflow-x: auto; }
+
+/* --- Knowledge Check --- */
+.kc-question {
+  border: 1px solid var(--c-border); border-radius: var(--radius);
+  padding: 16px 18px; margin: 14px 0; background: var(--c-surface);
+}
+.kc-question .kc-q-text { font-weight: 700; margin-bottom: 8px; color: var(--c-primary-dark); }
+.kc-q-note { font-weight: 400; font-size: .88rem; color: var(--c-muted); }
+.kc-options { list-style: none; padding: 0; }
+.kc-options li { margin-bottom: 6px; }
+.kc-options label {
+  display: flex; align-items: flex-start; gap: 8px;
+  cursor: pointer; padding: 7px 10px; border-radius: 5px;
+  border: 2px solid transparent; transition: background .15s, border-color .15s;
+}
+.kc-options label:hover { background: var(--c-primary-light); }
+.kc-options input[type="radio"] { margin-top: 3px; flex-shrink: 0; accent-color: var(--c-primary); }
+.kc-options input[type="radio"]:focus-visible + span { outline: 2px solid var(--c-accent); outline-offset: 1px; border-radius: 2px; }
+.kc-feedback {
+  display: none; margin-top: 10px; padding: 12px 14px;
+  border-radius: var(--radius); font-size: .93rem;
+}
+.kc-feedback.correct { background: var(--c-success-light); border: 1px solid var(--c-success); }
+.kc-feedback.incorrect { background: var(--c-danger-light); border: 1px solid var(--c-danger-border); }
+.kc-btn {
+  margin-top: 8px; padding: 8px 20px;
+  background: var(--c-primary); color: #fff;
+  border: none; border-radius: 5px; cursor: pointer;
+  font-size: .92rem; font-weight: 600;
+  transition: background .15s;
+}
+.kc-btn:hover { background: var(--c-primary-dark); }
+.kc-btn:focus-visible { outline: 3px solid var(--c-accent); outline-offset: 2px; }
+.kc-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* --- Diagram (ASCII-style in pre) --- */
+.diagram-box {
+  background: #263238; color: #e0f7fa; border-radius: var(--radius);
+  padding: 18px 20px; margin: 14px 0; overflow-x: auto;
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-size: .84rem; line-height: 1.55;
+  box-shadow: var(--shadow-sm);
+}
+
+/* --- Badge / Pill --- */
+.pill {
+  display: inline-block; padding: 2px 10px; border-radius: 12px;
+  font-size: .78rem; font-weight: 700; vertical-align: middle;
+}
+.pill-week { background: var(--c-primary-light); color: var(--c-primary-dark); }
+.pill-obj  { background: var(--c-accent-light); color: var(--c-accent); }
+
+/* --- Footer --- */
+.mod-footer {
+  margin-top: 32px; padding-top: 16px;
+  border-top: 2px solid var(--c-border);
+  font-size: .85rem; color: var(--c-muted); text-align: center;
+}
+
+/* --- Responsive --- */
+@media(max-width:640px){
+  body { font-size: 15px; padding: 0 8px 48px; }
+  .card { padding: 16px 14px; }
+  .mod-banner { padding: 20px 16px; }
+  .ref-table { font-size: .85rem; }
+  .ref-table th, .ref-table td { padding: 7px 8px; }
+  .nav-bar a { font-size: .76rem; padding: 4px 7px; }
+}
+
+/* --- Print --- */
+@media print {
+  .nav-bar { display: none; }
+  body { background: #fff; max-width: 100%; }
+  .card, .callout, details, .safety-banner { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     NAVIGATION BAR
+     ============================================================ -->
+<nav class="nav-bar" aria-label="Module sections">
+  <a href="#scenario">Scenario</a>
+  <a href="#context">Forensic Context</a>
+  <a href="#taxonomy">Classification</a>
+  <a href="#delivery">Delivery</a>
+  <a href="#workflow">Analysis Workflow</a>
+  <a href="#safety">Safe Analysis</a>
+  <a href="#knowledge-check">Knowledge Check</a>
+</nav>
+
+<main>
+
+<!-- ============================================================
+     MODULE BANNER
+     ============================================================ -->
+<header class="mod-banner">
+  <div class="mod-id">CSC 156 — Week 13 &middot; Module 13.1</div>
+  <h1>Malware Forensics Orientation: Types, Workflow, and Safe Analysis Practices</h1>
+  <div class="mod-meta">
+    <span class="pill pill-obj" style="background:#fff3;color:#fff;">Objective 1</span>&ensp;
+    Estimated Time: 1.5 – 2.0 hours&ensp;|&ensp;Supports: Lab 12
+  </div>
+</header>
+
+<!-- ============================================================
+     SECTION 0 – OPENING HOOK / SCENARIO
+     ============================================================ -->
+<section id="scenario" class="card">
+  <h2><span aria-hidden="true">&#127919;</span> The Case of <code>svchost_update.exe</code></h2>
+  <div class="scenario" role="region" aria-label="Week-long investigation scenario">
+    <div class="scenario-label"><span aria-hidden="true">&#128270;</span> Week 13 Investigation Scenario</div>
+    <p>The incident response team has isolated a Windows&nbsp;10 workstation after <strong>Volatility's <code>malfind</code> plugin</strong> flagged injected code in a suspicious process. The network team confirms the workstation was <strong>beaconing to an external IP every 60&nbsp;seconds</strong>&thinsp;—&thinsp;the same pattern you identified in last week's PCAP analysis.</p>
+    <p>A file named <strong><code>svchost_update.exe</code></strong> was found in <code>C:\Users\jsmith\AppData\Local\Temp\</code>.</p>
+    <p><strong>Your mission:</strong> Determine what this file does, how it got there, and how to detect it across the enterprise.</p>
+  </div>
+
+  <div class="callout callout-info">
+    <div class="callout-title"><span aria-hidden="true">&#128279;</span> Connecting the Threads</div>
+    <p>This scenario picks up where Weeks&nbsp;11 and 12 left off. In <strong>Week&nbsp;11</strong> you used Volatility (<code>malfind</code>, <code>netscan</code>, <code>pstree</code>) to detect injected code and suspicious network connections in memory. In <strong>Week&nbsp;12</strong> you used Wireshark to identify C2 beaconing and data exfiltration in packet captures. This week you take the next logical step&thinsp;—&thinsp;analyzing the <em>malicious tool itself</em>.</p>
+  </div>
+  <p>This scenario will thread through all four Week&nbsp;13 modules. By Module&nbsp;13.4 you will have classified the malware, examined it statically and dynamically, extracted IOCs, and connected your findings back to memory and network evidence.</p>
+</section>
+
+<!-- ============================================================
+     SECTION 1 – MALWARE IN A FORENSIC CONTEXT
+     ============================================================ -->
+<section id="context" class="card">
+  <h2>1. Malware Analysis in a Forensic Context</h2>
+
+  <h3>A Shift in Analytical Posture</h3>
+  <p>Weeks&nbsp;7–12 trained you to examine <em>artifacts left behind</em> by user activity, system events, and network traffic. Week&nbsp;13 asks a fundamentally different question: instead of reconstructing <strong>what happened</strong>, you now determine <strong>what the tool does</strong> and <strong>how it can be identified</strong> across an enterprise.</p>
+
+  <h3>The Dual Purpose of Malware Analysis</h3>
+  <p>In a forensic investigation, malware analysis serves two parallel goals:</p>
+  <ol>
+    <li><strong>Investigation support</strong>&thinsp;—&thinsp;answering key questions about the incident:
+      <ul>
+        <li><strong>Capability:</strong> What can the malware do? (Steal data? Encrypt files? Open a backdoor?)</li>
+        <li><strong>Attribution:</strong> What does the malware reveal about the attacker's tools and techniques?</li>
+        <li><strong>Scope:</strong> What systems are affected and what data was compromised?</li>
+        <li><strong>Initial access:</strong> How did the malware get on the system?</li>
+      </ul>
+    </li>
+    <li><strong>Enterprise defense</strong>&thinsp;—&thinsp;producing actionable outputs:
+      <ul>
+        <li><strong>IOCs (Indicators of Compromise):</strong> Hashes, IPs, domains, registry keys that can be searched across every endpoint.</li>
+        <li><strong>Remediation guidance:</strong> What must be cleaned, rebuilt, or patched?</li>
+        <li><strong>Detection rules:</strong> YARA signatures, IDS rules, or EDR queries to catch the same threat in the future.</li>
+      </ul>
+    </li>
+  </ol>
+
+  <div class="callout callout-forensic">
+    <div class="callout-title"><span aria-hidden="true">&#128300;</span> Scope for This Course</div>
+    <p><strong>Behavioral analysis</strong> (static + dynamic observation) is our focus. Full <strong>reverse engineering</strong>&thinsp;—&thinsp;assembly-level disassembly, decompilation, and code-level analysis&thinsp;—&thinsp;is beyond scope but represents an advanced career path in malware analysis. The techniques you learn this week are the essential first steps that even reverse engineers perform before opening a disassembler.</p>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 2 – MALWARE CLASSIFICATION TAXONOMY
+     ============================================================ -->
+<section id="taxonomy" class="card">
+  <h2>2. Malware Classification Taxonomy</h2>
+  <p>Classifying a malware sample is the first analytical step. Knowing <em>what type</em> of malware you are dealing with shapes every subsequent decision&thinsp;—&thinsp;which analysis tools to use, what behaviors to watch for, and which forensic artifacts to correlate.</p>
+
+  <h3>Taxonomy Reference Cards</h3>
+  <p>Expand each card below to review the type, its key behavioral indicator, primary forensic evidence source, and connections to prior weeks.</p>
+
+  <!-- -- Virus -- -->
+  <details>
+    <summary><span aria-hidden="true">&#129440;</span> Virus</summary>
+    <div class="detail-body">
+      <table class="ref-table" aria-label="Virus reference card">
+        <thead><tr><th style="width:30%">Attribute</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Definition</strong></td><td>Self-replicating malicious code that attaches to a legitimate host file. Requires user action (executing the host) to propagate.</td></tr>
+          <tr><td><strong>Key Behavioral Indicator</strong></td><td>Modified legitimate executables&thinsp;—&thinsp;file size changes, altered hashes, unexpected code sections appended to known-good binaries.</td></tr>
+          <tr><td><strong>Primary Forensic Evidence</strong></td><td>File system metadata (changed timestamps, hash mismatches against known-good baselines), Prefetch entries for modified executables.</td></tr>
+          <tr><td><strong>Prior-Week Connection</strong></td><td><span class="pill pill-week">Week 5</span> File hashing &amp; integrity &emsp;<span class="pill pill-week">Week 8</span> Prefetch analysis</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- -- Worm -- -->
+  <details>
+    <summary><span aria-hidden="true">&#129440;</span> Worm</summary>
+    <div class="detail-body">
+      <table class="ref-table" aria-label="Worm reference card">
+        <thead><tr><th style="width:30%">Attribute</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Definition</strong></td><td>Self-propagating malware that spreads across networks <em>without</em> requiring a host file or user interaction.</td></tr>
+          <tr><td><strong>Key Behavioral Indicator</strong></td><td>Network scanning activity&thinsp;—&thinsp;high volumes of SYN packets to many internal IPs on specific service ports.</td></tr>
+          <tr><td><strong>Primary Forensic Evidence</strong></td><td>PCAP data showing port-scanning patterns; firewall logs with blocked lateral-movement attempts; Volatility <code>netscan</code> showing many outbound connections.</td></tr>
+          <tr><td><strong>Prior-Week Connection</strong></td><td><span class="pill pill-week">Week 12</span> Port-scan detection in Wireshark &emsp;<span class="pill pill-week">Week 11</span> <code>netscan</code> output</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- -- Trojan -- -->
+  <details>
+    <summary><span aria-hidden="true">&#129440;</span> Trojan</summary>
+    <div class="detail-body">
+      <table class="ref-table" aria-label="Trojan reference card">
+        <thead><tr><th style="width:30%">Attribute</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Definition</strong></td><td>Malware disguised as legitimate or desirable software. Does <em>not</em> self-replicate; relies on social engineering for delivery.</td></tr>
+          <tr><td><strong>Key Behavioral Indicator</strong></td><td>Mismatched file properties&thinsp;—&thinsp;a file named <code>svchost_update.exe</code> that is unsigned, located in a user temp folder, and has no corresponding Windows service.</td></tr>
+          <tr><td><strong>Primary Forensic Evidence</strong></td><td>File metadata anomalies, download history (browser artifacts), email attachment logs, PE header analysis showing suspicious imports.</td></tr>
+          <tr><td><strong>Prior-Week Connection</strong></td><td><span class="pill pill-week">Week 7</span> Registry Run keys (persistence) &emsp;<span class="pill pill-week">Week 8</span> Prefetch &amp; UserAssist (execution evidence)</td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout-tip">
+        <div class="callout-title"><span aria-hidden="true">&#128161;</span> Scenario Hint</div>
+        <p>Our investigation file <code>svchost_update.exe</code> exhibits classic Trojan characteristics: it mimics a legitimate Windows service name but resides in a user's Temp directory.</p>
+      </div>
+    </div>
+  </details>
+
+  <!-- -- Ransomware -- -->
+  <details>
+    <summary><span aria-hidden="true">&#129440;</span> Ransomware</summary>
+    <div class="detail-body">
+      <table class="ref-table" aria-label="Ransomware reference card">
+        <thead><tr><th style="width:30%">Attribute</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Definition</strong></td><td>Encrypts victim files and demands payment for the decryption key. May also exfiltrate data before encryption (double extortion).</td></tr>
+          <tr><td><strong>Key Behavioral Indicator</strong></td><td>Mass file modification in short time window; new file extensions appended (e.g., <code>.locked</code>, <code>.crypt</code>); ransom note files dropped in every directory.</td></tr>
+          <tr><td><strong>Primary Forensic Evidence</strong></td><td>NTFS <code>$UsnJrnl</code> showing thousands of rename/modify operations; <code>$MFT</code> timestamp clusters; Volume Shadow Copy deletion events (Event ID 524).</td></tr>
+          <tr><td><strong>Prior-Week Connection</strong></td><td><span class="pill pill-week">Week 7</span> NTFS forensic structures (<code>$MFT</code>, <code>$UsnJrnl</code>) &emsp;<span class="pill pill-week">Week 8</span> Event Logs (shadow copy deletion)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- -- RAT -- -->
+  <details>
+    <summary><span aria-hidden="true">&#129440;</span> Remote Access Trojan (RAT)</summary>
+    <div class="detail-body">
+      <table class="ref-table" aria-label="RAT reference card">
+        <thead><tr><th style="width:30%">Attribute</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Definition</strong></td><td>Provides an attacker with persistent remote control over the victim system&thinsp;—&thinsp;keystroke logging, screen capture, file transfer, command execution.</td></tr>
+          <tr><td><strong>Key Behavioral Indicator</strong></td><td>Periodic C2 beaconing&thinsp;—&thinsp;regular-interval outbound connections (e.g., every 60 seconds) to an external IP or domain.</td></tr>
+          <tr><td><strong>Primary Forensic Evidence</strong></td><td>PCAP showing beaconing pattern; Volatility <code>netscan</code> showing ESTABLISHED connection to C2 IP; Registry Run key or Scheduled Task for persistence.</td></tr>
+          <tr><td><strong>Prior-Week Connection</strong></td><td><span class="pill pill-week">Week 12</span> C2 beaconing in Wireshark &emsp;<span class="pill pill-week">Week 11</span> <code>netscan</code> &amp; <code>malfind</code> &emsp;<span class="pill pill-week">Week 7</span> Run keys</td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout-tip">
+        <div class="callout-title"><span aria-hidden="true">&#128161;</span> Scenario Hint</div>
+        <p>The 60-second beaconing interval in our scenario is a textbook RAT indicator. The network team's PCAP and Volatility's <code>netscan</code> output both point to C2 communication.</p>
+      </div>
+    </div>
+  </details>
+
+  <!-- -- Rootkit -- -->
+  <details>
+    <summary><span aria-hidden="true">&#129440;</span> Rootkit</summary>
+    <div class="detail-body">
+      <table class="ref-table" aria-label="Rootkit reference card">
+        <thead><tr><th style="width:30%">Attribute</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Definition</strong></td><td>Hides attacker presence at the kernel or user level by intercepting OS API calls. May hide files, processes, network connections, or registry keys.</td></tr>
+          <tr><td><strong>Key Behavioral Indicator</strong></td><td>Discrepancies between what the live system reports and what a forensic image or memory dump reveals (e.g., a process visible in Volatility but not in Task Manager).</td></tr>
+          <tr><td><strong>Primary Forensic Evidence</strong></td><td>Volatility cross-view analysis (<code>pslist</code> vs. <code>psscan</code> discrepancies); Linux LKM analysis; forensic image file listing vs. live <code>dir</code>/<code>ls</code> output.</td></tr>
+          <tr><td><strong>Prior-Week Connection</strong></td><td><span class="pill pill-week">Week 11</span> Volatility process analysis &emsp;<span class="pill pill-week">Week 9</span> Linux kernel module (LKM) rootkits</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- -- Fileless -- -->
+  <details>
+    <summary><span aria-hidden="true">&#129440;</span> Fileless Malware</summary>
+    <div class="detail-body">
+      <table class="ref-table" aria-label="Fileless malware reference card">
+        <thead><tr><th style="width:30%">Attribute</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Definition</strong></td><td>Operates entirely in memory, leveraging legitimate system tools (PowerShell, WMI, .NET) rather than dropping a traditional executable to disk.</td></tr>
+          <tr><td><strong>Key Behavioral Indicator</strong></td><td>Suspicious process command lines&thinsp;—&thinsp;e.g., <code>powershell.exe -enc &lt;base64&gt;</code> or <code>wmic process call create</code>&thinsp;—&thinsp;with no corresponding file on disk.</td></tr>
+          <tr><td><strong>Primary Forensic Evidence</strong></td><td>Volatility <code>cmdline</code> output showing encoded PowerShell; Windows Event Logs (PowerShell ScriptBlock logging, Event ID 4104); memory-only artifacts.</td></tr>
+          <tr><td><strong>Prior-Week Connection</strong></td><td><span class="pill pill-week">Week 11</span> Volatility <code>cmdline</code> plugin &emsp;<span class="pill pill-week">Week 8</span> PowerShell Event Logs</td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout-warning">
+        <div class="callout-title"><span aria-hidden="true">&#9888;&#65039;</span> Analysis Challenge</div>
+        <p>Fileless malware is the hardest type to analyze because there may be <em>no file to examine statically</em>. Memory forensics (Week&nbsp;11) becomes the primary evidence source. This is why memory acquisition early in an incident is critical.</p>
+      </div>
+    </div>
+  </details>
+
+  <!-- -- Dropper/Downloader -- -->
+  <details>
+    <summary><span aria-hidden="true">&#129440;</span> Dropper / Downloader</summary>
+    <div class="detail-body">
+      <table class="ref-table" aria-label="Dropper and downloader reference card">
+        <thead><tr><th style="width:30%">Attribute</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Definition</strong></td><td><strong>Dropper:</strong> Contains the second-stage payload embedded within itself and extracts it to disk. <strong>Downloader:</strong> Retrieves the second-stage payload from a remote server.</td></tr>
+          <tr><td><strong>Key Behavioral Indicator</strong></td><td>Small initial file that quickly creates additional files (dropper) or initiates an HTTP/HTTPS download (downloader), then executes the new payload.</td></tr>
+          <tr><td><strong>Primary Forensic Evidence</strong></td><td>Process creation chains (parent → child); new files in Temp directories; DNS queries and HTTP GET requests for payload URLs; Prefetch entries for both stages.</td></tr>
+          <tr><td><strong>Prior-Week Connection</strong></td><td><span class="pill pill-week">Week 12</span> HTTP object export in Wireshark &emsp;<span class="pill pill-week">Week 11</span> <code>pstree</code> parent-child analysis &emsp;<span class="pill pill-week">Week 8</span> Prefetch</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- Consolidated Quick-Reference Table -->
+  <h3>Quick-Reference Summary Table</h3>
+  <div class="table-wrap">
+    <table class="ref-table" aria-label="Malware types summary table">
+      <thead>
+        <tr><th>Type</th><th>Propagation</th><th>Key Indicator</th><th>Top Evidence Source</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Virus</strong></td><td>Requires host file</td><td>Modified legitimate executables</td><td>File hashing, <code>$MFT</code></td></tr>
+        <tr><td><strong>Worm</strong></td><td>Self-propagating (network)</td><td>Network scanning activity</td><td>PCAP, firewall logs</td></tr>
+        <tr><td><strong>Trojan</strong></td><td>Social engineering</td><td>Mismatched file properties</td><td>PE headers, download artifacts</td></tr>
+        <tr><td><strong>Ransomware</strong></td><td>Varies</td><td>Mass file encryption</td><td><code>$UsnJrnl</code>, ransom notes</td></tr>
+        <tr><td><strong>RAT</strong></td><td>Social engineering / exploit</td><td>C2 beaconing</td><td>PCAP, <code>netscan</code>, Run keys</td></tr>
+        <tr><td><strong>Rootkit</strong></td><td>Post-exploitation install</td><td>Live vs. forensic discrepancies</td><td>Volatility cross-view, LKM analysis</td></tr>
+        <tr><td><strong>Fileless</strong></td><td>Leverages legitimate tools</td><td>Suspicious command lines</td><td>Memory dump, PowerShell logs</td></tr>
+        <tr><td><strong>Dropper / Downloader</strong></td><td>First-stage delivery</td><td>Rapid file creation or download</td><td><code>pstree</code>, HTTP exports, Prefetch</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 3 – DELIVERY MECHANISMS
+     ============================================================ -->
+<section id="delivery" class="card">
+  <h2>3. Malware Delivery Mechanisms</h2>
+  <p>Understanding <em>how</em> malware reaches a system helps you trace the initial access vector&thinsp;—&thinsp;a critical question in every investigation. Each mechanism connects to forensic techniques you have already practiced.</p>
+
+  <table class="ref-table" aria-label="Delivery mechanisms and course connections">
+    <thead>
+      <tr><th>Delivery Mechanism</th><th>Description</th><th>Course Connection</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Email Attachment (Phishing)</strong></td>
+        <td>Malicious file sent as an email attachment, often with social-engineering lure text. Most common initial access vector.</td>
+        <td><span class="pill pill-week">Week 16</span> Email forensics (email header analysis, attachment extraction)</td>
+      </tr>
+      <tr>
+        <td><strong>Drive-by Download</strong></td>
+        <td>Victim visits a compromised or malicious website; exploit kit delivers payload through browser vulnerability.</td>
+        <td><span class="pill pill-week">Week 12</span> Web server log analysis (identifying exploit kit traffic patterns)</td>
+      </tr>
+      <tr>
+        <td><strong>Exploitation of Vulnerabilities</strong></td>
+        <td>Attacker exploits an unpatched software vulnerability to execute code remotely (e.g., EternalBlue for WannaCry).</td>
+        <td><span class="pill pill-week">Week 12</span> IDS/IPS alerts for known exploit signatures</td>
+      </tr>
+      <tr>
+        <td><strong>USB / Removable Media</strong></td>
+        <td>Malware delivered via physical media&thinsp;—&thinsp;USB drives left in parking lots, infected devices plugged into air-gapped networks.</td>
+        <td><span class="pill pill-week">Week 7</span> Windows Registry USB device history (<code>USBSTOR</code>)</td>
+      </tr>
+      <tr>
+        <td><strong>Supply Chain Compromise</strong></td>
+        <td>Legitimate software update mechanism is hijacked to distribute malware to all users of the software (e.g., SolarWinds SUNBURST).</td>
+        <td><span class="pill pill-week">Week 8</span> Prefetch and service-install Event Logs showing unexpected update activity</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-info">
+    <div class="callout-title"><span aria-hidden="true">&#128269;</span> Investigation Question</div>
+    <p>For our scenario: How did <code>svchost_update.exe</code> arrive in the user's Temp folder? Answering this question will require correlating browser history, email artifacts, or download logs with the file's creation timestamp. We will revisit this in Module&nbsp;13.3 during dynamic analysis.</p>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 4 – FOUR-PHASE ANALYSIS WORKFLOW
+     ============================================================ -->
+<section id="workflow" class="card">
+  <h2>4. The Four-Phase Analysis Workflow</h2>
+  <p>Malware analysis follows a structured, sequential workflow. Each phase builds on the previous one, and the order matters&thinsp;—&thinsp;<strong>always perform static analysis before dynamic analysis</strong>.</p>
+
+  <!-- Visual Flowchart -->
+  <div class="flow" role="img" aria-label="Four-phase malware analysis workflow: Triage, then Static Analysis, then Dynamic Analysis, then IOC Extraction">
+    <div class="flow-step" style="background:#6a1b9a;">&#9312; Triage</div>
+    <div class="flow-arrow" aria-hidden="true">&#10145;</div>
+    <div class="flow-step" style="background:#1565c0;">&#9313; Static Analysis</div>
+    <div class="flow-arrow" aria-hidden="true">&#10145;</div>
+    <div class="flow-step" style="background:#00897b;">&#9314; Dynamic Analysis</div>
+    <div class="flow-arrow" aria-hidden="true">&#10145;</div>
+    <div class="flow-step" style="background:#c62828;">&#9315; IOC Extraction</div>
+  </div>
+
+  <!-- Phase Details -->
+  <details>
+    <summary>&#9312; Phase 1 — Triage</summary>
+    <div class="detail-body">
+      <p><strong>Goal:</strong> Quickly determine <em>what you have</em> and <em>whether it is worth deeper analysis</em>.</p>
+      <ul>
+        <li>Generate file hashes (MD5, SHA-256) for identification.</li>
+        <li>Check hashes against reputation databases (VirusTotal, NSRL, threat intel feeds).</li>
+        <li>Identify file type using magic bytes (<code>file</code> command) — is it really what the extension claims?</li>
+        <li>Determine priority: Is this a known threat (hash match) or a novel sample requiring full analysis?</li>
+      </ul>
+      <p><strong>Module coverage:</strong> Module&nbsp;13.2 (Static Analysis) covers triage techniques in depth.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>&#9313; Phase 2 — Static Analysis</summary>
+    <div class="detail-body">
+      <p><strong>Goal:</strong> Learn everything possible about the file <em>without executing it</em>.</p>
+      <ul>
+        <li>Extract readable strings (IP addresses, domains, registry paths, error messages).</li>
+        <li>Analyze PE headers: compile timestamp, section names, entropy levels.</li>
+        <li>Review import table: which Windows API functions does it call?</li>
+        <li>Check for packing indicators (high entropy, few imports, unusual section names).</li>
+      </ul>
+      <p><strong>Key advantage:</strong> Completely safe&thinsp;—&thinsp;the malware never runs.</p>
+      <p><strong>Key limitation:</strong> Cannot observe runtime behavior; packed/encrypted samples reveal little.</p>
+      <p><strong>Module coverage:</strong> Module&nbsp;13.2 is entirely dedicated to static analysis.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>&#9314; Phase 3 — Dynamic Analysis</summary>
+    <div class="detail-body">
+      <p><strong>Goal:</strong> Execute the malware in a <em>controlled, isolated environment</em> and observe its behavior.</p>
+      <ul>
+        <li>Monitor file system changes (files created, modified, deleted).</li>
+        <li>Monitor registry modifications (persistence keys, service creation).</li>
+        <li>Monitor network activity (DNS queries, C2 connections, data exfiltration).</li>
+        <li>Monitor process activity (child processes spawned, privilege escalation attempts).</li>
+      </ul>
+      <p><strong>Key advantage:</strong> Reveals actual behavior, defeats packing and obfuscation.</p>
+      <p><strong>Key limitation:</strong> Malware may detect the analysis environment and alter behavior.</p>
+      <p><strong>Module coverage:</strong> Module&nbsp;13.3 covers dynamic analysis and sandbox configuration.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>&#9315; Phase 4 — IOC Extraction</summary>
+    <div class="detail-body">
+      <p><strong>Goal:</strong> Distill analysis findings into <em>actionable Indicators of Compromise</em> that enable enterprise-wide detection.</p>
+      <ul>
+        <li>Document network IOCs: C2 IP addresses, domains, URLs, User-Agent strings.</li>
+        <li>Document host-based IOCs: file hashes, paths, registry keys, mutex names, service names.</li>
+        <li>Structure IOCs in a shareable format (IOC table, STIX/TAXII concepts).</li>
+        <li>Connect IOCs back to evidence from prior forensic domains (memory, network, OS artifacts).</li>
+      </ul>
+      <p><strong>Module coverage:</strong> Module&nbsp;13.3 covers IOC extraction. Module&nbsp;13.4 covers cross-domain correlation.</p>
+    </div>
+  </details>
+
+  <div class="callout callout-warning">
+    <div class="callout-title"><span aria-hidden="true">&#9888;&#65039;</span> Why "Static Before Dynamic"?</div>
+    <p>Static analysis is <strong>safe</strong> and <strong>non-destructive</strong>. It gives you hypotheses to test during dynamic analysis. If you skip straight to execution, you may trigger destructive behavior (ransomware encryption, data wiping) before you understand what you are dealing with. Additionally, static analysis findings&thinsp;—&thinsp;such as imported API calls and extracted strings&thinsp;—&thinsp;tell you <em>what to watch for</em> during dynamic analysis, making your observations far more targeted.</p>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 5 – SAFE ANALYSIS ENVIRONMENT
+     ============================================================ -->
+<section id="safety" class="card">
+  <h2>5. Safe Analysis Environment</h2>
+
+  <!-- CRITICAL SAFETY BANNER -->
+  <div class="safety-banner" role="alert" aria-label="Critical safety rules for malware analysis">
+    <div class="safety-heading"><span aria-hidden="true">&#9888;&#65039;</span> CRITICAL: Malware Analysis Safety Rules</div>
+    <p>Malware is <strong>live, dangerous software</strong>. Violating these rules can infect your host system, your home network, or your institution's network. <strong>Read and follow every rule before handling any sample.</strong></p>
+    <ul>
+      <li><strong>NEVER</strong> analyze malware on a production system or any system connected to a production network.</li>
+      <li><strong>NEVER</strong> use real credentials (personal or institutional) inside an analysis VM.</li>
+      <li><strong>ALWAYS</strong> take a VM snapshot <em>before</em> executing any sample — revert after every analysis session.</li>
+      <li><strong>ALWAYS</strong> use host-only networking or a network simulation tool (INetSim, FakeNet-NG) — <strong>never</strong> give the malware real internet access.</li>
+      <li><strong>ALWAYS</strong> disable shared folders, clipboard sharing, and drag-and-drop between host and guest VM.</li>
+      <li><strong>NEVER</strong> transfer malware samples to your host via shared folders — use a dedicated, isolated transfer method specified by your instructor.</li>
+      <li>If you suspect the malware has escaped the VM or your host is behaving unexpectedly, <strong>disconnect from the network immediately</strong> and contact your instructor.</li>
+    </ul>
+  </div>
+
+  <h3>VM Configuration Checklist</h3>
+  <p>Before beginning any analysis in Module&nbsp;13.2 or 13.3, verify your analysis VM meets these requirements:</p>
+
+  <table class="ref-table" aria-label="VM configuration checklist">
+    <thead><tr><th style="width:35%">Setting</th><th>Required Configuration</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Hypervisor</strong></td><td>VirtualBox or VMware Workstation/Player with snapshot support</td></tr>
+      <tr><td><strong>Guest OS</strong></td><td>Windows 10/11 (for PE analysis) or Linux (for ELF analysis) — match the target environment</td></tr>
+      <tr><td><strong>Network Adapter</strong></td><td><strong>Host-only</strong> or <strong>Internal Network</strong> — no NAT, no Bridged</td></tr>
+      <tr><td><strong>Shared Folders</strong></td><td>Disabled</td></tr>
+      <tr><td><strong>Clipboard Sharing</strong></td><td>Disabled</td></tr>
+      <tr><td><strong>Drag-and-Drop</strong></td><td>Disabled</td></tr>
+      <tr><td><strong>Snapshot</strong></td><td>Clean snapshot taken <em>before</em> any malware is introduced</td></tr>
+      <tr><td><strong>Analysis Tools Installed</strong></td><td>See tool list below — install <em>before</em> snapshotting</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Network Simulation Tools</h3>
+  <p>Malware often requires network connectivity to reveal its full behavior (DNS resolution, C2 communication, payload download). Instead of providing real internet access, we use <strong>network simulation tools</strong> that fake common internet services inside the isolated environment.</p>
+
+  <details>
+    <summary>INetSim (Linux-based)</summary>
+    <div class="detail-body">
+      <ul>
+        <li><strong>What it does:</strong> Simulates DNS, HTTP, HTTPS, SMTP, FTP, and other common internet services on the analysis network.</li>
+        <li><strong>How it works:</strong> Runs on a second VM (or the host in host-only mode) and responds to all DNS queries with its own IP, then serves fake responses for HTTP requests, accepts SMTP emails, etc.</li>
+        <li><strong>Forensic value:</strong> Captures every DNS query and HTTP request the malware makes — revealing C2 domains and URLs without any real data leaving your lab.</li>
+        <li><strong>Typical setup:</strong> Linux VM on the same host-only network as the analysis Windows VM; configure the Windows VM's DNS to point to the INetSim VM's IP.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details>
+    <summary>FakeNet-NG (Windows-based)</summary>
+    <div class="detail-body">
+      <ul>
+        <li><strong>What it does:</strong> Runs directly on the Windows analysis VM and intercepts all network traffic, responding to DNS, HTTP, and other protocols locally.</li>
+        <li><strong>Advantage over INetSim:</strong> Single-VM setup — no need for a second VM. Easier for students new to malware analysis.</li>
+        <li><strong>Forensic value:</strong> Same as INetSim — logs all network requests the malware attempts.</li>
+        <li><strong>Limitation:</strong> Running on the same VM as the malware means the tool could theoretically be tampered with by sophisticated malware.</li>
+      </ul>
+    </div>
+  </details>
+
+  <div class="callout callout-forensic">
+    <div class="callout-title"><span aria-hidden="true">&#128300;</span> Why Simulate the Network?</div>
+    <p>Many malware samples check for internet connectivity before activating. Without a simulated network, the malware may sit dormant, and you will miss critical behaviors. Network simulation gives you the best of both worlds: the malware <em>behaves normally</em>, but all traffic stays inside your isolated lab and is <strong>fully captured for analysis</strong>.</p>
+  </div>
+
+  <div class="callout callout-info">
+    <div class="callout-title"><span aria-hidden="true">&#128204;</span> Looking Ahead</div>
+    <p>You will configure and use these tools hands-on in <strong>Module&nbsp;13.3</strong> (Dynamic Analysis). For now, make sure you understand <em>why</em> network isolation and simulation are non-negotiable requirements.</p>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 6 – KNOWLEDGE CHECK
+     ============================================================ -->
+<section id="knowledge-check" class="card">
+  <h2><span aria-hidden="true">&#10004;&#65039;</span> Knowledge Check <span class="kc-q-note">(Ungraded — 3 Questions)</span></h2>
+  <p>Test your understanding of Module&nbsp;13.1 concepts. Select your answer and click <strong>Check Answer</strong> for immediate feedback.</p>
+
+  <!-- Question 1 -->
+  <div class="kc-question" id="kc1">
+    <div class="kc-q-text">Question 1: A forensic examiner discovers that a workstation is sending a small HTTPS request to the same external IP address every 60 seconds. Volatility's <code>malfind</code> plugin has flagged injected code in the process responsible. Which malware type is <em>most</em> consistent with these indicators?</div>
+    <ul class="kc-options" role="radiogroup" aria-label="Question 1 options">
+      <li><label><input type="radio" name="kc1" value="a"><span>Ransomware — because it contacts a payment server</span></label></li>
+      <li><label><input type="radio" name="kc1" value="b"><span>Worm — because it is scanning the network</span></label></li>
+      <li><label><input type="radio" name="kc1" value="c"><span>Remote Access Trojan (RAT) — because of the periodic C2 beaconing and injected code</span></label></li>
+      <li><label><input type="radio" name="kc1" value="d"><span>Virus — because it has modified a legitimate process</span></label></li>
+    </ul>
+    <button class="kc-btn" onclick="checkAnswer('kc1','c')" aria-label="Check answer for question 1">Check Answer</button>
+    <div class="kc-feedback correct" id="kc1-correct" role="status">
+      <strong>&#10003; Correct!</strong> The combination of <strong>periodic beaconing</strong> (regular-interval outbound connections) and <strong>injected code</strong> detected by <code>malfind</code> is the signature pattern of a <strong>Remote Access Trojan (RAT)</strong>. RATs maintain persistent C2 channels so the attacker can issue commands at will. Ransomware contacts payment infrastructure but does not typically beacon at regular intervals. Worms scan many hosts, not a single IP. Viruses modify files, not inject code into running processes.
+    </div>
+    <div class="kc-feedback incorrect" id="kc1-incorrect" role="status">
+      <strong>&#10007; Not quite.</strong> Look at the two key indicators together: <em>periodic beaconing</em> to a single external IP and <em>injected code</em> in a process. This combination points to a <strong>Remote Access Trojan (RAT)</strong>. RATs maintain a regular C2 heartbeat so the attacker knows the implant is alive. Ransomware, worms, and viruses each have different characteristic patterns — review the taxonomy cards above.
+    </div>
+  </div>
+
+  <!-- Question 2 -->
+  <div class="kc-question" id="kc2">
+    <div class="kc-q-text">Question 2: A junior analyst receives a suspicious executable and immediately runs it on their analysis VM to "see what it does." They did not perform any prior examination. What critical mistake did they make, and what risk does it introduce?</div>
+    <ul class="kc-options" role="radiogroup" aria-label="Question 2 options">
+      <li><label><input type="radio" name="kc2" value="a"><span>They should have uploaded it to VirusTotal first — online sandboxes are always safer than local VMs.</span></label></li>
+      <li><label><input type="radio" name="kc2" value="b"><span>They skipped static analysis. Without examining the file first, they have no hypotheses to guide observation and may trigger destructive behavior (e.g., ransomware encryption) before understanding the threat.</span></label></li>
+      <li><label><input type="radio" name="kc2" value="c"><span>They should have used a physical machine instead of a VM because malware can escape VMs.</span></label></li>
+      <li><label><input type="radio" name="kc2" value="d"><span>Running malware in a VM is always safe, so no mistake was made.</span></label></li>
+    </ul>
+    <button class="kc-btn" onclick="checkAnswer('kc2','b')" aria-label="Check answer for question 2">Check Answer</button>
+    <div class="kc-feedback correct" id="kc2-correct" role="status">
+      <strong>&#10003; Correct!</strong> The four-phase workflow exists for a reason: <strong>static analysis always comes before dynamic analysis</strong>. Static examination reveals imported APIs, embedded strings, and packing indicators that tell you what to <em>watch for</em> during execution. Skipping it means you are running blind — and if the sample is ransomware, you may trigger file encryption before you even know what you are dealing with. While VMs provide good isolation, "always safe" is never a valid assumption in malware analysis.
+    </div>
+    <div class="kc-feedback incorrect" id="kc2-incorrect" role="status">
+      <strong>&#10007; Not quite.</strong> The core issue is skipping <strong>Phase 2 (Static Analysis)</strong> in the workflow. The rule is "static before dynamic" — examine the file without executing it first. This gives you hypotheses, reveals potential destructive capabilities, and ensures you know what to monitor. Option A has OPSEC concerns (uploading targeted malware to public services can alert the attacker). Option C is not standard practice. Option D is dangerously incorrect — VMs are not escape-proof. Review the workflow section above.
+    </div>
+  </div>
+
+  <!-- Question 3 -->
+  <div class="kc-question" id="kc3">
+    <div class="kc-q-text">Question 3: Why do malware analysts use network simulation tools like INetSim or FakeNet-NG instead of giving the analysis VM real internet access?</div>
+    <ul class="kc-options" role="radiogroup" aria-label="Question 3 options">
+      <li><label><input type="radio" name="kc3" value="a"><span>To make the malware run faster by reducing network latency.</span></label></li>
+      <li><label><input type="radio" name="kc3" value="b"><span>To prevent the malware from reaching real C2 servers (which could trigger additional payloads, alert the attacker, or exfiltrate real data) while still capturing every network request the malware attempts.</span></label></li>
+      <li><label><input type="radio" name="kc3" value="c"><span>Because malware cannot use DNS in a virtual machine without simulation tools.</span></label></li>
+      <li><label><input type="radio" name="kc3" value="d"><span>Network simulation is optional — real internet access is preferred for more accurate results.</span></label></li>
+    </ul>
+    <button class="kc-btn" onclick="checkAnswer('kc3','b')" aria-label="Check answer for question 3">Check Answer</button>
+    <div class="kc-feedback correct" id="kc3-correct" role="status">
+      <strong>&#10003; Correct!</strong> Network simulation serves two critical purposes: (1) <strong>Safety</strong> — the malware cannot reach real C2 infrastructure, download additional payloads, exfiltrate data, or alert the attacker that their sample is being analyzed. (2) <strong>Forensic capture</strong> — every DNS query, HTTP request, and connection attempt is logged by the simulation tool, giving you a complete record of the malware's intended network behavior. The malware "thinks" it has internet access and reveals its communication patterns, but nothing leaves your isolated lab.
+    </div>
+    <div class="kc-feedback incorrect" id="kc3-incorrect" role="status">
+      <strong>&#10007; Not quite.</strong> Network simulation is about <strong>safety and evidence capture</strong>, not performance. Giving malware real internet access is extremely dangerous — it could download additional payloads, exfiltrate sensitive data, or signal the attacker. Simulation tools (INetSim, FakeNet-NG) respond to the malware's network requests with fake services, tricking it into revealing its C2 domains and URLs while keeping everything contained. Review the Safe Analysis Environment section above.
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     LOOKING AHEAD
+     ============================================================ -->
+<section class="card">
+  <h2><span aria-hidden="true">&#128640;</span> Looking Ahead</h2>
+  <p>Now that you understand the malware landscape, the analysis workflow, and the safety requirements, you are ready to begin examining <code>svchost_update.exe</code>.</p>
+  <ul>
+    <li><strong>Module 13.2 — Static Analysis:</strong> You will examine the file without executing it — hashing, string extraction, PE header analysis, and import table review.</li>
+    <li><strong>Module 13.3 — Dynamic Analysis &amp; IOC Extraction:</strong> You will detonate the sample in your isolated VM and observe its behavior, then extract structured IOCs.</li>
+    <li><strong>Module 13.4 — Anti-Analysis &amp; Cross-Domain Integration:</strong> You will learn how malware authors fight back against analysts and connect your findings to evidence from Weeks&nbsp;7–12.</li>
+  </ul>
+
+  <div class="callout callout-tip">
+    <div class="callout-title"><span aria-hidden="true">&#128218;</span> Study Recommendation</div>
+    <p>Complete this module on <strong>Day 1</strong> of Week 13 before proceeding to any other content. Do not begin Module&nbsp;13.2 until you are confident in the analysis workflow and have reviewed the safety rules. The safety checklist will be critical when you set up your analysis VM for Lab&nbsp;12.</p>
+  </div>
+</section>
+
+</main>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer class="mod-footer">
+  <p>CSC 156 – Digital Forensics Fundamentals &ensp;|&ensp; Week 13, Module 13.1 &ensp;|&ensp; Mendocino College Computer Science Department</p>
+  <p>Lab 12 (30 pts) is the sole graded assessment for Week 13. &ensp;|&ensp; <span class="pill pill-obj">CSLO 2</span></p>
+</footer>
+
+<!-- ============================================================
+     JAVASCRIPT – Knowledge Check Logic
+     ============================================================ -->
+<script>
+function checkAnswer(qId, correctVal) {
+  var radios = document.querySelectorAll('input[name="' + qId + '"]');
+  var selected = null;
+  for (var i = 0; i < radios.length; i++) {
+    if (radios[i].checked) { selected = radios[i].value; break; }
+  }
+  if (!selected) { return; }
+  var fbCorrect = document.getElementById(qId + '-correct');
+  var fbIncorrect = document.getElementById(qId + '-incorrect');
+  if (selected === correctVal) {
+    fbCorrect.style.display = 'block';
+    fbIncorrect.style.display = 'none';
+  } else {
+    fbCorrect.style.display = 'none';
+    fbIncorrect.style.display = 'block';
+  }
+  /* Disable further changes after answering */
+  for (var j = 0; j < radios.length; j++) {
+    radios[j].disabled = true;
+    if (radios[j].value === correctVal) {
+      radios[j].parentElement.style.background = '#e8f5e9';
+      radios[j].parentElement.style.borderColor = '#2e7d32';
+      radios[j].parentElement.style.borderWidth = '2px';
+      radios[j].parentElement.style.borderStyle = 'solid';
+    } else if (radios[j].checked && radios[j].value !== correctVal) {
+      radios[j].parentElement.style.background = '#ffebee';
+      radios[j].parentElement.style.borderColor = '#c62828';
+      radios[j].parentElement.style.borderWidth = '2px';
+      radios[j].parentElement.style.borderStyle = 'solid';
+    }
+  }
+  var btn = document.querySelector('#' + qId + ' .kc-btn');
+  if (btn) { btn.disabled = true; }
+}
+</script>
+
+</body>
+</html>

