@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 14.2 – Anatomy of a Professional Forensic Report</title>
+<style>
+:root {
+--primary: #1a5276;
+--primary-light: #2980b9;
+--primary-dark: #0e2f44;
+--accent: #e67e22;
+--accent-light: #f39c12;
+--bg: #f5f7fa;
+--bg-white: #ffffff;
+--text: #2c3e50;
+--text-light: #5d6d7e;
+--border: #d5dbdb;
+--success: #27ae60;
+--success-bg: #eafaf1;
+--danger: #c0392b;
+--danger-bg: #fdedec;
+--warning: #f39c12;
+--warning-bg: #fef9e7;
+--info: #2980b9;
+--info-bg: #ebf5fb;
+--code-bg: #eaf2f8;
+--shadow: 0 2px 8px rgba(0,0,0,0.08);
+--radius: 8px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+body{margin:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:var(--bg);color:var(--text);line-height:1.65;font-size:16px;}
+.page-wrapper{max-width:1080px;margin:0 auto;padding:0 1rem 3rem;}
+
+/* ---- NAV BAR ---- */
+.top-nav{background:var(--primary-dark);position:sticky;top:0;z-index:100;border-bottom:3px solid var(--accent);}
+.top-nav .nav-inner{max-width:1080px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;padding:.35rem 1rem;gap:.15rem .5rem;}
+.top-nav a{color:#fff;text-decoration:none;font-size:.82rem;padding:.35rem .65rem;border-radius:4px;white-space:nowrap;transition:background .2s;}
+.top-nav a:hover,.top-nav a:focus{background:var(--primary-light);outline:2px solid var(--accent);outline-offset:1px;}
+.top-nav .nav-title{font-weight:700;font-size:.92rem;margin-right:auto;color:var(--accent-light);padding-left:0;}
+
+/* ---- HEADER ---- */
+.mod-header{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);color:#fff;padding:2.5rem 2rem 2rem;border-radius:0 0 var(--radius) var(--radius);margin-bottom:2rem;}
+.mod-header .overline{font-size:.85rem;text-transform:uppercase;letter-spacing:2px;color:var(--accent-light);margin-bottom:.25rem;}
+.mod-header h1{margin:0 0 .5rem;font-size:2rem;line-height:1.25;}
+.mod-header .subtitle{font-size:1.05rem;color:#d5e8f0;max-width:740px;}
+
+/* ---- SECTIONS ---- */
+.section{background:var(--bg-white);border-radius:var(--radius);box-shadow:var(--shadow);padding:2rem;margin-bottom:2rem;border-left:5px solid var(--primary-light);}
+.section h2{margin-top:0;color:var(--primary);font-size:1.45rem;border-bottom:2px solid var(--border);padding-bottom:.45rem;}
+.section h3{color:var(--primary-dark);font-size:1.15rem;margin-top:1.5rem;}
+
+/* ---- CALLOUT BOXES ---- */
+.callout{border-radius:var(--radius);padding:1.1rem 1.25rem;margin:1.25rem 0;position:relative;padding-left:3.2rem;font-size:.97rem;}
+.callout::before{position:absolute;left:1rem;top:1.1rem;font-size:1.25rem;}
+.callout-scenario{background:#f4ecf7;border-left:5px solid #8e44ad;}.callout-scenario::before{content:"🏢";}
+.callout-info{background:var(--info-bg);border-left:5px solid var(--info);}.callout-info::before{content:"ℹ️";}
+.callout-tip{background:var(--success-bg);border-left:5px solid var(--success);}.callout-tip::before{content:"💡";}
+.callout-warn{background:var(--warning-bg);border-left:5px solid var(--warning);}.callout-warn::before{content:"⚠️";}
+.callout-danger{background:var(--danger-bg);border-left:5px solid var(--danger);}.callout-danger::before{content:"🚫";}
+.callout-connect{background:#eaf2f8;border-left:5px solid var(--primary-light);}.callout-connect::before{content:"🔗";}
+
+/* ---- TABLES ---- */
+.resp-table{overflow-x:auto;margin:1.25rem 0;}
+table{width:100%;border-collapse:collapse;font-size:.93rem;}
+th,td{padding:.65rem .85rem;text-align:left;border:1px solid var(--border);}
+th{background:var(--primary);color:#fff;font-weight:600;}
+tr:nth-child(even){background:#f8f9fa;}
+td.label-cell{font-weight:600;background:#eaf2f8;white-space:nowrap;}
+
+/* ---- ACCORDION ---- */
+.accordion{margin:1.25rem 0;}
+.accordion-item{border:1px solid var(--border);border-radius:var(--radius);margin-bottom:.5rem;overflow:hidden;}
+.accordion-btn{width:100%;background:var(--code-bg);border:none;text-align:left;padding:.85rem 1.1rem;font-size:1rem;font-weight:600;color:var(--primary-dark);cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:background .2s;}
+.accordion-btn:hover,.accordion-btn:focus{background:#d4e6f1;outline:2px solid var(--primary-light);outline-offset:-2px;}
+.accordion-btn .arrow{transition:transform .25s;font-size:.85rem;}
+.accordion-btn[aria-expanded="true"] .arrow{transform:rotate(180deg);}
+.accordion-panel{max-height:0;overflow:hidden;transition:max-height .35s ease;padding:0 1.1rem;}
+.accordion-panel.open{max-height:5000px;padding:.85rem 1.1rem 1.1rem;}
+
+/* ---- TABS ---- */
+.tabs{margin:1.25rem 0;}
+.tab-list{display:flex;flex-wrap:wrap;gap:0;border-bottom:2px solid var(--border);margin-bottom:0;}
+.tab-btn{background:transparent;border:none;padding:.7rem 1.2rem;font-size:.95rem;font-weight:600;color:var(--text-light);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;}
+.tab-btn:hover,.tab-btn:focus{color:var(--primary);outline:2px solid var(--primary-light);outline-offset:-2px;}
+.tab-btn[aria-selected="true"]{color:var(--primary);border-bottom-color:var(--accent);}
+.tab-panel{display:none;padding:1.25rem;background:var(--bg-white);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);}
+.tab-panel.active{display:block;}
+
+/* ---- INTERACTIVE EXERCISE ---- */
+.exercise-item{background:#fdfefe;border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.25rem;margin-bottom:1rem;}
+.exercise-item blockquote{margin:.5rem 0;padding:.6rem 1rem;background:var(--code-bg);border-left:4px solid var(--primary-light);font-style:italic;font-size:.95rem;border-radius:0 var(--radius) var(--radius) 0;}
+.exercise-item .choices{display:flex;flex-wrap:wrap;gap:.5rem;margin:.75rem 0;}
+.exercise-item .choices button{padding:.45rem 1rem;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg-white);cursor:pointer;font-size:.88rem;transition:all .2s;}
+.exercise-item .choices button:hover,.exercise-item .choices button:focus{border-color:var(--primary-light);background:var(--info-bg);outline:none;}
+.exercise-item .choices button.correct{border-color:var(--success);background:var(--success-bg);font-weight:600;}
+.exercise-item .choices button.incorrect{border-color:var(--danger);background:var(--danger-bg);}
+.exercise-item .choices button:disabled{opacity:.75;cursor:default;}
+.feedback{margin-top:.65rem;padding:.65rem 1rem;border-radius:var(--radius);font-size:.92rem;display:none;}
+.feedback.show{display:block;}
+.feedback.correct-fb{background:var(--success-bg);border:1px solid var(--success);}
+.feedback.incorrect-fb{background:var(--danger-bg);border:1px solid var(--danger);}
+
+/* ---- KNOWLEDGE CHECK ---- */
+.kc-item{background:var(--bg-white);border:2px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1.25rem;}
+.kc-item h4{margin-top:0;color:var(--primary);}
+.kc-options label{display:block;padding:.45rem .65rem;margin:.25rem 0;border-radius:4px;cursor:pointer;transition:background .15s;}
+.kc-options label:hover{background:var(--code-bg);}
+.kc-options input[type="radio"]{margin-right:.5rem;}
+.kc-submit{margin-top:.75rem;padding:.5rem 1.5rem;background:var(--primary);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-size:.95rem;transition:background .2s;}
+.kc-submit:hover,.kc-submit:focus{background:var(--primary-light);outline:2px solid var(--accent);outline-offset:2px;}
+.kc-feedback{margin-top:.65rem;padding:.65rem 1rem;border-radius:var(--radius);font-size:.92rem;display:none;}
+
+/* ---- VISUAL DIAGRAM ---- */
+.diagram-container{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.25rem;margin:1.25rem 0;}
+.audience-card{border-radius:var(--radius);padding:1.25rem;border:2px solid;text-align:center;}
+.audience-card.tech{border-color:#2980b9;background:#ebf5fb;}
+.audience-card.exec{border-color:#8e44ad;background:#f4ecf7;}
+.audience-card.legal{border-color:#c0392b;background:#fdedec;}
+.audience-card .card-icon{font-size:2.5rem;margin-bottom:.5rem;}
+.audience-card h4{margin:.25rem 0 .5rem;font-size:1.1rem;}
+.audience-card ul{text-align:left;padding-left:1.25rem;font-size:.9rem;margin:.5rem 0;}
+
+/* ---- MISC ---- */
+.lo-box{background:var(--info-bg);border:1px solid var(--info);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1.5rem;}
+.lo-box h3{margin-top:0;color:var(--primary);}
+.lo-box ul{margin-bottom:0;}
+code{background:var(--code-bg);padding:.15rem .4rem;border-radius:3px;font-size:.9em;}
+.scroll-top{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--primary);color:#fff;border:none;width:42px;height:42px;border-radius:50%;font-size:1.3rem;cursor:pointer;box-shadow:var(--shadow);display:none;z-index:50;transition:background .2s;}
+.scroll-top:hover,.scroll-top:focus{background:var(--accent);outline:2px solid var(--primary);outline-offset:2px;}
+.section-num{display:inline-block;background:var(--accent);color:#fff;border-radius:50%;width:28px;height:28px;text-align:center;line-height:28px;font-size:.85rem;font-weight:700;margin-right:.5rem;}
+
+/* ---- PRINT ---- */
+@media print{.top-nav,.scroll-top{display:none!important;}.section{break-inside:avoid;}}
+@media(max-width:600px){.mod-header{padding:1.5rem 1rem 1.25rem;}.mod-header h1{font-size:1.5rem;}.section{padding:1.25rem;}.tab-btn{padding:.55rem .75rem;font-size:.85rem;}}
+</style>
+</head>
+<body>
+
+<!-- ====== TOP NAVIGATION ====== -->
+<nav class="top-nav" aria-label="Module section navigation">
+<div class="nav-inner">
+<span class="nav-title">14.2 – Forensic Report Anatomy</span>
+<a href="#scenario">Scenario</a>
+<a href="#audiences">Audiences</a>
+<a href="#ten-sections">10 Sections</a>
+<a href="#writing">Writing Findings</a>
+<a href="#visuals">Visual Elements</a>
+<a href="#standards">Standards</a>
+<a href="#mini-exercise">Mini-Exercise</a>
+<a href="#knowledge-check">Knowledge Check</a>
+</div>
+</nav>
+
+<div class="page-wrapper">
+
+<!-- ====== HEADER ====== -->
+<header class="mod-header">
+<div class="overline">Week 14 · Module 14.2</div>
+<h1>Anatomy of a Professional Forensic Report</h1>
+<p class="subtitle">From raw forensic findings to a polished, defensible report — learn the standard sections, audience-aware writing, and the line between fact, opinion, and speculation.</p>
+</header>
+
+<!-- ====== LEARNING OBJECTIVES ====== -->
+<div class="lo-box">
+<h3>Module 14.2 Learning Objectives</h3>
+<p>After completing this module you will be able to:</p>
+<ul>
+<li>Identify the three primary audiences for forensic reports and explain how each audience's needs shape report content and format.</li>
+<li>List and describe the purpose of each of the 10 standard forensic report sections.</li>
+<li>Distinguish fact from labeled expert opinion from unacceptable speculation in forensic writing.</li>
+<li>Properly document negative findings and inconclusive results.</li>
+<li>Apply visual-element best practices (timelines, annotated screenshots, tables) to strengthen report clarity.</li>
+<li>Map report-writing practices to NIST SP 800-86 and SWGDE guidelines.</li>
+</ul>
+<p><strong>CSLO Alignment:</strong> CSLO 3 — <em>Create a forensic analysis report that presents digital evidence findings in a format appropriate for both technical and non-technical audiences.</em></p>
+</div>
+
+<div class="callout callout-connect"><strong>Prerequisite Reading:</strong> This module builds directly on Module 14.1 – Documentation and Chain of Custody. Complete Module 14.1 before proceeding.</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 1 – SCENARIO CONTINUATION                            -->
+<!-- ============================================================ -->
+<section class="section" id="scenario">
+<h2><span class="section-num">1</span> Scenario Continuation — Meridian Financial</h2>
+
+<div class="callout callout-scenario">
+<strong>Meridian Financial Services — Three-Audience Directive</strong><br><br>
+Two weeks into the investigation you began documenting in Module 14.1, Meridian's outside counsel, Attorney Diane Holt, schedules a call with your team lead. She delivers a clear directive:<br><br>
+<em>"We need three versions of the final report. One for my litigation team — full technical detail, hash values, tool output, everything. A second executive summary for Meridian's Board of Directors — they need to understand the scope and business impact without drowning in hex dumps. And a third, court-ready version that I can attach to our motion — it must survive a Daubert challenge and clearly separate what you <strong>observed</strong> from what you <strong>concluded</strong>."</em><br><br>
+Your team lead turns to you: <strong>"Draft the master report first. We'll tailor the three deliverables from it. Make sure every section is airtight."</strong>
+</div>
+
+<p>Attorney Holt's request is not unusual. Real-world forensic examiners routinely produce reports for audiences with very different backgrounds, priorities, and reading habits. The rest of this module teaches you how to build that <strong>master report</strong> and adapt it for each audience.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 2 – REPORT AUDIENCES                                 -->
+<!-- ============================================================ -->
+<section class="section" id="audiences">
+<h2><span class="section-num">2</span> Report Audiences and Purpose</h2>
+
+<p>Every forensic report exists to communicate findings to someone who must <strong>make a decision</strong> — prosecute, remediate, terminate, litigate, or close the case. Mismatching your writing to the audience is one of the fastest ways to undermine your credibility.</p>
+
+<h3>Three Primary Audiences</h3>
+
+<div class="diagram-container" role="list" aria-label="Three audience types for forensic reports">
+<div class="audience-card tech" role="listitem">
+<div class="card-icon" aria-hidden="true">🔧</div>
+<h4>Technical Audience</h4>
+<p><strong>Who:</strong> IT staff, incident-response teams, peer examiners</p>
+<ul>
+<li>Expects full tool output, hash values, registry paths, log excerpts</li>
+<li>Comfortable with jargon and abbreviations</li>
+<li>Wants reproducible steps</li>
+<li>Typical length: 30–80+ pages</li>
+<li>Appendices may exceed the main body</li>
+</ul>
+</div>
+<div class="audience-card exec" role="listitem">
+<div class="card-icon" aria-hidden="true">📊</div>
+<h4>Executive / Management</h4>
+<p><strong>Who:</strong> C-suite, board members, HR directors</p>
+<ul>
+<li>Needs business-impact focus: What happened? How bad? What now?</li>
+<li>Minimal jargon — define any technical term used</li>
+<li>Prefers visual summaries: timelines, charts, tables</li>
+<li>Typical length: 3–8 pages plus an appendix reference</li>
+<li>Actionable recommendations are critical</li>
+</ul>
+</div>
+<div class="audience-card legal" role="listitem">
+<div class="card-icon" aria-hidden="true">⚖️</div>
+<h4>Legal / Court</h4>
+<p><strong>Who:</strong> Attorneys, judges, jury members</p>
+<ul>
+<li>Must clearly separate <strong>fact</strong> from <strong>expert opinion</strong></li>
+<li>Chain-of-custody documentation is paramount</li>
+<li>Language must withstand cross-examination (Daubert / Frye standards)</li>
+<li>Typical length: 15–40 pages, tightly structured</li>
+<li>Every conclusion must cite the supporting evidence</li>
+</ul>
+</div>
+</div>
+
+<h3>Detailed Audience Comparison</h3>
+<div class="resp-table">
+<table>
+<caption>Comparison of forensic report expectations across three audience types</caption>
+<thead>
+<tr><th>Dimension</th><th>Technical</th><th>Executive</th><th>Legal / Court</th></tr>
+</thead>
+<tbody>
+<tr><td class="label-cell">Primary Goal</td><td>Reproduce &amp; validate findings</td><td>Inform business decisions</td><td>Establish admissible evidence</td></tr>
+<tr><td class="label-cell">Jargon Level</td><td>High — assumed knowledge</td><td>Low — define all terms</td><td>Moderate — define then use consistently</td></tr>
+<tr><td class="label-cell">Detail Depth</td><td>Maximum (full tool output)</td><td>Summary with appendix pointers</td><td>Selective detail supporting each conclusion</td></tr>
+<tr><td class="label-cell">Visual Emphasis</td><td>Screenshots, hex views, log excerpts</td><td>Timelines, pie/bar charts, dashboards</td><td>Annotated screenshots, evidence photos, timelines</td></tr>
+<tr><td class="label-cell">Chain of Custody</td><td>Referenced</td><td>Mentioned briefly</td><td>Fully documented and attached</td></tr>
+<tr><td class="label-cell">Opinion Handling</td><td>Peer-level interpretation accepted</td><td>Conclusions stated plainly</td><td>Explicitly labeled; basis stated per Daubert</td></tr>
+<tr><td class="label-cell">Typical Format</td><td>Detailed narrative + appendices</td><td>Executive summary + recommendations</td><td>Structured affidavit or expert report</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout callout-tip"><strong>Practical Tip — The Master Report Strategy:</strong> Write the full technical report first. Then <em>derive</em> the executive summary and legal report from it. This ensures consistency and prevents contradictions between versions — a problem that opposing counsel will eagerly exploit.</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 3 – THE 10 STANDARD REPORT SECTIONS                  -->
+<!-- ============================================================ -->
+<section class="section" id="ten-sections">
+<h2><span class="section-num">3</span> The 10 Standard Report Sections</h2>
+
+<p>While formats vary by organization, the following 10 sections represent a widely accepted professional structure aligned with NIST SP 800-86 and SWGDE best practices. Click each section below to expand its purpose, content requirements, writing tips, and common mistakes.</p>
+
+<div class="accordion" id="reportAccordion">
+
+<!-- Section 1 -->
+<div class="accordion-item">
+<button class="accordion-btn" aria-expanded="false" aria-controls="rptPanel1" id="rptBtn1">
+<span>1. Title Page &amp; Report Identification</span><span class="arrow" aria-hidden="true">▼</span>
+</button>
+<div class="accordion-panel" id="rptPanel1" role="region" aria-labelledby="rptBtn1">
+<h4>Purpose</h4>
+<p>Provides immediate identification of the report, case, examiner, and organization. Establishes the document as an official work product.</p>
+<h4>Content Requirements</h4>
+<ul>
+<li>Case number / report number</li>
+<li>Report title (descriptive, not generic)</li>
+<li>Examiner name, title, and organization</li>
+<li>Date of report and date range of examination</li>
+<li>Classification or confidentiality marking</li>
+</ul>
+<h4>Writing Tips</h4>
+<ul>
+<li>Use a consistent naming convention: <code>RPT-2026-MFS-0042-v1.0</code></li>
+<li>Include version number — reports are often revised</li>
+</ul>
+<h4>Common Mistakes</h4>
+<ul>
+<li>Missing confidentiality marking — the report may be shared beyond the intended audience</li>
+<li>Using a vague title like "Forensic Report" instead of "Digital Forensic Examination Report — Meridian Financial Insider-Threat Investigation, Case MFS-2026-0042"</li>
+</ul>
+</div>
+</div>
+
+<!-- Section 2 -->
+<div class="accordion-item">
+<button class="accordion-btn" aria-expanded="false" aria-controls="rptPanel2" id="rptBtn2">
+<span>2. Table of Contents</span><span class="arrow" aria-hidden="true">▼</span>
+</button>
+<div class="accordion-panel" id="rptPanel2" role="region" aria-labelledby="rptBtn2">
+<h4>Purpose</h4>
+<p>Enables readers — especially attorneys and executives — to jump directly to the sections they need.</p>
+<h4>Content Requirements</h4>
+<ul>
+<li>All section headings with page numbers</li>
+<li>List of figures and tables (if the report exceeds ~15 pages)</li>
+<li>List of appendices</li>
+</ul>
+<h4>Writing Tips</h4>
+<ul>
+<li>Generate automatically from heading styles in your word processor to avoid page-number drift</li>
+<li>Update the TOC as the <em>last</em> step before finalizing</li>
+</ul>
+<h4>Common Mistakes</h4>
+<ul>
+<li>Stale page numbers after edits — always regenerate before submission</li>
+<li>Omitting appendices from the TOC</li>
+</ul>
+</div>
+</div>
+
+<!-- Section 3 -->
+<div class="accordion-item">
+<button class="accordion-btn" aria-expanded="false" aria-controls="rptPanel3" id="rptBtn3">
+<span>3. Executive Summary</span><span class="arrow" aria-hidden="true">▼</span>
+</button>
+<div class="accordion-panel" id="rptPanel3" role="region" aria-labelledby="rptBtn3">
+<h4>Purpose</h4>
+<p>Provides a high-level overview of the entire investigation for readers who may not read beyond this section. This is the most-read section of any forensic report.</p>
+<h4>Content Requirements</h4>
+<ul>
+<li>Brief background of the case (1–2 sentences)</li>
+<li>Scope of the examination</li>
+<li>Key findings (bulleted, plain language)</li>
+<li>Overall conclusion</li>
+<li>Critical recommendations (if applicable)</li>
+</ul>
+<h4>Writing Tips</h4>
+<ul>
+<li>Write this section <strong>last</strong>, after all analysis is complete</li>
+<li>Keep it to one page — two pages maximum</li>
+<li>Avoid jargon; a board member should understand every sentence</li>
+<li>Each key finding should be traceable to a detailed section later in the report</li>
+</ul>
+<h4>Common Mistakes</h4>
+<ul>
+<li>Including findings in the executive summary that are not supported in the body</li>
+<li>Writing it first and forgetting to update it as the investigation evolves</li>
+<li>Using technical acronyms without definition</li>
+</ul>
+</div>
+</div>
+
+<!-- Section 4 -->
+<div class="accordion-item">
+<button class="accordion-btn" aria-expanded="false" aria-controls="rptPanel4" id="rptBtn4">
+<span>4. Case Background &amp; Objectives</span><span class="arrow" aria-hidden="true">▼</span>
+</button>
+<div class="accordion-panel" id="rptPanel4" role="region" aria-labelledby="rptBtn4">
+<h4>Purpose</h4>
+<p>Sets the context: why the examination was requested, what questions it aims to answer, and the authority under which it was conducted.</p>
+<h4>Content Requirements</h4>
+<ul>
+<li>Who requested the examination and when</li>
+<li>Nature of the incident or allegation</li>
+<li>Specific questions or objectives to be addressed</li>
+<li>Legal authority (warrant, consent, corporate policy, etc.)</li>
+<li>Scope limitations agreed upon in advance</li>
+</ul>
+<h4>Writing Tips</h4>
+<ul>
+<li>State facts about the request — do not editorialize about the suspect's guilt</li>
+<li>Quote the authorization document or reference it by exhibit number</li>
+</ul>
+<h4>Common Mistakes</h4>
+<ul>
+<li>Assuming guilt in the background narrative ("the suspect stole…" vs. "the examiner was asked to determine whether…")</li>
+<li>Omitting scope limitations — this can be exploited on cross-examination</li>
+</ul>
+</div>
+</div>
+
+<!-- Section 5 -->
+<div class="accordion-item">
+<button class="accordion-btn" aria-expanded="false" aria-controls="rptPanel5" id="rptBtn5">
+<span>5. Evidence Description &amp; Chain of Custody</span><span class="arrow" aria-hidden="true">▼</span>
+</button>
+<div class="accordion-panel" id="rptPanel5" role="region" aria-labelledby="rptBtn5">
+<h4>Purpose</h4>
+<p>Documents every item of evidence received, its condition, and the unbroken chain of custody from seizure through analysis to storage.</p>
+<h4>Content Requirements</h4>
+<ul>
+<li>Evidence item number, description, make, model, serial number</li>
+<li>Condition upon receipt (sealed? damaged?)</li>
+<li>Acquisition hash values (MD5 and SHA-256 at minimum)</li>
+<li>Chain-of-custody log: who, when, where, why for every transfer</li>
+<li>Storage location and security measures</li>
+</ul>
+<h4>Writing Tips</h4>
+<ul>
+<li>Photograph evidence upon receipt and reference the photo exhibit</li>
+<li>Use a table format for multiple evidence items</li>
+<li>Record hash values at acquisition <em>and</em> at each subsequent access</li>
+</ul>
+<h4>Common Mistakes</h4>
+<ul>
+<li>Gaps in the chain-of-custody timeline — even a 30-minute gap can be challenged</li>
+<li>Recording only one hash algorithm; best practice is two independent algorithms</li>
+<li>Failing to note the condition of tamper-evident seals</li>
+</ul>
+</div>
+</div>
+
+<!-- Section 6 -->
+<div class="accordion-item">
+<button class="accordion-btn" aria-expanded="false" aria-controls="rptPanel6" id="rptBtn6">
+<span>6. Tools, Equipment &amp; Environment</span><span class="arrow" aria-hidden="true">▼</span>
+</button>
+<div class="accordion-panel" id="rptPanel6" role="region" aria-labelledby="rptBtn6">
+<h4>Purpose</h4>
+<p>Establishes the reliability and validity of the tools and methods used — a key element for admissibility under Daubert.</p>
+<h4>Content Requirements</h4>
+<ul>
+<li>Software tools: name, vendor, version, license number</li>
+<li>Hardware: write-blockers (make/model/firmware), forensic workstation specs</li>
+<li>Examination environment: standalone network, lab address</li>
+<li>Validation status of tools (date of last validation test)</li>
+</ul>
+<h4>Writing Tips</h4>
+<ul>
+<li>List tools in a table with version numbers — opposing counsel <em>will</em> check</li>
+<li>Note any tool limitations relevant to the case (e.g., "Autopsy 4.21 does not natively parse APFS encryption")</li>
+</ul>
+<h4>Common Mistakes</h4>
+<ul>
+<li>Omitting version numbers — "I used EnCase" is insufficient; "EnCase 22.4.0.88" is required</li>
+<li>Failing to mention write-blocker use — this invites challenges to evidence integrity</li>
+</ul>
+</div>
+</div>
+
+<!-- Section 7 -->
+<div class="accordion-item">
+<button class="accordion-btn" aria-expanded="false" aria-controls="rptPanel7" id="rptBtn7">
+<span>7. Analysis &amp; Findings</span><span class="arrow" aria-hidden="true">▼</span>
+</button>
+<div class="accordion-panel" id="rptPanel7" role="region" aria-labelledby="rptBtn7">
+<h4>Purpose</h4>
+<p>The core of the report. Presents what was examined, what was found (and <em>not</em> found), and the factual basis for each finding. This is typically the longest section.</p>
+<h4>Content Requirements</h4>
+<ul>
+<li>Organized by examination objective or evidence item</li>
+<li>Each finding includes: what was examined → what was observed → supporting artifact (with exhibit reference)</li>
+<li>Negative findings documented ("No evidence of X was found in Y")</li>
+<li>Timestamps with timezone notation (UTC preferred, local time noted)</li>
+<li>Hash values for key artifacts</li>
+</ul>
+<h4>Writing Tips</h4>
+<ul>
+<li>Use the <strong>Observation → Artifact → Interpretation</strong> pattern for each finding</li>
+<li>State facts in past tense: "The file <code>client_list.xlsx</code> was located in the Recycle Bin…"</li>
+<li>Cross-reference exhibits: "(See Exhibit E-14, Screenshot of Recycle Bin contents)"</li>
+<li>Address each objective from Section 4 — even if the answer is "no evidence found"</li>
+</ul>
+<h4>Common Mistakes</h4>
+<ul>
+<li>Mixing facts with conclusions — save interpretation for Section 8</li>
+<li>Omitting negative findings — silence is not the same as "not found"</li>
+<li>Timestamps without timezone — 14:32 means nothing without UTC offset</li>
+</ul>
+</div>
+</div>
+
+<!-- Section 8 -->
+<div class="accordion-item">
+<button class="accordion-btn" aria-expanded="false" aria-controls="rptPanel8" id="rptBtn8">
+<span>8. Conclusions &amp; Expert Opinions</span><span class="arrow" aria-hidden="true">▼</span>
+</button>
+<div class="accordion-panel" id="rptPanel8" role="region" aria-labelledby="rptBtn8">
+<h4>Purpose</h4>
+<p>Synthesizes the findings into answers to the investigation's questions. This is where the examiner, as an expert, may offer professional opinions — clearly labeled as such.</p>
+<h4>Content Requirements</h4>
+<ul>
+<li>Direct answers to each objective from Section 4</li>
+<li>Each conclusion tied to specific findings (with section/exhibit references)</li>
+<li>Expert opinions explicitly labeled: "Based on my training and experience, it is my professional opinion that…"</li>
+<li>Degree of certainty stated where appropriate</li>
+<li>Inconclusive results documented honestly</li>
+</ul>
+<h4>Writing Tips</h4>
+<ul>
+<li>Never overstate certainty — "consistent with" is different from "proves"</li>
+<li>If a question cannot be answered, explain <em>why</em> (data destroyed, encrypted, out of scope)</li>
+<li>Number conclusions to match numbered objectives for easy cross-reference</li>
+</ul>
+<h4>Common Mistakes</h4>
+<ul>
+<li>Stating opinions as facts without the "expert opinion" label</li>
+<li>Drawing conclusions not supported by the findings section</li>
+<li>Overstating certainty to please the client</li>
+</ul>
+</div>
+</div>
+
+<!-- Section 9 -->
+<div class="accordion-item">
+<button class="accordion-btn" aria-expanded="false" aria-controls="rptPanel9" id="rptBtn9">
+<span>9. Recommendations</span><span class="arrow" aria-hidden="true">▼</span>
+</button>
+<div class="accordion-panel" id="rptPanel9" role="region" aria-labelledby="rptBtn9">
+<h4>Purpose</h4>
+<p>Provides actionable guidance to the requesting party. Common in corporate/IR reports; may be omitted or minimized in law-enforcement reports where the examiner's role is strictly analytical.</p>
+<h4>Content Requirements</h4>
+<ul>
+<li>Remediation steps tied to specific findings</li>
+<li>Additional investigation suggestions (if scope was limited)</li>
+<li>Security-improvement recommendations</li>
+<li>Evidence-preservation advisories</li>
+</ul>
+<h4>Writing Tips</h4>
+<ul>
+<li>Prioritize recommendations (critical → high → medium)</li>
+<li>Keep recommendations objective — avoid product endorsements</li>
+<li>In legal contexts, consult with counsel before including recommendations</li>
+</ul>
+<h4>Common Mistakes</h4>
+<ul>
+<li>Recommending specific vendor products (appears biased)</li>
+<li>Including recommendations in a law-enforcement report where they are inappropriate</li>
+</ul>
+</div>
+</div>
+
+<!-- Section 10 -->
+<div class="accordion-item">
+<button class="accordion-btn" aria-expanded="false" aria-controls="rptPanel10" id="rptBtn10">
+<span>10. Appendices &amp; Exhibits</span><span class="arrow" aria-hidden="true">▼</span>
+</button>
+<div class="accordion-panel" id="rptPanel10" role="region" aria-labelledby="rptBtn10">
+<h4>Purpose</h4>
+<p>Contains supporting material that is essential for verification but would interrupt the narrative flow of the main report.</p>
+<h4>Content Requirements</h4>
+<ul>
+<li>Full chain-of-custody forms</li>
+<li>Complete tool output logs</li>
+<li>Full-size screenshots and photographs</li>
+<li>Hash-value verification logs</li>
+<li>Examiner CV / qualifications (for court reports)</li>
+<li>Glossary of technical terms</li>
+</ul>
+<h4>Writing Tips</h4>
+<ul>
+<li>Number exhibits sequentially: E-01, E-02, etc.</li>
+<li>Cross-reference every exhibit from the main body</li>
+<li>Include a glossary — even for technical audiences, it prevents misinterpretation</li>
+</ul>
+<h4>Common Mistakes</h4>
+<ul>
+<li>Appendices referenced in text but not actually attached</li>
+<li>Exhibits without labels or captions</li>
+<li>Including the examiner's CV in a corporate report where it is unnecessary</li>
+</ul>
+</div>
+</div>
+
+</div><!-- end accordion -->
+
+<div class="callout callout-info"><strong>Section Mapping:</strong> Not every report requires all 10 sections at full depth. A quick internal triage report might combine sections 3, 4, and 7 into a short memo. However, any report that may be used in legal proceedings should include all 10 sections.</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 4 – WRITING FORENSIC FINDINGS                        -->
+<!-- ============================================================ -->
+<section class="section" id="writing">
+<h2><span class="section-num">4</span> Writing Forensic Findings</h2>
+
+<h3>Fact vs. Opinion vs. Speculation</h3>
+<p>The single most important writing skill in digital forensics is knowing the difference between what you <strong>observed</strong>, what you <strong>concluded</strong> based on training and evidence, and what you <strong>guessed</strong>. Courts, opposing counsel, and cross-examiners will test this distinction relentlessly.</p>
+
+<div class="resp-table">
+<table>
+<caption>Fact, Opinion, and Speculation — Definitions, Examples, and Acceptability</caption>
+<thead>
+<tr><th style="width:16%">Category</th><th style="width:36%">Definition</th><th style="width:36%">Forensic Example</th><th style="width:12%">Acceptable?</th></tr>
+</thead>
+<tbody>
+<tr>
+<td class="label-cell" style="background:var(--success-bg);">Fact (Observation)</td>
+<td>A directly observable, verifiable data point. Reproducible by another examiner using the same tools and evidence.</td>
+<td>"The file <code>client_list.xlsx</code> (MD5: 7a3f…b2c1) was located in the Windows Recycle Bin (<code>$Recycle.Bin\S-1-5-21-…</code>) with a deletion timestamp of 2026-03-15T08:42:17Z."</td>
+<td style="color:var(--success);font-weight:700;">✔ Always</td>
+</tr>
+<tr>
+<td class="label-cell" style="background:var(--warning-bg);">Labeled Expert Opinion</td>
+<td>A professional interpretation or inference drawn from facts, the examiner's training, and accepted methodology. Must be explicitly labeled.</td>
+<td>"Based on my training and experience, the deletion timestamp and the proximity to the employee's resignation notice (submitted 2026-03-15T07:58Z) are consistent with intentional destruction of company data prior to departure."</td>
+<td style="color:var(--warning);font-weight:700;">✔ When labeled</td>
+</tr>
+<tr>
+<td class="label-cell" style="background:var(--danger-bg);">Speculation</td>
+<td>A guess or assumption not supported by the evidence or the examiner's expertise. Introduces bias and destroys credibility.</td>
+<td>"The employee obviously deleted the file to cover up the theft because they knew they were about to be caught."</td>
+<td style="color:var(--danger);font-weight:700;">✘ Never</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout callout-warn"><strong>The Daubert Test:</strong> Under the Daubert standard (and its state-level equivalents), expert opinion is admissible only if it is based on sufficient facts or data, is the product of reliable principles and methods, and the expert has reliably applied those principles to the facts. Speculation fails all three prongs.</div>
+
+<h3>Language Precision Matters</h3>
+<div class="resp-table">
+<table>
+<caption>Precise vs. imprecise forensic language examples</caption>
+<thead>
+<tr><th>Imprecise (Avoid)</th><th>Precise (Use)</th><th>Why It Matters</th></tr>
+</thead>
+<tbody>
+<tr><td>"The suspect deleted the file"</td><td>"The file was deleted from the user account associated with jsmith"</td><td>A user account is not the same as a person — someone else could have used the account</td></tr>
+<tr><td>"This proves the employee stole data"</td><td>"The evidence is consistent with unauthorized data exfiltration from the jsmith account"</td><td>"Proves" is almost never appropriate; "consistent with" acknowledges alternative explanations</td></tr>
+<tr><td>"The malware was installed on March 10"</td><td>"The file system metadata indicates a creation timestamp of 2026-03-10T14:22:08Z for the file <code>svchost32.exe</code>"</td><td>Metadata can be manipulated; state what the metadata <em>shows</em>, not what <em>happened</em></td></tr>
+<tr><td>"Nothing was found"</td><td>"No artifacts consistent with [specific activity] were identified within the examined data set"</td><td>Absence of evidence is not evidence of absence — scope your negative finding</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Presenting Negative Findings</h3>
+<p>A negative finding — the <em>absence</em> of expected evidence — is just as important as a positive one. Failing to document what you did <em>not</em> find leaves a gap that opposing counsel will fill with their own narrative.</p>
+
+<div class="callout callout-tip"><strong>Negative Finding Formula:</strong><br>
+"[Specific search action] was performed on [specific data source] using [specific tool/method]. No artifacts consistent with [specific activity] were identified within the scope of this examination."<br><br>
+<strong>Example:</strong> "A keyword search for the terms 'competitor,' 'offer letter,' and 'salary' was performed across the unallocated space of Evidence Item E-03 using Autopsy 4.21.0 (keyword search module). No matching artifacts were identified within the examined data set."</div>
+
+<h3>Handling Inconclusive Results</h3>
+<p>Sometimes the evidence simply does not support a definitive answer. An honest "inconclusive" finding is far more credible than a forced conclusion.</p>
+
+<div class="resp-table">
+<table>
+<caption>Documenting inconclusive results — structure and example</caption>
+<thead>
+<tr><th>Component</th><th>What to Write</th></tr>
+</thead>
+<tbody>
+<tr><td class="label-cell">State the objective</td><td>"Objective 3 asked whether the jsmith account accessed the M:\Confidential share after business hours."</td></tr>
+<tr><td class="label-cell">State what was examined</td><td>"Windows Security Event Logs (Event IDs 4624, 4663) on server SRV-FILE-01 were examined for the period 2026-02-01 through 2026-03-15."</td></tr>
+<tr><td class="label-cell">State the limitation</td><td>"Security Event Logs prior to 2026-02-28 had been overwritten due to a 30-day retention policy, limiting the available audit trail."</td></tr>
+<tr><td class="label-cell">State the result</td><td>"Within the available log data (2026-02-28 through 2026-03-15), two after-hours logon events for the jsmith account were identified. However, the incomplete log coverage prevents a definitive determination for the full period in question."</td></tr>
+<tr><td class="label-cell">Label as inconclusive</td><td>"This finding is therefore <strong>inconclusive</strong> with respect to the full date range specified in Objective 3."</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout callout-danger"><strong>Never Do This:</strong> Do not hide inconclusive results or omit them from the report. If discovered later — during deposition or cross-examination — the omission will damage your credibility far more than the inconclusive result itself.</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 5 – VISUAL ELEMENTS IN REPORTS                       -->
+<!-- ============================================================ -->
+<section class="section" id="visuals">
+<h2><span class="section-num">5</span> Visual Elements in Reports</h2>
+
+<p>Well-designed visuals transform dense forensic data into comprehensible evidence. They are especially critical for executive and legal audiences. However, visuals must be <strong>accurate, labeled, and referenced</strong> — a misleading chart is worse than no chart at all.</p>
+
+<!-- Tabs for visual element types -->
+<div class="tabs">
+<div class="tab-list" role="tablist" aria-label="Visual element types">
+<button class="tab-btn" role="tab" aria-selected="true" aria-controls="tabTimelines" id="tabBtnTimelines">Timelines</button>
+<button class="tab-btn" role="tab" aria-selected="false" aria-controls="tabScreenshots" id="tabBtnScreenshots">Screenshots</button>
+<button class="tab-btn" role="tab" aria-selected="false" aria-controls="tabTables" id="tabBtnTables">Tables</button>
+<button class="tab-btn" role="tab" aria-selected="false" aria-controls="tabDiagrams" id="tabBtnDiagrams">Diagrams</button>
+</div>
+
+<div class="tab-panel active" role="tabpanel" id="tabTimelines" aria-labelledby="tabBtnTimelines">
+<h4>Timelines</h4>
+<p><strong>Purpose:</strong> Show the chronological sequence of events. Timelines are the single most powerful visual in a forensic report because they turn scattered timestamps into a coherent story.</p>
+<h4>Best Practices</h4>
+<ul>
+<li>Use a consistent timezone (UTC recommended) and label it prominently</li>
+<li>Color-code event categories (e.g., blue = logon events, red = file deletions, green = email activity)</li>
+<li>Include a legend explaining all color codes and symbols</li>
+<li>Cite the source artifact for each timeline entry</li>
+<li>For legal reports, provide both the visual timeline and a supporting data table</li>
+</ul>
+<h4>Common Mistakes</h4>
+<ul>
+<li>Mixing timezones without notation</li>
+<li>Overcrowding — if more than ~20 events, break into multiple focused timelines</li>
+<li>Including events not supported by cited evidence</li>
+</ul>
+</div>
+
+<div class="tab-panel" role="tabpanel" id="tabScreenshots" aria-labelledby="tabBtnScreenshots">
+<h4>Annotated Screenshots</h4>
+<p><strong>Purpose:</strong> Provide visual proof of what the examiner observed on screen. Screenshots bridge the gap between raw data and human understanding.</p>
+<h4>Best Practices</h4>
+<ul>
+<li>Capture the <em>full</em> application window including title bar (shows tool name and context)</li>
+<li>Use annotation overlays (arrows, boxes, numbered callouts) to highlight key areas</li>
+<li>Add a descriptive caption: "Figure 7: Autopsy file listing showing deleted file <code>client_list.xlsx</code> in the Recycle Bin (highlighted in yellow)"</li>
+<li>Record the date/time the screenshot was taken in the caption or exhibit log</li>
+<li>Use lossless formats (PNG) — JPEG compression can introduce artifacts that raise questions</li>
+</ul>
+<h4>Common Mistakes</h4>
+<ul>
+<li>Screenshots without captions or exhibit numbers</li>
+<li>Cropping out context (tool name, path bar) that establishes authenticity</li>
+<li>Using red annotation on a red background — ensure high contrast for accessibility</li>
+</ul>
+</div>
+
+<div class="tab-panel" role="tabpanel" id="tabTables" aria-labelledby="tabBtnTables">
+<h4>Data Tables</h4>
+<p><strong>Purpose:</strong> Present structured data (hash values, file listings, log entries) in a scannable format. Tables are the workhorse of the technical report.</p>
+<h4>Best Practices</h4>
+<ul>
+<li>Include column headers that are descriptive: "File Name," "Full Path," "MD5 Hash," "Last Modified (UTC)"</li>
+<li>Sort logically (chronological, alphabetical, or by evidence item number)</li>
+<li>Highlight critical rows with subtle shading — not bright colors that reduce readability</li>
+<li>For large data sets, put the full table in an appendix and include a summary table in the body</li>
+</ul>
+<h4>Common Mistakes</h4>
+<ul>
+<li>Tables that span multiple pages without repeating the header row</li>
+<li>Truncating hash values — always show the full hash or clearly mark truncation</li>
+<li>Missing units or timezone labels on timestamp columns</li>
+</ul>
+</div>
+
+<div class="tab-panel" role="tabpanel" id="tabDiagrams" aria-labelledby="tabBtnDiagrams">
+<h4>Network &amp; Process Diagrams</h4>
+<p><strong>Purpose:</strong> Illustrate relationships, data flows, network topology, or attack paths that are difficult to convey in text alone.</p>
+<h4>Best Practices</h4>
+<ul>
+<li>Keep diagrams simple — focus on the elements relevant to the finding</li>
+<li>Label every node and connection</li>
+<li>Include a legend for any symbols or color coding</li>
+<li>Use standard notation where possible (e.g., standard network diagram icons)</li>
+<li>Provide a text description of the diagram for accessibility</li>
+</ul>
+<h4>Common Mistakes</h4>
+<ul>
+<li>Overly complex diagrams that obscure rather than clarify</li>
+<li>Using diagrams as decoration rather than evidence presentation</li>
+<li>No text alternative for screen-reader users</li>
+</ul>
+</div>
+</div><!-- end tabs -->
+
+<div class="callout callout-info"><strong>Accessibility Reminder:</strong> Every visual element in a forensic report should have a text equivalent — a caption, a supporting data table, or a descriptive paragraph. This is not only good accessibility practice; it also ensures that the report's meaning survives if visuals are stripped during legal filing.</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 6 – REPORT TEMPLATES AND STANDARDS                   -->
+<!-- ============================================================ -->
+<section class="section" id="standards">
+<h2><span class="section-num">6</span> Report Templates and Standards</h2>
+
+<p>Professional forensic reports are not written from scratch each time. Examiners work from organizational templates aligned with recognized standards. Two of the most widely referenced are:</p>
+
+<h3>NIST Special Publication 800-86</h3>
+<p><em>Guide to Integrating Forensic Techniques into Incident Response</em></p>
+<ul>
+<li>Section 7 provides guidance on reporting and recommends documenting: actions taken, findings, recommendations, and any deviations from standard procedure</li>
+<li>Emphasizes that reports should be written for the intended audience</li>
+<li>Recommends including enough detail for another examiner to reproduce the analysis</li>
+<li>Stresses the importance of documenting the chain of custody and tool validation</li>
+</ul>
+
+<h3>SWGDE (Scientific Working Group on Digital Evidence)</h3>
+<p><em>Best Practices for Computer Forensic Reports</em></p>
+<ul>
+<li>Provides a recommended report structure closely aligned with the 10 sections covered in this module</li>
+<li>Emphasizes that opinions must be clearly distinguished from facts</li>
+<li>Requires that the examiner's qualifications be documented</li>
+<li>Specifies that all tools must be identified by name, version, and validation status</li>
+<li>Recommends peer review of reports before submission</li>
+</ul>
+
+<h3>Other Relevant Standards</h3>
+<div class="resp-table">
+<table>
+<caption>Additional forensic reporting standards and guidelines</caption>
+<thead>
+<tr><th>Standard</th><th>Focus</th><th>Key Reporting Requirement</th></tr>
+</thead>
+<tbody>
+<tr><td class="label-cell">ISO/IEC 27037:2012</td><td>Digital evidence — identification, collection, acquisition, preservation</td><td>Documentation must be sufficient to allow an independent review</td></tr>
+<tr><td class="label-cell">ASTM E2916-19</td><td>Standard terminology for digital and multimedia evidence examination</td><td>Use standardized terminology to avoid ambiguity</td></tr>
+<tr><td class="label-cell">DoJ / FBI RCFL Guidelines</td><td>Federal forensic lab reporting</td><td>Structured report template with mandatory sections for court use</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout callout-connect"><strong>Final Project Connection:</strong> Your Final Practical Project (Weeks 16–17) requires you to produce a professional forensic report following the 10-section structure covered in this module. The grading rubric maps directly to these sections. Start building your report template now — Lab 13 this week gives you a practice run.</div>
+
+<div class="callout callout-tip"><strong>Peer Review:</strong> SWGDE and most forensic lab accreditation programs require peer review of reports before release. In Lab 13, you will practice this by reviewing a classmate's report draft. Treat peer review as a professional obligation, not a formality.</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 7 – MINI-EXERCISE                                    -->
+<!-- ============================================================ -->
+<section class="section" id="mini-exercise">
+<h2><span class="section-num">7</span> Mini-Exercise: Report Section Identification</h2>
+
+<p><strong>Directions:</strong> For each forensic writing sample below, identify <strong>(a)</strong> which of the 10 standard report sections it belongs to and <strong>(b)</strong> whether the writing is <em>appropriate</em>, a <em>labeled opinion</em>, or <em>unacceptable speculation</em>. Click your answer to receive immediate feedback. This exercise is <strong>ungraded</strong>.</p>
+
+<div id="exerciseContainer">
+
+<!-- Exercise 1 -->
+<div class="exercise-item" data-ex="1">
+<p><strong>Sample 1:</strong></p>
+<blockquote>"The forensic examination was conducted using EnCase Forensic v22.4.0.88 (OpenText, License #EF-2026-4471) and Autopsy 4.21.0 (open source). A Tableau T35689iu write-blocker (firmware v7.22) was used for all acquisitions. All tools were validated per lab SOP on 2026-01-15."</blockquote>
+<p><strong>(a) Which section?</strong></p>
+<div class="choices" data-correct="tools" role="group" aria-label="Section choices for Sample 1">
+<button data-val="exec-summary" onclick="checkExercise(this,'tools')">3. Executive Summary</button>
+<button data-val="tools" onclick="checkExercise(this,'tools')">6. Tools, Equipment &amp; Environment</button>
+<button data-val="analysis" onclick="checkExercise(this,'tools')">7. Analysis &amp; Findings</button>
+</div>
+<p><strong>(b) Writing quality?</strong></p>
+<div class="choices" data-correct="appropriate" role="group" aria-label="Writing quality choices for Sample 1">
+<button data-val="appropriate" onclick="checkExercise(this,'appropriate')">Appropriate (Fact)</button>
+<button data-val="opinion" onclick="checkExercise(this,'appropriate')">Labeled Opinion</button>
+<button data-val="speculation" onclick="checkExercise(this,'appropriate')">Unacceptable Speculation</button>
+</div>
+<div class="feedback" aria-live="polite"></div>
+</div>
+
+<!-- Exercise 2 -->
+<div class="exercise-item" data-ex="2">
+<p><strong>Sample 2:</strong></p>
+<blockquote>"The employee clearly panicked and tried to destroy all the evidence before leaving the building."</blockquote>
+<p><strong>(a) Which section?</strong></p>
+<div class="choices" role="group" aria-label="Section choices for Sample 2">
+<button onclick="checkExercise(this,'conclusions')">8. Conclusions &amp; Expert Opinions</button>
+<button onclick="checkExercise(this,'conclusions')">7. Analysis &amp; Findings</button>
+<button onclick="checkExercise(this,'conclusions')">4. Case Background</button>
+</div>
+<p><strong>(b) Writing quality?</strong></p>
+<div class="choices" role="group" aria-label="Writing quality choices for Sample 2">
+<button onclick="checkExercise(this,'speculation')">Appropriate (Fact)</button>
+<button onclick="checkExercise(this,'speculation')">Labeled Opinion</button>
+<button data-val="speculation" onclick="checkExercise(this,'speculation')">Unacceptable Speculation</button>
+</div>
+<div class="feedback" aria-live="polite"></div>
+</div>
+
+<!-- Exercise 3 -->
+<div class="exercise-item" data-ex="3">
+<p><strong>Sample 3:</strong></p>
+<blockquote>"A keyword search for 'salary,' 'competitor,' and 'offer' was performed across all allocated and unallocated space on Evidence Item E-03 using Autopsy 4.21.0. No matching artifacts were identified within the examined data set."</blockquote>
+<p><strong>(a) Which section?</strong></p>
+<div class="choices" role="group" aria-label="Section choices for Sample 3">
+<button onclick="checkExercise(this,'analysis')">7. Analysis &amp; Findings</button>
+<button onclick="checkExercise(this,'analysis')">8. Conclusions</button>
+<button onclick="checkExercise(this,'analysis')">3. Executive Summary</button>
+</div>
+<p><strong>(b) Writing quality?</strong></p>
+<div class="choices" role="group" aria-label="Writing quality choices for Sample 3">
+<button onclick="checkExercise(this,'appropriate')">Appropriate (Fact — Negative Finding)</button>
+<button onclick="checkExercise(this,'appropriate')">Labeled Opinion</button>
+<button onclick="checkExercise(this,'appropriate')">Unacceptable Speculation</button>
+</div>
+<div class="feedback" aria-live="polite"></div>
+</div>
+
+<!-- Exercise 4 -->
+<div class="exercise-item" data-ex="4">
+<p><strong>Sample 4:</strong></p>
+<blockquote>"Based on my training and 12 years of experience in digital forensics, the pattern of file deletions — concentrated within a 47-minute window immediately following the submission of the resignation notice — is consistent with intentional data destruction rather than routine file management."</blockquote>
+<p><strong>(a) Which section?</strong></p>
+<div class="choices" role="group" aria-label="Section choices for Sample 4">
+<button onclick="checkExercise(this,'conclusions')">8. Conclusions &amp; Expert Opinions</button>
+<button onclick="checkExercise(this,'conclusions')">7. Analysis &amp; Findings</button>
+<button onclick="checkExercise(this,'conclusions')">9. Recommendations</button>
+</div>
+<p><strong>(b) Writing quality?</strong></p>
+<div class="choices" role="group" aria-label="Writing quality choices for Sample 4">
+<button onclick="checkExercise(this,'opinion')">Appropriate (Fact)</button>
+<button onclick="checkExercise(this,'opinion')">Labeled Opinion</button>
+<button onclick="checkExercise(this,'opinion')">Unacceptable Speculation</button>
+</div>
+<div class="feedback" aria-live="polite"></div>
+</div>
+
+<!-- Exercise 5 -->
+<div class="exercise-item" data-ex="5">
+<p><strong>Sample 5:</strong></p>
+<blockquote>"The investigation identified unauthorized transfer of 2,847 client records to a personal cloud storage account. Immediate revocation of the jsmith account credentials is recommended. Additionally, Meridian should implement Data Loss Prevention (DLP) controls on all endpoints to prevent similar exfiltration in the future."</blockquote>
+<p><strong>(a) Which section?</strong></p>
+<div class="choices" role="group" aria-label="Section choices for Sample 5">
+<button onclick="checkExercise(this,'recommendations')">9. Recommendations</button>
+<button onclick="checkExercise(this,'recommendations')">3. Executive Summary</button>
+<button onclick="checkExercise(this,'recommendations')">8. Conclusions</button>
+</div>
+<p><strong>(b) Writing quality?</strong></p>
+<div class="choices" role="group" aria-label="Writing quality choices for Sample 5">
+<button onclick="checkExercise(this,'appropriate')">Appropriate</button>
+<button onclick="checkExercise(this,'appropriate')">Labeled Opinion</button>
+<button onclick="checkExercise(this,'appropriate')">Unacceptable Speculation</button>
+</div>
+<div class="feedback" aria-live="polite"></div>
+</div>
+
+<!-- Exercise 6 -->
+<div class="exercise-item" data-ex="6">
+<p><strong>Sample 6:</strong></p>
+<blockquote>"On 2026-03-20, Attorney Diane Holt of Whitfield &amp; Associates requested a forensic examination of one Dell Latitude 5540 laptop (S/N: JK7832XZ) assigned to employee John Smith (username: jsmith). The examination was authorized under Meridian Financial's Acceptable Use Policy, Section 4.2, and a signed consent form (Exhibit A-01)."</blockquote>
+<p><strong>(a) Which section?</strong></p>
+<div class="choices" role="group" aria-label="Section choices for Sample 6">
+<button onclick="checkExercise(this,'background')">4. Case Background &amp; Objectives</button>
+<button onclick="checkExercise(this,'background')">5. Evidence Description</button>
+<button onclick="checkExercise(this,'background')">1. Title Page</button>
+</div>
+<p><strong>(b) Writing quality?</strong></p>
+<div class="choices" role="group" aria-label="Writing quality choices for Sample 6">
+<button onclick="checkExercise(this,'appropriate')">Appropriate (Fact)</button>
+<button onclick="checkExercise(this,'appropriate')">Labeled Opinion</button>
+<button onclick="checkExercise(this,'appropriate')">Unacceptable Speculation</button>
+</div>
+<div class="feedback" aria-live="polite"></div>
+</div>
+
+<!-- Exercise 7 -->
+<div class="exercise-item" data-ex="7">
+<p><strong>Sample 7:</strong></p>
+<blockquote>"Evidence Item E-03: One Samsung 870 EVO 1TB SSD (S/N: S5Y1NX0T812345K), removed from Dell Latitude 5540. Received in sealed anti-static bag with tamper-evident seal #TES-20260320-007 (seal intact upon receipt). Acquisition hash — MD5: 4a8b…f3d2, SHA-256: 9c1e…7a4b."</blockquote>
+<p><strong>(a) Which section?</strong></p>
+<div class="choices" role="group" aria-label="Section choices for Sample 7">
+<button onclick="checkExercise(this,'evidence')">5. Evidence Description &amp; Chain of Custody</button>
+<button onclick="checkExercise(this,'evidence')">6. Tools, Equipment</button>
+<button onclick="checkExercise(this,'evidence')">10. Appendices</button>
+</div>
+<p><strong>(b) Writing quality?</strong></p>
+<div class="choices" role="group" aria-label="Writing quality choices for Sample 7">
+<button onclick="checkExercise(this,'appropriate')">Appropriate (Fact)</button>
+<button onclick="checkExercise(this,'appropriate')">Labeled Opinion</button>
+<button onclick="checkExercise(this,'appropriate')">Unacceptable Speculation</button>
+</div>
+<div class="feedback" aria-live="polite"></div>
+</div>
+
+<!-- Exercise 8 -->
+<div class="exercise-item" data-ex="8">
+<p><strong>Sample 8:</strong></p>
+<blockquote>"The USB device was probably used to steal the files since that's what employees usually do when they're about to quit."</blockquote>
+<p><strong>(a) Which section?</strong></p>
+<div class="choices" role="group" aria-label="Section choices for Sample 8">
+<button onclick="checkExercise(this,'conclusions')">8. Conclusions</button>
+<button onclick="checkExercise(this,'conclusions')">7. Analysis &amp; Findings</button>
+<button onclick="checkExercise(this,'conclusions')">9. Recommendations</button>
+</div>
+<p><strong>(b) Writing quality?</strong></p>
+<div class="choices" role="group" aria-label="Writing quality choices for Sample 8">
+<button onclick="checkExercise(this,'speculation')">Appropriate (Fact)</button>
+<button onclick="checkExercise(this,'speculation')">Labeled Opinion</button>
+<button onclick="checkExercise(this,'speculation')">Unacceptable Speculation</button>
+</div>
+<div class="feedback" aria-live="polite"></div>
+</div>
+
+</div><!-- end exerciseContainer -->
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 8 – KNOWLEDGE CHECK                                  -->
+<!-- ============================================================ -->
+<section class="section" id="knowledge-check">
+<h2><span class="section-num">8</span> Knowledge Check</h2>
+<p>Answer the following three questions to test your understanding of this module. This is <strong>ungraded</strong> — use it to identify areas to review before Lab 13.</p>
+
+<!-- KC Question 1 -->
+<div class="kc-item" id="kc1">
+<h4>Question 1 of 3</h4>
+<p>Attorney Holt asks you to prepare a report for Meridian's Board of Directors. Which of the following is the <strong>most important</strong> adaptation you should make compared to the full technical report?</p>
+<div class="kc-options">
+<label><input type="radio" name="kc1" value="a"> Include all hash values and registry paths so the board can verify your work.</label>
+<label><input type="radio" name="kc1" value="b"> Replace technical jargon with plain language and emphasize business impact and recommendations.</label>
+<label><input type="radio" name="kc1" value="c"> Remove the chain-of-custody section entirely since the board does not need it.</label>
+<label><input type="radio" name="kc1" value="d"> Add your personal opinion about the employee's character to provide context.</label>
+</div>
+<button class="kc-submit" onclick="checkKC('kc1','b')">Check Answer</button>
+<div class="kc-feedback" id="kc1-fb" aria-live="polite"></div>
+</div>
+
+<!-- KC Question 2 -->
+<div class="kc-item" id="kc2">
+<h4>Question 2 of 3</h4>
+<p>Which of the following statements is an example of a properly <strong>labeled expert opinion</strong>?</p>
+<div class="kc-options">
+<label><input type="radio" name="kc2" value="a"> "The file was deleted on 2026-03-15 at 08:42:17 UTC."</label>
+<label><input type="radio" name="kc2" value="b"> "The employee definitely deleted the file to hide evidence of wrongdoing."</label>
+<label><input type="radio" name="kc2" value="c"> "Based on my training and experience, the deletion pattern is consistent with intentional data destruction rather than routine file management."</label>
+<label><input type="radio" name="kc2" value="d"> "The file was probably deleted because the employee panicked."</label>
+</div>
+<button class="kc-submit" onclick="checkKC('kc2','c')">Check Answer</button>
+<div class="kc-feedback" id="kc2-fb" aria-live="polite"></div>
+</div>
+
+<!-- KC Question 3 -->
+<div class="kc-item" id="kc3">
+<h4>Question 3 of 3</h4>
+<p>You searched Evidence Item E-03 for files related to a competitor company but found nothing. What is the <strong>correct</strong> way to handle this in your report?</p>
+<div class="kc-options">
+<label><input type="radio" name="kc3" value="a"> Omit it from the report — there is nothing to report if nothing was found.</label>
+<label><input type="radio" name="kc3" value="b"> Write "Nothing was found" in the Analysis section.</label>
+<label><input type="radio" name="kc3" value="c"> Document the specific search performed, the tool used, the data source examined, and state that no matching artifacts were identified within the examined data set.</label>
+<label><input type="radio" name="kc3" value="d"> State that the employee is innocent of this allegation since no evidence was found.</label>
+</div>
+<button class="kc-submit" onclick="checkKC('kc3','c')">Check Answer</button>
+<div class="kc-feedback" id="kc3-fb" aria-live="polite"></div>
+</div>
+</section>
+
+<!-- ====== MODULE SUMMARY ====== -->
+<section class="section">
+<h2>Module 14.2 Summary</h2>
+<ul>
+<li><strong>Three audiences</strong> — technical, executive, and legal/court — each require different levels of detail, language, and emphasis.</li>
+<li>The <strong>10 standard report sections</strong> provide a comprehensive, defensible structure from title page through appendices.</li>
+<li><strong>Facts</strong> are directly observable and reproducible. <strong>Expert opinions</strong> must be explicitly labeled and grounded in training and methodology. <strong>Speculation</strong> is never acceptable.</li>
+<li><strong>Negative findings</strong> must be documented — silence is not the same as "not found."</li>
+<li><strong>Inconclusive results</strong> should be reported honestly, with an explanation of the limitation that prevented a definitive answer.</li>
+<li><strong>Visual elements</strong> — timelines, annotated screenshots, tables, and diagrams — strengthen comprehension but must be accurate, labeled, and accessible.</li>
+<li><strong>NIST SP 800-86</strong> and <strong>SWGDE</strong> provide the authoritative framework for professional forensic reporting.</li>
+</ul>
+<div class="callout callout-connect"><strong>Up Next:</strong> Module 14.3 covers Peer Review and Report Quality Assurance. In Lab 13, you will apply everything from this module by drafting a forensic report for the Meridian Financial scenario and participating in a peer-review exercise.</div>
+</section>
+
+</div><!-- end page-wrapper -->
+
+<!-- Scroll-to-top button -->
+<button class="scroll-top" id="scrollTopBtn" aria-label="Scroll to top" title="Scroll to top">↑</button>
+
+<!-- ====== JAVASCRIPT ====== -->
+<script>
+/* ---- Accordion ---- */
+document.querySelectorAll('.accordion-btn').forEach(function(btn){
+btn.addEventListener('click',function(){
+var expanded=this.getAttribute('aria-expanded')==='true';
+/* close all in same accordion */
+this.closest('.accordion').querySelectorAll('.accordion-btn').forEach(function(b){
+b.setAttribute('aria-expanded','false');
+document.getElementById(b.getAttribute('aria-controls')).classList.remove('open');
+});
+if(!expanded){
+this.setAttribute('aria-expanded','true');
+document.getElementById(this.getAttribute('aria-controls')).classList.add('open');
+}
+});
+});
+
+/* ---- Tabs ---- */
+document.querySelectorAll('.tab-list').forEach(function(tabList){
+var btns=tabList.querySelectorAll('.tab-btn');
+var panels=tabList.parentElement.querySelectorAll('.tab-panel');
+btns.forEach(function(btn,i){
+btn.addEventListener('click',function(){
+btns.forEach(function(b){b.setAttribute('aria-selected','false');});
+panels.forEach(function(p){p.classList.remove('active');});
+btn.setAttribute('aria-selected','true');
+panels[i].classList.add('active');
+});
+btn.addEventListener('keydown',function(e){
+var idx=Array.prototype.indexOf.call(btns,btn);
+if(e.key==='ArrowRight'||e.key==='ArrowLeft'){
+e.preventDefault();
+var next=e.key==='ArrowRight'?(idx+1)%btns.length:(idx-1+btns.length)%btns.length;
+btns[next].click();
+btns[next].focus();
+}
+});
+});
+});
+
+/* ---- Mini-Exercise Feedback ---- */
+var exerciseFeedback={
+'1':{
+'tools':'Correct! This passage lists specific tools, versions, license numbers, and validation — classic Section 6 content.',
+'tools_wrong':'Not quite. This passage lists specific tools with version numbers and validation dates — that belongs in Section 6: Tools, Equipment & Environment.',
+'appropriate':'Correct! Every statement is a verifiable fact — tool names, version numbers, license numbers, and a validation date.',
+'appropriate_wrong':'Not quite. This passage contains only verifiable facts (tool names, versions, dates). It is appropriate factual writing.'
+},
+'2':{
+'conclusions':'This writing might be <em>attempted</em> in a conclusions section, but the real problem is the writing quality — see below.',
+'conclusions_wrong':'This writing style is problematic regardless of section. It reads like a conclusion attempt, but the language is unacceptable.',
+'speculation':'Correct! "Clearly panicked" and "tried to destroy all the evidence" are assumptions about the employee\'s mental state and intent — classic unacceptable speculation. A proper version would state observed facts and, if warranted, a labeled expert opinion about what the evidence is consistent with.',
+'speculation_wrong':'This is unacceptable speculation. Words like "clearly panicked" and "tried to destroy all the evidence" assume the employee\'s mental state and intent without evidence.'
+},
+'3':{
+'analysis':'Correct! This is a well-documented negative finding in the Analysis & Findings section — it states the search performed, the tool used, the scope, and the result.',
+'analysis_wrong':'This belongs in Section 7: Analysis & Findings. It documents a specific search action and its (negative) result.',
+'appropriate':'Correct! This is a properly documented negative finding — specific search terms, specific tool, specific data source, and a scoped negative result.',
+'appropriate_wrong':'This is appropriate factual writing — a properly documented negative finding with specific search terms, tool, data source, and scoped result.'
+},
+'4':{
+'conclusions':'Correct! The phrase "Based on my training and 12 years of experience" explicitly labels this as an expert opinion, and it draws a conclusion about what the evidence pattern is "consistent with." This belongs in Section 8.',
+'conclusions_wrong':'This belongs in Section 8: Conclusions & Expert Opinions. The "Based on my training and experience" phrasing signals a labeled expert opinion.',
+'opinion':'Correct! The examiner explicitly labels this as based on training and experience, states the factual basis (47-minute window, proximity to resignation), and uses "consistent with" rather than "proves." This is a textbook labeled expert opinion.',
+'opinion_wrong':'This is a labeled expert opinion. The examiner explicitly cites training and experience, states the factual basis, and uses measured language ("consistent with").'
+},
+'5':{
+'recommendations':'Correct! This passage contains actionable remediation steps (revoke credentials, implement DLP) tied to a finding — classic Section 9 content.',
+'recommendations_wrong':'This belongs in Section 9: Recommendations. It provides actionable remediation steps tied to specific findings.',
+'appropriate':'Correct! The recommendations are objective, specific, and tied to findings. They avoid product endorsements and are appropriately written.',
+'appropriate_wrong':'This is appropriate writing for a recommendations section — objective, specific, and tied to findings.'
+},
+'6':{
+'background':'Correct! This passage identifies who requested the examination, when, what device, and the legal authority — all hallmarks of Section 4.',
+'background_wrong':'This belongs in Section 4: Case Background & Objectives. It identifies the requestor, date, evidence item, and legal authority.',
+'appropriate':'Correct! Every element is a verifiable fact — names, dates, device details, and policy references.',
+'appropriate_wrong':'This is appropriate factual writing — verifiable names, dates, device details, and policy references.'
+},
+'7':{
+'evidence':'Correct! This passage documents a specific evidence item with make, model, serial number, condition of seal, and acquisition hash values — Section 5 content.',
+'evidence_wrong':'This belongs in Section 5: Evidence Description & Chain of Custody. It documents a specific evidence item with identifiers, condition, and hash values.',
+'appropriate':'Correct! All statements are verifiable facts about the evidence item — serial number, seal condition, hash values.',
+'appropriate_wrong':'This is appropriate factual writing — verifiable details about the evidence item including serial number, seal integrity, and hash values.'
+},
+'8':{
+'conclusions':'This writing might be attempted in a conclusions section, but the language is the real problem — see below.',
+'conclusions_wrong':'Regardless of which section this was intended for, the writing quality is the critical issue.',
+'speculation':'Correct! "Probably used to steal" is an unsupported assumption, and "that\'s what employees usually do" is a generalization with no evidentiary basis. This is textbook unacceptable speculation that would be demolished on cross-examination.',
+'speculation_wrong':'This is unacceptable speculation. "Probably" signals a guess, and "that\'s what employees usually do" is a baseless generalization.'
+}
+};
+
+function checkExercise(btn,correctVal){
+var choicesDiv=btn.parentElement;
+var buttons=choicesDiv.querySelectorAll('button');
+var exerciseItem=btn.closest('.exercise-item');
+var exNum=exerciseItem.getAttribute('data-ex');
+var feedbackDiv=exerciseItem.querySelector('.feedback');
+var isCorrect=(btn.getAttribute('data-val')===correctVal)||(btn.textContent.toLowerCase().indexOf(correctVal)>-1&&correctVal.length>3);
+
+/* Determine which choice group this is (section or quality) */
+var allChoiceGroups=exerciseItem.querySelectorAll('.choices');
+var groupIndex=Array.prototype.indexOf.call(allChoiceGroups,choicesDiv);
+
+/* Simple correctness check */
+var clickedVal=btn.getAttribute('data-val')||btn.textContent.trim().substring(0,20).toLowerCase();
+var matched=false;
+
+/* Check by data-val first */
+if(btn.getAttribute('data-val')===correctVal){matched=true;}
+/* Fallback: check if button text starts with correct answer mapping */
+var answerMap={
+'tools':'6. Tools','exec-summary':'3. Executive','analysis':'7. Analysis',
+'conclusions':'8. Conclusions','recommendations':'9. Recommend','background':'4. Case',
+'evidence':'5. Evidence','appropriate':'Appropriate','opinion':'Labeled','speculation':'Unacceptable'
+};
+if(!matched){
+var correctText=answerMap[correctVal]||correctVal;
+if(btn.textContent.indexOf(correctText)>-1){matched=true;}
+}
+
+buttons.forEach(function(b){
+b.disabled=true;
+var bMatched=false;
+if(b.getAttribute('data-val')===correctVal)bMatched=true;
+var ct=answerMap[correctVal]||correctVal;
+if(b.textContent.indexOf(ct)>-1)bMatched=true;
+if(bMatched)b.classList.add('correct');
+});
+if(!matched)btn.classList.add('incorrect');
+
+/* Build feedback */
+var fbKey=correctVal+(matched?'':'_wrong');
+var fbText=exerciseFeedback[exNum]&&exerciseFeedback[exNum][fbKey]?exerciseFeedback[exNum][fbKey]:(matched?'Correct!':'Not quite — review the correct answer highlighted above.');
+feedbackDiv.innerHTML=(matched?'<strong>✔ </strong>':'<strong>✘ </strong>')+fbText;
+feedbackDiv.className='feedback show '+(matched?'correct-fb':'incorrect-fb');
+}
+
+/* ---- Knowledge Check ---- */
+var kcFeedback={
+'kc1':{
+'b':{'correct':true,'text':'Correct! Executive audiences need plain language, business-impact focus, and actionable recommendations. Technical details belong in appendices they can reference if needed.'},
+'a':{'correct':false,'text':'Incorrect. Board members typically do not need hash values and registry paths. Those details belong in the technical version or an appendix. The key adaptation for executives is plain language and business-impact focus.'},
+'c':{'correct':false,'text':'Incorrect. While the chain-of-custody section may be abbreviated for an executive audience, removing it entirely is not appropriate — a brief mention establishes credibility. The most important adaptation is replacing jargon with plain language and emphasizing business impact.'},
+'d':{'correct':false,'text':'Incorrect. Personal opinions about character are never appropriate in any version of a forensic report. The most important adaptation for executives is plain language and business-impact focus.'}
+},
+'kc2':{
+'c':{'correct':true,'text':'Correct! This statement explicitly cites the examiner\'s training and experience, states the factual basis (deletion pattern), and uses measured language ("consistent with" rather than "proves"). This is a textbook labeled expert opinion that would satisfy Daubert requirements.'},
+'a':{'correct':false,'text':'Incorrect. Option A is a statement of fact (an observed timestamp), not an opinion. A labeled expert opinion requires the examiner to explicitly cite their expertise and draw an inference, as in option C.'},
+'b':{'correct':false,'text':'Incorrect. "Definitely deleted" and "to hide evidence of wrongdoing" are unsupported assertions about intent — this is speculation, not a labeled opinion. Option C properly labels the opinion and uses measured language.'},
+'d':{'correct':false,'text':'Incorrect. "Probably" signals a guess, and attributing panic to the employee is speculation about mental state. Option C properly labels the opinion with "Based on my training and experience" and uses "consistent with."'}
+},
+'kc3':{
+'c':{'correct':true,'text':'Correct! A proper negative finding documents the specific search performed, the tool used, the data source examined, and states that no matching artifacts were identified within the examined data set. This scopes the negative finding and prevents misinterpretation.'},
+'a':{'correct':false,'text':'Incorrect. Omitting a negative finding leaves a gap that opposing counsel can exploit. If you searched for something and didn\'t find it, that result must be documented with the specific search method, tool, and scope.'},
+'b':{'correct':false,'text':'Incorrect. "Nothing was found" is too vague — it doesn\'t specify what was searched for, what tool was used, or what data source was examined. A proper negative finding is specific and scoped.'},
+'d':{'correct':false,'text':'Incorrect. Absence of evidence is not evidence of absence, and declaring innocence is far beyond an examiner\'s role. The correct approach is to document the specific search and its null result without drawing conclusions about guilt or innocence.'}
+}
+};
+
+function checkKC(qId,correctVal){
+var container=document.getElementById(qId);
+var selected=container.querySelector('input[name="'+qId+'"]:checked');
+var fbDiv=document.getElementById(qId+'-fb');
+if(!selected){
+fbDiv.innerHTML='<strong>Please select an answer before checking.</strong>';
+fbDiv.style.display='block';
+fbDiv.style.background=kcFeedback[qId]?'var(--warning-bg)':'var(--warning-bg)';
+fbDiv.style.border='1px solid var(--warning)';
+return;
+}
+var val=selected.value;
+var fb=kcFeedback[qId]&&kcFeedback[qId][val]?kcFeedback[qId][val]:{correct:false,text:'Incorrect. The correct answer is option '+correctVal.toUpperCase()+'.'};
+fbDiv.innerHTML=(fb.correct?'<strong>✔ Correct!</strong> ':'<strong>✘ Incorrect.</strong> ')+fb.text;
+fbDiv.style.display='block';
+fbDiv.style.background=fb.correct?'var(--success-bg)':'var(--danger-bg)';
+fbDiv.style.border='1px solid '+(fb.correct?'var(--success)':'var(--danger)');
+/* Disable inputs after answering */
+container.querySelectorAll('input[type="radio"]').forEach(function(r){r.disabled=true;});
+container.querySelector('.kc-submit').disabled=true;
+}
+
+/* ---- Scroll to Top ---- */
+var scrollBtn=document.getElementById('scrollTopBtn');
+window.addEventListener('scroll',function(){
+scrollBtn.style.display=window.scrollY>400?'block':'none';
+});
+scrollBtn.addEventListener('click',function(){
+window.scrollTo({top:0,behavior:'smooth'});
+});
+
+/* ---- Smooth Scroll for Nav Links ---- */
+document.querySelectorAll('.top-nav a[href^="#"]').forEach(function(link){
+link.addEventListener('click',function(e){
+e.preventDefault();
+var target=document.querySelector(this.getAttribute('href'));
+if(target){
+target.scrollIntoView({behavior:'smooth',block:'start'});
+target.setAttribute('tabindex','-1');
+target.focus({preventScroll:true});
+}
+});
+});
+</script>
+</body>
+</html>

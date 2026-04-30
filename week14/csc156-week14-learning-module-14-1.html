@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 14.1 – Documentation Standards and the Reporting Imperative</title>
+<style>
+/* ============================================================
+   CSC 156 – WEEK 14  TEMPLATE ANCHOR
+   Design System: palette, typography, layout, components
+   Modules 14.2–14.4 inherit this template.
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1b2a4a;--navy-lt:#253760;--blue:#2d6090;--blue-lt:#3b7dba;
+  --teal:#1a8a7d;--teal-lt:#24baa8;--gold:#d49a2a;--gold-lt:#f0ba40;
+  --red:#c0392b;--green:#27ae60;
+  --bg:#f4f5f9;--surface:#fff;--border:#cfd4dc;
+  --txt:#1e2939;--txt-m:#525f72;--txt-inv:#fff;
+  --sans:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --mono:'Consolas','Courier New',monospace;
+  --xs:.25rem;--sm:.5rem;--md:1rem;--lg:1.5rem;--xl:2rem;--xxl:3rem;
+  --nav-h:54px;--mw:960px;--rad:8px;--rad-s:4px;
+}
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--nav-h) + 18px)}
+body{font-family:var(--sans);font-size:1rem;line-height:1.65;color:var(--txt);background:var(--bg)}
+
+/* skip link */
+.skip{position:absolute;top:-200%;left:var(--md);background:var(--gold);color:var(--navy);
+  padding:var(--sm) var(--md);border-radius:var(--rad-s);font-weight:700;z-index:1100;text-decoration:none}
+.skip:focus{top:var(--sm)}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:900;background:var(--navy);height:var(--nav-h);
+  display:flex;align-items:center;padding:0 var(--md);box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.nav ul{list-style:none;display:flex;flex-wrap:wrap;gap:var(--xs);max-width:var(--mw);margin:0 auto;width:100%}
+.nav a{color:var(--txt-inv);text-decoration:none;font-size:.8rem;font-weight:500;
+  padding:var(--xs) var(--sm);border-radius:var(--rad-s);transition:background .2s,outline .2s;white-space:nowrap}
+.nav a:hover,.nav a:focus{background:var(--blue);outline:2px solid var(--gold);outline-offset:2px}
+
+/* main */
+.main{max-width:var(--mw);margin:0 auto;padding:var(--xl) var(--md) var(--xxl)}
+
+/* module header */
+.mh{background:linear-gradient(135deg,var(--navy),var(--blue));color:var(--txt-inv);
+  border-radius:var(--rad);padding:var(--xl);margin-bottom:var(--xl)}
+.mh__eye{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gold-lt);margin-bottom:var(--xs)}
+.mh__t{font-size:1.55rem;font-weight:700;line-height:1.25;margin-bottom:var(--sm)}
+.mh__s{font-size:.93rem;opacity:.92;line-height:1.55}
+
+/* section / sub headings */
+.sh{font-size:1.3rem;font-weight:700;color:var(--navy);border-left:4px solid var(--gold);
+  padding-left:var(--md);margin:var(--xxl) 0 var(--md);scroll-margin-top:calc(var(--nav-h) + 18px)}
+.sub{font-size:1.08rem;font-weight:600;color:var(--blue);margin:var(--lg) 0 var(--sm)}
+
+/* callout boxes */
+.co{border-radius:var(--rad);padding:var(--md) var(--lg);margin:var(--lg) 0;border-left:5px solid}
+.co__l{font-weight:700;font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;
+  margin-bottom:var(--xs);display:flex;align-items:center;gap:var(--sm)}
+.co-sc{background:#e5f7f4;border-color:var(--teal)}.co-sc .co__l{color:#0b5a53}
+.co-cn{background:#e7eff8;border-color:var(--blue)}.co-cn .co__l{color:var(--blue)}
+.co-wr{background:#fdecea;border-color:var(--red)}.co-wr .co__l{color:var(--red)}
+.co-tp{background:#fef9e7;border-color:var(--gold)}.co-tp .co__l{color:#7b5c00}
+.co-ok{background:#e8f8ef;border-color:var(--green)}.co-ok .co__l{color:#1b6e3a}
+.co-cs{background:#eaecf2;border-color:var(--navy)}.co-cs .co__l{color:var(--navy)}
+
+/* scenario banner */
+.sb{background:linear-gradient(135deg,#0d4d44,var(--teal));color:var(--txt-inv);
+  border-radius:var(--rad);padding:var(--xl);margin-bottom:var(--xl)}
+.sb__t{font-size:1.1rem;font-weight:700;margin-bottom:var(--sm);display:flex;align-items:center;gap:var(--sm)}
+.sb__b{font-size:.93rem;line-height:1.65;opacity:.95}
+.sb__b p+p{margin-top:var(--sm)}
+.sb code{background:rgba(0,0,0,.28);color:var(--txt-inv)}
+
+/* timeline */
+.tl-w{overflow-x:auto;margin:var(--lg) 0;padding-bottom:var(--sm);-webkit-overflow-scrolling:touch}
+.tl{display:flex;align-items:flex-start;min-width:860px;padding:var(--md) 0;position:relative}
+.tl::before{content:'';position:absolute;top:36px;left:28px;right:28px;height:4px;background:var(--border);border-radius:2px;z-index:0}
+.tl__i{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1;min-width:72px}
+.tl__d{width:18px;height:18px;border-radius:50%;background:var(--blue-lt);border:3px solid var(--surface);
+  box-shadow:0 0 0 2px var(--blue-lt);margin-bottom:var(--sm)}
+.tl__i--now .tl__d{background:var(--gold);box-shadow:0 0 0 3px var(--gold),0 0 14px rgba(212,152,42,.5);width:26px;height:26px}
+.tl__i--fut .tl__d{background:var(--border);box-shadow:0 0 0 2px var(--border)}
+.tl__l{font-size:.68rem;font-weight:600;color:var(--txt-m);text-align:center;line-height:1.3}
+.tl__i--now .tl__l{color:var(--gold);font-weight:700;font-size:.73rem}
+.tl__desc{font-size:.6rem;color:var(--txt-m);text-align:center;margin-top:2px;max-width:88px}
+.tl__i--now .tl__desc{color:var(--navy);font-weight:600}
+
+/* accordion */
+.acc{margin:var(--md) 0}
+.acc__i{border:1px solid var(--border);border-radius:var(--rad);margin-bottom:var(--sm);background:var(--surface);overflow:hidden}
+.acc__b{width:100%;background:var(--surface);border:none;padding:var(--md) var(--lg);font-size:.93rem;
+  font-weight:600;color:var(--navy);text-align:left;cursor:pointer;display:flex;justify-content:space-between;
+  align-items:center;transition:background .2s;font-family:inherit;line-height:1.4}
+.acc__b:hover,.acc__b:focus{background:#eaecf2;outline:2px solid var(--blue);outline-offset:-2px}
+.acc__b::after{content:'+';font-size:1.2rem;font-weight:700;color:var(--blue);flex-shrink:0;margin-left:var(--sm)}
+.acc__b[aria-expanded="true"]::after{content:'\2212'}
+.acc__p{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.acc__in{padding:0 var(--lg) var(--lg);font-size:.91rem;line-height:1.65}
+.acc__in p+p{margin-top:var(--sm)}
+
+/* connection table rows */
+.ct{margin:var(--lg) 0}
+.ct__r{border:1px solid var(--border);border-radius:var(--rad);margin-bottom:var(--sm);background:var(--surface);overflow:hidden}
+.ct__h{width:100%;border:none;background:var(--surface);padding:var(--md) var(--lg);cursor:pointer;
+  display:flex;justify-content:space-between;align-items:center;font-size:.9rem;font-weight:600;
+  color:var(--navy);text-align:left;transition:background .2s;font-family:inherit;line-height:1.4}
+.ct__h:hover,.ct__h:focus{background:#e7eff8;outline:2px solid var(--blue);outline-offset:-2px}
+.badge{background:var(--blue);color:var(--txt-inv);padding:2px 10px;border-radius:12px;font-size:.75rem;
+  font-weight:600;margin-right:var(--sm);flex-shrink:0}
+.arr{transition:transform .25s;font-size:.8rem;color:var(--blue);flex-shrink:0;margin-left:var(--sm)}
+.ct__h[aria-expanded="true"] .arr{transform:rotate(90deg)}
+.ct__bd{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.ct__bd__in{padding:0 var(--lg) var(--lg);font-size:.89rem;line-height:1.6}
+.stag{display:inline-block;background:var(--gold-lt);color:var(--navy);font-size:.73rem;
+  font-weight:700;padding:2px 8px;border-radius:10px;margin-right:var(--xs)}
+
+/* knowledge check */
+.kc{border:2px solid var(--border);border-radius:var(--rad);background:var(--surface);
+  padding:var(--lg) var(--xl);margin-bottom:var(--lg)}
+.kc__n{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--blue);margin-bottom:var(--xs)}
+.kc__q{font-size:1rem;font-weight:600;color:var(--navy);margin-bottom:var(--md)}
+.kc__o{list-style:none}
+.kc__o li{margin-bottom:var(--sm)}
+.kc__ob{width:100%;text-align:left;background:#f4f5f9;border:2px solid var(--border);border-radius:var(--rad-s);
+  padding:var(--sm) var(--md);font-size:.9rem;cursor:pointer;transition:border-color .2s,background .2s;
+  color:var(--txt);font-family:inherit;line-height:1.5}
+.kc__ob:hover,.kc__ob:focus{border-color:var(--blue);background:#e7eff8;outline:none}
+.kc__ob:disabled{cursor:default;opacity:.85}
+.kc__ob.y{border-color:var(--green);background:#e8f8ef}
+.kc__ob.n{border-color:var(--red);background:#fdecea}
+.kc__fb{margin-top:var(--md);padding:var(--md);border-radius:var(--rad-s);font-size:.89rem;line-height:1.55;display:none}
+.kc__fb--y{background:#e8f8ef;border-left:4px solid var(--green);color:#1a5632}
+.kc__fb--n{background:#fdecea;border-left:4px solid var(--red);color:#7a1a1a}
+
+/* lists */
+.cl{margin:var(--sm) 0 var(--md) var(--xl);line-height:1.7}.cl li+li{margin-top:var(--xs)}
+code{background:#eef1f6;padding:1px 6px;border-radius:3px;font-family:var(--mono);font-size:.87em}
+.hl{color:var(--gold);font-weight:600}
+
+/* footer */
+.foot{margin-top:var(--xxl);padding-top:var(--lg);border-top:2px solid var(--border);
+  font-size:.82rem;color:var(--txt-m);text-align:center}
+
+@media(max-width:640px){
+  .mh{padding:var(--lg) var(--md)}.mh__t{font-size:1.25rem}
+  .sh{font-size:1.12rem}.nav a{font-size:.7rem;padding:2px 5px}
+  .kc{padding:var(--md)}.acc__in,.ct__bd__in{padding:0 var(--md) var(--md)}
+}
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip">Skip to main content</a>
+
+<!-- ======== NAV ======== -->
+<nav class="nav" aria-label="Module section navigation">
+<ul role="list">
+  <li><a href="#scenario">Scenario</a></li>
+  <li><a href="#imperative">Reporting Imperative</a></li>
+  <li><a href="#bus-test">Bus Test</a></li>
+  <li><a href="#doc-types">Doc Types</a></li>
+  <li><a href="#best-practices">Best Practices</a></li>
+  <li><a href="#lab-connect">Labs &rarr; Report</a></li>
+  <li><a href="#knowledge-check">Knowledge Check</a></li>
+</ul>
+</nav>
+
+<!-- ======== MAIN ======== -->
+<main id="main" class="main" role="main">
+
+<!-- Header -->
+<header class="mh">
+  <div class="mh__eye">CSC 156 &mdash; Week 14 &middot; Module 14.1</div>
+  <h1 class="mh__t">Documentation Standards and the Reporting Imperative</h1>
+  <p class="mh__s">Why your notes matter more than your tools. This module establishes that reporting is not an afterthought&mdash;it is the purpose of every forensic examination.</p>
+</header>
+
+<!-- CSLO -->
+<div class="co co-cs" role="note" aria-label="Course Student Learning Outcomes">
+  <p class="co__l">&#127919; CSLOs Addressed</p>
+  <ul class="cl">
+    <li><strong>CSLO 3 &ndash;</strong> Perform data collection using forensic technology methods in accordance with evidence handling procedures.</li>
+    <li><strong>CSLO 4 &ndash;</strong> Be able to generate reports which detail the approach and provide an audit trail that supports the integrity of the investigation process and any actions taken.</li>
+  </ul>
+</div>
+
+<div class="co co-tp" role="note">
+  <p class="co__l">&#128204; Week 14 Objectives Supported</p>
+  <ul class="cl">
+    <li><strong>Objective 1:</strong> Describe the essential components of a professional digital forensic report.</li>
+    <li><strong>Objective 5:</strong> Apply documentation best practices to maintain evidence integrity from acquisition through reporting.</li>
+  </ul>
+</div>
+
+<!-- ============================================================
+     SECTION 1 – SCENARIO
+     ============================================================ -->
+<section id="scenario" aria-labelledby="s1h">
+<h2 id="s1h" class="sh">1 &middot; Week 14 Scenario: The Meridian Financial Data Breach</h2>
+
+<div class="sb">
+  <div class="sb__t">&#128200; Scenario Hook &mdash; Meridian Financial Services</div>
+  <div class="sb__b">
+    <p>Meridian Financial Services&mdash;a mid-size investment firm managing portfolios for 12,000 clients&mdash;discovered unauthorized access to a production database server. The breach was detected on a Monday morning when the SIEM flagged anomalous outbound traffic at <code>2026-04-06T02:47:00Z</code>. The IT team immediately isolated the server, preserved a forensic image, and engaged your forensics unit.</p>
+    <p>Over the next three weeks your team executed a textbook investigation: write-blocked imaging and hash verification, NTFS file-system analysis and deleted-file recovery, Windows Registry and Event Log examination, memory acquisition and analysis, packet-capture review of the flagged traffic, and static/dynamic analysis of a suspicious executable found in a temp directory.</p>
+    <p>The technical picture is now clear. But the CISO, corporate counsel, an insurance carrier, and a state regulatory board are all waiting for <strong>one thing: your report</strong>. Without a defensible, well-structured document, three weeks of expert analysis might as well never have happened.</p>
+    <p>This scenario frames all four Week&nbsp;14 modules and scaffolds <strong>Lab&nbsp;13</strong>, where you will draft a formal forensic report for the Meridian breach.</p>
+  </div>
+</div>
+
+<div class="co co-tp" role="note">
+  <p class="co__l">&#128197; Week 14 Roadmap</p>
+  <p>
+    <strong>Module 14.1</strong> (this page) &mdash; Documentation standards and the reporting imperative<br>
+    <strong>Module 14.2</strong> &mdash; Anatomy of a professional forensic report<br>
+    <strong>Module 14.3</strong> &mdash; Legal standards for expert testimony (Daubert, Frye, FRE&nbsp;702)<br>
+    <strong>Module 14.4</strong> &mdash; Courtroom testimony, QA, peer review, and report finalization<br>
+    <strong>Lab&nbsp;13</strong> &mdash; Forensic Report Writing (30&nbsp;pts, CSLO&nbsp;3)
+  </p>
+</div>
+</section>
+
+<!-- ============================================================
+     SECTION 2 – THE REPORTING IMPERATIVE
+     ============================================================ -->
+<section id="imperative" aria-labelledby="s2h">
+<h2 id="s2h" class="sh">2 &middot; The Reporting Imperative</h2>
+
+<p>A forensic examiner may execute a flawless acquisition, recover deleted artifacts, and reconstruct a precise timeline&mdash;but if those findings are never clearly communicated, the investigation effectively never happened. The <strong>reporting imperative</strong> is the professional principle that <em>documentation is the deliverable</em>, not a bureaucratic afterthought.</p>
+
+<div class="co co-cn" role="note">
+  <p class="co__l">&#128218; Key Concept &mdash; The Reporting Imperative</p>
+  <p>The reporting imperative states that the value of every forensic action is realized <strong>only</strong> through its documentation. Courts, regulators, executives, and peer examiners rely on written reports&mdash;not on the examiner's memory&mdash;to evaluate, reproduce, and act on forensic findings.</p>
+</div>
+
+<h3 class="sub">Why Reports Are the Final Deliverable</h3>
+<ul class="cl">
+  <li><strong>Legal admissibility:</strong> Courts require documented procedures, tool settings, and hash verifications before admitting digital evidence. Undocumented steps create gaps that opposing counsel will exploit under Daubert or Frye challenges (covered in Module&nbsp;14.3).</li>
+  <li><strong>Organizational decision-making:</strong> Executives and boards use forensic reports to decide on breach notifications, insurance claims, employee actions, and security investments.</li>
+  <li><strong>Regulatory compliance:</strong> Frameworks such as PCI-DSS, HIPAA, and state breach-notification laws mandate documented incident investigation records with specific retention periods.</li>
+  <li><strong>Professional accountability:</strong> A well-documented report protects the examiner by demonstrating that accepted methodologies were followed.</li>
+  <li><strong>Documentation as a continuous process:</strong> Reporting is not a "last step." It begins at the moment evidence is identified and continues through every phase of the investigation&mdash;a principle you first encountered in Week&nbsp;2.</li>
+</ul>
+
+<div class="co co-sc" role="note">
+  <p class="co__l">&#128200; Meridian Connection</p>
+  <p>The state regulatory board's first request will be: <em>"Provide your complete investigative report, including methodology, chain of custody records, and all supporting exhibits."</em> If the examiner's notes are incomplete or the methodology is undocumented, the entire engagement is at risk&mdash;regardless of how skilled the technical analysis was.</p>
+</div>
+
+<!-- Course-Arc Timeline -->
+<h3 class="sub">Course-Arc Timeline &mdash; How We Arrived Here</h3>
+<p>Every skill you have practiced since Week&nbsp;1 feeds into the report you will produce in Lab&nbsp;13. The timeline below shows how the course arc builds toward Week&nbsp;14 as the <span class="hl">reporting culmination</span>.</p>
+
+<div class="tl-w" role="figure" aria-label="Course arc timeline. Weeks 1 through 13 build technical skills. Week 14 is highlighted as the reporting culmination. Weeks 15 through 17 cover remaining topics and the final project.">
+<div class="tl">
+  <div class="tl__i"><div class="tl__d"></div><div class="tl__l">Wk 1</div><div class="tl__desc">Intro &amp; Ethics</div></div>
+  <div class="tl__i"><div class="tl__d"></div><div class="tl__l">Wk 2</div><div class="tl__desc">Investigation Process</div></div>
+  <div class="tl__i"><div class="tl__d"></div><div class="tl__l">Wk 3</div><div class="tl__desc">Legal &amp; Ethical</div></div>
+  <div class="tl__i"><div class="tl__d"></div><div class="tl__l">Wk 4</div><div class="tl__desc">Hardware &amp; Boot</div></div>
+  <div class="tl__i"><div class="tl__d"></div><div class="tl__l">Wk 5</div><div class="tl__desc">File Systems</div></div>
+  <div class="tl__i"><div class="tl__d"></div><div class="tl__l">Wk 6</div><div class="tl__desc">Acquisition</div></div>
+  <div class="tl__i"><div class="tl__d"></div><div class="tl__l">Wk 7</div><div class="tl__desc">Win Registry</div></div>
+  <div class="tl__i"><div class="tl__d"></div><div class="tl__l">Wk 8</div><div class="tl__desc">Win Events</div></div>
+  <div class="tl__i"><div class="tl__d"></div><div class="tl__l">Wk 9</div><div class="tl__desc">Linux Forensics</div></div>
+  <div class="tl__i"><div class="tl__d"></div><div class="tl__l">Wk 10</div><div class="tl__desc">Midterm Review</div></div>
+  <div class="tl__i"><div class="tl__d"></div><div class="tl__l">Wk 11</div><div class="tl__desc">Memory (RAM)</div></div>
+  <div class="tl__i"><div class="tl__d"></div><div class="tl__l">Wk 12</div><div class="tl__desc">Network</div></div>
+  <div class="tl__i"><div class="tl__d"></div><div class="tl__l">Wk 13</div><div class="tl__desc">Malware</div></div>
+  <div class="tl__i tl__i--now"><div class="tl__d"></div><div class="tl__l">Wk 14</div><div class="tl__desc">Reporting</div></div>
+  <div class="tl__i tl__i--fut"><div class="tl__d"></div><div class="tl__l">Wk 15</div><div class="tl__desc">Cloud &amp; DB</div></div>
+  <div class="tl__i tl__i--fut"><div class="tl__d"></div><div class="tl__l">Wk 16</div><div class="tl__desc">Email &amp; Anti-F</div></div>
+  <div class="tl__i tl__i--fut"><div class="tl__d"></div><div class="tl__l">Wk 17</div><div class="tl__desc">Final Project</div></div>
+</div>
+</div>
+
+<div class="co co-cn" role="note">
+  <p class="co__l">&#128218; Reading the Timeline</p>
+  <p><strong>Weeks&nbsp;1&ndash;3</strong> established legal, ethical, and procedural foundations. <strong>Weeks&nbsp;4&ndash;13</strong> built technical evidence-handling and analysis skills across storage media, operating systems, memory, networks, and malware. <strong>Week&nbsp;14</strong> (gold) is where those skills converge into the professional deliverable: the forensic report. <strong>Weeks&nbsp;15&ndash;17</strong> apply Week&nbsp;14 reporting standards to remaining topics and the final project.</p>
+</div>
+</section>
+
+<!-- ============================================================
+     SECTION 3 – THE "HIT BY A BUS" TEST
+     ============================================================ -->
+<section id="bus-test" aria-labelledby="s3h">
+<h2 id="s3h" class="sh">3 &middot; The "Hit by a Bus" Test</h2>
+
+<p>Forensic professionals use a vivid thought experiment to evaluate documentation quality: <em>If the original examiner were suddenly unavailable, could a comparably skilled examiner pick up the notes, repeat every step, and reach the same conclusions?</em> This is the <strong>"hit by a bus" test</strong>.</p>
+
+<div class="co co-cn" role="note">
+  <p class="co__l">&#128218; Key Concept &mdash; The "Hit by a Bus" Test</p>
+  <p>Documentation passes the test when it contains sufficient detail&mdash;tools, versions, commands, settings, hash values, timestamps, and reasoning&mdash;for an <strong>independent examiner to reproduce the entire analysis</strong> and <strong>verify the conclusions</strong> without ever consulting the original examiner.</p>
+</div>
+
+<h3 class="sub">Why Reproducibility Matters</h3>
+<ul class="cl">
+  <li><strong>Daubert / Frye challenges:</strong> Opposing counsel may challenge whether the examiner's methods are scientifically valid and reproducible. Documentation is the evidence that they are.</li>
+  <li><strong>Examiner turnover:</strong> Investigations can span months. Staff leave, retire, or are reassigned. Thorough notes ensure continuity.</li>
+  <li><strong>Peer review and QA:</strong> Many labs require a second examiner to verify conclusions before a report is released (Module&nbsp;14.4). This is impossible without detailed documentation.</li>
+  <li><strong>Long-term defensibility:</strong> Years after an investigation, the report may be the only remaining record. Memory fades; documentation does not.</li>
+</ul>
+
+<h3 class="sub">Applying the Test &mdash; A Practical Checklist</h3>
+<p>For every documented step, ask:</p>
+<ol class="cl">
+  <li>Is the <strong>exact tool and version</strong> recorded? (e.g., Autopsy&nbsp;4.21.0, FTK&nbsp;Imager&nbsp;4.7.1, Volatility&nbsp;3.2.0)</li>
+  <li>Are <strong>all parameters and settings</strong> noted? (hash algorithm, block size, write-blocker model, Volatility profile)</li>
+  <li>Are <strong>results captured</strong>&mdash;both expected and unexpected?</li>
+  <li>Are <strong>hash values</strong> recorded before and after each operation to prove integrity?</li>
+  <li>Are <strong>timestamps in UTC</strong> using ISO&nbsp;8601, with timezone offsets where relevant?</li>
+  <li>Is the <strong>reasoning</strong> behind analytical decisions explained, not just the actions?</li>
+</ol>
+
+<div class="co co-wr" role="note">
+  <p class="co__l">&#9888;&#65039; Fail vs. Pass &mdash; Side-by-Side</p>
+  <p><strong>&#10060; Fails:</strong> <em>"Ran Autopsy on the image. Found some suspicious files."</em></p>
+  <p><strong>&#9989; Passes:</strong> <em>"Opened case MF-2026-0042 in Autopsy&nbsp;4.21.0. Ingested E01 image <code>meridian-srv01.E01</code> (MD5:&nbsp;<code>a3f8&hellip;c712</code>, SHA-256:&nbsp;<code>9b21&hellip;e4f0</code>). Enabled ingest modules: Hash Lookup (NSRL&nbsp;v3.2), Keyword Search (terms: 'exfil', 'client_db', 'staging'), Recent Activity. Ingest completed at <code>2026-04-14T09:32:17Z</code> with 0&nbsp;errors. Keyword search returned 14&nbsp;hits for 'client_db' across 3&nbsp;files in <code>C:\Users\svc_backup\AppData\Local\Temp\</code>."</em></p>
+</div>
+
+<div class="co co-sc" role="note">
+  <p class="co__l">&#128200; Meridian Connection</p>
+  <p>Imagine the Meridian examiner documented only <em>"Checked Windows Event Logs&mdash;found suspicious logons."</em> When the regulatory board asks which Event IDs were queried, what time window was searched, and how "suspicious" was defined, the examiner has no defensible answer. The bus test would have caught this gap before submission.</p>
+</div>
+</section>
+
+<!-- ============================================================
+     SECTION 4 – TYPES OF FORENSIC DOCUMENTATION
+     ============================================================ -->
+<section id="doc-types" aria-labelledby="s4h">
+<h2 id="s4h" class="sh">4 &middot; Types of Forensic Documentation</h2>
+
+<p>Forensic documentation is not a single artifact&mdash;it is a <strong>taxonomy of complementary records</strong>, each serving a distinct purpose. Together they form the evidentiary backbone of any investigation. Expand each type below to explore its definition, purpose, and a concrete example from your prior labs.</p>
+
+<div class="acc" id="dtAcc">
+
+<!-- Contemporaneous Notes -->
+<div class="acc__i">
+<button class="acc__b" aria-expanded="false" aria-controls="dt1" id="dtb1"><span>&#128221; Contemporaneous Notes</span></button>
+<div class="acc__p" id="dt1" role="region" aria-labelledby="dtb1"><div class="acc__in">
+  <p><strong>Definition:</strong> Handwritten or typed notes created <em>at the time</em> an action is performed&mdash;not reconstructed later from memory.</p>
+  <p><strong>Purpose:</strong> Provide a real-time, chronological log of every decision, observation, and result. They carry significant weight in court because they are recorded before outcomes are known, reducing confirmation bias risk.</p>
+  <p><strong>Key characteristics:</strong></p>
+  <ul class="cl">
+    <li>Timestamped entries in UTC (ISO&nbsp;8601)</li>
+    <li>Written in first person ("I connected the write-blocker&hellip;")</li>
+    <li>Errors and corrections noted honestly&mdash;never erased</li>
+    <li>Pages numbered; bound notebooks preferred for physical notes</li>
+    <li>Digital notes saved incrementally and hashed at end of session</li>
+  </ul>
+  <p><strong>Lab example &mdash; Lab&nbsp;2 (Chain of Custody):</strong> When you recorded the start time, write-blocker model, source/destination drives, and resulting hash values during the imaging exercise, those entries were contemporaneous notes.</p>
+</div></div>
+</div>
+
+<!-- Tool Output Logs -->
+<div class="acc__i">
+<button class="acc__b" aria-expanded="false" aria-controls="dt2" id="dtb2"><span>&#128424; Tool Output Logs</span></button>
+<div class="acc__p" id="dt2" role="region" aria-labelledby="dtb2"><div class="acc__in">
+  <p><strong>Definition:</strong> Machine-generated records produced by forensic tools&mdash;console output, export files, ingest logs, hash reports, keyword-hit summaries, and timeline databases.</p>
+  <p><strong>Purpose:</strong> Provide an objective, tamper-evident record of what the tool did and found. They corroborate the examiner's notes and can be independently verified.</p>
+  <ul class="cl">
+    <li>Preserved in original format (plain text, CSV, XML, HTML)</li>
+    <li>Hashed upon creation to prove integrity</li>
+    <li>Stored alongside the case file with consistent naming conventions</li>
+    <li>Referenced by filename and hash in the formal report</li>
+  </ul>
+  <p><strong>Lab example &mdash; Lab&nbsp;6 (Imaging &amp; Hashing):</strong> FTK&nbsp;Imager generated an imaging log recording source device details, destination path, block size, and computed MD5/SHA-1 hashes. That log is a tool output artifact.</p>
+</div></div>
+</div>
+
+<!-- Visual Documentation -->
+<div class="acc__i">
+<button class="acc__b" aria-expanded="false" aria-controls="dt3" id="dtb3"><span>&#128247; Visual Documentation</span></button>
+<div class="acc__p" id="dt3" role="region" aria-labelledby="dtb3"><div class="acc__in">
+  <p><strong>Definition:</strong> Screenshots, photographs, annotated diagrams, network topology maps, and timeline visualizations that capture evidence state or illustrate findings.</p>
+  <p><strong>Purpose:</strong> Make complex technical data accessible to non-technical audiences. A well-annotated screenshot can convey in seconds what paragraphs of text cannot.</p>
+  <ul class="cl">
+    <li>Annotated with figure numbers, captions, and timestamps</li>
+    <li>Full-screen captures preferred to show tool context</li>
+    <li>Stored in lossless formats (PNG)</li>
+    <li>Network diagrams and timeline charts illustrate event sequences</li>
+  </ul>
+  <p><strong>Lab example &mdash; Lab&nbsp;8 (Event Logs &amp; Prefetch):</strong> Screenshots of Event Viewer filtered to Security Event&nbsp;ID&nbsp;4624 entries, annotated to highlight the anomalous source IP and logon type, are visual documentation.</p>
+</div></div>
+</div>
+
+<!-- Chain of Custody -->
+<div class="acc__i">
+<button class="acc__b" aria-expanded="false" aria-controls="dt4" id="dtb4"><span>&#128279; Chain of Custody Records</span></button>
+<div class="acc__p" id="dt4" role="region" aria-labelledby="dtb4"><div class="acc__in">
+  <p><strong>Definition:</strong> A chronological log tracking every person who handled evidence, when, why, and what they did&mdash;from seizure through storage, analysis, and disposition.</p>
+  <p><strong>Purpose:</strong> Prove evidence was not tampered with, contaminated, or mishandled. A broken chain can render evidence inadmissible regardless of how compelling the findings are.</p>
+  <ul class="cl">
+    <li>Unique evidence identifier (e.g., <code>MF-2026-0042-HDD01</code>)</li>
+    <li>Date/time of each transfer in UTC</li>
+    <li>Name, role, and organization of each custodian</li>
+    <li>Purpose of transfer ("Released to Examiner&nbsp;B for registry analysis")</li>
+    <li>Signatures (physical or digital) at each handoff</li>
+    <li>Secure storage location documented between transfers</li>
+  </ul>
+  <p><strong>Lab example &mdash; Lab&nbsp;2 (Chain of Custody):</strong> You completed a chain of custody form documenting receipt of the evidence drive, imaging, verification, and return to secure storage.</p>
+</div></div>
+</div>
+
+<!-- Formal Reports -->
+<div class="acc__i">
+<button class="acc__b" aria-expanded="false" aria-controls="dt5" id="dtb5"><span>&#128196; Formal Forensic Reports</span></button>
+<div class="acc__p" id="dt5" role="region" aria-labelledby="dtb5"><div class="acc__in">
+  <p><strong>Definition:</strong> A structured, written document that synthesizes all other documentation types into a coherent narrative&mdash;presenting scope, methodology, findings, analysis, conclusions, and supporting exhibits.</p>
+  <p><strong>Purpose:</strong> Serve as the <strong>primary deliverable</strong> to stakeholders. The formal report is what people read; all other types are its supporting evidence.</p>
+  <ul class="cl">
+    <li>Follows a standardized structure (Module&nbsp;14.2 covers this in depth)</li>
+    <li>Written in objective, third-person language</li>
+    <li>Includes an executive summary for non-technical readers</li>
+    <li>References all supporting exhibits by number and hash</li>
+    <li>Version-controlled and digitally signed or certified</li>
+    <li>Aligns with NIST&nbsp;SP&nbsp;800-86 and SWGDE best practices</li>
+  </ul>
+  <p><strong>Lab example &mdash; Lab&nbsp;13 (this week):</strong> You will produce a formal forensic report for the Meridian Financial breach, drawing on concepts from all prior labs.</p>
+</div></div>
+</div>
+
+</div>
+
+<div class="co co-cn" role="note">
+  <p class="co__l">&#128218; How the Five Types Fit Together</p>
+  <p>Think of these types as layers of an evidentiary pyramid:</p>
+  <ul class="cl">
+    <li><strong>Base layer:</strong> Contemporaneous notes and tool output logs&mdash;the raw, real-time record.</li>
+    <li><strong>Context layer:</strong> Visual documentation and chain of custody records&mdash;providing integrity proof and accessibility.</li>
+    <li><strong>Synthesis layer:</strong> The formal report&mdash;weaving everything into a stakeholder-ready narrative.</li>
+  </ul>
+  <p>No single type is sufficient alone. A report without tool logs lacks verifiability. Tool logs without notes lack the examiner's reasoning. All are meaningless without an unbroken chain of custody.</p>
+</div>
+</section>
+
+<!-- ============================================================
+     SECTION 5 – DOCUMENTATION BEST PRACTICES
+     ============================================================ -->
+<section id="best-practices" aria-labelledby="s5h">
+<h2 id="s5h" class="sh">5 &middot; Documentation Best Practices</h2>
+
+<p>Regardless of documentation type, five cross-cutting best practices ensure your records are defensible, reproducible, and professional. These are the quality standards against which Lab&nbsp;13 will be evaluated.</p>
+
+<div class="acc" id="bpAcc">
+
+<!-- BP1 -->
+<div class="acc__i">
+<button class="acc__b" aria-expanded="false" aria-controls="bp1" id="bpb1"><span>1. Use Objective, Precise Language</span></button>
+<div class="acc__p" id="bp1" role="region" aria-labelledby="bpb1"><div class="acc__in">
+  <p>Forensic reports must be free of speculation, opinion, and emotional language. State what was <em>observed</em>, not what you <em>believe</em>.</p>
+  <p><strong>&#10060; Avoid:</strong> <em>"The hacker clearly stole the database."</em></p>
+  <p><strong>&#9989; Use:</strong> <em>"Analysis of the Windows Security Event Log revealed five successful logon events (Event&nbsp;ID&nbsp;4624, Logon&nbsp;Type&nbsp;10) from IP&nbsp;<code>198.51.100.14</code> between <code>2026-04-07T02:12:00Z</code> and <code>2026-04-07T02:47:00Z</code>. This IP does not appear in Meridian's authorized remote-access inventory (Exhibit&nbsp;C-3)."</em></p>
+  <p>The second version cites specific artifacts, identifiers, timestamps, and the basis for concern&mdash;without labeling anyone a "hacker" or asserting theft before the evidence supports it.</p>
+</div></div>
+</div>
+
+<!-- BP2 -->
+<div class="acc__i">
+<button class="acc__b" aria-expanded="false" aria-controls="bp2" id="bpb2"><span>2. Record All Timestamps in UTC (ISO 8601)</span></button>
+<div class="acc__p" id="bp2" role="region" aria-labelledby="bpb2"><div class="acc__in">
+  <p>Digital evidence often spans multiple time zones. UTC as the single reference eliminates ambiguity and simplifies timeline correlation.</p>
+  <ul class="cl">
+    <li>Use ISO&nbsp;8601: <code>2026-04-07T02:47:00Z</code></li>
+    <li>When local time is relevant, note both: <code>2026-04-06T22:47:00-04:00 (EDT) = 2026-04-07T02:47:00Z</code></li>
+    <li>Document the timezone configuration of each examined system</li>
+    <li>Note any clock skew discovered and how it was accounted for</li>
+  </ul>
+</div></div>
+</div>
+
+<!-- BP3 -->
+<div class="acc__i">
+<button class="acc__b" aria-expanded="false" aria-controls="bp3" id="bpb3"><span>3. Maintain Version Control</span></button>
+<div class="acc__p" id="bp3" role="region" aria-labelledby="bpb3"><div class="acc__in">
+  <p>Reports undergo revision as new evidence emerges or reviewers suggest corrections. Every version must be tracked.</p>
+  <ul class="cl">
+    <li>Include a version history table (version, date, author, change summary)</li>
+    <li>Embed version in filenames: <code>MF-2026-0042_Report_v1.2.pdf</code></li>
+    <li>Never overwrite a prior version&mdash;archive it</li>
+    <li>Hash each released version for integrity verification</li>
+    <li>Mark drafts with "DRAFT" watermarks to prevent premature distribution</li>
+  </ul>
+</div></div>
+</div>
+
+<!-- BP4 -->
+<div class="acc__i">
+<button class="acc__b" aria-expanded="false" aria-controls="bp4" id="bpb4"><span>4. Secure Storage and Access Control</span></button>
+<div class="acc__p" id="bp4" role="region" aria-labelledby="bpb4"><div class="acc__in">
+  <p>Forensic documentation often contains PII, credentials, and proprietary data. Protect it with the same rigor as the evidence itself.</p>
+  <ul class="cl">
+    <li>Store on encrypted, access-controlled systems</li>
+    <li>Limit access to authorized personnel (need-to-know)</li>
+    <li>Maintain an access log (who viewed/modified, when)</li>
+    <li>Follow data retention and destruction policies</li>
+    <li>Redact sensitive details in versions shared with broader audiences</li>
+  </ul>
+</div></div>
+</div>
+
+<!-- BP5 -->
+<div class="acc__i">
+<button class="acc__b" aria-expanded="false" aria-controls="bp5" id="bpb5"><span>5. Peer Review Before Release</span></button>
+<div class="acc__p" id="bp5" role="region" aria-labelledby="bpb5"><div class="acc__in">
+  <p>No report should be released without at least one independent review.</p>
+  <ul class="cl">
+    <li><strong>Technical review:</strong> A second qualified examiner verifies methodology, reproducibility, and supported conclusions (the bus test in action).</li>
+    <li><strong>Administrative review:</strong> Check grammar, formatting, exhibit numbering, and cross-references.</li>
+    <li><strong>Legal review:</strong> Counsel reviews for privilege issues, regulatory compliance, and language that could create unintended liability.</li>
+  </ul>
+  <p>Module&nbsp;14.4 covers peer review in depth, including a QA checklist you will use before submitting Lab&nbsp;13.</p>
+</div></div>
+</div>
+
+</div>
+
+<div class="co co-sc" role="note">
+  <p class="co__l">&#128200; Meridian Connection</p>
+  <p>The Meridian report will be reviewed by corporate counsel before submission to the regulatory board. If the examiner used subjective language (<em>"The attacker was obviously an insider"</em>), counsel would flag it immediately. If timestamps mixed local time and UTC without notation, the timeline would be unreliable. Applying all five practices from the start prevents costly revision cycles.</p>
+</div>
+</section>
+
+<!-- ============================================================
+     SECTION 6 – PRIOR LABS → REPORT
+     ============================================================ -->
+<section id="lab-connect" aria-labelledby="s6h">
+<h2 id="s6h" class="sh">6 &middot; Prior Labs &rarr; Report Sections</h2>
+
+<p>Your Lab&nbsp;13 report will not start from scratch&mdash;it draws on artifacts and skills from prior labs. <strong>Click any row</strong> to see how each lab maps to a formal report section.</p>
+
+<div class="co co-tp" role="note">
+  <p class="co__l">&#128161; Self-Assessment</p>
+  <p>As you expand each row, ask: <em>"Could I explain this lab's process and findings to someone who was not there?"</em> If not, revisit that lab's materials before starting Lab&nbsp;13. This is the bus test applied to your own learning.</p>
+</div>
+
+<div class="ct" id="ctWrap">
+
+<!-- Lab 2 -->
+<div class="ct__r">
+<button class="ct__h" aria-expanded="false" aria-controls="c2" id="cb2"><span><span class="badge">Lab 2</span> Chain of Custody Documentation</span><span class="arr" aria-hidden="true">&#9654;</span></button>
+<div class="ct__bd" id="c2" role="region" aria-labelledby="cb2"><div class="ct__bd__in">
+  <p><span class="stag">Report Section</span> Evidence Description &amp; Chain of Custody</p>
+  <p>Lab&nbsp;2 introduced the forensic investigation process and chain of custody procedures. In the Meridian report, this maps to the <strong>Evidence Description</strong> section where every item is cataloged with physical descriptions, serial numbers, hash values, and a reference to the chain of custody log (which appears as an appendix exhibit).</p>
+  <p><strong>Key artifacts:</strong> Chain of custody form, evidence intake photographs, initial hash verification records.</p>
+</div></div>
+</div>
+
+<!-- Lab 5 -->
+<div class="ct__r">
+<button class="ct__h" aria-expanded="false" aria-controls="c5" id="cb5"><span><span class="badge">Lab 5</span> File System Analysis &amp; Deleted File Recovery</span><span class="arr" aria-hidden="true">&#9654;</span></button>
+<div class="ct__bd" id="c5" role="region" aria-labelledby="cb5"><div class="ct__bd__in">
+  <p><span class="stag">Report Section</span> Findings &mdash; File System Evidence</p>
+  <p>Lab&nbsp;5 introduced NTFS/ext analysis and deleted-file recovery. Recovered files are documented in the <strong>Findings</strong> section with full paths, MFT entry numbers, hash values, MAC timestamps, and recovery method. Each artifact gets an exhibit number.</p>
+  <p><strong>Key artifacts:</strong> Autopsy case export, deleted-file inventory with hashes, MFT analysis output.</p>
+</div></div>
+</div>
+
+<!-- Lab 6 -->
+<div class="ct__r">
+<button class="ct__h" aria-expanded="false" aria-controls="c6" id="cb6"><span><span class="badge">Lab 6</span> Forensic Imaging &amp; Hash Verification</span><span class="arr" aria-hidden="true">&#9654;</span></button>
+<div class="ct__bd" id="c6" role="region" aria-labelledby="cb6"><div class="ct__bd__in">
+  <p><span class="stag">Report Section</span> Tools &amp; Methodology &mdash; Evidence Acquisition</p>
+  <p>Lab&nbsp;6 taught forensic imaging with FTK&nbsp;Imager and integrity verification. This maps to the <strong>Tools and Methodology</strong> section: imaging process, write-blocker model, source/destination details, block size, and matching hash values proving the image is a bit-for-bit copy.</p>
+  <p><strong>Key artifacts:</strong> FTK Imager log, E01 image metadata, pre/post-imaging hash comparison table.</p>
+</div></div>
+</div>
+
+<!-- Lab 7 -->
+<div class="ct__r">
+<button class="ct__h" aria-expanded="false" aria-controls="c7" id="cb7"><span><span class="badge">Lab 7</span> Windows Registry Analysis</span><span class="arr" aria-hidden="true">&#9654;</span></button>
+<div class="ct__bd" id="c7" role="region" aria-labelledby="cb7"><div class="ct__bd__in">
+  <p><span class="stag">Report Section</span> Findings &mdash; OS Artifact Analysis (Registry)</p>
+  <p>Lab&nbsp;7 used Registry Explorer and RegRipper to extract user activity, USB device history, and application execution artifacts. Registry findings document what programs were run, what devices were connected, and user account configurations&mdash;cited with specific key paths and last-write timestamps.</p>
+  <p><strong>Key artifacts:</strong> RegRipper plugin output, registry key path documentation, USB device history (USBSTOR), UserAssist decoded data.</p>
+</div></div>
+</div>
+
+<!-- Lab 8 -->
+<div class="ct__r">
+<button class="ct__h" aria-expanded="false" aria-controls="c8" id="cb8"><span><span class="badge">Lab 8</span> Windows Event Logs &amp; Prefetch</span><span class="arr" aria-hidden="true">&#9654;</span></button>
+<div class="ct__bd" id="c8" role="region" aria-labelledby="cb8"><div class="ct__bd__in">
+  <p><span class="stag">Report Section</span> Findings &mdash; Log Analysis &amp; Intrusion Evidence</p>
+  <p>Lab&nbsp;8 analyzed Security, System, and Application event logs plus Prefetch files. For Meridian, this documents unauthorized RDP sessions (Event&nbsp;ID&nbsp;4624, Type&nbsp;10), privilege escalation (4672), service installations (7045), and log clearing (1102) suggesting anti-forensic activity.</p>
+  <p><strong>Key artifacts:</strong> Filtered EVTX exports, Event&nbsp;ID correlation table, Prefetch listing with execution counts/timestamps, anomalous logon summary.</p>
+</div></div>
+</div>
+
+<!-- Lab 10 -->
+<div class="ct__r">
+<button class="ct__h" aria-expanded="false" aria-controls="c10" id="cb10"><span><span class="badge">Lab 10</span> Memory Acquisition &amp; Analysis</span><span class="arr" aria-hidden="true">&#9654;</span></button>
+<div class="ct__bd" id="c10" role="region" aria-labelledby="cb10"><div class="ct__bd__in">
+  <p><span class="stag">Report Section</span> Findings &mdash; Volatile Data Analysis</p>
+  <p>Lab&nbsp;10 used Volatility to analyze memory dumps&mdash;running processes, network connections, loaded DLLs, injected code. Memory findings reveal processes active during the breach, established connections to external IPs, and malicious code existing only in RAM.</p>
+  <p><strong>Key artifacts:</strong> Memory image metadata, Volatility plugin output (pslist, netscan, malfind), process tree visualization.</p>
+</div></div>
+</div>
+
+<!-- Lab 11 -->
+<div class="ct__r">
+<button class="ct__h" aria-expanded="false" aria-controls="c11" id="cb11"><span><span class="badge">Lab 11</span> Network Forensics &mdash; Packet Capture &amp; Logs</span><span class="arr" aria-hidden="true">&#9654;</span></button>
+<div class="ct__bd" id="c11" role="region" aria-labelledby="cb11"><div class="ct__bd__in">
+  <p><span class="stag">Report Section</span> Findings &mdash; Network Evidence &amp; Traffic Analysis</p>
+  <p>Lab&nbsp;11 used Wireshark and web server log analysis. The network section documents the anomalous outbound traffic the SIEM flagged&mdash;destination IPs, ports, protocols, data volumes, and timing correlated with host-based findings.</p>
+  <p><strong>Key artifacts:</strong> PCAP files (hashed), Wireshark filter expressions, flow summaries, protocol statistics, web server log excerpts.</p>
+</div></div>
+</div>
+
+<!-- Lab 12 -->
+<div class="ct__r">
+<button class="ct__h" aria-expanded="false" aria-controls="c12" id="cb12"><span><span class="badge">Lab 12</span> Static &amp; Dynamic Malware Analysis</span><span class="arr" aria-hidden="true">&#9654;</span></button>
+<div class="ct__bd" id="c12" role="region" aria-labelledby="cb12"><div class="ct__bd__in">
+  <p><span class="stag">Report Section</span> Findings &mdash; Malware Analysis &amp; IOCs</p>
+  <p>Lab&nbsp;12 performed static analysis (strings, PE headers, imports) and dynamic analysis (sandbox behavioral observation). Malware findings include the file's hash, detection name, behavioral indicators (files created, registry keys modified, network callbacks), and extracted IOCs shareable with threat intelligence teams.</p>
+  <p><strong>Key artifacts:</strong> Strings output, PE header analysis, sandbox behavioral report, IOC list (hashes, IPs, domains, file paths).</p>
+</div></div>
+</div>
+
+</div>
+
+<div class="co co-cn" role="note">
+  <p class="co__l">&#128218; The Evidence Thread</p>
+  <p>Notice how a single artifact&mdash;say, the suspicious executable on the Meridian server&mdash;threads through multiple labs and report sections: <strong>acquired</strong> (Lab&nbsp;6), <strong>recovered from the file system</strong> (Lab&nbsp;5), <strong>correlated with registry and event log artifacts</strong> (Labs&nbsp;7&ndash;8), <strong>observed in active memory</strong> (Lab&nbsp;10), <strong>seen communicating on the network</strong> (Lab&nbsp;11), and <strong>analyzed for malicious behavior</strong> (Lab&nbsp;12). The formal report weaves this thread into a coherent narrative. This tracing of evidence from acquisition through analysis to reporting is what the Week&nbsp;14 outline calls <em>"The Evidence Thread"</em> (Topic&nbsp;6).</p>
+</div>
+</section>
+
+<!-- ============================================================
+     SECTION 7 – KNOWLEDGE CHECK
+     ============================================================ -->
+<section id="knowledge-check" aria-labelledby="s7h">
+<h2 id="s7h" class="sh">7 &middot; Knowledge Check</h2>
+
+<p>Test your understanding of Module&nbsp;14.1 with three ungraded questions. Select an answer to receive immediate feedback. You may retry by reloading the page.</p>
+
+<!-- Q1 -->
+<div class="kc" id="q1">
+  <div class="kc__n">Question 1 of 3</div>
+  <p class="kc__q">Which principle states that the value of every forensic action is realized only through its documentation?</p>
+  <ul class="kc__o" role="list">
+    <li><button class="kc__ob" type="button" data-c="0" data-q="q1">A. The chain of custody principle</button></li>
+    <li><button class="kc__ob" type="button" data-c="1" data-q="q1">B. The reporting imperative</button></li>
+    <li><button class="kc__ob" type="button" data-c="0" data-q="q1">C. The Daubert standard</button></li>
+    <li><button class="kc__ob" type="button" data-c="0" data-q="q1">D. The best evidence rule</button></li>
+  </ul>
+  <div class="kc__fb kc__fb--y" id="q1y" role="alert">
+    <strong>&#9989; Correct!</strong> The reporting imperative is the principle that documentation is the deliverable&mdash;without it, forensic work has no practical value to courts, regulators, or organizations.
+  </div>
+  <div class="kc__fb kc__fb--n" id="q1n" role="alert">
+    <strong>&#10060; Not quite.</strong> The correct answer is <strong>B&mdash;The reporting imperative</strong>. Chain of custody tracks evidence handling; Daubert governs expert testimony admissibility; the best evidence rule prefers original documents. The reporting imperative specifically addresses the principle that all forensic value is realized through documentation.
+  </div>
+</div>
+
+<!-- Q2 -->
+<div class="kc" id="q2">
+  <div class="kc__n">Question 2 of 3</div>
+  <p class="kc__q">An examiner's notes state: <em>"Used Autopsy to look at the disk image. Found some suspicious files."</em> This documentation fails the "hit by a bus" test primarily because it lacks:</p>
+  <ul class="kc__o" role="list">
+    <li><button class="kc__ob" type="button" data-c="0" data-q="q2">A. A chain of custody form</button></li>
+    <li><button class="kc__ob" type="button" data-c="0" data-q="q2">B. An executive summary</button></li>
+    <li><button class="kc__ob" type="button" data-c="1" data-q="q2">C. Specific tool version, settings, file identifiers, and objective criteria for "suspicious"</button></li>
+    <li><button class="kc__ob" type="button" data-c="0" data-q="q2">D. A digital signature</button></li>
+  </ul>
+  <div class="kc__fb kc__fb--y" id="q2y" role="alert">
+    <strong>&#9989; Correct!</strong> The bus test requires enough detail for another examiner to reproduce the analysis. "Used Autopsy" omits the version, ingest modules, image hash, and specific findings. "Suspicious" is subjective without defined criteria.
+  </div>
+  <div class="kc__fb kc__fb--n" id="q2n" role="alert">
+    <strong>&#10060; Not quite.</strong> The correct answer is <strong>C</strong>. While chain of custody forms, executive summaries, and digital signatures are important, the primary failure here is lack of specificity&mdash;no tool version, no parameters, no file identifiers, and no objective definition of "suspicious." Without these, no one can reproduce the work.
+  </div>
+</div>
+
+<!-- Q3 -->
+<div class="kc" id="q3">
+  <div class="kc__n">Question 3 of 3</div>
+  <p class="kc__q">Which type of forensic documentation is created <em>at the time</em> an action is performed and carries significant weight in court because it is recorded before outcomes are known?</p>
+  <ul class="kc__o" role="list">
+    <li><button class="kc__ob" type="button" data-c="0" data-q="q3">A. Formal forensic report</button></li>
+    <li><button class="kc__ob" type="button" data-c="0" data-q="q3">B. Tool output logs</button></li>
+    <li><button class="kc__ob" type="button" data-c="1" data-q="q3">C. Contemporaneous notes</button></li>
+    <li><button class="kc__ob" type="button" data-c="0" data-q="q3">D. Visual documentation</button></li>
+  </ul>
+  <div class="kc__fb kc__fb--y" id="q3y" role="alert">
+    <strong>&#9989; Correct!</strong> Contemporaneous notes are created in real time as the examiner works. Because they are written before the outcome is known, they are considered highly credible evidence of the examiner's process and observations.
+  </div>
+  <div class="kc__fb kc__fb--n" id="q3n" role="alert">
+    <strong>&#10060; Not quite.</strong> The correct answer is <strong>C&mdash;Contemporaneous notes</strong>. Formal reports are written after analysis is complete. Tool output logs are machine-generated. Visual documentation supplements but does not replace the real-time, chronological record that contemporaneous notes provide.
+  </div>
+</div>
+
+</section>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer class="foot">
+  <p><strong>Up Next:</strong> Module 14.2 &mdash; Building the Report: Structure, Content, and Writing Standards for Professional Forensic Reports</p>
+  <p style="margin-top:var(--sm)">CSC 156 &ndash; Digital Forensics Fundamentals &middot; Week 14 &middot; Module 14.1<br>
+  Mendocino College &middot; Computer Science Department<br>
+  Content is for instructional purposes within this course.</p>
+</footer>
+
+</main>
+
+<!-- ============================================================
+     JAVASCRIPT – Accordions, Connection Table, Knowledge Check
+     ============================================================ -->
+<script>
+(function(){
+  'use strict';
+
+  /* ---- Accordion / Collapsible toggle ---- */
+  function initToggles(sel){
+    document.querySelectorAll(sel).forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var exp=btn.getAttribute('aria-expanded')==='true';
+        var pnl=document.getElementById(btn.getAttribute('aria-controls'));
+        if(!pnl)return;
+        if(exp){
+          btn.setAttribute('aria-expanded','false');
+          pnl.style.maxHeight=null;
+        }else{
+          btn.setAttribute('aria-expanded','true');
+          pnl.style.maxHeight=pnl.scrollHeight+'px';
+        }
+      });
+    });
+  }
+  initToggles('.acc__b');
+  initToggles('.ct__h');
+
+  /* ---- Knowledge Check ---- */
+  document.querySelectorAll('.kc__ob').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var qid=btn.getAttribute('data-q');
+      var card=document.getElementById(qid);
+      if(!card)return;
+      var all=card.querySelectorAll('.kc__ob');
+      all.forEach(function(b){b.disabled=true;b.classList.remove('y','n');});
+      var correct=btn.getAttribute('data-c')==='1';
+      var fbY=document.getElementById(qid+'y');
+      var fbN=document.getElementById(qid+'n');
+      if(correct){
+        btn.classList.add('y');
+        if(fbY)fbY.style.display='block';
+        if(fbN)fbN.style.display='none';
+      }else{
+        btn.classList.add('n');
+        all.forEach(function(b){if(b.getAttribute('data-c')==='1')b.classList.add('y');});
+        if(fbN)fbN.style.display='block';
+        if(fbY)fbY.style.display='none';
+      }
+    });
+  });
+
+})();
+</script>
+
+<!--
+=============================================================
+  ACCESSIBILITY AUDIT — Module 14.1 (Template Anchor)
+  Reviewed: 2026-04-29
+=============================================================
+
+KEYBOARD NAVIGATION
+  ✓ Skip-to-main link present and functional (focus reveals it).
+  ✓ Sticky nav links reachable via Tab; activated with Enter.
+  ✓ All accordion/connection-table buttons are <button> elements —
+    keyboard-activated natively (Enter/Space). Redundant keydown
+    handler removed in this pass.
+  ✓ Knowledge-check option buttons are <button> elements; tab order
+    follows DOM order (no positive tabindex).
+  ✓ Focus indicators visible on nav links (gold outline) and
+    accordion buttons (blue outline).
+  ✓ No keyboard traps identified.
+
+COLOR CONTRAST
+  ✓ Body text (#1e2939) on page background (#f4f5f9): ~12:1 — passes AA.
+  ✓ Nav links (#fff) on nav background (#1b2a4a): ~13:1 — passes AA.
+  ✓ Section heading (.sh) navy on page bg: passes AA.
+  ✓ Muted text (--txt-m: #525f72) on white surface and page bg:
+    ~5.5:1 — passes AA (darkened from #6b7280 in this pass).
+  ✓ Callout label text corrected in this pass:
+      co-tp label: #7b5c00 on #fef9e7 (~6.5:1) — passes AA.
+      co-sc label: #0b5a53 on #e5f7f4 (~5.8:1) — passes AA.
+      co-ok label: #1b6e3a on #e8f8ef (~5.4:1) — passes AA.
+      co-cn, co-wr, co-cs labels were already compliant.
+  ✓ Knowledge-check feedback panels use dark text on tinted
+    backgrounds with sufficient contrast.
+
+SCREEN-READER SEMANTICS
+  ✓ Single <h1> for page title; clean h2/h3 hierarchy, no skipped levels.
+  ✓ <main>, <nav aria-label>, <header>, <footer>, <section aria-labelledby>
+    landmarks all present and correctly nested.
+  ✓ Accordion panels: aria-expanded, aria-controls, role="region",
+    aria-labelledby wired correctly.
+  ✓ Knowledge-check feedback uses role="alert" — announced by screen
+    readers when toggled from display:none to display:block.
+  ✓ Timeline figure has role="figure" and a full aria-label describing
+    all items in text (no information conveyed by color alone).
+  ✓ CSLO callout has role="note" and aria-label.
+
+CANVAS / IFRAME CONSTRAINTS
+  ✓ No external resources, CDNs, or network requests.
+  ✓ No localStorage, sessionStorage, or cross-frame API usage.
+  ✓ scroll-padding-top on <html> and scroll-margin-top on .sh both set
+    to calc(var(--nav-h) + 18px) — belt-and-suspenders for sticky nav.
+  ✓ No window.top or parent-frame access.
+
+ITEMS FOR HUMAN REVIEW
+  ! Emoji in callout labels (e.g., 🎯 📌 📖 ⚠️) are read aloud by
+    screen readers using their Unicode description. They are decorative;
+    wrapping each in <span aria-hidden="true"> would suppress the
+    announcements. Deferred — low priority, but worth doing before
+    final accessibility audit.
+  ! Timeline is horizontal and scroll-hinted on mobile via overflow-x:auto.
+    Verify on a physical tablet/phone that the scroll affordance is clear;
+    consider adding a visible scroll-hint label for small viewports.
+  ! Knowledge-check questions lock after one attempt (by design).
+    Confirm with the instructor that the "reload to retry" behavior is
+    acceptable for the LMS context; no Canvas-specific state is stored.
+=============================================================
+-->
+</body>
+</html>

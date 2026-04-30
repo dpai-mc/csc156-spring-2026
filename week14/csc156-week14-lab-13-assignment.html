@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 13: Forensic Report Writing – CSC 156 Digital Forensics Fundamentals</title>
+<style>
+/* ============================================================
+   CSS RESET & BASE
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:1rem;line-height:1.6;color:#1a1a2e;
+  background:#f4f6fa;margin:0;padding:0;
+}
+/* ============================================================
+   SKIP LINK
+   ============================================================ */
+.skip-link{
+  position:absolute;top:-100%;left:0;
+  background:#0d3b66;color:#fff;padding:.6em 1.2em;
+  z-index:9999;font-weight:600;border-radius:0 0 4px 0;
+  text-decoration:none;
+}
+.skip-link:focus{top:0}
+/* ============================================================
+   TOP NAV BAR
+   ============================================================ */
+.topnav{
+  position:sticky;top:0;z-index:900;
+  background:#0d3b66;color:#fff;
+  display:flex;flex-wrap:wrap;align-items:center;
+  padding:.55rem 1.2rem;gap:.35rem .9rem;
+  box-shadow:0 2px 6px rgba(0,0,0,.25);
+}
+.topnav__title{font-weight:700;font-size:.95rem;margin-right:auto;white-space:nowrap}
+.topnav a{
+  color:#c9e4ff;font-size:.82rem;text-decoration:none;
+  padding:.25rem .45rem;border-radius:3px;white-space:nowrap;
+}
+.topnav a:hover,.topnav a:focus{background:rgba(255,255,255,.15);color:#fff;outline:2px solid #7ec8f8;outline-offset:1px}
+/* ============================================================
+   PAGE WRAPPER
+   ============================================================ */
+.page{max-width:960px;margin:0 auto;padding:1.4rem 1.2rem 3rem}
+/* ============================================================
+   HEADINGS
+   ============================================================ */
+h1{font-size:1.65rem;color:#0d3b66;margin-bottom:.2rem}
+.subtitle{font-size:1.02rem;color:#444;margin-bottom:1.3rem}
+h2.sh{
+  font-size:1.25rem;color:#0d3b66;
+  border-bottom:3px solid #f0a500;
+  padding-bottom:.3rem;margin:2rem 0 .8rem;
+}
+h3{font-size:1.05rem;color:#1a1a2e;margin:1.2rem 0 .5rem}
+/* ============================================================
+   CALLOUT BOXES
+   ============================================================ */
+.co{border-radius:6px;padding:1rem 1.1rem;margin:1rem 0}
+.co-info{background:#e8f0fe;border-left:4px solid #1a73e8}
+.co-warn{background:#fff8e1;border-left:4px solid #f0a500}
+.co-scen{background:#e6f4ea;border-left:4px solid #1e8e3e}
+.co-tp{background:#f3e8fd;border-left:4px solid #7c3aed}
+.co__l{font-weight:700;margin-bottom:.45rem}
+/* ============================================================
+   EVIDENCE TABLE
+   ============================================================ */
+.ev-tbl{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.88rem}
+.ev-tbl th{background:#0d3b66;color:#fff;text-align:left;padding:.55rem .65rem;font-weight:600}
+.ev-tbl td{padding:.5rem .65rem;border-bottom:1px solid #d0d7e2;vertical-align:top}
+.ev-tbl tr:nth-child(even){background:#f0f3f8}
+.ev-tbl caption{caption-side:top;text-align:left;font-weight:700;margin-bottom:.4rem;font-size:.92rem}
+/* ============================================================
+   TEXT AREAS & FORM ELEMENTS
+   ============================================================ */
+label.sec-label{
+  display:block;font-weight:700;font-size:1rem;
+  color:#0d3b66;margin:.9rem 0 .3rem;
+}
+.sec-hint{font-size:.85rem;color:#555;margin-bottom:.35rem;font-style:italic}
+textarea{
+  width:100%;min-height:140px;padding:.65rem;
+  font-family:inherit;font-size:.92rem;line-height:1.55;
+  border:1px solid #b0bec5;border-radius:5px;
+  resize:vertical;background:#fff;
+}
+textarea:focus{outline:2px solid #1a73e8;outline-offset:1px;border-color:#1a73e8}
+/* ============================================================
+   COLLAPSIBLE HINTS
+   ============================================================ */
+details{margin:.6rem 0;background:#fafbfd;border:1px solid #d0d7e2;border-radius:5px}
+details summary{
+  cursor:pointer;padding:.55rem .75rem;font-weight:600;font-size:.9rem;
+  color:#0d3b66;list-style:none;
+}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"▸ ";font-size:.85rem}
+details[open] summary::before{content:"▾ "}
+details summary:focus{outline:2px solid #7c3aed;outline-offset:1px}
+details .hint-body{padding:.45rem .75rem .75rem;font-size:.88rem;color:#333}
+/* ============================================================
+   CHECKLIST
+   ============================================================ */
+fieldset{border:1px solid #c5cad3;border-radius:6px;padding:.9rem 1rem;margin:1rem 0}
+fieldset legend{font-weight:700;font-size:1rem;color:#0d3b66;padding:0 .3rem}
+.chk-group{margin:.6rem 0 .2rem;font-weight:600;color:#444;font-size:.92rem}
+.chk-item{display:flex;align-items:flex-start;gap:.5rem;margin:.35rem 0;font-size:.88rem}
+.chk-item input[type="checkbox"]{
+  margin-top:.25rem;width:1.05rem;height:1.05rem;accent-color:#1a73e8;flex-shrink:0;
+}
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn{
+  display:inline-block;padding:.7rem 1.6rem;
+  font-size:1rem;font-weight:700;border:none;border-radius:5px;
+  cursor:pointer;text-align:center;margin:.7rem .5rem .7rem 0;
+}
+.btn-primary{background:#0d3b66;color:#fff}
+.btn-primary:hover,.btn-primary:focus{background:#145088;outline:2px solid #7ec8f8;outline-offset:2px}
+.btn-secondary{background:#f0a500;color:#1a1a2e}
+.btn-secondary:hover,.btn-secondary:focus{background:#d4920a;outline:2px solid #0d3b66;outline-offset:2px}
+/* ============================================================
+   ORDERED / UNORDERED LISTS
+   ============================================================ */
+.cl{margin:.4rem 0 .6rem 1.4rem}
+.cl li{margin-bottom:.3rem}
+ol.steps{margin:.5rem 0 1rem 1.5rem}
+ol.steps li{margin-bottom:.55rem}
+/* ============================================================
+   PRINT / PDF STYLES
+   ============================================================ */
+@media print{
+  .topnav,.skip-link,.no-print,details summary,.btn,
+  .phase-nav,.co-warn.no-print-box{display:none!important}
+  details{border:none;background:none}
+  details .hint-body{display:none!important}
+  body{background:#fff;font-size:11pt;color:#000}
+  .page{max-width:100%;padding:0}
+  textarea{
+    border:1px solid #999;min-height:auto;height:auto;
+    white-space:pre-wrap;font-size:10pt;page-break-inside:avoid;
+  }
+  h2.sh{page-break-before:auto;page-break-after:avoid}
+  fieldset{page-break-inside:avoid}
+  .ev-tbl{font-size:9pt}
+  .chk-item input[type="checkbox"]{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  @page{margin:1.8cm 1.5cm}
+}
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media(max-width:640px){
+  .page{padding:1rem .7rem 2rem}
+  h1{font-size:1.3rem}
+  h2.sh{font-size:1.1rem}
+  .ev-tbl{font-size:.8rem}
+  .topnav{padding:.45rem .7rem}
+}
+</style>
+</head>
+<body>
+
+<!-- Skip Link -->
+<a href="#main" class="skip-link">Skip to main content</a>
+
+<!-- ============================================================
+     TOP NAVIGATION BAR
+     ============================================================ -->
+<nav class="topnav" aria-label="Lab page navigation">
+  <span class="topnav__title">Lab 13 – Forensic Report Writing</span>
+  <a href="#scenario">Scenario</a>
+  <a href="#objectives">Objectives</a>
+  <a href="#evidence">Evidence</a>
+  <a href="#phase1">Phase 1</a>
+  <a href="#phase2">Phase 2</a>
+  <a href="#phase3">Phase 3</a>
+  <a href="#deliverables">Deliverables</a>
+</nav>
+
+<!-- ============================================================
+     MAIN CONTENT
+     ============================================================ -->
+<main id="main" class="page">
+
+<h1>Lab 13: Forensic Report Writing</h1>
+<p class="subtitle">CSC 156 – Digital Forensics Fundamentals &nbsp;|&nbsp; Week 14 &nbsp;|&nbsp; 30 Points &nbsp;|&nbsp; CSLO 3</p>
+
+<!-- Objectives & CSLO callout -->
+<div class="co co-tp" role="note">
+  <p class="co__l">&#128204; CSLO &amp; Objectives Addressed</p>
+  <p><strong>CSLO 3:</strong> Describe forensic data collection methods and the tools used for forensic data collection.</p>
+  <ul class="cl">
+    <li><strong>Objective 1:</strong> Describe the essential components of a professional digital forensic report.</li>
+    <li><strong>Objective 2:</strong> Construct a forensic report that documents methodology, findings, and conclusions in a clear, defensible manner.</li>
+    <li><strong>Objective 5:</strong> Apply documentation best practices to maintain evidence integrity from acquisition through reporting.</li>
+    <li><strong>Objective 6:</strong> Differentiate between technical reports, executive summaries, and courtroom exhibits based on audience and purpose.</li>
+  </ul>
+</div>
+
+<!-- ============================================================
+     SECTION 1 – SCENARIO
+     ============================================================ -->
+<section id="scenario" aria-labelledby="s1h">
+<h2 id="s1h" class="sh">1 &middot; Scenario: The Meridian Financial Data Breach</h2>
+
+<div class="co co-scen">
+  <div class="co__l">&#128200; Scenario &mdash; Meridian Financial Services</div>
+  <p>Meridian Financial Services, a mid-size investment advisory firm headquartered in Sacramento, CA, detected anomalous outbound data transfers on <strong>March 15, 2026</strong>. The Security Operations Center (SOC) escalated the alert and engaged your forensic team on <strong>March 16, 2026</strong>.</p>
+  <p>Over the following three weeks your team executed a textbook investigation: write-blocked imaging of three workstations and one file server, volatile memory captures, network packet captures from the perimeter firewall, and malware triage of suspicious executables. Technical analysis is now <strong>complete</strong>.</p>
+  <p>The Chief Legal Officer has requested a <strong>formal forensic report</strong> suitable for potential use in civil litigation and regulatory proceedings. Your task in this lab is to produce that report using the documentation standards (Module&nbsp;14.1), report structure (Module&nbsp;14.2), and QA checklist (Module&nbsp;14.4) covered this week.</p>
+</div>
+
+<div class="co co-info">
+  <p class="co__l">&#128218; Background Reading</p>
+  <p>Before starting this lab, you should have completed <strong>Module 14.1</strong> (Documentation Standards), <strong>Module 14.2</strong> (Anatomy of a Professional Forensic Report), and <strong>Module 14.4</strong> (Courtroom Testimony, QA, and Report Finalization). These modules provide the standards and templates you will apply here.</p>
+</div>
+</section>
+
+<!-- ============================================================
+     SECTION 2 – OBJECTIVES
+     ============================================================ -->
+<section id="objectives" aria-labelledby="s2h">
+<h2 id="s2h" class="sh">2 &middot; Lab Objectives</h2>
+<p>Upon successful completion of this lab, you will be able to:</p>
+<ol class="steps">
+  <li>Organize pre-analyzed forensic findings using professional documentation standards (objective language, UTC timestamps, exhibit numbering).</li>
+  <li>Draft a complete forensic report containing all 10 standard sections defined in Module&nbsp;14.2.</li>
+  <li>Apply the three-level QA checklist (technical, administrative, legal) from Module&nbsp;14.4 to self-review your report before submission.</li>
+  <li>Produce a polished, PDF-ready forensic report suitable for a non-technical legal audience.</li>
+</ol>
+</section>
+
+<!-- ============================================================
+     SECTION 3 – EVIDENCE SUMMARY
+     ============================================================ -->
+<section id="evidence" aria-labelledby="s3h">
+<h2 id="s3h" class="sh">3 &middot; Pre-Analyzed Evidence Summary &mdash; Meridian Financial Case</h2>
+
+<div class="co co-info">
+  <p class="co__l">&#128269; Using This Evidence</p>
+  <p>The findings below represent a <strong>representative subset</strong> of the investigation results. Use them as the basis for your report. You may also incorporate findings from your own prior lab work (Labs 1–12) if you prefer&mdash;just ensure all referenced evidence uses proper exhibit numbering, hash values, and UTC timestamps.</p>
+</div>
+
+<h3>3.1 &middot; Case &amp; Evidence Identifiers</h3>
+<table class="ev-tbl" aria-label="Case identification details">
+  <caption>Table 1 – Case Information</caption>
+  <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+  <tbody>
+    <tr><td>Case Number</td><td>MFS-2026-0042</td></tr>
+    <tr><td>Client / Organization</td><td>Meridian Financial Services, Sacramento, CA</td></tr>
+    <tr><td>Engagement Date</td><td>2026-03-16 (UTC)</td></tr>
+    <tr><td>Lead Examiner</td><td><em>(Your name)</em></td></tr>
+    <tr><td>Lab / Agency</td><td>Mendocino College Digital Forensics Lab</td></tr>
+  </tbody>
+</table>
+
+<h3>3.2 &middot; Evidence Items</h3>
+<table class="ev-tbl" aria-label="Evidence items collected">
+  <caption>Table 2 – Evidence Items</caption>
+  <thead>
+    <tr><th scope="col">Exhibit #</th><th scope="col">Description</th><th scope="col">Serial / ID</th><th scope="col">MD5 Hash (Forensic Image)</th><th scope="col">Acquisition Date (UTC)</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>EX-001</td><td>Dell Latitude 5540 – Workstation (J. Patel, Finance Dept.)</td><td>SN: DL5540-8827A</td><td>3a7c9f…e41b2d</td><td>2026-03-16 14:22</td></tr>
+    <tr><td>EX-002</td><td>Dell PowerEdge R740 – File Server "FS-MERID-01"</td><td>SN: PE740-44210</td><td>b81e03…7f29aa</td><td>2026-03-16 16:05</td></tr>
+    <tr><td>EX-003</td><td>Volatile Memory Capture – Workstation EX-001</td><td>RAM: 16 GB DDR4</td><td>d4f217…ca0893</td><td>2026-03-16 14:10</td></tr>
+    <tr><td>EX-004</td><td>PCAP – Perimeter Firewall (Palo Alto PA-850), 72-hour window</td><td>FW-MFS-PA850</td><td>90ab4e…1dc567</td><td>2026-03-16 18:30</td></tr>
+    <tr><td>EX-005</td><td>Suspicious Executable – "svchost_update.exe" recovered from EX-001</td><td>SHA-256: 6e3f1a…d820cf</td><td>f7c832…5ea901</td><td>2026-03-17 09:15</td></tr>
+  </tbody>
+</table>
+
+<h3>3.3 &middot; Representative Findings</h3>
+
+<table class="ev-tbl" aria-label="Pre-analyzed forensic findings">
+  <caption>Table 3 – Selected Forensic Findings</caption>
+  <thead>
+    <tr><th scope="col">Finding&nbsp;#</th><th scope="col">Artifact Type</th><th scope="col">Exhibit</th><th scope="col">Description</th><th scope="col">Timestamp (UTC)</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>F-01</td><td>File System (NTFS)</td><td>EX-001</td>
+      <td>A deleted archive file <code>client_records_Q1.7z</code> (245&nbsp;MB) was recovered from unallocated space at sector offset 0x1A4C000 on volume C:\. MFT entry 118204 shows creation timestamp 2026-03-14 22:17 UTC and deletion timestamp 2026-03-15 02:48 UTC. The file contained 12,417 client PII records (names, SSNs, account numbers) matching Meridian's CRM export format.</td>
+      <td>Created: 2026-03-14 22:17<br>Deleted: 2026-03-15 02:48</td>
+    </tr>
+    <tr>
+      <td>F-02</td><td>Windows Registry</td><td>EX-001</td>
+      <td>Registry key <code>HKCU\Software\Microsoft\Windows\CurrentVersion\Run</code> contained a value named <code>SvcHostUpdate</code> pointing to <code>C:\Users\jpatel\AppData\Local\Temp\svchost_update.exe</code>. The key's last-write timestamp was 2026-03-14 21:03 UTC, indicating persistence was established before the data staging activity in F-01.</td>
+      <td>2026-03-14 21:03</td>
+    </tr>
+    <tr>
+      <td>F-03</td><td>Windows Event Log</td><td>EX-002</td>
+      <td>Security Event ID 4624 (Logon Type 3 – Network) recorded 47 successful logon events from workstation EX-001 (IP 10.10.5.22) to file server FS-MERID-01 between 2026-03-14 21:30 and 2026-03-15 01:55 UTC using the <code>jpatel</code> domain account. Normal business-hours logon frequency for this account averaged 3–5 events per day.</td>
+      <td>2026-03-14 21:30 – 2026-03-15 01:55</td>
+    </tr>
+    <tr>
+      <td>F-04</td><td>Memory Forensics</td><td>EX-003</td>
+      <td>Volatility3 <code>pslist</code> and <code>malfind</code> plugins identified process <code>svchost_update.exe</code> (PID 5765) running under the <code>jpatel</code> user context. The process had injected code in a <code>PAGE_EXECUTE_READWRITE</code> memory region at base address <code>0x00400000</code>. Parent process was <code>explorer.exe</code> (PID 2104). Network connections plugin (<code>netscan</code>) showed PID 5765 maintaining an established TCP session to external IP <code>185.220.101.34</code> on port 443.</td>
+      <td>Capture: 2026-03-16 14:10</td>
+    </tr>
+    <tr>
+      <td>F-05</td><td>Network (PCAP)</td><td>EX-004</td>
+      <td>Wireshark analysis of the 72-hour PCAP revealed 238&nbsp;MB of outbound TLS traffic from internal IP 10.10.5.22 to external IP <code>185.220.101.34</code> (geo-located to a VPS provider in Bucharest, Romania) between 2026-03-15 00:12 and 2026-03-15 03:47 UTC. DNS queries resolved the IP to domain <code>update-cdn-node[.]com</code>, which was registered on 2026-03-10 via a privacy-protected registrar.</td>
+      <td>2026-03-15 00:12 – 03:47</td>
+    </tr>
+    <tr>
+      <td>F-06</td><td>Malware / IOC</td><td>EX-005</td>
+      <td>Static analysis of <code>svchost_update.exe</code> (SHA-256: 6e3f1a…d820cf) revealed a UPX-packed .NET binary. After unpacking, string analysis identified references to <code>update-cdn-node[.]com</code>, AES-256 encryption routines, and a hardcoded exfiltration path <code>/upload/sync</code>. VirusTotal showed 38/72 detections classifying it as <code>Trojan.GenericKD.46789012</code>. YARA rule <code>apt_exfil_tool_v2</code> matched on three signatures. The compile timestamp was 2026-03-09 16:44 UTC.</td>
+      <td>Compiled: 2026-03-09 16:44</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>3.4 &middot; Tools Used During the Investigation</h3>
+<table class="ev-tbl" aria-label="Forensic tools used">
+  <caption>Table 4 – Forensic Tools</caption>
+  <thead><tr><th scope="col">Tool</th><th scope="col">Version</th><th scope="col">Purpose</th></tr></thead>
+  <tbody>
+    <tr><td>FTK Imager</td><td>4.7.1</td><td>Forensic imaging and hash verification</td></tr>
+    <tr><td>Autopsy</td><td>4.21.0</td><td>File system analysis, keyword search, deleted file recovery</td></tr>
+    <tr><td>Registry Explorer (Eric Zimmerman)</td><td>2.0.0.0</td><td>Windows Registry analysis</td></tr>
+    <tr><td>Volatility3</td><td>2.5.0</td><td>Memory forensics (process listing, malfind, netscan)</td></tr>
+    <tr><td>Wireshark</td><td>4.2.3</td><td>Network packet capture analysis</td></tr>
+    <tr><td>YARA</td><td>4.3.2</td><td>Malware signature matching</td></tr>
+    <tr><td>VirusTotal</td><td>Web (accessed 2026-03-17)</td><td>Multi-engine malware scanning</td></tr>
+    <tr><td>Write-blocker: Tableau T35689iu</td><td>Firmware 7.22</td><td>Hardware write-blocking during acquisition</td></tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ============================================================
+     SECTION 4 – PHASE 1: ORGANIZE DOCUMENTATION
+     ============================================================ -->
+<section id="phase1" aria-labelledby="s4h">
+<h2 id="s4h" class="sh">4 &middot; Phase 1 – Organize Your Documentation</h2>
+
+<div class="co co-info">
+  <p class="co__l">&#128203; Phase 1 Goal</p>
+  <p>Before writing the report, organize the evidence findings above using the documentation standards from <strong>Module&nbsp;14.1</strong>. Ensure all items use objective language, UTC timestamps, and consistent exhibit numbering.</p>
+</div>
+
+<ol class="steps">
+  <li><strong>Review the evidence tables</strong> in Section&nbsp;3 above. Confirm you understand each finding and its relationship to the overall breach timeline.</li>
+  <li><strong>Construct a brief chronological timeline</strong> of key events. Use the text area below to list events in UTC order. Follow the format: <code>[YYYY-MM-DD HH:MM UTC] – Exhibit # – Event description</code>.</li>
+  <li><strong>Verify exhibit numbering</strong> is consistent. If you are incorporating findings from your own prior labs, assign them exhibit numbers continuing the EX-00x series.</li>
+  <li><strong>Check language objectivity.</strong> Review each finding description. Flag any language that expresses opinion, speculation, or subjective judgment. Rewrite if necessary using third-person, factual language.</li>
+</ol>
+
+<details>
+  <summary>&#128161; Hint: Building a Chronological Timeline</summary>
+  <div class="hint-body">
+    <p>Start with the earliest event and work forward. For the Meridian case, the timeline begins with the malware compile date (F-06, 2026-03-09) and ends with the SOC alert on 2026-03-15. Key milestones include: malware compilation &rarr; domain registration &rarr; persistence established (Registry) &rarr; data staging (file creation) &rarr; file server access &rarr; exfiltration &rarr; file deletion &rarr; SOC detection. Refer to Module&nbsp;14.1, Section&nbsp;3 for timestamp formatting standards.</p>
+  </div>
+</details>
+
+<label for="ta-timeline" class="sec-label">Phase 1 Workspace: Chronological Event Timeline</label>
+<p class="sec-hint">List all key events in UTC chronological order using the format specified above. Include exhibit references for every entry.</p>
+<textarea id="ta-timeline" rows="10" placeholder="[YYYY-MM-DD HH:MM UTC] – EX-### / F-## – Description of event&#10;&#10;Example:&#10;[2026-03-09 16:44 UTC] – EX-005 / F-06 – svchost_update.exe compiled (UPX-packed .NET binary)&#10;[2026-03-10 UTC] – F-05 – Domain update-cdn-node[.]com registered via privacy-protected registrar&#10;...continue with remaining events..."></textarea>
+</section>
+
+<!-- ============================================================
+     SECTION 5 – PHASE 2: DRAFT THE REPORT
+     ============================================================ -->
+<section id="phase2" aria-labelledby="s5h">
+<h2 id="s5h" class="sh">5 &middot; Phase 2 – Draft the Report</h2>
+
+<div class="co co-info">
+  <p class="co__l">&#9997;&#65039; Phase 2 Goal</p>
+  <p>Complete each of the <strong>10 standard report sections</strong> defined in <strong>Module&nbsp;14.2</strong>. Draft your content directly in the text areas below. Write in objective, third-person language appropriate for a legal audience. Reference exhibits by number and include hash values where applicable.</p>
+</div>
+
+<div class="co co-warn no-print-box">
+  <p class="co__l">&#9888;&#65039; Important Reminders</p>
+  <ul class="cl">
+    <li>Use <strong>objective, factual language</strong> throughout. Avoid first-person pronouns (e.g., write "The examiner" not "I").</li>
+    <li>Clearly distinguish <strong>facts</strong> (what the evidence shows) from <strong>opinions/conclusions</strong> (what the examiner interprets).</li>
+    <li>Reference all evidence by <strong>exhibit number</strong> and <strong>hash value</strong>.</li>
+    <li>All timestamps must be in <strong>UTC</strong> format.</li>
+    <li>The <strong>Executive Summary</strong> should be written <em>last</em>, even though it appears as Section 3 of the report.</li>
+  </ul>
+</div>
+
+<details>
+  <summary>&#128161; Hint: General Report Writing Tips</summary>
+  <div class="hint-body">
+    <p>Refer to Module&nbsp;14.2, Section&nbsp;3 for writing standards. Key principles: (1) Write for a non-technical reader&mdash;define technical terms on first use or include a glossary in the appendices. (2) Present negative findings (what was NOT found) when relevant. (3) Each finding should answer: What was found? Where? When? How was it found? Why does it matter? (4) Use tables, timelines, and structured formatting to improve readability.</p>
+  </div>
+</details>
+
+<!-- SECTION 1: Title Page -->
+<h3 id="rpt-s1">Report Section 1: Title Page</h3>
+<label for="ta-s1" class="sec-label">1 – Title Page</label>
+<p class="sec-hint">Include: report title, case number (MFS-2026-0042), examiner name, examiner affiliation, date of report, classification/confidentiality marking, and version number.</p>
+<textarea id="ta-s1" rows="8" placeholder="DIGITAL FORENSIC EXAMINATION REPORT&#10;&#10;Case Number: MFS-2026-0042&#10;Report Title: Forensic Examination of Digital Evidence – Meridian Financial Services Data Breach&#10;Examiner: [Your Full Name]&#10;Affiliation: [Your Organization / Mendocino College Digital Forensics Lab]&#10;Date of Report: [Date in YYYY-MM-DD format]&#10;Classification: CONFIDENTIAL – ATTORNEY WORK PRODUCT&#10;Version: 1.0 – DRAFT"></textarea>
+
+<!-- SECTION 2: Table of Contents -->
+<h3 id="rpt-s2">Report Section 2: Table of Contents</h3>
+<label for="ta-s2" class="sec-label">2 – Table of Contents</label>
+<p class="sec-hint">List all report sections and subsections with page number placeholders. This will be finalized when the report is formatted.</p>
+<textarea id="ta-s2" rows="8" placeholder="TABLE OF CONTENTS&#10;&#10;1. Title Page .................................. 1&#10;2. Table of Contents ........................... 2&#10;3. Executive Summary ........................... 3&#10;4. Scope and Objectives ........................ 4&#10;5. Evidence Description ........................ 5&#10;6. Tools and Methodology ....................... 6&#10;7. Findings .................................... 7&#10;8. Analysis and Interpretation ................. 10&#10;9. Conclusions ................................. 12&#10;10. Appendices ................................. 13"></textarea>
+
+<!-- SECTION 3: Executive Summary -->
+<h3 id="rpt-s3">Report Section 3: Executive Summary</h3>
+<label for="ta-s3" class="sec-label">3 – Executive Summary</label>
+<p class="sec-hint">1–2 page overview of key findings and conclusions written for a non-technical audience (management, legal counsel, jury). Summarize: what was examined, what was found, and what it means. Write this section LAST after completing all other sections.</p>
+<textarea id="ta-s3" rows="10" placeholder="EXECUTIVE SUMMARY&#10;&#10;[Write a concise summary of the investigation scope, key findings, and conclusions. This section should be understandable by a non-technical reader. Avoid jargon or define terms when used. Highlight the most significant findings and their implications for the case.]&#10;&#10;Example opening: 'At the request of Meridian Financial Services' Chief Legal Officer, a forensic examination was conducted on digital evidence related to a suspected data breach detected on March 15, 2026. The examination identified...'"></textarea>
+
+<details>
+  <summary>&#128161; Hint: Executive Summary Best Practices</summary>
+  <div class="hint-body">
+    <p>The executive summary should answer three questions: (1) What were we asked to do? (2) What did we find? (3) What does it mean? Keep it to 1–2 paragraphs. Avoid technical details&mdash;save those for the Findings section. Write this section last so it accurately reflects the complete report. See Module&nbsp;14.2, Section&nbsp;2 for the "write last, place first" principle.</p>
+  </div>
+</details>
+
+<!-- SECTION 4: Scope and Objectives -->
+<h3 id="rpt-s4">Report Section 4: Scope and Objectives</h3>
+<label for="ta-s4" class="sec-label">4 – Scope and Objectives</label>
+<p class="sec-hint">Describe: what was requested by the client/counsel, what evidence items were examined, what investigative questions were addressed, and any limitations or constraints on the examination.</p>
+<textarea id="ta-s4" rows="10" placeholder="SCOPE AND OBJECTIVES&#10;&#10;Engagement Authorization: [Who authorized the examination and when]&#10;&#10;Investigative Questions:&#10;1. Was client personally identifiable information (PII) exfiltrated from Meridian Financial systems?&#10;2. What was the method and timeline of the data breach?&#10;3. Which systems and user accounts were involved?&#10;4. What malware or tools were used to facilitate the breach?&#10;&#10;Evidence Examined: [List exhibit numbers EX-001 through EX-005]&#10;&#10;Limitations: [Note any constraints, e.g., encrypted volumes that could not be accessed, evidence items not made available, time constraints]"></textarea>
+
+<!-- SECTION 5: Evidence Description -->
+<h3 id="rpt-s5">Report Section 5: Evidence Description</h3>
+<label for="ta-s5" class="sec-label">5 – Evidence Description</label>
+<p class="sec-hint">For each evidence item: physical description, serial number/identifier, hash values (acquisition and verification), chain of custody reference, and condition upon receipt. Reference the evidence table in Section 3 of this lab.</p>
+<textarea id="ta-s5" rows="12" placeholder="EVIDENCE DESCRIPTION&#10;&#10;Five (5) evidence items were received and processed in this examination:&#10;&#10;Exhibit EX-001: Dell Latitude 5540 laptop computer, Serial Number DL5540-8827A, assigned to employee J. Patel (Finance Department). The device was received powered off in a sealed anti-static evidence bag on 2026-03-16. A forensic image was acquired using FTK Imager 4.7.1 via Tableau T35689iu hardware write-blocker at 2026-03-16 14:22 UTC. Acquisition hash (MD5): 3a7c9f...e41b2d. Verification hash confirmed match.&#10;&#10;[Continue for EX-002 through EX-005, including physical description, serial/ID, acquisition method, hash values, and chain of custody reference for each item]"></textarea>
+
+<details>
+  <summary>&#128161; Hint: Evidence Description Standards</summary>
+  <div class="hint-body">
+    <p>For each item, include: (1) Exhibit number, (2) Physical description (make, model, capacity), (3) Serial number or unique identifier, (4) Condition upon receipt, (5) How and when it was acquired (tool, write-blocker, date/time UTC), (6) Hash values (both acquisition and verification), (7) Chain of custody log reference. Refer to Module&nbsp;14.1, Section&nbsp;2 for documentation taxonomy and Week&nbsp;6 acquisition standards.</p>
+  </div>
+</details>
+
+<!-- SECTION 6: Tools and Methodology -->
+<h3 id="rpt-s6">Report Section 6: Tools and Methodology</h3>
+<label for="ta-s6" class="sec-label">6 – Tools and Methodology</label>
+<p class="sec-hint">List all forensic tools (name, version, purpose), hardware used, and describe the forensic methodology/process followed. Reference accepted standards (e.g., NIST SP 800-86, SWGDE). Explain the examination workflow.</p>
+<textarea id="ta-s6" rows="12" placeholder="TOOLS AND METHODOLOGY&#10;&#10;Forensic Tools:&#10;[List each tool from Table 4 with version number and purpose. Example:]&#10;- FTK Imager v4.7.1 – Used for forensic imaging and hash verification of physical media&#10;- Autopsy v4.21.0 – Used for file system analysis, keyword search, and deleted file recovery&#10;[Continue for all tools]&#10;&#10;Hardware:&#10;- Tableau T35689iu forensic write-blocker (Firmware 7.22) – Used to prevent write operations during acquisition&#10;&#10;Methodology:&#10;The examination followed the NIST SP 800-86 guidelines for digital forensic processing. The workflow consisted of: (1) Evidence intake and chain of custody documentation, (2) Forensic imaging with hash verification, (3) Volatile data preservation (memory capture), (4) File system analysis, (5) Registry and event log analysis, (6) Memory analysis, (7) Network traffic analysis, (8) Malware triage, (9) Timeline reconstruction, (10) Report preparation."></textarea>
+
+<!-- SECTION 7: Findings -->
+<h3 id="rpt-s7">Report Section 7: Findings</h3>
+<label for="ta-s7" class="sec-label">7 – Findings</label>
+<p class="sec-hint">Present each finding organized by investigative question or evidence item. For each finding include: what was found, where (exhibit #, file path, offset), when (UTC timestamp), how it was found (tool/method), and supporting hash values. Use objective, factual language. Include negative findings where relevant. Reference findings F-01 through F-06 from Section 3.</p>
+<textarea id="ta-s7" rows="18" placeholder="FINDINGS&#10;&#10;The following findings are organized by investigative question. All timestamps are reported in Coordinated Universal Time (UTC).&#10;&#10;7.1 Data Staging and Exfiltration&#10;&#10;Finding F-01 – Deleted Archive Containing Client PII:&#10;Examination of Exhibit EX-001 using Autopsy v4.21.0 identified a deleted 7-Zip archive file named 'client_records_Q1.7z' (approximately 245 MB) recovered from unallocated space at sector offset 0x1A4C000 on the NTFS volume C:\. The NTFS Master File Table (MFT) entry 118204 recorded a creation timestamp of 2026-03-14 22:17 UTC and a deletion timestamp of 2026-03-15 02:48 UTC. Analysis of the archive contents revealed 12,417 client records containing personally identifiable information (PII), including names, Social Security Numbers, and account numbers. The data format was consistent with Meridian Financial's Customer Relationship Management (CRM) system export format.&#10;&#10;[Continue with findings F-02 through F-06, maintaining the same level of detail and objective language]&#10;&#10;7.2 Malware Persistence and Command-and-Control&#10;[Document findings F-02, F-04, F-06]&#10;&#10;7.3 Anomalous Network Activity&#10;[Document findings F-03, F-05]&#10;&#10;7.4 Negative Findings&#10;[Document what was NOT found that may be relevant, e.g., no evidence of lateral movement to other workstations, no evidence of additional user accounts compromised]"></textarea>
+
+<details>
+  <summary>&#128161; Hint: Writing Effective Findings</summary>
+  <div class="hint-body">
+    <p>Each finding should follow a consistent structure: (1) Finding number and title, (2) Evidence source (exhibit number), (3) Tool used for discovery, (4) Factual description of what was observed, (5) Supporting data (timestamps, hashes, file paths), (6) Forensic significance. Remember to document <strong>negative findings</strong>&mdash;what you did NOT find can be as important as what you did find. Avoid conclusions in this section; save interpretation for Section 8. See Module&nbsp;14.2, Section&nbsp;3.</p>
+  </div>
+</details>
+
+<!-- SECTION 8: Analysis and Interpretation -->
+<h3 id="rpt-s8">Report Section 8: Analysis and Interpretation</h3>
+<label for="ta-s8" class="sec-label">8 – Analysis and Interpretation</label>
+<p class="sec-hint">Explain what the findings mean in the context of the investigation. Connect individual findings into a coherent narrative. Clearly label any examiner opinions or interpretations and distinguish them from established facts. Address each investigative question from the Scope section.</p>
+<textarea id="ta-s8" rows="14" placeholder="ANALYSIS AND INTERPRETATION&#10;&#10;The following analysis represents the examiner's professional interpretation of the forensic findings documented in Section 7. Opinions are clearly identified and are based on the documented evidence, the examiner's training and experience, and accepted forensic principles.&#10;&#10;8.1 Breach Timeline Reconstruction&#10;Based on the totality of the findings, the following sequence of events is supported by the evidence:&#10;[Construct a narrative timeline connecting the malware compilation (F-06), persistence establishment (F-02), data staging (F-01), anomalous server access (F-03), data exfiltration (F-05), and evidence destruction (F-01 deletion timestamp)]&#10;&#10;8.2 Attribution Indicators&#10;[Discuss what the evidence indicates about the source/method of the breach. Be careful to distinguish facts from inferences.]&#10;&#10;8.3 Scope of Data Exposure&#10;[Based on F-01 and F-05, discuss the volume and type of data potentially exfiltrated]"></textarea>
+
+<details>
+  <summary>&#128161; Hint: Analysis vs. Findings</summary>
+  <div class="hint-body">
+    <p>The <strong>Findings</strong> section states <em>what</em> the evidence shows. The <strong>Analysis</strong> section explains <em>what it means</em>. For example, Finding: "238 MB of outbound TLS traffic was transmitted to IP 185.220.101.34." Analysis: "The volume of outbound traffic (238 MB) is consistent with the size of the staged archive (245 MB, pre-compression), suggesting the client PII data was successfully exfiltrated." Always use qualifying language for opinions: "is consistent with," "suggests," "supports the conclusion that." Avoid definitive statements unless the evidence is unambiguous.</p>
+  </div>
+</details>
+
+<!-- SECTION 9: Conclusions -->
+<h3 id="rpt-s9">Report Section 9: Conclusions</h3>
+<label for="ta-s9" class="sec-label">9 – Conclusions</label>
+<p class="sec-hint">Summarize your opinions based on the findings and analysis. Address each investigative question directly. Clearly distinguish conclusions (supported opinions) from facts. Note any limitations or areas requiring further investigation.</p>
+<textarea id="ta-s9" rows="12" placeholder="CONCLUSIONS&#10;&#10;Based on the forensic examination of five (5) evidence items and the analysis documented in this report, the examiner offers the following conclusions:&#10;&#10;1. [Conclusion addressing investigative question 1 – Was PII exfiltrated?]&#10;2. [Conclusion addressing investigative question 2 – Method and timeline of the breach]&#10;3. [Conclusion addressing investigative question 3 – Systems and accounts involved]&#10;4. [Conclusion addressing investigative question 4 – Malware/tools used]&#10;&#10;Limitations and Further Investigation:&#10;[Note any areas where the evidence was inconclusive or where additional investigation is recommended]&#10;&#10;Examiner Certification:&#10;I certify that the findings, analysis, and conclusions in this report are accurate and complete to the best of my knowledge and professional ability.&#10;&#10;[Examiner Name] | [Date]"></textarea>
+
+<!-- SECTION 10: Appendices -->
+<h3 id="rpt-s10">Report Section 10: Appendices</h3>
+<label for="ta-s10" class="sec-label">10 – Appendices</label>
+<p class="sec-hint">Include supporting materials: hash verification logs, chain of custody forms (reference by form number), tool output excerpts, timeline exports, annotated screenshots, and a glossary of technical terms. List each appendix with a letter designation (Appendix A, B, C, etc.).</p>
+<textarea id="ta-s10" rows="14" placeholder="APPENDICES&#10;&#10;Appendix A – Hash Verification Log&#10;[List each exhibit with acquisition hash, verification hash, algorithm (MD5/SHA-256), and match status]&#10;&#10;Appendix B – Chain of Custody Log&#10;[Reference chain of custody form numbers for each exhibit. Document: who handled the evidence, when, and for what purpose]&#10;&#10;Appendix C – Detailed Timeline of Events&#10;[Paste or reference the chronological timeline from Phase 1]&#10;&#10;Appendix D – Tool Output Excerpts&#10;[Include relevant excerpts: Autopsy file recovery log, Volatility3 pslist/malfind output, Wireshark conversation statistics, YARA scan results]&#10;&#10;Appendix E – Glossary of Technical Terms&#10;[Define key terms: NTFS, MFT, PII, TLS, UPX, YARA, IOC, VPS, CRM, etc.]&#10;&#10;Appendix F – Examiner Curriculum Vitae&#10;[Include or reference the examiner's CV documenting qualifications, training, certifications, and relevant experience]"></textarea>
+
+<details>
+  <summary>&#128161; Hint: What Goes in the Appendices</summary>
+  <div class="hint-body">
+    <p>Appendices contain supporting evidence that is too detailed for the main report body but essential for verification and legal defensibility. At minimum, include: (1) Hash logs proving image integrity, (2) Chain of custody documentation, (3) Complete timeline, (4) Representative tool output (not every log line&mdash;selected excerpts that support your findings), (5) A glossary defining every technical term used in the report. For this lab, you may describe what each appendix <em>would</em> contain rather than producing full tool output. See Module&nbsp;14.2, Section&nbsp;2 for appendix standards.</p>
+  </div>
+</details>
+
+</section>
+
+<!-- ============================================================
+     SECTION 6 – PHASE 3: SELF-REVIEW (QA CHECKLIST)
+     ============================================================ -->
+<section id="phase3" aria-labelledby="s6h">
+<h2 id="s6h" class="sh">6 &middot; Phase 3 – Self-Review: QA Checklist</h2>
+
+<div class="co co-info">
+  <p class="co__l">&#9989; Phase 3 Goal</p>
+  <p>Before submitting your report, apply the <strong>three-level QA checklist</strong> from <strong>Module&nbsp;14.4</strong>. Check every item below that you have verified in your report. All items should be checked before submission. Items left unchecked indicate areas that need revision.</p>
+</div>
+
+<details>
+  <summary>&#128161; Hint: Why QA Matters</summary>
+  <div class="hint-body">
+    <p>In professional practice, forensic reports undergo technical peer review, administrative review, and legal review before submission. Errors in a forensic report can undermine the credibility of the examiner and the admissibility of evidence. This self-review checklist simulates that professional QA process. Take it seriously&mdash;opposing counsel will scrutinize every detail. See Module&nbsp;14.4, Section&nbsp;5 for the complete QA framework.</p>
+  </div>
+</details>
+
+<!-- Technical Review -->
+<fieldset>
+  <legend>Level 1: Technical Review</legend>
+  <p class="chk-group">Methodology &amp; Findings Accuracy</p>
+
+  <div class="chk-item">
+    <input type="checkbox" id="t1" name="tech-review">
+    <label for="t1">All findings are supported by documented evidence with exhibit numbers and hash values.</label>
+  </div>
+  <div class="chk-item">
+    <input type="checkbox" id="t2" name="tech-review">
+    <label for="t2">Tool names and version numbers are accurately recorded for every tool used.</label>
+  </div>
+  <div class="chk-item">
+    <input type="checkbox" id="t3" name="tech-review">
+    <label for="t3">Conclusions are logically supported by the findings and analysis; no unsupported inferences.</label>
+  </div>
+  <div class="chk-item">
+    <input type="checkbox" id="t4" name="tech-review">
+    <label for="t4">Facts are clearly distinguished from examiner opinions and interpretations.</label>
+  </div>
+  <div class="chk-item">
+    <input type="checkbox" id="t5" name="tech-review">
+    <label for="t5">All timestamps are in UTC and formatted consistently throughout the report.</label>
+  </div>
+  <div class="chk-item">
+    <input type="checkbox" id="t6" name="tech-review">
+    <label for="t6">Hash values in the report body match those in the appendix hash verification log.</label>
+  </div>
+  <div class="chk-item">
+    <input type="checkbox" id="t7" name="tech-review">
+    <label for="t7">The methodology section describes a reproducible process; another examiner could replicate the work.</label>
+  </div>
+  <div class="chk-item">
+    <input type="checkbox" id="t8" name="tech-review">
+    <label for="t8">Negative findings (what was NOT found) are documented where relevant.</label>
+  </div>
+</fieldset>
+
+<!-- Administrative Review -->
+<fieldset>
+  <legend>Level 2: Administrative Review</legend>
+  <p class="chk-group">Formatting, Completeness &amp; Consistency</p>
+
+  <div class="chk-item">
+    <input type="checkbox" id="a1" name="admin-review">
+    <label for="a1">All 10 standard report sections are present and in the correct order.</label>
+  </div>
+  <div class="chk-item">
+    <input type="checkbox" id="a2" name="admin-review">
+    <label for="a2">The title page contains: case number, report title, examiner name, affiliation, date, classification, and version.</label>
+  </div>
+  <div class="chk-item">
+    <input type="checkbox" id="a3" name="admin-review">
+    <label for="a3">The table of contents accurately reflects all sections and subsections.</label>
+  </div>
+  <div class="chk-item">
+    <input type="checkbox" id="a4" name="admin-review">
+    <label for="a4">Exhibit numbers are used consistently throughout (no mismatched or missing references).</label>
+  </div>
+  <div class="chk-item">
+    <input type="checkbox" id="a5" name="admin-review">
+    <label for="a5">Grammar, spelling, and punctuation have been reviewed; no obvious errors remain.</label>
+  </div>
+  <div class="chk-item">
+    <input type="checkbox" id="a6" name="admin-review">
+    <label for="a6">The report uses objective, third-person language throughout (no first-person pronouns).</label>
+  </div>
+  <div class="chk-item">
+    <input type="checkbox" id="a7" name="admin-review">
+    <label for="a7">Technical terms are defined on first use or included in a glossary appendix.</label>
+  </div>
+  <div class="chk-item">
+    <input type="checkbox" id="a8" name="admin-review">
+    <label for="a8">The executive summary is written for a non-technical audience and accurately reflects the full report.</label>
+  </div>
+</fieldset>
+
+<!-- Legal Review -->
+<fieldset>
+  <legend>Level 3: Legal Review</legend>
+  <p class="chk-group">Admissibility, Privilege &amp; Scope Compliance</p>
+
+  <div class="chk-item">
+    <input type="checkbox" id="l1" name="legal-review">
+    <label for="l1">The report stays within the authorized scope of examination defined in the Scope and Objectives section.</label>
+  </div>
+  <div class="chk-item">
+    <input type="checkbox" id="l2" name="legal-review">
+    <label for="l2">Chain of custody is documented or referenced for every evidence item.</label>
+  </div>
+  <div class="chk-item">
+    <input type="checkbox" id="l3" name="legal-review">
+    <label for="l3">The methodology follows accepted forensic standards (NIST SP 800-86, SWGDE) that would satisfy Daubert/Frye criteria.</label>
+  </div>
+  <div class="chk-item">
+    <input type="checkbox" id="l4" name="legal-review">
+    <label for="l4">No privileged, confidential, or out-of-scope information is disclosed beyond what is necessary for the findings.</label>
+  </div>
+  <div class="chk-item">
+    <input type="checkbox" id="l5" name="legal-review">
+    <label for="l5">Opinions are qualified appropriately and do not overstate what the evidence supports.</label>
+  </div>
+  <div class="chk-item">
+    <input type="checkbox" id="l6" name="legal-review">
+    <label for="l6">The report includes an examiner certification statement attesting to accuracy and completeness.</label>
+  </div>
+  <div class="chk-item">
+    <input type="checkbox" id="l7" name="legal-review">
+    <label for="l7">Sensitive PII or data is appropriately redacted or noted for redaction before external distribution.</label>
+  </div>
+</fieldset>
+
+</section>
+
+<!-- ============================================================
+     SECTION 7 – DELIVERABLES & SUBMISSION
+     ============================================================ -->
+<section id="deliverables" aria-labelledby="s7h">
+<h2 id="s7h" class="sh">7 &middot; Deliverables &amp; Submission</h2>
+
+<div class="co co-warn">
+  <p class="co__l">&#128230; Submission Instructions</p>
+  <ol class="steps">
+    <li><strong>Complete all three phases</strong> of this lab: organize your documentation (Phase 1), draft all 10 report sections (Phase 2), and complete the self-review QA checklist (Phase 3).</li>
+    <li><strong>Click the "Save as PDF" button</strong> below to generate a PDF of your completed report and checklist.</li>
+    <li><strong>Review the generated PDF</strong> to ensure all your content is captured correctly.</li>
+    <li><strong>Submit the PDF</strong> to the Canvas assignment named <strong>Lab 13: Forensic Report Writing</strong>.</li>
+  </ol>
+</div>
+
+<div class="co co-info">
+  <p class="co__l">&#128203; Grading Alignment</p>
+  <p>This lab is worth <strong>30 points</strong> and is aligned with <strong>CSLO 3</strong>. The Canvas assignment rubric evaluates your report based on the 10-section structure from Module&nbsp;14.2. Ensure every section is complete, uses professional documentation standards from Module&nbsp;14.1, and reflects the QA standards from Module&nbsp;14.4.</p>
+</div>
+
+<div style="text-align:center;margin:1.5rem 0">
+  <button type="button" class="btn btn-primary" id="btnPDF" aria-label="Save your completed lab as a PDF document">&#128424; Save as PDF</button>
+  <button type="button" class="btn btn-secondary" id="btnReset" aria-label="Clear all fields and start over">&#128260; Reset All Fields</button>
+</div>
+
+<div class="co co-info no-print-box" style="font-size:.88rem">
+  <p><strong>Note:</strong> The "Save as PDF" button uses your browser's print-to-PDF function. In the print dialog, select <strong>"Save as PDF"</strong> as the destination. Ensure <strong>"Background graphics"</strong> is enabled for best results. If any sections are left blank, they will appear with their placeholder text in the PDF.</p>
+</div>
+
+</section>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer style="margin-top:2.5rem;padding-top:1rem;border-top:2px solid #d0d7e2;font-size:.82rem;color:#666;text-align:center" role="contentinfo">
+  <p>CSC 156 – Digital Forensics Fundamentals &nbsp;|&nbsp; Mendocino College &nbsp;|&nbsp; Week 14 – Lab 13: Forensic Report Writing</p>
+  <p>CSLO 3 &nbsp;|&nbsp; 30 Points &nbsp;|&nbsp; Spring 2026</p>
+</footer>
+
+</main><!-- /.page -->
+
+<!-- ============================================================
+     JAVASCRIPT – SAVE AS PDF & RESET
+     ============================================================ -->
+<script>
+(function(){
+  "use strict";
+
+  /* ---- Save as PDF via window.print() ---- */
+  var btnPDF=document.getElementById("btnPDF");
+  if(btnPDF){
+    btnPDF.addEventListener("click",function(){
+      /* Expand all textareas to show full content for print */
+      var tas=document.querySelectorAll("textarea");
+      var origStyles=[];
+      tas.forEach(function(ta,i){
+        origStyles[i]={h:ta.style.height,o:ta.style.overflow};
+        /* If textarea is empty, leave placeholder visible via CSS */
+        ta.style.height=ta.scrollHeight+"px";
+        ta.style.overflow="hidden";
+      });
+
+      /* Open all details elements so hint content is hidden via print CSS
+         but checklist fieldsets are visible */
+
+      window.print();
+
+      /* Restore textarea sizes after print dialog closes */
+      setTimeout(function(){
+        tas.forEach(function(ta,i){
+          ta.style.height=origStyles[i].h;
+          ta.style.overflow=origStyles[i].o;
+        });
+      },1000);
+    });
+  }
+
+  /* ---- Reset All Fields ---- */
+  var btnReset=document.getElementById("btnReset");
+  if(btnReset){
+    btnReset.addEventListener("click",function(){
+      if(!confirm("Are you sure you want to clear ALL text areas and uncheck ALL checklist items? This cannot be undone.")){
+        return;
+      }
+      /* Clear textareas */
+      var tas=document.querySelectorAll("textarea");
+      tas.forEach(function(ta){ta.value="";});
+      /* Uncheck checkboxes */
+      var cbs=document.querySelectorAll('input[type="checkbox"]');
+      cbs.forEach(function(cb){cb.checked=false;});
+      /* Scroll to top */
+      window.scrollTo({top:0,behavior:"smooth"});
+    });
+  }
+
+})();
+</script>
+
+</body>
+</html>

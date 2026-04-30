@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 14 Overview – CSC 156 Digital Forensics Fundamentals</title>
+<style>
+:root{
+--primary:#1a5276;
+--primary-light:#2980b9;
+--accent:#e67e22;
+--accent-light:#f5cba7;
+--bg:#f8f9fa;
+--card-bg:#ffffff;
+--text:#2c3e50;
+--text-light:#566573;
+--border:#d5dbdb;
+--focus-ring:#2980b9;
+--success:#27ae60;
+--info-bg:#eaf2f8;
+--info-border:#2980b9;
+--warn-bg:#fef9e7;
+--warn-border:#f39c12;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{
+font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+background:var(--bg);color:var(--text);line-height:1.65;
+}
+/* ---- Skip Link ---- */
+.skip-link{
+position:absolute;top:-100%;left:1rem;
+background:var(--primary);color:#fff;padding:.6rem 1.2rem;
+border-radius:0 0 6px 6px;z-index:1000;font-weight:600;
+text-decoration:none;
+}
+.skip-link:focus{top:0;}
+
+/* ---- Top Nav ---- */
+.top-nav{
+background:var(--primary);
+position:sticky;top:0;z-index:900;
+padding:.55rem 1rem;
+display:flex;flex-wrap:wrap;align-items:center;gap:.35rem .9rem;
+}
+.top-nav a{
+color:#fff;text-decoration:none;font-size:.85rem;
+padding:.3rem .55rem;border-radius:4px;
+transition:background .2s;
+}
+.top-nav a:hover,
+.top-nav a:focus-visible{background:rgba(255,255,255,.18);outline:none;}
+.top-nav a:focus-visible{box-shadow:0 0 0 2px var(--accent);}
+
+/* ---- Header ---- */
+.hero{
+background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);
+color:#fff;padding:2.2rem 1.5rem 1.8rem;
+}
+.hero .course-tag{
+font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;
+opacity:.85;margin-bottom:.25rem;
+}
+.hero h1{font-size:1.75rem;font-weight:700;margin-bottom:.3rem;}
+.hero .subtitle{font-size:1.05rem;opacity:.92;margin-bottom:1rem;}
+.hero .meta-row{
+display:flex;flex-wrap:wrap;gap:.6rem 1.6rem;font-size:.85rem;opacity:.88;
+}
+.hero .meta-row span::before{margin-right:.35rem;}
+
+/* ---- Container ---- */
+.container{max-width:54rem;margin:0 auto;padding:1.2rem 1rem 3rem;}
+
+/* ---- Section ---- */
+.section{
+background:var(--card-bg);border:1px solid var(--border);
+border-radius:8px;margin-bottom:1.4rem;
+padding:1.4rem 1.5rem;
+}
+.section h2{
+font-size:1.25rem;color:var(--primary);
+margin-bottom:.85rem;padding-bottom:.4rem;
+border-bottom:2px solid var(--accent-light);
+}
+.section h2 .emoji{margin-right:.45rem;}
+
+/* ---- Callout boxes ---- */
+.callout{
+border-left:4px solid var(--info-border);
+background:var(--info-bg);
+border-radius:0 6px 6px 0;
+padding:.85rem 1rem;margin:.85rem 0;
+font-size:.93rem;
+}
+.callout.warn{border-left-color:var(--warn-border);background:var(--warn-bg);}
+.callout strong{display:block;margin-bottom:.2rem;}
+
+/* ---- Lists ---- */
+.obj-list{list-style:none;counter-reset:obj;}
+.obj-list li{
+counter-increment:obj;padding:.45rem 0 .45rem 2.2rem;
+position:relative;font-size:.95rem;
+}
+.obj-list li::before{
+content:counter(obj);position:absolute;left:0;top:.4rem;
+background:var(--primary);color:#fff;
+width:1.55rem;height:1.55rem;border-radius:50%;
+display:flex;align-items:center;justify-content:center;
+font-size:.78rem;font-weight:700;
+}
+ul.plain{list-style:none;padding-left:0;}
+ul.plain li{padding:.3rem 0 .3rem 1.4rem;position:relative;font-size:.95rem;}
+ul.plain li::before{
+content:"▸";position:absolute;left:0;color:var(--accent);font-weight:700;
+}
+ul.bullet{padding-left:1.3rem;}
+ul.bullet li{padding:.25rem 0;font-size:.93rem;}
+
+/* ---- Schedule Table ---- */
+.sched-table{width:100%;border-collapse:collapse;margin-top:.6rem;font-size:.9rem;}
+.sched-table th{
+background:var(--primary);color:#fff;text-align:left;
+padding:.55rem .7rem;font-weight:600;
+}
+.sched-table td{
+padding:.55rem .7rem;border-bottom:1px solid var(--border);
+vertical-align:top;
+}
+.sched-table tr:last-child td{border-bottom:none;}
+.sched-table .day-label{
+font-weight:700;color:var(--primary);white-space:nowrap;width:5.5rem;
+}
+
+/* ---- Collapsible ---- */
+details.collapse{
+border:1px solid var(--border);border-radius:6px;
+margin-top:.85rem;
+}
+details.collapse summary{
+cursor:pointer;padding:.75rem 1rem;font-weight:600;
+font-size:.97rem;color:var(--primary);
+list-style:none;display:flex;align-items:center;gap:.5rem;
+background:var(--info-bg);border-radius:6px;
+}
+details.collapse summary:focus-visible{
+outline:2px solid var(--focus-ring);outline-offset:-2px;
+}
+details.collapse summary::before{
+content:"▶";font-size:.7rem;transition:transform .2s;display:inline-block;
+}
+details.collapse[open] summary::before{transform:rotate(90deg);}
+details.collapse .inner{padding:.85rem 1rem 1rem;}
+
+/* ---- Footer ---- */
+.page-footer{
+text-align:center;font-size:.8rem;color:var(--text-light);
+padding:1.5rem 1rem .8rem;border-top:1px solid var(--border);
+margin-top:1rem;
+}
+
+/* ---- Responsive ---- */
+@media(max-width:600px){
+.hero{padding:1.5rem 1rem 1.3rem;}
+.hero h1{font-size:1.35rem;}
+.section{padding:1rem;}
+.sched-table td,.sched-table th{padding:.45rem .5rem;font-size:.84rem;}
+}
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<!-- ===== Top Navigation ===== -->
+<nav class="top-nav" aria-label="Page section navigation">
+<a href="#welcome">Welcome</a>
+<a href="#objectives">Objectives</a>
+<a href="#activities">Activities</a>
+<a href="#schedule">Schedule</a>
+<a href="#concepts">Key Concepts</a>
+<a href="#ahead">Looking Ahead</a>
+</nav>
+
+<!-- ===== Hero Header ===== -->
+<header class="hero">
+<div class="course-tag">CSC 156 – Digital Forensics Fundamentals</div>
+<h1>Week 14: Forensic Reporting &amp; Expert Testimony</h1>
+<p class="subtitle">From Technical Analysis to Professional Communication</p>
+<div class="meta-row">
+<span>📅 Week 14 of 17</span>
+<span>📚 Lecture: 2 hrs</span>
+<span>🔬 Lab: 3 hrs</span>
+<span>⏰ Est. Total: ~9 hrs</span>
+</div>
+</header>
+
+<!-- ===== Main Content ===== -->
+<main id="main-content" class="container">
+
+<!-- 1 · Welcome -->
+<section id="welcome" class="section" aria-labelledby="h-welcome">
+<h2 id="h-welcome"><span class="emoji">👋</span>Welcome to Week 14</h2>
+<p>
+This week marks a pivotal shift in the course. Over the past thirteen weeks you have built a deep technical toolkit — imaging drives, analyzing registries and memory, dissecting packets, reverse-engineering malware, and more. <strong>None of that work matters in a real investigation if you cannot communicate your findings clearly, accurately, and defensibly.</strong>
+</p>
+<p style="margin-top:.6rem;">
+Week 14 bridges the gap between <em>doing</em> forensics and <em>presenting</em> forensics. You will learn the documentation standards that make or break a case, study the anatomy of a professional forensic report, explore the legal standards governing expert testimony, and practice the quality-assurance process that ensures your report can withstand scrutiny in any setting — from a corporate boardroom to a courtroom witness stand.
+</p>
+<div class="callout">
+<strong>🔗 Course Arc Connection</strong>
+Every technical skill you have developed since Week 1 feeds directly into this week's deliverables. Think of Week 14 as the place where your investigation skills become <em>evidence</em> — documented, structured, and ready for the people who need them most.
+</div>
+</section>
+
+<!-- 2 · Learning Objectives -->
+<section id="objectives" class="section" aria-labelledby="h-objectives">
+<h2 id="h-objectives"><span class="emoji">🎯</span>Learning Objectives</h2>
+<p>By the end of Week 14, you will be able to:</p>
+<ol class="obj-list">
+<li>Explain why thorough documentation is the foundation of every defensible forensic investigation and identify the professional standards that govern forensic reporting.</li>
+<li>Describe the complete anatomy of a professional forensic report, including all major sections from the executive summary through appendices.</li>
+<li>Distinguish between statements of fact and statements of opinion in forensic writing and apply the rules for expressing each appropriately.</li>
+<li>Explain the legal standards for expert witness qualification and testimony, including the Daubert standard, the Frye standard, and Federal Rule of Evidence 702.</li>
+<li>Describe effective courtroom testimony techniques, including direct examination, cross-examination strategies, and common impeachment tactics.</li>
+<li>Apply a three-level quality-assurance review process (self-review, technical peer review, administrative/legal review) to finalize a forensic report for submission.</li>
+</ol>
+<div class="callout">
+<strong>📊 CSLO Alignment</strong>
+This week directly supports <strong>CSLO 4</strong>: <em>Be able to generate reports which detail the approach and provide an audit trail that supports the integrity of the investigation process and any actions taken.</em>
+</div>
+</section>
+
+<!-- 3 · Required Activities -->
+<section id="activities" class="section" aria-labelledby="h-activities">
+<h2 id="h-activities"><span class="emoji">📋</span>Required Activities</h2>
+<p>Complete all of the following items this week. Check Canvas for specific due dates.</p>
+
+<h3 style="font-size:1rem;color:var(--primary);margin:.9rem 0 .4rem;">Learning Modules</h3>
+<ul class="plain">
+<li><strong>Learning Module 14.1</strong> — Documentation Standards and the Reporting Imperative</li>
+<li><strong>Learning Module 14.2</strong> — Anatomy of a Professional Forensic Report</li>
+<li><strong>Learning Module 14.3</strong> — Legal Standards for Expert Testimony</li>
+<li><strong>Learning Module 14.4</strong> — Courtroom Testimony, QA, and Report Finalization</li>
+</ul>
+
+<h3 style="font-size:1rem;color:var(--primary);margin:.9rem 0 .4rem;">Graded Assignment</h3>
+<ul class="plain">
+<li><strong>Lab 13: Forensic Report Writing</strong> — 30 points (CSLO 3)</li>
+</ul>
+
+<div class="callout warn">
+<strong>⚠️ Reminder</strong>
+Due dates for all activities are managed in Canvas. Plan your time using the suggested schedule below, and check the Canvas calendar for exact deadlines.
+</div>
+</section>
+
+<!-- 4 · Suggested Study Schedule -->
+<section id="schedule" class="section" aria-labelledby="h-schedule">
+<h2 id="h-schedule"><span class="emoji">🗓️</span>Suggested Study Schedule</h2>
+<p>This five-day plan is a <em>recommendation</em> to help you pace your work — it is not a graded requirement. Adjust as needed to fit your schedule.</p>
+
+<table class="sched-table" role="table">
+<thead>
+<tr>
+<th scope="col">Day</th>
+<th scope="col">Focus</th>
+<th scope="col">Est. Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="day-label">Day 1</td>
+<td><strong>Module 14.1</strong> — Documentation Standards and the Reporting Imperative. Read all content, complete knowledge-check questions.</td>
+<td>~1.5 hrs</td>
+</tr>
+<tr>
+<td class="day-label">Day 2</td>
+<td><strong>Module 14.2</strong> — Anatomy of a Professional Forensic Report. Study the 10-section report structure; review sample report excerpts.</td>
+<td>~2 hrs</td>
+</tr>
+<tr>
+<td class="day-label">Day 3</td>
+<td><strong>Module 14.3</strong> — Legal Standards for Expert Testimony. Cover Daubert, Frye, and FRE 702; complete knowledge checks.</td>
+<td>~1.5 hrs</td>
+</tr>
+<tr>
+<td class="day-label">Day 4</td>
+<td><strong>Module 14.4</strong> — Courtroom Testimony, QA, and Report Finalization. Study cross-examination techniques and the three-level QA process.</td>
+<td>~1.5 hrs</td>
+</tr>
+<tr>
+<td class="day-label">Day 5</td>
+<td><strong>Lab 13</strong> — Forensic Report Writing. Apply the week's concepts to draft and refine a professional forensic report. Final review and submission.</td>
+<td>~2.5 hrs</td>
+</tr>
+</tbody>
+</table>
+<p style="margin-top:.6rem;font-size:.88rem;color:var(--text-light);">Total estimated time: approximately 9 hours (including lecture, lab, and out-of-class work).</p>
+</section>
+
+<!-- 5 · Key Concepts (collapsible) -->
+<section id="concepts" class="section" aria-labelledby="h-concepts">
+<h2 id="h-concepts"><span class="emoji">🧠</span>Key Concepts &amp; Themes</h2>
+<p>This week covers a rich set of professional-practice topics. Expand the panel below for a quick-reference list.</p>
+
+<details class="collapse">
+<summary>View Key Concepts for Week 14</summary>
+<div class="inner">
+<ul class="bullet">
+<li><strong>Documentation standards</strong> — SWGDE, NIST SP 800-86, ISO 27037 guidelines for forensic documentation</li>
+<li><strong>The "hit by a bus" test</strong> — Could another qualified examiner reproduce your work from your notes alone?</li>
+<li><strong>Report anatomy (10 sections)</strong> — Executive summary, authorization, evidence inventory, tools &amp; methodology, findings, analysis, conclusions, opinions, appendices, and chain-of-custody references</li>
+<li><strong>Fact vs. opinion</strong> — Distinguishing objective observations from expert interpretations; rules for expressing each in a forensic report</li>
+<li><strong>Daubert standard</strong> — Federal test for admissibility of expert testimony (testing, peer review, error rate, general acceptance)</li>
+<li><strong>Frye standard</strong> — "General acceptance" test still used in some state jurisdictions</li>
+<li><strong>Federal Rule of Evidence 702</strong> — Statutory framework for qualifying expert witnesses and admitting expert opinion</li>
+<li><strong>Expert witness qualification</strong> — Education, training, experience, certification, and prior testimony history</li>
+<li><strong>Cross-examination strategies</strong> — Impeachment tactics, hypothetical challenges, and how to maintain credibility on the stand</li>
+<li><strong>Three-level QA process</strong> — Self-review (examiner), technical peer review (second examiner), and administrative/legal review (supervisor or counsel)</li>
+<li><strong>Final Practical connection</strong> — How this week's reporting skills feed directly into the Final Practical Project report due in Weeks 16–17</li>
+</ul>
+</div>
+</details>
+</section>
+
+<!-- 6 · Looking Ahead -->
+<section id="ahead" class="section" aria-labelledby="h-ahead">
+<h2 id="h-ahead"><span class="emoji">🔭</span>Looking Ahead</h2>
+<p>
+Next week (<strong>Week 15</strong>) shifts to <strong>Mobile and IoT Forensics</strong>, where you will apply acquisition and analysis techniques to smartphones and connected devices. Then, in <strong>Weeks 16–17</strong>, you will bring everything together for the <strong>Final Practical Project</strong> — a comprehensive forensic investigation, written report, and case presentation. The reporting and testimony skills you build this week will be essential for producing a professional-quality final deliverable.
+</p>
+</section>
+
+</main>
+
+<!-- ===== Footer ===== -->
+<footer class="page-footer">
+<p>CSC 156 – Digital Forensics Fundamentals &nbsp;|&nbsp; Mendocino College &nbsp;|&nbsp; Computer Science Department</p>
+<p style="margin-top:.25rem;">Week 14 Overview Page &nbsp;·&nbsp; Spring 2026</p>
+</footer>
+
+<!-- Smooth-scroll for nav anchors -->
+<script>
+(function(){
+document.querySelectorAll('.top-nav a[href^="#"]').forEach(function(a){
+a.addEventListener('click',function(e){
+var id=this.getAttribute('href').slice(1);
+var el=document.getElementById(id);
+if(el){e.preventDefault();el.scrollIntoView({behavior:'smooth',block:'start'});el.focus({preventScroll:true});}
+});
+});
+})();
+</script>
+</body>
+</html>
