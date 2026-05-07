@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 14 – Incident Response Tabletop and Triage Exercise | CSC 156</title>
+<style>
+:root {
+--primary: #1a5276;
+--primary-light: #2980b9;
+--accent: #e74c3c;
+--bg: #ffffff;
+--bg-alt: #f4f6f8;
+--text: #212529;
+--text-muted: #5a6268;
+--border: #dee2e6;
+--focus: #f39c12;
+--success: #27ae60;
+--task1: #2471a3;
+--task2: #6c3483;
+--task3: #ca6f1e;
+--task4: #1e8449;
+}
+*,*::before,*::after{box-sizing:border-box;}
+body{
+font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+line-height:1.6;
+color:var(--text);
+background:var(--bg);
+margin:0;
+padding:0;
+}
+a:focus,button:focus,textarea:focus,input:focus,select:focus,[tabindex]:focus{
+outline:3px solid var(--focus);
+outline-offset:2px;
+}
+.skip-link{
+position:absolute;
+top:-100px;
+left:0;
+background:var(--primary);
+color:#fff;
+padding:8px 16px;
+z-index:10000;
+font-size:1rem;
+}
+.skip-link:focus{top:0;}
+header{
+background:var(--primary);
+color:#fff;
+padding:24px 32px;
+}
+header h1{margin:0 0 4px 0;font-size:1.5rem;}
+header p{margin:0;opacity:0.9;font-size:0.95rem;}
+.points-badge{
+display:inline-block;
+background:var(--accent);
+color:#fff;
+padding:4px 12px;
+border-radius:4px;
+font-weight:700;
+font-size:0.9rem;
+margin-top:8px;
+}
+nav.task-nav{
+position:sticky;
+top:0;
+z-index:1000;
+background:var(--bg-alt);
+border-bottom:2px solid var(--border);
+padding:10px 32px;
+display:flex;
+flex-wrap:wrap;
+gap:8px;
+align-items:center;
+}
+nav.task-nav a{
+text-decoration:none;
+color:var(--primary);
+font-weight:600;
+padding:6px 14px;
+border-radius:4px;
+border:1px solid var(--primary-light);
+font-size:0.85rem;
+transition:background 0.2s,color 0.2s;
+}
+nav.task-nav a:hover,nav.task-nav a:focus{
+background:var(--primary);
+color:#fff;
+}
+.nav-spacer{margin-left:auto;}
+.btn-pdf{
+background:var(--success);
+color:#fff;
+border:none;
+padding:8px 16px;
+border-radius:4px;
+font-weight:700;
+cursor:pointer;
+font-size:0.85rem;
+}
+.btn-pdf:hover{background:#219a52;}
+main{
+max-width:960px;
+margin:0 auto;
+padding:24px 32px 80px;
+}
+.student-info{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:16px;
+margin-bottom:32px;
+padding:16px;
+background:var(--bg-alt);
+border:1px solid var(--border);
+border-radius:6px;
+}
+.student-info label{font-weight:600;display:block;margin-bottom:4px;font-size:0.9rem;}
+.student-info input{
+width:100%;
+padding:8px 12px;
+border:1px solid var(--border);
+border-radius:4px;
+font-size:1rem;
+}
+.purpose-box{
+background:#eaf2f8;
+border-left:4px solid var(--primary-light);
+padding:16px 20px;
+margin-bottom:32px;
+border-radius:4px;
+}
+.purpose-box h2{margin:0 0 8px;font-size:1.1rem;color:var(--primary);}
+.purpose-box p{margin:0;font-size:0.95rem;}
+section.task{
+margin-bottom:48px;
+border:2px solid var(--border);
+border-radius:8px;
+overflow:hidden;
+}
+section.task .task-header{
+padding:14px 20px;
+color:#fff;
+display:flex;
+justify-content:space-between;
+align-items:center;
+flex-wrap:wrap;
+gap:8px;
+}
+section.task .task-header h2{margin:0;font-size:1.15rem;}
+section.task .task-header .task-pts{
+background:rgba(255,255,255,0.25);
+padding:3px 10px;
+border-radius:4px;
+font-weight:700;
+font-size:0.85rem;
+}
+#task1 .task-header{background:var(--task1);}
+#task2 .task-header{background:var(--task2);}
+#task3 .task-header{background:var(--task3);}
+#task4 .task-header{background:var(--task4);}
+.task-body{padding:20px;}
+.task-instructions{
+background:var(--bg-alt);
+border:1px solid var(--border);
+border-radius:4px;
+padding:12px 16px;
+margin-bottom:20px;
+font-size:0.92rem;
+}
+.task-instructions strong{display:block;margin-bottom:4px;}
+.scenario-phase{
+margin-bottom:20px;
+padding:16px;
+border:1px solid var(--border);
+border-radius:6px;
+background:#fff;
+}
+.scenario-phase .phase-label{
+font-weight:700;
+font-size:0.9rem;
+color:var(--text-muted);
+margin-bottom:6px;
+}
+.scenario-phase .phase-narrative{
+font-size:0.95rem;
+margin-bottom:12px;
+padding:10px;
+background:#fef9e7;
+border-left:3px solid #f1c40f;
+border-radius:3px;
+}
+.scenario-phase label{font-weight:600;font-size:0.88rem;display:block;margin-bottom:4px;}
+.scenario-phase textarea{
+width:100%;
+min-height:80px;
+padding:10px;
+border:1px solid var(--border);
+border-radius:4px;
+font-family:inherit;
+font-size:0.92rem;
+resize:vertical;
+}
+.decision-point{
+margin-bottom:24px;
+padding:16px;
+border:1px solid var(--border);
+border-radius:6px;
+background:#fff;
+}
+.decision-point .dp-label{
+font-weight:700;
+font-size:0.9rem;
+color:var(--text-muted);
+margin-bottom:6px;
+}
+.decision-point .dp-narrative{
+font-size:0.95rem;
+margin-bottom:12px;
+padding:10px;
+background:#f4ecf7;
+border-left:3px solid var(--task2);
+border-radius:3px;
+}
+.triage-scenario{
+padding:16px;
+background:#fef5e7;
+border-left:4px solid var(--task3);
+border-radius:4px;
+margin-bottom:20px;
+}
+.triage-system{
+margin-bottom:16px;
+padding:12px 16px;
+border:1px solid var(--border);
+border-radius:6px;
+background:#fff;
+}
+.triage-system .sys-name{font-weight:700;margin-bottom:4px;}
+.ir-plan-section{
+margin-bottom:20px;
+padding:16px;
+border:1px solid var(--border);
+border-radius:6px;
+background:#fff;
+}
+.ir-plan-section label{
+font-weight:700;
+font-size:0.92rem;
+display:block;
+margin-bottom:6px;
+color:var(--task4);
+}
+.ir-plan-section .plan-hint{
+font-size:0.82rem;
+color:var(--text-muted);
+margin-bottom:8px;
+}
+.ir-plan-section textarea{
+width:100%;
+min-height:100px;
+padding:10px;
+border:1px solid var(--border);
+border-radius:4px;
+font-family:inherit;
+font-size:0.92rem;
+resize:vertical;
+}
+/* Quick Reference Panel */
+.qr-toggle{
+position:fixed;
+bottom:20px;
+right:20px;
+z-index:2000;
+background:var(--primary);
+color:#fff;
+border:none;
+padding:12px 16px;
+border-radius:50px;
+font-weight:700;
+cursor:pointer;
+font-size:0.85rem;
+box-shadow:0 4px 12px rgba(0,0,0,0.2);
+}
+.qr-toggle:hover{background:var(--primary-light);}
+.qr-panel{
+position:fixed;
+top:0;right:-380px;
+width:360px;
+height:100%;
+background:#fff;
+border-left:2px solid var(--border);
+box-shadow:-4px 0 20px rgba(0,0,0,0.1);
+z-index:3000;
+overflow-y:auto;
+padding:24px;
+transition:right 0.3s ease;
+}
+.qr-panel.open{right:0;}
+.qr-panel h3{margin:0 0 16px;color:var(--primary);font-size:1.1rem;}
+.qr-panel .qr-close{
+position:absolute;top:12px;right:16px;
+background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-muted);
+}
+.qr-panel h4{margin:16px 0 6px;font-size:0.95rem;color:var(--primary);}
+.qr-panel ul{margin:0 0 12px;padding-left:20px;font-size:0.88rem;}
+.qr-panel li{margin-bottom:4px;}
+.qr-panel .qr-table{width:100%;border-collapse:collapse;font-size:0.82rem;margin-bottom:16px;}
+.qr-panel .qr-table th,.qr-panel .qr-table td{
+border:1px solid var(--border);padding:6px 8px;text-align:left;
+}
+.qr-panel .qr-table th{background:var(--bg-alt);}
+footer{
+text-align:center;
+padding:24px;
+font-size:0.82rem;
+color:var(--text-muted);
+border-top:1px solid var(--border);
+}
+@media(max-width:600px){
+.student-info{grid-template-columns:1fr;}
+nav.task-nav{padding:8px 12px;}
+main{padding:16px;}
+.qr-panel{width:100%;right:-100%;}
+}
+@media print{
+nav.task-nav,.btn-pdf,.qr-toggle,.qr-panel,.skip-link{display:none!important;}
+section.task{break-inside:avoid;}
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<header>
+<h1>CSC 156 – Digital Forensic Fundamentals</h1>
+<p>Week 15 | Lab 14 – Incident Response Tabletop and Triage Exercise</p>
+<span class="points-badge">30 Points</span>
+</header>
+
+<nav class="task-nav" aria-label="Lab task navigation">
+<a href="#task1">Task 1: Phase ID</a>
+<a href="#task2">Task 2: Action Selection</a>
+<a href="#task3">Task 3: Triage</a>
+<a href="#task4">Task 4: IR Plan</a>
+<span class="nav-spacer"></span>
+<button class="btn-pdf" onclick="savePDF()" aria-label="Save completed lab as PDF">&#128196; Save as PDF</button>
+</nav>
+
+<main id="main-content">
+
+<div class="student-info">
+<div>
+<label for="student-name">Student Name</label>
+<input type="text" id="student-name" placeholder="Last, First">
+</div>
+<div>
+<label for="student-date">Date</label>
+<input type="text" id="student-date" placeholder="MM/DD/YYYY">
+</div>
+</div>
+
+<div class="purpose-box">
+<h2>Lab Purpose</h2>
+<p>This tabletop exercise tests your ability to <strong>apply incident response frameworks, select appropriate forensic actions, prioritize evidence collection under time constraints, and develop an IR plan</strong>. Unlike hands-on tool labs, this assessment evaluates your decision-making, process knowledge, and planning skills — the same competencies tested in professional DFIR interviews and real-world IR engagements. You will work through a multi-phase incident at <em>MedTech Health Systems</em>, responding as the forensic examiner on call.</p>
+</div>
+
+<!-- ========== SCENARIO CONTEXT ========== -->
+<div style="background:#fdf2e9;border:2px solid var(--task3);border-radius:8px;padding:20px;margin-bottom:32px;">
+<h2 style="margin:0 0 10px;color:#b9770e;font-size:1.05rem;">&#9888;&#65039; Scenario Context — MedTech Health Systems</h2>
+<p style="font-size:0.93rem;margin:0 0 10px;">MedTech Health Systems is a mid-size healthcare organization (1,200 employees, 3 hospital campuses) that manages electronic health records (EHR), medical imaging data, and insurance billing systems. Their environment includes:</p>
+<ul style="font-size:0.9rem;margin:0 0 10px;padding-left:20px;">
+<li><strong>MEDDB01</strong> – Primary patient records database server (Linux, PostgreSQL)</li>
+<li><strong>WEBPORTAL</strong> – Patient-facing web portal (Windows Server 2019, IIS)</li>
+<li><strong>DC-MAIN</strong> – Active Directory domain controller (Windows Server 2022)</li>
+<li><strong>WKS-RAD04</strong> – Radiology workstation (Windows 11, DICOM viewer)</li>
+<li><strong>EXCH-01</strong> – Exchange email server (Windows Server 2019)</li>
+</ul>
+<p style="font-size:0.93rem;margin:0;">At <strong>3:14 AM on Tuesday, March 17, 2026</strong>, the SOC receives an alert: MEDDB01 is making outbound connections to IP address 185.47.xx.xx (geolocated to Eastern Europe). The IR team is activated. <strong>You are the forensic examiner on call.</strong></p>
+</div>
+
+<!-- ========== TASK 1 ========== -->
+<section class="task" id="task1">
+<div class="task-header">
+<h2>Task 1 – IR Phase Identification</h2>
+<span class="task-pts">6 Points (1 pt each)</span>
+</div>
+<div class="task-body">
+<div class="task-instructions">
+<strong>Instructions:</strong> Below are six scenario snapshots at different moments in the MedTech incident timeline. For each, identify the <strong>current IR phase</strong> using either the NIST SP 800-61 framework (Preparation → Detection &amp; Analysis → Containment, Eradication &amp; Recovery → Post-Incident Activity) or the SANS PICERL model (Preparation → Identification → Containment → Eradication → Recovery → Lessons Learned). State the phase name and write 2–3 sentences justifying your choice.
+</div>
+
+<div class="scenario-phase">
+<div class="phase-label">Snapshot 1 of 6</div>
+<div class="phase-narrative">The SOC analyst reviews the SIEM alert showing MEDDB01 initiating TLS connections to 185.47.xx.xx on port 443 every 90 seconds. The analyst correlates this with a failed login spike on the same server 6 hours earlier. They page the IR Manager and document the initial indicators of compromise (IOCs) in the ticketing system.</div>
+<label for="t1q1">IR Phase &amp; Justification:</label>
+<textarea id="t1q1" aria-label="Task 1 Snapshot 1 response"></textarea>
+</div>
+
+<div class="scenario-phase">
+<div class="phase-label">Snapshot 2 of 6</div>
+<div class="phase-narrative">Two weeks prior to this incident, the IR Manager conducted a review of the organization's IR playbooks, confirmed forensic toolkit readiness (write-blockers charged, FTK Imager on USB), and updated the emergency contact list for legal counsel and the HIPAA privacy officer.</div>
+<label for="t1q2">IR Phase &amp; Justification:</label>
+<textarea id="t1q2" aria-label="Task 1 Snapshot 2 response"></textarea>
+</div>
+
+<div class="scenario-phase">
+<div class="phase-label">Snapshot 3 of 6</div>
+<div class="phase-narrative">The network team implements a firewall rule blocking all traffic to/from 185.47.xx.xx. Simultaneously, the IR team decides NOT to power off MEDDB01 yet — they want to capture volatile memory first. They isolate the server's VLAN from the rest of the network while keeping it powered on.</div>
+<label for="t1q3">IR Phase &amp; Justification:</label>
+<textarea id="t1q3" aria-label="Task 1 Snapshot 3 response"></textarea>
+</div>
+
+<div class="scenario-phase">
+<div class="phase-label">Snapshot 4 of 6</div>
+<div class="phase-narrative">After acquiring memory and disk images from MEDDB01, the forensic examiner identifies a web shell (cmd.aspx) on WEBPORTAL that was used as the initial access point. The sysadmin removes the web shell, patches the exploited vulnerability (CVE-2025-21987), and resets all service account credentials that had access to both servers.</div>
+<label for="t1q4">IR Phase &amp; Justification:</label>
+<textarea id="t1q4" aria-label="Task 1 Snapshot 4 response"></textarea>
+</div>
+
+<div class="scenario-phase">
+<div class="phase-label">Snapshot 5 of 6</div>
+<div class="phase-narrative">The database team restores MEDDB01 from a verified clean backup dated March 10. They apply all security patches, harden the PostgreSQL configuration, enable enhanced audit logging, and conduct validation testing before reconnecting the server to the production VLAN. The IR Manager monitors for 48 hours to confirm no recurrence.</div>
+<label for="t1q5">IR Phase &amp; Justification:</label>
+<textarea id="t1q5" aria-label="Task 1 Snapshot 5 response"></textarea>
+</div>
+
+<div class="scenario-phase">
+<div class="phase-label">Snapshot 6 of 6</div>
+<div class="phase-narrative">Three weeks later, the full IR team, legal counsel, and the CISO meet to review the incident timeline, evaluate what worked and what didn't, update the IR playbook to include healthcare-specific exfiltration scenarios, and schedule quarterly tabletop exercises. The forensic examiner presents a lessons-learned brief on evidence handling gaps identified during the engagement.</div>
+<label for="t1q6">IR Phase &amp; Justification:</label>
+<textarea id="t1q6" aria-label="Task 1 Snapshot 6 response"></textarea>
+</div>
+</div>
+</section>
+
+<!-- ========== TASK 2 ========== -->
+<section class="task" id="task2">
+<div class="task-header">
+<h2>Task 2 – Forensic Action Selection</h2>
+<span class="task-pts">8 Points (2 pts each)</span>
+</div>
+<div class="task-body">
+<div class="task-instructions">
+<strong>Instructions:</strong> At each decision point below, describe the <strong>specific forensic actions</strong> you would take and explain your rationale. You <strong>must reference specific tools and artifact names</strong> (e.g., "Use Volatility's malfind plugin to detect injected code in the process memory space"). Each response should be 4–6 sentences.
+</div>
+
+<div class="decision-point">
+<div class="dp-label">Decision Point 1 of 4</div>
+<div class="dp-narrative">You arrive at MedTech's data center at 4:22 AM. MEDDB01 is still running and network-isolated. The IR Manager says: "We need to know what's in memory before we do anything else. We also need to preserve the evidence legally — this may become a HIPAA breach notification case." What forensic actions do you take first, and in what order?</div>
+<label for="t2q1">Forensic Actions &amp; Rationale:</label>
+<textarea id="t2q1" aria-label="Task 2 Decision Point 1 response"></textarea>
+</div>
+
+<div class="decision-point">
+<div class="dp-label">Decision Point 2 of 4</div>
+<div class="dp-narrative">Memory analysis reveals a suspicious process named <code>svchost_update.exe</code> (PID 4872) with network connections to 185.47.xx.xx. The process is injecting into <code>lsass.exe</code>. You also notice the process was launched from <code>C:\ProgramData\temp\</code> on WEBPORTAL (the web server), suggesting lateral movement. What forensic actions do you perform to trace the attack path?</div>
+<label for="t2q2">Forensic Actions &amp; Rationale:</label>
+<textarea id="t2q2" aria-label="Task 2 Decision Point 2 response"></textarea>
+</div>
+
+<div class="decision-point">
+<div class="dp-label">Decision Point 3 of 4</div>
+<div class="dp-narrative">Log analysis reveals that the attacker used compromised credentials for the service account <code>svc_dbbackup</code> to move from WEBPORTAL to MEDDB01 via SSH. The account has access to four other servers. The IR Manager asks: "Do we have evidence the attacker accessed any other systems?" How do you investigate lateral movement scope?</div>
+<label for="t2q3">Forensic Actions &amp; Rationale:</label>
+<textarea id="t2q3" aria-label="Task 2 Decision Point 3 response"></textarea>
+</div>
+
+<div class="decision-point">
+<div class="dp-label">Decision Point 4 of 4</div>
+<div class="dp-narrative">The forensic timeline shows that between 2:00 AM and 3:14 AM, approximately 4.2 GB of data was transferred outbound from MEDDB01. The organization needs to determine whether protected health information (PHI) was exfiltrated. You have a full PCAP capture from the network tap for that time window. What do you analyze, and what artifacts help you determine data content?</div>
+<label for="t2q4">Forensic Actions &amp; Rationale:</label>
+<textarea id="t2q4" aria-label="Task 2 Decision Point 4 response"></textarea>
+</div>
+</div>
+</section>
+
+<!-- ========== TASK 3 ========== -->
+<section class="task" id="task3">
+<div class="task-header">
+<h2>Task 3 – Triage Prioritization</h2>
+<span class="task-pts">8 Points</span>
+</div>
+<div class="task-body">
+<div class="task-instructions">
+<strong>Instructions:</strong> It is now 5:00 AM. You are the <em>only</em> forensic examiner available until the second examiner arrives at 8:00 AM (3 hours). The IR Manager confirms that <strong>four systems</strong> require forensic attention. You cannot image all four in time. Using the <strong>severity / scope / volatility</strong> framework from Module 15.3, create a prioritized evidence collection plan. For each system, assign a priority rank (1 = first), state what evidence you will collect, and justify your ordering in 3–4 sentences.
+</div>
+
+<div class="triage-scenario">
+<p style="font-weight:700;margin:0 0 12px;">Situational Constraints:</p>
+<ul style="font-size:0.9rem;margin:0;padding-left:20px;">
+<li>You have one forensic workstation, one write-blocker, and a RAM capture tool.</li>
+<li>Full disk images take ~45 minutes per server; RAM capture takes ~15 minutes.</li>
+<li>MEDDB01 is network-isolated but still powered on (volatile data at risk if power fails).</li>
+<li>WEBPORTAL was rebooted by a panicked sysadmin at 4:45 AM (volatile data lost).</li>
+<li>DC-MAIN shows no alerts but the compromised account has Domain Admin privileges.</li>
+<li>WKS-RAD04 has a scheduled auto-update reboot at 6:00 AM (1 hour from now).</li>
+</ul>
+</div>
+
+<div class="triage-system">
+<div class="sys-name">System A: MEDDB01 (Patient Records Database Server)</div>
+<p style="font-size:0.88rem;color:var(--text-muted);margin:4px 0 8px;">Linux | PostgreSQL | Confirmed C2 beaconing | Network-isolated, powered on</p>
+<label for="t3a">Priority Rank, Evidence to Collect, &amp; Justification:</label>
+<textarea id="t3a" aria-label="Task 3 System A response"></textarea>
+</div>
+
+<div class="triage-system">
+<div class="sys-name">System B: WEBPORTAL (Patient Web Portal)</div>
+<p style="font-size:0.88rem;color:var(--text-muted);margin:4px 0 8px;">Windows Server 2019 | IIS | Initial access point (web shell) | Rebooted at 4:45 AM</p>
+<label for="t3b">Priority Rank, Evidence to Collect, &amp; Justification:</label>
+<textarea id="t3b" aria-label="Task 3 System B response"></textarea>
+</div>
+
+<div class="triage-system">
+<div class="sys-name">System C: DC-MAIN (Domain Controller)</div>
+<p style="font-size:0.88rem;color:var(--text-muted);margin:4px 0 8px;">Windows Server 2022 | AD DS | No alerts, but compromised account has DA privileges</p>
+<label for="t3c">Priority Rank, Evidence to Collect, &amp; Justification:</label>
+<textarea id="t3c" aria-label="Task 3 System C response"></textarea>
+</div>
+
+<div class="triage-system">
+<div class="sys-name">System D: WKS-RAD04 (Radiology Workstation)</div>
+<p style="font-size:0.88rem;color:var(--text-muted);margin:4px 0 8px;">Windows 11 | DICOM viewer | Auto-update reboot scheduled at 6:00 AM | No confirmed compromise</p>
+<label for="t3d">Priority Rank, Evidence to Collect, &amp; Justification:</label>
+<textarea id="t3d" aria-label="Task 3 System D response"></textarea>
+</div>
+
+<div style="margin-top:16px;">
+<label for="t3summary" style="font-weight:700;font-size:0.92rem;">Summary: Explain your overall triage strategy in 3–5 sentences, referencing the severity/scope/volatility framework:</label>
+<textarea id="t3summary" style="width:100%;min-height:100px;padding:10px;border:1px solid var(--border);border-radius:4px;font-family:inherit;font-size:0.92rem;resize:vertical;" aria-label="Task 3 summary response"></textarea>
+</div>
+</div>
+</section>
+
+<!-- ========== TASK 4 ========== -->
+<section class="task" id="task4">
+<div class="task-header">
+<h2>Task 4 – IR Plan Outline</h2>
+<span class="task-pts">8 Points</span>
+</div>
+<div class="task-body">
+<div class="task-instructions">
+<strong>Instructions:</strong> Based on what you have learned from this incident, develop a concise <strong>Incident Response Plan outline</strong> for MedTech Health Systems. This plan should be forward-looking — it is the document the organization will use for <em>future</em> incidents. Address each section below using the template structure from Module 15.3. Write in professional language suitable for an organizational policy document. Each section should be 4–8 sentences or equivalent bullet points.
+</div>
+
+<div class="ir-plan-section">
+<label for="t4roles">Section 1: Roles &amp; Responsibilities</label>
+<div class="plan-hint">Define at least 4 IR team roles, their responsibilities, and escalation authority. Include the forensic examiner's specific responsibilities and reporting relationships.</div>
+<textarea id="t4roles" aria-label="Task 4 Roles and Responsibilities"></textarea>
+</div>
+
+<div class="ir-plan-section">
+<label for="t4class">Section 2: Incident Classification</label>
+<div class="plan-hint">Define at least 3 severity levels with examples relevant to a healthcare organization. Include criteria for HIPAA breach determination and mandatory notification triggers.</div>
+<textarea id="t4class" aria-label="Task 4 Incident Classification"></textarea>
+</div>
+
+<div class="ir-plan-section">
+<label for="t4forensic">Section 3: Forensic Acquisition Procedures</label>
+<div class="plan-hint">Outline the standard forensic acquisition workflow (order of volatility, chain of custody, imaging procedures). Specify tools approved for use and documentation requirements.</div>
+<textarea id="t4forensic" aria-label="Task 4 Forensic Acquisition Procedures"></textarea>
+</div>
+
+<div class="ir-plan-section">
+<label for="t4comms">Section 4: Communication Plan</label>
+<div class="plan-hint">Define internal notification chains, external communication requirements (legal, regulatory, law enforcement, patients), and rules about public disclosure. Address HIPAA's 60-day notification requirement.</div>
+<textarea id="t4comms" aria-label="Task 4 Communication Plan"></textarea>
+</div>
+
+<div class="ir-plan-section">
+<label for="t4recovery">Section 5: Recovery Criteria</label>
+<div class="plan-hint">Define the specific conditions that must be met before affected systems are returned to production. Include monitoring requirements, validation testing, and sign-off authority.</div>
+<textarea id="t4recovery" aria-label="Task 4 Recovery Criteria"></textarea>
+</div>
+</div>
+</section>
+
+<div style="text-align:center;margin:32px 0;">
+<button class="btn-pdf" onclick="savePDF()" aria-label="Save completed lab as PDF" style="font-size:1rem;padding:12px 28px;">&#128196; Save as PDF</button>
+<p style="font-size:0.82rem;color:var(--text-muted);margin-top:8px;">Click to generate a PDF of your completed lab for submission.</p>
+</div>
+
+</main>
+
+<footer>
+<p>CSC 156 – Digital Forensic Fundamentals | Mendocino College | Week 15 Lab 14<br>
+This lab aligns with CSLOs: Identify and explain the steps of the forensic process; Apply forensic tools and techniques; Analyze digital evidence; Present findings in a professional format.</p>
+</footer>
+
+<!-- Quick Reference Toggle -->
+<button class="qr-toggle" onclick="toggleQR()" aria-label="Open quick reference panel" aria-expanded="false" id="qr-btn">&#128218; Quick Ref</button>
+
+<!-- Quick Reference Panel -->
+<div class="qr-panel" id="qr-panel" role="complementary" aria-label="Quick Reference Panel">
+<button class="qr-close" onclick="toggleQR()" aria-label="Close quick reference panel">&times;</button>
+<h3>&#128218; Quick Reference</h3>
+
+<h4>NIST SP 800-61 Phases</h4>
+<ul>
+<li><strong>1. Preparation</strong> – Establishing IR capability</li>
+<li><strong>2. Detection &amp; Analysis</strong> – Identifying and validating incidents</li>
+<li><strong>3. Containment, Eradication &amp; Recovery</strong> – Limiting damage, removing threats, restoring</li>
+<li><strong>4. Post-Incident Activity</strong> – Lessons learned, documentation</li>
+</ul>
+
+<h4>SANS PICERL Phases</h4>
+<ul>
+<li><strong>P</strong> – Preparation</li>
+<li><strong>I</strong> – Identification</li>
+<li><strong>C</strong> – Containment</li>
+<li><strong>E</strong> – Eradication</li>
+<li><strong>R</strong> – Recovery</li>
+<li><strong>L</strong> – Lessons Learned</li>
+</ul>
+
+<h4>Order of Volatility (RFC 3227)</h4>
+<table class="qr-table">
+<thead><tr><th>Priority</th><th>Source</th><th>Volatility</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>CPU registers, cache</td><td>Highest</td></tr>
+<tr><td>2</td><td>RAM (memory)</td><td>High</td></tr>
+<tr><td>3</td><td>Network state / connections</td><td>High</td></tr>
+<tr><td>4</td><td>Running processes</td><td>High</td></tr>
+<tr><td>5</td><td>Disk (file system)</td><td>Medium</td></tr>
+<tr><td>6</td><td>Remote logging / monitoring</td><td>Low</td></tr>
+<tr><td>7</td><td>Archival media / backups</td><td>Lowest</td></tr>
+</tbody>
+</table>
+
+<h4>Three-Factor Prioritization Matrix</h4>
+<ul>
+<li><strong>Severity</strong> – How critical is the compromised data/system?</li>
+<li><strong>Scope</strong> – How many systems/users are affected?</li>
+<li><strong>Volatility</strong> – How quickly will the evidence disappear?</li>
+</ul>
+
+<h4>Common Forensic Tools Reference</h4>
+<ul>
+<li><strong>Memory:</strong> FTK Imager (RAM capture), Volatility 3, Rekall</li>
+<li><strong>Disk:</strong> FTK Imager, dd/dc3dd, Autopsy, EnCase</li>
+<li><strong>Network:</strong> Wireshark, NetworkMiner, Zeek</li>
+<li><strong>Logs:</strong> Event Viewer, Log2Timeline/Plaso, ELK Stack</li>
+<li><strong>Timeline:</strong> Plaso/log2timeline, Autopsy timeline</li>
+<li><strong>Registry:</strong> RegRipper, Registry Explorer</li>
+<li><strong>Hashing:</strong> md5sum, sha256sum, HashCalc</li>
+</ul>
+
+<h4>IR Plan Required Sections</h4>
+<ul>
+<li>Roles &amp; Responsibilities</li>
+<li>Incident Classification / Severity Levels</li>
+<li>Forensic Acquisition Procedures</li>
+<li>Communication Plan</li>
+<li>Recovery Criteria</li>
+</ul>
+</div>
+
+<script>
+// Quick Reference Panel Toggle
+function toggleQR(){
+const panel=document.getElementById('qr-panel');
+const btn=document.getElementById('qr-btn');
+const isOpen=panel.classList.toggle('open');
+btn.setAttribute('aria-expanded',isOpen);
+if(isOpen){
+panel.querySelector('.qr-close').focus();
+}else{
+btn.focus();
+}
+}
+// Close panel with Escape key
+document.addEventListener('keydown',function(e){
+if(e.key==='Escape'){
+const panel=document.getElementById('qr-panel');
+if(panel.classList.contains('open')){toggleQR();}
+}
+});
+
+// Save as PDF using browser print
+function savePDF(){
+// Expand all textareas to show full content before printing
+const textareas=document.querySelectorAll('textarea');
+const inputs=document.querySelectorAll('input[type="text"]');
+const replacements=[];
+
+textareas.forEach(function(ta){
+const div=document.createElement('div');
+div.style.whiteSpace='pre-wrap';
+div.style.border='1px solid #ccc';
+div.style.padding='8px';
+div.style.minHeight='60px';
+div.style.fontFamily='inherit';
+div.style.fontSize='0.92rem';
+div.style.background='#fff';
+div.style.borderRadius='4px';
+div.style.marginBottom='8px';
+div.textContent=ta.value||'[No response entered]';
+div.setAttribute('aria-label',ta.getAttribute('aria-label'));
+ta.parentNode.insertBefore(div,ta);
+ta.style.display='none';
+replacements.push({original:ta,replacement:div});
+});
+
+inputs.forEach(function(inp){
+const span=document.createElement('span');
+span.style.fontWeight='700';
+span.style.borderBottom='1px solid #333';
+span.style.paddingBottom='2px';
+span.textContent=inp.value||'[Not provided]';
+inp.parentNode.insertBefore(span,inp);
+inp.style.display='none';
+replacements.push({original:inp,replacement:span});
+});
+
+setTimeout(function(){
+window.print();
+// Restore after print dialog
+setTimeout(function(){
+replacements.forEach(function(r){
+r.original.style.display='';
+r.replacement.parentNode.removeChild(r.replacement);
+});
+},1000);
+},100);
+}
+</script>
+</body>
+</html>

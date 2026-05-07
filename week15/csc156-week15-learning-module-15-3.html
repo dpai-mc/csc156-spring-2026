@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 15.3 – Working Under Pressure: Forensic Triage, Evidence Prioritization, and IR Plan Development</title>
+<style>
+:root {
+--primary: #1a237e;
+--primary-light: #3949ab;
+--accent: #00897b;
+--accent-light: #e0f2f1;
+--warning: #e65100;
+--warning-light: #fff3e0;
+--bg: #fafafa;
+--surface: #ffffff;
+--text: #212121;
+--text-secondary: #555555;
+--border: #e0e0e0;
+--code-bg: #f5f5f5;
+--nav-height: 56px;
+--focus-ring: 3px solid #1565c0;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--nav-height) + 16px)}
+body{margin:0;font-family:'Segoe UI',Roboto,Oxygen,sans-serif;font-size:1rem;line-height:1.65;color:var(--text);background:var(--bg)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:var(--focus-ring);outline-offset:2px;border-radius:3px}
+/* NAV */
+.nav-bar{position:sticky;top:0;z-index:1000;background:var(--primary);display:flex;align-items:center;gap:0;height:var(--nav-height);padding:0 1rem;overflow-x:auto;box-shadow:0 2px 4px rgba(0,0,0,.2)}
+.nav-bar a{color:#fff;text-decoration:none;font-size:.82rem;padding:.5rem .7rem;white-space:nowrap;border-radius:4px;transition:background .2s}
+.nav-bar a:hover,.nav-bar a:focus-visible{background:var(--primary-light)}
+.nav-title{font-weight:700;font-size:.9rem;margin-right:auto;padding-right:1rem;border-right:1px solid rgba(255,255,255,.3)}
+/* MAIN */
+.container{max-width:960px;margin:0 auto;padding:1.5rem 1.25rem 4rem}
+h1{font-size:1.75rem;color:var(--primary);margin:1.5rem 0 .5rem;line-height:1.3}
+h2{font-size:1.35rem;color:var(--primary);margin:2rem 0 .75rem;border-bottom:2px solid var(--accent);padding-bottom:.35rem}
+h3{font-size:1.1rem;color:var(--primary-light);margin:1.5rem 0 .5rem}
+p,li{margin-bottom:.6rem}
+ul,ol{padding-left:1.4rem}
+/* CALLOUT BOXES */
+.callout{border-left:4px solid var(--accent);background:var(--accent-light);padding:1rem 1.25rem;border-radius:4px;margin:1.25rem 0}
+.callout-warn{border-left-color:var(--warning);background:var(--warning-light)}
+.callout-primary{border-left-color:var(--primary);background:#e8eaf6}
+.callout .callout-title{font-weight:700;margin-bottom:.4rem;font-size:.95rem}
+/* SCENARIO */
+.scenario-box{background:linear-gradient(135deg,#e8eaf6 0%,#e0f2f1 100%);border:1px solid var(--primary-light);border-radius:8px;padding:1.25rem 1.5rem;margin:1.5rem 0}
+.scenario-box .label{font-weight:700;color:var(--primary);text-transform:uppercase;font-size:.8rem;letter-spacing:.05em;margin-bottom:.5rem}
+/* TABLES */
+.table-wrap{overflow-x:auto;margin:1rem 0}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th{background:var(--primary);color:#fff;padding:.6rem .75rem;text-align:left;font-weight:600}
+td{padding:.55rem .75rem;border-bottom:1px solid var(--border)}
+tr:nth-child(even){background:#f5f7ff}
+/* CODE */
+code{background:var(--code-bg);padding:.15rem .4rem;border-radius:3px;font-size:.88rem;font-family:'Consolas','Courier New',monospace}
+/* DETAILS/COLLAPSIBLE */
+details{border:1px solid var(--border);border-radius:6px;margin:1rem 0;background:var(--surface)}
+details[open]{box-shadow:0 1px 4px rgba(0,0,0,.08)}
+summary{cursor:pointer;padding:.85rem 1rem;font-weight:600;color:var(--primary);list-style:none;display:flex;align-items:center;gap:.5rem}
+summary::before{content:'▸';font-size:1.1rem;transition:transform .2s}
+details[open]>summary::before{transform:rotate(90deg)}
+summary::-webkit-details-marker{display:none}
+.details-body{padding:0 1rem 1rem}
+/* INTERACTIVE WIDGET */
+.widget-area{background:var(--surface);border:2px solid var(--accent);border-radius:8px;padding:1.5rem;margin:1.5rem 0}
+.widget-area h3{margin-top:0}
+.priority-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin:1rem 0}
+.priority-card{border:1px solid var(--border);border-radius:6px;padding:1rem;background:var(--surface);transition:box-shadow .2s,transform .2s}
+.priority-card:hover{box-shadow:0 3px 8px rgba(0,0,0,.1);transform:translateY(-2px)}
+.priority-card .score{font-size:1.8rem;font-weight:700;color:var(--accent);text-align:center}
+.priority-card .sys-name{font-weight:700;text-align:center;margin-bottom:.5rem}
+.priority-card .factor{font-size:.85rem;color:var(--text-secondary)}
+/* BUTTONS */
+.btn{display:inline-block;background:var(--accent);color:#fff;border:none;padding:.6rem 1.2rem;border-radius:4px;cursor:pointer;font-size:.9rem;font-weight:600;transition:background .2s}
+.btn:hover{background:#00695c}
+.btn:focus-visible{outline:var(--focus-ring)}
+/* QUIZ */
+.quiz-section{margin:2rem 0}
+.quiz-q{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1.25rem;margin:1rem 0}
+.quiz-q .q-label{font-weight:700;color:var(--primary);margin-bottom:.5rem}
+.feedback{display:none;margin-top:.75rem;padding:.75rem 1rem;border-radius:4px;font-size:.9rem}
+.feedback.show{display:block}
+.feedback.correct{background:#e8f5e9;border-left:4px solid #2e7d32}
+.feedback.info{background:#e3f2fd;border-left:4px solid #1565c0}
+/* TEMPLATE SECTION */
+.template-section{background:#f5f5f5;border:1px dashed var(--primary-light);border-radius:6px;padding:1rem 1.25rem;margin:.75rem 0}
+.template-section .section-label{font-weight:700;color:var(--primary);font-size:.95rem}
+.template-section p{font-size:.9rem;margin:.3rem 0}
+/* RESPONSIVE */
+@media(max-width:600px){
+.nav-bar{padding:0 .5rem}
+.nav-bar a{font-size:.75rem;padding:.4rem .5rem}
+.container{padding:1rem .75rem 3rem}
+h1{font-size:1.4rem}
+h2{font-size:1.15rem}
+}
+</style>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<nav class="nav-bar" role="navigation" aria-label="Module sections">
+<span class="nav-title">15.3</span>
+<a href="#scenario">Scenario</a>
+<a href="#volatility">Volatility</a>
+<a href="#triage">Triage</a>
+<a href="#prioritization">Prioritization</a>
+<a href="#constraints">Constraints</a>
+<a href="#ir-plan">IR Plan</a>
+<a href="#playbooks">Playbooks</a>
+<a href="#knowledge-check">Check</a>
+</nav>
+
+<main class="container" role="main">
+
+<!-- MODULE HEADER -->
+<h1 id="top">Module 15.3 – Working Under Pressure: Forensic Triage, Evidence Prioritization, and IR Plan Development</h1>
+<p><strong>Estimated Time:</strong> 1.5 – 2.0 hours &nbsp;|&nbsp; <strong>Objectives Supported:</strong> Week 15 Objectives 5 &amp; 6</p>
+<p>This module addresses the practical reality that incidents impose time pressure. You will learn to apply the RFC 3227 order of volatility as a decision tool, prioritize evidence collection using a three-factor framework, and develop an incident response plan outline that integrates forensic acquisition, analysis, and reporting.</p>
+
+<!-- ============================================================ -->
+<!-- SECTION 1: SCENARIO CONTINUATION -->
+<!-- ============================================================ -->
+<h2 id="scenario">1. Scenario Continuation — The Clock is Ticking</h2>
+
+<div class="scenario-box">
+<div class="label">⏱ Week 15 Scenario Update — 11:45 PM Tuesday</div>
+<p>The situation at Meridian Healthcare has escalated. The initial compromise you identified in Module 15.2 — the confirmed database server (<code>DB-PROD-01</code>) — is no longer the only concern. Network monitoring has flagged suspicious outbound connections from <strong>two additional web application servers</strong> (<code>WEB-02</code> and <code>WEB-03</code>) that sit in the same VLAN.</p>
+<p>Your IR Commander has delivered the directive:</p>
+<p style="font-size:1.05rem;font-weight:700;color:var(--warning);text-align:center;margin:1rem 0;">"I need a preliminary forensic assessment of all three systems and an incident response plan on my desk by 7:00 AM. We have a potential HIPAA breach notification clock starting at sunrise."</p>
+<p>Here is the problem: <strong>you have one forensic examiner (you), one junior analyst, and seven hours.</strong> You cannot do everything. You must decide what to collect first, which system to examine first, and how to structure your response — all before the evidence disappears and the legal deadline arrives.</p>
+<p>This module gives you the decision frameworks to make those calls confidently.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 2: ORDER OF VOLATILITY -->
+<!-- ============================================================ -->
+<h2 id="volatility">2. Order of Volatility as a Decision Tool (RFC 3227)</h2>
+
+<p>RFC 3227 (<em>Guidelines for Evidence Collection and Archiving</em>) establishes a principle you first encountered in Week 4 and applied in Week 11 (memory forensics): <strong>collect the most volatile evidence first, because it disappears the fastest.</strong></p>
+
+<div class="callout">
+<div class="callout-title">Key Insight</div>
+<p>The order of volatility is not just a list to memorize — it is a <strong>real-time decision tool</strong>. When you arrive on-scene with limited time, it tells you exactly what to reach for first.</p>
+</div>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Priority</th><th>Evidence Layer</th><th>Volatility</th><th>Lifespan</th><th>Collection Tools</th></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td>CPU Registers / Cache</td><td>Most volatile</td><td>Nanoseconds</td><td>Generally not collectible in field; captured indirectly via memory dump</td></tr>
+<tr><td>2</td><td>RAM (System Memory)</td><td>Extremely volatile</td><td>Lost at power-off</td><td>FTK Imager, WinPmem, LiME, DumpIt, Magnet RAM Capture</td></tr>
+<tr><td>3</td><td>Network State</td><td>Very volatile</td><td>Seconds–minutes</td><td><code>netstat</code>, <code>ss</code>, Wireshark (live capture), <code>tcpdump</code></td></tr>
+<tr><td>4</td><td>Running Processes</td><td>Volatile</td><td>Until terminated</td><td><code>tasklist</code>, <code>ps aux</code>, Volatility (from RAM image)</td></tr>
+<tr><td>5</td><td>Disk (File Systems)</td><td>Semi-persistent</td><td>Until overwritten</td><td>FTK Imager, <code>dd</code>, <code>dc3dd</code>, Guymager</td></tr>
+<tr><td>6</td><td>Removable Media</td><td>Persistent</td><td>Until degaussed/destroyed</td><td>Same as disk imaging tools</td></tr>
+<tr><td>7</td><td>Remote Logs / Backups</td><td>Least volatile</td><td>Retention-policy dependent</td><td>SIEM export, log aggregator queries, backup software</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Applying Volatility to Our Scenario</h3>
+<p>At 11:45 PM, all three Meridian servers are still powered on. The moment IT pulls a network cable or reboots a system, you lose Layers 1–4 permanently. Your first action on each system must be a <strong>RAM capture</strong>, followed by network state documentation, before any containment step that might alter the running system.</p>
+
+<div class="callout callout-primary">
+<div class="callout-title">Connection to Prior Weeks</div>
+<p><strong>Week 4:</strong> You learned the concept of volatility during evidence acquisition planning.<br>
+<strong>Week 6:</strong> You practiced forensic imaging with hash verification — the same integrity principles apply to RAM captures.<br>
+<strong>Week 11:</strong> You used Volatility to analyze memory dumps — those dumps exist because someone followed this exact collection priority.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 3: PLATFORM TRIAGE COLLECTIONS -->
+<!-- ============================================================ -->
+<h2 id="triage">3. Platform-Specific Rapid Triage Collections</h2>
+
+<p>When you cannot perform a full forensic image of every system (our scenario: three servers, seven hours), you perform <strong>triage collection</strong> — capturing the highest-value artifacts as quickly as possible. Below are prioritized triage artifact lists for Windows and Linux servers.</p>
+
+<h3>Windows Server Triage Artifacts</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>#</th><th>Artifact</th><th>Location</th><th>Collection Tool</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>RAM Dump</td><td>Physical memory</td><td>WinPmem, DumpIt, FTK Imager</td></tr>
+<tr><td>2</td><td>Registry Hives</td><td><code>C:\Windows\System32\config\</code> (SAM, SYSTEM, SOFTWARE, SECURITY)</td><td>KAPE, FTK Imager (logical)</td></tr>
+<tr><td>3</td><td>NTUSER.DAT / UsrClass.dat</td><td><code>C:\Users\&lt;user&gt;\</code></td><td>KAPE, Robocopy</td></tr>
+<tr><td>4</td><td>Event Logs (EVTX)</td><td><code>C:\Windows\System32\winevt\Logs\</code></td><td>KAPE, wevtutil</td></tr>
+<tr><td>5</td><td>Prefetch Files</td><td><code>C:\Windows\Prefetch\</code></td><td>KAPE, Robocopy</td></tr>
+<tr><td>6</td><td>$MFT</td><td>Root of NTFS volume</td><td>KAPE, RawCopy</td></tr>
+<tr><td>7</td><td>$UsnJrnl</td><td><code>$Extend\$UsnJrnl:$J</code></td><td>KAPE, ExtractUsnJrnl</td></tr>
+<tr><td>8</td><td>Scheduled Tasks</td><td><code>C:\Windows\System32\Tasks\</code></td><td>KAPE, dir listing</td></tr>
+<tr><td>9</td><td>SRUM Database</td><td><code>C:\Windows\System32\sru\SRUDB.dat</code></td><td>KAPE</td></tr>
+<tr><td>10</td><td>Browser Artifacts</td><td>User profile AppData</td><td>KAPE, manual copy</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Linux Server Triage Artifacts</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>#</th><th>Artifact</th><th>Location</th><th>Collection Tool</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>RAM Dump</td><td>Physical memory</td><td>LiME (kernel module)</td></tr>
+<tr><td>2</td><td>Authentication Logs</td><td><code>/var/log/auth.log</code> or <code>/var/log/secure</code></td><td>UAC, <code>cp</code>, <code>tar</code></td></tr>
+<tr><td>3</td><td>Syslog / Journal</td><td><code>/var/log/syslog</code>, <code>journalctl --output=export</code></td><td>UAC, <code>journalctl</code></td></tr>
+<tr><td>4</td><td>Web Server Logs</td><td><code>/var/log/apache2/</code> or <code>/var/log/nginx/</code></td><td>UAC, <code>tar</code></td></tr>
+<tr><td>5</td><td>Bash History (all users)</td><td><code>/home/*/.bash_history</code>, <code>/root/.bash_history</code></td><td>UAC, <code>find</code> + <code>cp</code></td></tr>
+<tr><td>6</td><td>Cron Jobs</td><td><code>/etc/crontab</code>, <code>/etc/cron.d/</code>, <code>/var/spool/cron/</code></td><td>UAC, <code>tar</code></td></tr>
+<tr><td>7</td><td>User/Group Files</td><td><code>/etc/passwd</code>, <code>/etc/shadow</code>, <code>/etc/group</code></td><td>UAC, <code>cp</code></td></tr>
+<tr><td>8</td><td>SSH Authorized Keys</td><td><code>/home/*/.ssh/authorized_keys</code></td><td>UAC, <code>find</code></td></tr>
+<tr><td>9</td><td>Systemd Units (custom)</td><td><code>/etc/systemd/system/</code></td><td>UAC, <code>ls</code> + <code>cp</code></td></tr>
+<tr><td>10</td><td>Network Connections (live)</td><td><code>ss -tulnp</code>, <code>netstat -anp</code></td><td>UAC, shell script</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Triage Tool Categories (Awareness Level)</h3>
+
+<div class="callout callout-primary">
+<div class="callout-title">Note</div>
+<p>The following tools automate the triage collections listed above. You are not expected to use them hands-on in this course, but you should be aware of their purpose and capabilities.</p>
+</div>
+
+<details>
+<summary>KAPE (Kroll Artifact Parser and Extractor) — Windows</summary>
+<div class="details-body">
+<p><strong>Purpose:</strong> Automated collection and parsing of Windows forensic artifacts. Uses modular "targets" (what to collect) and "modules" (how to parse).</p>
+<ul>
+<li>Can collect a full triage package from a live Windows system in minutes</li>
+<li>Outputs structured data ready for timeline analysis</li>
+<li>Maintained by Eric Zimmerman (same developer as the EZ Tools suite from Week 8)</li>
+<li>Free for law enforcement and educational use</li>
+</ul>
+</div>
+</details>
+
+<details>
+<summary>CyLR (CyLR Live Response) — Cross-Platform</summary>
+<div class="details-body">
+<p><strong>Purpose:</strong> Lightweight, cross-platform artifact collection tool. Runs as a single executable with no installation required.</p>
+<ul>
+<li>Supports Windows, Linux, and macOS</li>
+<li>Collects files based on a configurable artifact list</li>
+<li>Outputs a ZIP archive for offline analysis</li>
+<li>Minimal footprint on the target system</li>
+</ul>
+</div>
+</details>
+
+<details>
+<summary>UAC (Unix-like Artifacts Collector) — Linux/macOS/Unix</summary>
+<div class="details-body">
+<p><strong>Purpose:</strong> Shell-based triage collector for Unix-like systems. Gathers volatile data, logs, configuration files, and persistence artifacts.</p>
+<ul>
+<li>No compilation or dependencies required — pure shell script</li>
+<li>Collects live system state (network connections, processes, loaded modules)</li>
+<li>Packages logs, cron, user data, and SSH artifacts</li>
+<li>Ideal for Linux servers where installing software is undesirable</li>
+</ul>
+</div>
+</details>
+
+<!-- ============================================================ -->
+<!-- SECTION 4: PRIORITIZATION FRAMEWORK -->
+<!-- ============================================================ -->
+<h2 id="prioritization">4. Prioritization Decision Framework</h2>
+
+<p>When multiple systems are affected, you cannot examine them all simultaneously. You need a structured way to decide: <strong>which system do I analyze first?</strong></p>
+
+<h3>The Three-Factor Model: Severity × Scope × Volatility</h3>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Factor</th><th>Question It Answers</th><th>Scale (1–5)</th></tr></thead>
+<tbody>
+<tr><td><strong>Severity</strong></td><td>How critical is the data/system? What is the potential harm?</td><td>1 = Low-value test system<br>5 = Production system with PII/PHI</td></tr>
+<tr><td><strong>Scope</strong></td><td>How many users, records, or systems are affected?</td><td>1 = Single user/host<br>5 = Enterprise-wide / thousands of records</td></tr>
+<tr><td><strong>Volatility</strong></td><td>How quickly is evidence disappearing or being altered?</td><td>1 = Powered-off, stable<br>5 = Live, actively under attack, evidence degrading</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Priority Score</strong> = Severity + Scope + Volatility (range: 3–15). Higher score = examine first.</p>
+
+<h3>Worked Example: Meridian Healthcare Scenario</h3>
+
+<div class="widget-area" role="region" aria-label="Interactive prioritization example">
+<h3>Interactive Prioritization — Rank the Systems</h3>
+<p>Review each system's factors, then use the button to reveal the recommended priority order.</p>
+
+<div class="priority-grid">
+<div class="priority-card" id="card-db">
+<div class="sys-name">DB-PROD-01 (Database Server)</div>
+<div class="factor"><strong>Severity:</strong> 5 — Contains 240,000 patient records (PHI)</div>
+<div class="factor"><strong>Scope:</strong> 5 — All patient records potentially exposed</div>
+<div class="factor"><strong>Volatility:</strong> 4 — Live, confirmed C2 connection active</div>
+<div class="score" aria-label="Priority score">14</div>
+</div>
+<div class="priority-card" id="card-web2">
+<div class="sys-name">WEB-02 (Patient Portal)</div>
+<div class="factor"><strong>Severity:</strong> 4 — Handles authentication; session tokens in memory</div>
+<div class="factor"><strong>Scope:</strong> 3 — Portal users (subset of patient records)</div>
+<div class="factor"><strong>Volatility:</strong> 5 — Suspected active exploitation; logs rotating hourly</div>
+<div class="score" aria-label="Priority score">12</div>
+</div>
+<div class="priority-card" id="card-web3">
+<div class="sys-name">WEB-03 (Internal Staff App)</div>
+<div class="factor"><strong>Severity:</strong> 3 — Staff scheduling; limited sensitive data</div>
+<div class="factor"><strong>Scope:</strong> 2 — Internal staff only</div>
+<div class="factor"><strong>Volatility:</strong> 3 — Suspicious connection flagged but no confirmed exploitation</div>
+<div class="score" aria-label="Priority score">8</div>
+</div>
+</div>
+
+<button class="btn" id="btn-reveal-priority" aria-expanded="false" aria-controls="priority-result">Reveal Recommended Priority Order</button>
+<div id="priority-result" class="callout" style="display:none;margin-top:1rem" role="region" aria-live="polite">
+<div class="callout-title">Recommended Order</div>
+<ol>
+<li><strong>DB-PROD-01 (Score: 14)</strong> — Highest severity and scope. Capture RAM immediately, then begin live triage. This is your primary evidence source and your biggest legal exposure.</li>
+<li><strong>WEB-02 (Score: 12)</strong> — Highest volatility factor. Assign your junior analyst to capture RAM and preserve web/auth logs before the hourly rotation destroys evidence.</li>
+<li><strong>WEB-03 (Score: 8)</strong> — Lower priority. Preserve logs remotely if possible; schedule full triage after the first two systems are secured.</li>
+</ol>
+<p><strong>Key decision:</strong> Even though WEB-02 has the highest volatility score (5), DB-PROD-01's combined severity and scope make it the overall priority. However, the volatility of WEB-02 means you should <em>not</em> wait — delegate its RAM capture to run in parallel.</p>
+</div>
+</div>
+
+<div class="callout">
+<div class="callout-title">Real-World Note</div>
+<p>This framework is a guide, not a rigid formula. Professional judgment matters. If WEB-02's logs rotate in 15 minutes and DB-PROD-01 is stable, you might grab WEB-02's logs first (a 2-minute task) before starting the longer DB-PROD-01 RAM capture. The framework helps you <em>justify</em> your decisions — critical when writing your report and testifying.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 5: BUSINESS AND LEGAL CONSTRAINTS -->
+<!-- ============================================================ -->
+<h2 id="constraints">5. Business and Legal Constraints on Prioritization</h2>
+
+<p>Technical factors alone do not determine priority. Business operations and legal obligations impose hard constraints that can override pure forensic logic.</p>
+
+<h3>Breach Notification Deadlines</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Regulation</th><th>Notification Window</th><th>Implication for Forensics</th></tr></thead>
+<tbody>
+<tr><td>HIPAA (healthcare)</td><td>60 days from discovery</td><td>Clock starts when breach is "discovered" — your triage findings may trigger the clock</td></tr>
+<tr><td>GDPR (EU data subjects)</td><td>72 hours from awareness</td><td>Extremely aggressive; preliminary findings needed within hours</td></tr>
+<tr><td>State breach laws (CA, NY)</td><td>Varies; often "expedient" or 30–60 days</td><td>Must determine scope of exposure quickly to assess notification requirements</td></tr>
+<tr><td>PCI-DSS (payment cards)</td><td>Immediate to acquirer; 72 hrs forensic engagement</td><td>PFI (PCI Forensic Investigator) must be engaged within 72 hours</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout callout-warn">
+<div class="callout-title">Scenario Impact</div>
+<p>Meridian Healthcare is a HIPAA-covered entity. The IR Commander's 7:00 AM deadline is driven by the need to determine whether PHI was actually exfiltrated — because that determination starts the 60-day notification clock. Your forensic triage must answer: <em>"Did data leave the building?"</em></p>
+</div>
+
+<h3>System Availability Requirements</h3>
+<ul>
+<li><strong>Revenue-generating systems:</strong> Taking a production e-commerce server offline for imaging may cost thousands per hour. You may need to perform live acquisition.</li>
+<li><strong>Life-safety systems:</strong> Hospital systems, SCADA/ICS — cannot be taken offline. Triage must be non-disruptive.</li>
+<li><strong>SLA obligations:</strong> Contractual uptime guarantees may limit your containment options.</li>
+</ul>
+
+<h3>Legal Hold Obligations</h3>
+<ul>
+<li>Once litigation is reasonably anticipated, a <strong>legal hold</strong> requires preservation of all potentially relevant evidence.</li>
+<li>This may <em>expand</em> your collection scope — you must preserve systems you might otherwise deprioritize.</li>
+<li>Coordinate with legal counsel before making any decision to skip or defer evidence collection.</li>
+<li><strong>Connection to Week 3:</strong> The legal authority and chain-of-custody principles you learned early in the course become critical under legal hold conditions.</li>
+</ul>
+
+<h3>How Constraints Modify Your Priority Matrix</h3>
+<p>Think of business/legal constraints as <strong>override rules</strong>:</p>
+<ul>
+<li>If a notification deadline is imminent → prioritize determining scope of exposure over deep analysis</li>
+<li>If a system cannot go offline → plan for live acquisition methods only</li>
+<li>If legal hold is active → you cannot deprioritize any potentially relevant system, even if its technical score is low</li>
+</ul>
+
+<!-- ============================================================ -->
+<!-- SECTION 6: IR PLAN TEMPLATE -->
+<!-- ============================================================ -->
+<h2 id="ir-plan">6. Building an Incident Response Plan</h2>
+
+<p>An Incident Response Plan (IRP) is a <strong>pre-written document</strong> that tells your organization how to handle incidents before they happen. In our scenario, Meridian Healthcare should already have one. In Lab 14, you will develop an IR plan outline for a given scenario. Here are the key sections every plan needs:</p>
+
+<h3>IR Plan Template Walkthrough</h3>
+
+<div class="template-section">
+<div class="section-label">Section 1: Purpose and Scope</div>
+<p>Defines what the plan covers (which systems, which incident types, which personnel). Sets boundaries — e.g., "This plan covers information security incidents affecting Meridian Healthcare production systems. Physical security incidents are covered under a separate plan."</p>
+</div>
+
+<div class="template-section">
+<div class="section-label">Section 2: Roles and Responsibilities</div>
+<p>Lists every role on the IR team with specific duties. Who declares an incident? Who authorizes containment? Who communicates with media? Who performs forensic acquisition? (Connection to Module 15.1 — CSIRT structure.)</p>
+</div>
+
+<div class="template-section">
+<div class="section-label">Section 3: Incident Classification and Severity Levels</div>
+<p>Defines categories (malware, unauthorized access, data breach, DoS, insider threat) and severity tiers (e.g., SEV-1 through SEV-4). Each severity level triggers different response actions, escalation paths, and timelines.</p>
+</div>
+
+<div class="template-section">
+<div class="section-label">Section 4: Detection and Reporting Procedures</div>
+<p>How are incidents detected? (SIEM alerts, user reports, threat intelligence feeds.) How does someone report a suspected incident? What information must be included in the initial report?</p>
+</div>
+
+<div class="template-section">
+<div class="section-label">Section 5: Forensic Acquisition Procedures</div>
+<p>Step-by-step procedures for evidence collection at each severity level. References the order of volatility. Specifies approved tools, hash verification requirements, and chain-of-custody documentation. (Connection to Weeks 4 and 6.)</p>
+</div>
+
+<div class="template-section">
+<div class="section-label">Section 6: Communication Plan</div>
+<p>Internal communication: who is notified, through what channels, at what intervals. External communication: legal counsel, law enforcement, regulators, affected individuals, media. Specifies who is authorized to speak externally (usually legal + PR only).</p>
+</div>
+
+<div class="template-section">
+<div class="section-label">Section 7: Containment Strategy</div>
+<p>Short-term containment (stop the bleeding — isolate affected systems, block attacker IPs). Long-term containment (maintain operations while preparing for eradication). Documents forensic considerations: always capture volatile evidence before containment actions that alter system state.</p>
+</div>
+
+<div class="template-section">
+<div class="section-label">Section 8: Recovery Criteria</div>
+<p>Defines what "recovered" means: What conditions must be met before systems return to production? Who authorizes return to service? What monitoring is required post-recovery? How long is the heightened monitoring period?</p>
+</div>
+
+<div class="callout">
+<div class="callout-title">Lab 14 Preview</div>
+<p>In Lab 14, you will be asked to develop an IR plan outline for a provided scenario. You do not need to write a complete 50-page plan — you will populate each of the eight sections above with scenario-specific content in a structured outline format. This template gives you the skeleton.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 7: IR PLAYBOOKS -->
+<!-- ============================================================ -->
+<h2 id="playbooks">7. IR Playbooks — Scenario-Specific Procedures</h2>
+
+<p>While an IR Plan provides the overall framework, <strong>playbooks</strong> provide step-by-step procedures for specific incident types. Think of the IR Plan as the constitution and playbooks as the specific laws — they operate within the plan's structure but provide tactical detail.</p>
+
+<details open>
+<summary>Worked Example: Ransomware Incident Playbook</summary>
+<div class="details-body">
+<h3>Ransomware Response Playbook — Key Steps</h3>
+<ol>
+<li><strong>Detection &amp; Identification</strong>
+<ul>
+<li>Confirm ransomware indicators: ransom note files, encrypted file extensions, mass file modification events</li>
+<li>Identify affected systems (check for lateral spread)</li>
+<li>Determine ransomware variant (ransom note text, file extension, YARA signature match)</li>
+</ul>
+</li>
+<li><strong>Immediate Containment (First 30 Minutes)</strong>
+<ul>
+<li>Isolate affected systems from network (disconnect, do NOT power off)</li>
+<li>Block known C2 domains/IPs at firewall</li>
+<li>Disable affected user accounts</li>
+<li>Capture RAM from isolated systems before any other action</li>
+</ul>
+</li>
+<li><strong>Forensic Collection</strong>
+<ul>
+<li>RAM dump (may contain encryption keys in memory)</li>
+<li>Disk image of affected systems</li>
+<li>Network logs showing lateral movement and C2 traffic</li>
+<li>Email logs (identify initial delivery vector)</li>
+</ul>
+</li>
+<li><strong>Analysis</strong>
+<ul>
+<li>Determine initial access vector (phishing email? RDP brute force? exploit?)</li>
+<li>Map lateral movement path</li>
+<li>Identify all affected systems and data</li>
+<li>Check for data exfiltration before encryption (double extortion)</li>
+</ul>
+</li>
+<li><strong>Eradication</strong>
+<ul>
+<li>Remove ransomware binaries and persistence mechanisms</li>
+<li>Patch exploited vulnerabilities</li>
+<li>Reset all potentially compromised credentials</li>
+</ul>
+</li>
+<li><strong>Recovery</strong>
+<ul>
+<li>Restore from clean backups (verify backup integrity first)</li>
+<li>Rebuild systems that cannot be confirmed clean</li>
+<li>Monitor for re-infection indicators</li>
+</ul>
+</li>
+<li><strong>Post-Incident</strong>
+<ul>
+<li>Complete forensic report</li>
+<li>Conduct lessons-learned meeting</li>
+<li>Update detection rules based on observed TTPs</li>
+<li>Assess whether to notify law enforcement (FBI IC3)</li>
+</ul>
+</li>
+</ol>
+</div>
+</details>
+
+<details>
+<summary>Playbook Overview: Data Exfiltration / Insider Threat</summary>
+<div class="details-body">
+<p><strong>Trigger:</strong> DLP alert, unusual data volume to external destination, or HR-reported suspicious employee behavior.</p>
+<p><strong>Key differences from ransomware playbook:</strong></p>
+<ul>
+<li>Legal/HR coordination is immediate (potential employment action)</li>
+<li>Covert investigation may be required — do not alert the subject</li>
+<li>Focus on proving what data left and where it went (network forensics emphasis)</li>
+<li>Email, cloud storage, USB device logs are primary evidence sources</li>
+<li>Chain of custody is especially critical if termination or prosecution follows</li>
+</ul>
+</div>
+</details>
+
+<details>
+<summary>Playbook Overview: Web Application Compromise</summary>
+<div class="details-body">
+<p><strong>Trigger:</strong> WAF alert, web server log anomalies, defacement, or customer reports of malicious redirects.</p>
+<p><strong>Key differences from ransomware playbook:</strong></p>
+<ul>
+<li>Web server logs are the primary initial evidence source (connection to Week 12)</li>
+<li>Determine attack type: SQL injection, file upload, RCE, XSS</li>
+<li>Check for web shells (persistent backdoor files on the server)</li>
+<li>Database integrity verification if SQL injection confirmed</li>
+<li>May require application-level forensics (not just OS-level)</li>
+<li>Customer data exposure assessment drives notification decisions</li>
+</ul>
+<p><strong>Directly relevant to our scenario:</strong> WEB-02 and WEB-03 at Meridian Healthcare may require this playbook.</p>
+</div>
+</details>
+
+<div class="callout">
+<div class="callout-title">Playbooks Reference Forensic Procedures</div>
+<p>Notice how each playbook references specific forensic techniques you have already learned: RAM capture (Week 11), disk imaging (Week 6), network log analysis (Week 12), persistence mechanism identification (Weeks 7–9), malware analysis (Week 13). Playbooks are where your individual skills become an orchestrated response.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 8: KNOWLEDGE CHECK -->
+<!-- ============================================================ -->
+<h2 id="knowledge-check">8. Knowledge Check (Ungraded)</h2>
+
+<p>Test your understanding of this module's concepts. Click "Show Feedback" after formulating your answer.</p>
+
+<div class="quiz-section">
+
+<!-- Question 1 -->
+<div class="quiz-q">
+<div class="q-label">Question 1 — Time-Constrained Collection Ordering</div>
+<p>You arrive at an incident scene with three affected systems. System A is a Windows file server (powered on, no active attacker connection detected). System B is a Linux web server (powered on, active C2 beacon confirmed, logs rotate every 30 minutes — next rotation in 12 minutes). System C is a Windows workstation (powered off, suspected patient zero).</p>
+<p><strong>In what order should you begin evidence collection, and what is your first action on each system? Justify your answer using the order of volatility and the prioritization framework.</strong></p>
+<button class="btn" onclick="toggleFeedback('fb1')" aria-expanded="false" aria-controls="fb1">Show Feedback</button>
+<div id="fb1" class="feedback info" role="region" aria-live="polite">
+<p><strong>Recommended Order:</strong></p>
+<ol>
+<li><strong>System B (Linux web server) — FIRST</strong>
+<ul>
+<li><em>First action:</em> Preserve the rotating logs immediately (12-minute deadline is your hardest constraint), then capture RAM.</li>
+<li><em>Justification:</em> Highest volatility (active C2 + imminent log rotation). The 12-minute window creates an absolute deadline that overrides other factors. Logs lost are lost forever.</li>
+</ul>
+</li>
+<li><strong>System A (Windows file server) — SECOND</strong>
+<ul>
+<li><em>First action:</em> Capture RAM (volatile, lost at power-off), then collect registry hives and event logs.</li>
+<li><em>Justification:</em> Powered on = volatile evidence exists. No immediate deadline pressure, but evidence degrades over time.</li>
+</ul>
+</li>
+<li><strong>System C (Windows workstation) — THIRD</strong>
+<ul>
+<li><em>First action:</em> Create a forensic disk image (system is off, so no volatile data to capture).</li>
+<li><em>Justification:</em> Powered off = no volatile evidence remaining. Disk evidence is stable. This system can wait without evidence loss.</li>
+</ul>
+</li>
+</ol>
+<p><strong>Key principle:</strong> The order of volatility tells you what to collect on each system; the prioritization framework (with the volatility factor weighted heavily here) tells you which system to approach first.</p>
+</div>
+</div>
+
+<!-- Question 2 -->
+<div class="quiz-q">
+<div class="q-label">Question 2 — Prioritization Matrix Application</div>
+<p>Your organization has been breached. Four systems are affected:</p>
+<ul>
+<li><strong>System W:</strong> HR database with 50,000 employee SSNs (live, no active attacker connection)</li>
+<li><strong>System X:</strong> Development/test server with no real data (live, active attacker session)</li>
+<li><strong>System Y:</strong> Email server handling executive communications (live, suspicious outbound connections)</li>
+<li><strong>System Z:</strong> Public website (defaced, powered on, no sensitive data)</li>
+</ul>
+<p><strong>Assign Severity, Scope, and Volatility scores (1–5) to each system, calculate priority scores, and rank them. Explain any cases where you might override the numeric ranking.</strong></p>
+<button class="btn" onclick="toggleFeedback('fb2')" aria-expanded="false" aria-controls="fb2">Show Feedback</button>
+<div id="fb2" class="feedback info" role="region" aria-live="polite">
+<p><strong>Sample Scoring:</strong></p>
+<table style="font-size:.85rem">
+<thead><tr><th>System</th><th>Severity</th><th>Scope</th><th>Volatility</th><th>Score</th></tr></thead>
+<tbody>
+<tr><td>W (HR DB)</td><td>5</td><td>5</td><td>3</td><td><strong>13</strong></td></tr>
+<tr><td>X (Dev/Test)</td><td>1</td><td>1</td><td>5</td><td><strong>7</strong></td></tr>
+<tr><td>Y (Email)</td><td>4</td><td>4</td><td>4</td><td><strong>12</strong></td></tr>
+<tr><td>Z (Website)</td><td>2</td><td>2</td><td>2</td><td><strong>6</strong></td></tr>
+</tbody>
+</table>
+<p><strong>Ranking:</strong> W (13) → Y (12) → X (7) → Z (6)</p>
+<p><strong>Override consideration:</strong> System X has the highest volatility (active attacker session) but lowest severity/scope. You might capture RAM from X quickly (a 5-minute task) before moving to W, because the attacker might disconnect at any moment and you lose insight into their tools and methods. This is a tactical decision — the framework gives you the overall priority, but professional judgment handles edge cases.</p>
+<p><strong>Legal override:</strong> If your state has a 72-hour breach notification law and System W contains SSNs, legal counsel may require you to determine exposure scope on W before anything else — regardless of other scores.</p>
+</div>
+</div>
+
+<!-- Question 3 -->
+<div class="quiz-q">
+<div class="q-label">Question 3 — Mini-Playbook Drafting</div>
+<p>Your organization's monitoring system detects that a database administrator's account is downloading the entire customer database (2.3 million records) to a personal cloud storage service at 2:00 AM. The DBA is not scheduled to work tonight.</p>
+<p><strong>Draft a 5-step mini-playbook for this incident. For each step, identify: (a) the action, (b) who is responsible, and (c) what forensic evidence you would collect or preserve.</strong></p>
+<button class="btn" onclick="toggleFeedback('fb3')" aria-expanded="false" aria-controls="fb3">Show Feedback</button>
+<div id="fb3" class="feedback info" role="region" aria-live="polite">
+<p><strong>Sample Mini-Playbook: Suspected Insider Data Exfiltration</strong></p>
+<ol>
+<li><strong>Confirm and Document the Alert</strong>
+<ul>
+<li><em>Action:</em> Verify the DLP/monitoring alert is not a false positive. Screenshot the alert, confirm the account, confirm the destination.</li>
+<li><em>Responsible:</em> SOC Analyst / IR Coordinator</li>
+<li><em>Evidence:</em> DLP alert logs, SIEM event records, proxy logs showing cloud storage upload</li>
+</ul>
+</li>
+<li><strong>Covert Preservation (Do NOT Alert the Subject)</strong>
+<ul>
+<li><em>Action:</em> Preserve network logs, proxy logs, database audit logs, and authentication logs. Begin RAM capture of the DBA's workstation if physically accessible without alerting them.</li>
+<li><em>Responsible:</em> Forensic Examiner + Network Engineer</li>
+<li><em>Evidence:</em> Proxy/firewall logs, DB audit trail, workstation RAM, authentication logs</li>
+</ul>
+</li>
+<li><strong>Engage Legal and HR</strong>
+<ul>
+<li><em>Action:</em> Notify legal counsel and HR. Determine whether to allow continued activity (to build a stronger case) or immediately contain.</li>
+<li><em>Responsible:</em> IR Commander + Legal Counsel + HR</li>
+<li><em>Evidence:</em> Document the decision and authorization in writing</li>
+</ul>
+</li>
+<li><strong>Containment (When Authorized)</strong>
+<ul>
+<li><em>Action:</em> Disable the DBA account, block the cloud storage destination at the proxy, isolate the workstation.</li>
+<li><em>Responsible:</em> System Administrator (directed by IR Commander)</li>
+<li><em>Evidence:</em> Capture workstation RAM and disk image after account disable; preserve the cloud storage upload records</li>
+</ul>
+</li>
+<li><strong>Scope Assessment and Reporting</strong>
+<ul>
+<li><em>Action:</em> Determine exactly what data was exfiltrated, whether it reached the cloud destination, and whether any other accounts or systems were involved.</li>
+<li><em>Responsible:</em> Forensic Examiner</li>
+<li><em>Evidence:</em> Database query logs, network PCAP (if available), cloud storage API logs, forensic workstation image analysis</li>
+</ul>
+</li>
+</ol>
+<p><strong>Key differences from a ransomware playbook:</strong> Covert investigation, HR/legal engagement before containment, focus on proving intent and scope rather than stopping destruction.</p>
+</div>
+</div>
+
+</div><!-- end quiz-section -->
+
+<!-- CLOSING -->
+<div class="callout callout-primary" style="margin-top:2rem">
+<div class="callout-title">What's Next</div>
+<p><strong>Module 15.4</strong> frames Lab 14, where you will apply everything from this module: prioritize evidence collection in a multi-system scenario, make triage decisions under time pressure, and develop an IR plan outline. <strong>Module 15.5</strong> launches the Final Capstone Project.</p>
+<p>Before moving on, make sure you can: (1) recite the RFC 3227 order of volatility from memory, (2) apply the three-factor prioritization framework to a novel scenario, and (3) list the eight sections of an IR plan from memory.</p>
+</div>
+
+</main>
+
+<script>
+function toggleFeedback(id){
+var el=document.getElementById(id);
+var btn=el.previousElementSibling;
+if(el.classList.contains('show')){
+el.classList.remove('show');
+el.style.display='none';
+btn.setAttribute('aria-expanded','false');
+btn.textContent='Show Feedback';
+}else{
+el.classList.add('show');
+el.style.display='block';
+btn.setAttribute('aria-expanded','true');
+btn.textContent='Hide Feedback';
+}
+}
+document.getElementById('btn-reveal-priority').addEventListener('click',function(){
+var result=document.getElementById('priority-result');
+if(result.style.display==='none'){
+result.style.display='block';
+this.setAttribute('aria-expanded','true');
+this.textContent='Hide Priority Order';
+}else{
+result.style.display='none';
+this.setAttribute('aria-expanded','false');
+this.textContent='Reveal Recommended Priority Order';
+}
+});
+</script>
+</body>
+</html>

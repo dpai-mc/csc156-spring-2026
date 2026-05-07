@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 15.5 – Final Project Launch: Your Capstone Forensic Investigation | CSC 156</title>
+<style>
+:root {
+--primary: #1a237e;
+--primary-light: #3949ab;
+--accent: #0d47a1;
+--accent-light: #e3f2fd;
+--success: #2e7d32;
+--success-light: #e8f5e9;
+--warning: #f57f17;
+--warning-light: #fff8e1;
+--danger: #c62828;
+--danger-light: #ffebee;
+--neutral-50: #fafafa;
+--neutral-100: #f5f5f5;
+--neutral-200: #eeeeee;
+--neutral-300: #e0e0e0;
+--neutral-600: #757575;
+--neutral-700: #616161;
+--neutral-800: #424242;
+--neutral-900: #212121;
+--font-main: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+--font-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
+--radius: 8px;
+--shadow: 0 2px 8px rgba(0,0,0,0.1);
+--shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
+--max-width: 960px;
+--nav-height: 56px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+font-family: var(--font-main);
+font-size: 1rem;
+line-height: 1.7;
+color: var(--neutral-900);
+background: var(--neutral-100);
+margin: 0;
+padding: 0;
+}
+
+/* Skip Link */
+.skip-link {
+position: absolute;
+top: -100px;
+left: 0;
+background: var(--primary);
+color: #fff;
+padding: 0.5rem 1rem;
+z-index: 10000;
+font-size: 0.9rem;
+}
+.skip-link:focus {
+top: 0;
+}
+
+/* Sticky Nav */
+.nav-bar {
+position: sticky;
+top: 0;
+z-index: 1000;
+background: var(--primary);
+box-shadow: var(--shadow);
+}
+.nav-inner {
+max-width: var(--max-width);
+margin: 0 auto;
+display: flex;
+align-items: center;
+gap: 0;
+overflow-x: auto;
+-webkit-overflow-scrolling: touch;
+}
+.nav-bar a {
+color: #fff;
+text-decoration: none;
+padding: 1rem 0.85rem;
+font-size: 0.82rem;
+font-weight: 500;
+white-space: nowrap;
+border-bottom: 3px solid transparent;
+transition: background 0.2s, border-color 0.2s;
+}
+.nav-bar a:hover,
+.nav-bar a:focus {
+background: var(--primary-light);
+border-bottom-color: #fff;
+outline: 2px solid transparent;
+outline-offset: -2px;
+}
+.nav-bar a:focus-visible {
+outline: 2px solid #fff;
+outline-offset: -2px;
+}
+
+/* Main Content */
+.main-content {
+max-width: var(--max-width);
+margin: 0 auto;
+padding: 2rem 1.5rem 4rem;
+}
+
+/* Scroll margin for anchors */
+[id] {
+scroll-margin-top: calc(var(--nav-height) + 16px);
+}
+
+/* Headings */
+h1 {
+font-size: 1.85rem;
+color: var(--primary);
+margin: 0 0 0.25rem;
+line-height: 1.3;
+}
+.module-subtitle {
+font-size: 1rem;
+color: var(--neutral-600);
+margin: 0 0 2rem;
+font-weight: 400;
+}
+h2 {
+font-size: 1.4rem;
+color: var(--primary);
+margin: 2.5rem 0 1rem;
+padding-bottom: 0.4rem;
+border-bottom: 2px solid var(--neutral-300);
+}
+h3 {
+font-size: 1.15rem;
+color: var(--neutral-800);
+margin: 1.5rem 0 0.75rem;
+}
+
+/* Callout Boxes */
+.callout {
+border-radius: var(--radius);
+padding: 1.5rem;
+margin: 1.5rem 0;
+box-shadow: var(--shadow);
+}
+.callout-assessment {
+background: var(--accent-light);
+border-left: 5px solid var(--accent);
+}
+.callout-warning {
+background: var(--warning-light);
+border-left: 5px solid var(--warning);
+}
+.callout-success {
+background: var(--success-light);
+border-left: 5px solid var(--success);
+}
+.callout-danger {
+background: var(--danger-light);
+border-left: 5px solid var(--danger);
+}
+.callout-title {
+font-weight: 700;
+font-size: 1.1rem;
+margin: 0 0 0.5rem;
+display: flex;
+align-items: center;
+gap: 0.5rem;
+}
+.callout-badge {
+display: inline-block;
+background: var(--accent);
+color: #fff;
+padding: 0.2rem 0.6rem;
+border-radius: 4px;
+font-size: 0.8rem;
+font-weight: 700;
+letter-spacing: 0.03em;
+}
+.callout-badge-warning {
+background: var(--warning);
+color: #000;
+}
+
+/* Tables */
+.table-wrap {
+overflow-x: auto;
+margin: 1rem 0;
+}
+table {
+width: 100%;
+border-collapse: collapse;
+font-size: 0.92rem;
+}
+thead {
+background: var(--primary);
+color: #fff;
+}
+th, td {
+padding: 0.7rem 0.9rem;
+text-align: left;
+border: 1px solid var(--neutral-300);
+}
+th {
+font-weight: 600;
+}
+tbody tr:nth-child(even) {
+background: var(--neutral-50);
+}
+tbody tr:hover {
+background: var(--accent-light);
+}
+
+/* Lists */
+ul, ol {
+padding-left: 1.5rem;
+}
+li {
+margin-bottom: 0.4rem;
+}
+
+/* Interactive Form Styles */
+.form-section {
+background: #fff;
+border: 1px solid var(--neutral-300);
+border-radius: var(--radius);
+padding: 1.5rem;
+margin: 1.5rem 0;
+box-shadow: var(--shadow);
+}
+.form-section h3 {
+margin-top: 0;
+}
+.form-group {
+margin-bottom: 1rem;
+}
+.form-group label {
+display: block;
+font-weight: 600;
+margin-bottom: 0.3rem;
+font-size: 0.9rem;
+color: var(--neutral-800);
+}
+.form-group input[type="text"],
+.form-group textarea,
+.form-group select {
+width: 100%;
+padding: 0.6rem 0.75rem;
+border: 1px solid var(--neutral-300);
+border-radius: 4px;
+font-family: var(--font-main);
+font-size: 0.9rem;
+transition: border-color 0.2s;
+}
+.form-group input[type="text"]:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+border-color: var(--accent);
+outline: 2px solid var(--accent-light);
+outline-offset: 1px;
+}
+.form-group textarea {
+resize: vertical;
+min-height: 60px;
+}
+.form-row {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 1rem;
+}
+@media (max-width: 600px) {
+.form-row { grid-template-columns: 1fr; }
+}
+.checklist-item {
+display: flex;
+align-items: flex-start;
+gap: 0.5rem;
+margin-bottom: 0.5rem;
+}
+.checklist-item input[type="checkbox"] {
+margin-top: 0.3rem;
+width: 1.1rem;
+height: 1.1rem;
+accent-color: var(--primary);
+}
+.checklist-item label {
+font-weight: 400;
+font-size: 0.9rem;
+}
+
+/* Evidence Table in Form */
+.evidence-table input[type="text"] {
+width: 100%;
+padding: 0.4rem 0.5rem;
+border: 1px solid var(--neutral-300);
+border-radius: 3px;
+font-size: 0.85rem;
+}
+.evidence-table input[type="text"]:focus {
+border-color: var(--accent);
+outline: 2px solid var(--accent-light);
+}
+
+/* Knowledge Check */
+.kc-question {
+background: #fff;
+border: 1px solid var(--neutral-300);
+border-radius: var(--radius);
+padding: 1.25rem;
+margin: 1rem 0;
+box-shadow: var(--shadow);
+}
+.kc-question p.kc-prompt {
+font-weight: 600;
+margin: 0 0 0.75rem;
+}
+.kc-options {
+list-style: none;
+padding: 0;
+margin: 0 0 0.75rem;
+}
+.kc-options li {
+margin-bottom: 0.4rem;
+}
+.kc-options label {
+display: flex;
+align-items: flex-start;
+gap: 0.5rem;
+cursor: pointer;
+padding: 0.4rem 0.5rem;
+border-radius: 4px;
+transition: background 0.15s;
+}
+.kc-options label:hover {
+background: var(--neutral-100);
+}
+.kc-options input[type="radio"] {
+margin-top: 0.25rem;
+accent-color: var(--primary);
+}
+.kc-btn {
+background: var(--primary);
+color: #fff;
+border: none;
+padding: 0.55rem 1.2rem;
+border-radius: 4px;
+font-size: 0.9rem;
+font-weight: 600;
+cursor: pointer;
+transition: background 0.2s;
+}
+.kc-btn:hover {
+background: var(--primary-light);
+}
+.kc-btn:focus-visible {
+outline: 3px solid var(--accent);
+outline-offset: 2px;
+}
+.kc-feedback {
+margin-top: 0.75rem;
+padding: 0.75rem 1rem;
+border-radius: 4px;
+font-size: 0.9rem;
+display: none;
+}
+.kc-feedback.correct {
+background: var(--success-light);
+border: 1px solid var(--success);
+color: var(--success);
+display: block;
+}
+.kc-feedback.incorrect {
+background: var(--danger-light);
+border: 1px solid var(--danger);
+color: var(--danger);
+display: block;
+}
+
+/* Pitfall cards */
+.pitfall-grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 1rem;
+margin: 1rem 0;
+}
+@media (max-width: 650px) {
+.pitfall-grid { grid-template-columns: 1fr; }
+}
+.pitfall-card {
+background: #fff;
+border: 1px solid var(--neutral-300);
+border-radius: var(--radius);
+padding: 1rem 1.25rem;
+box-shadow: var(--shadow);
+}
+.pitfall-card .pitfall-title {
+font-weight: 700;
+color: var(--danger);
+margin: 0 0 0.4rem;
+font-size: 0.95rem;
+}
+.pitfall-card .pitfall-fix {
+font-size: 0.88rem;
+color: var(--neutral-700);
+margin: 0;
+}
+
+/* Utility */
+.sr-only {
+position: absolute;
+width: 1px;
+height: 1px;
+padding: 0;
+margin: -1px;
+overflow: hidden;
+clip: rect(0,0,0,0);
+border: 0;
+}
+strong { font-weight: 700; }
+</style>
+</head>
+<body>
+<a href="#main" class="skip-link">Skip to main content</a>
+
+<!-- Navigation -->
+<nav class="nav-bar" aria-label="Module sections">
+<div class="nav-inner">
+<a href="#overview">Overview</a>
+<a href="#scenario">Scenario</a>
+<a href="#deliverables">Deliverables</a>
+<a href="#rubric">Rubric</a>
+<a href="#timeline">Timeline</a>
+<a href="#plan">Analysis Plan</a>
+<a href="#pitfalls">Pitfalls</a>
+<a href="#knowledge-check">Knowledge Check</a>
+</div>
+</nav>
+
+<main id="main" class="main-content">
+
+<h1>Module 15.5 – Final Project Launch</h1>
+<p class="module-subtitle">Your Capstone Forensic Investigation &bull; CSC 156 &bull; Week 15</p>
+
+<!-- ====== SECTION 1: OVERVIEW ====== -->
+<section id="overview">
+<h2>Final Project Overview</h2>
+
+<div class="callout callout-assessment" role="region" aria-label="Assessment details">
+<p class="callout-title"><span class="callout-badge">GRADED</span> Final Project (Capstone) — 60 Points</p>
+<p style="margin:0.5rem 0 0;"><strong>Weight:</strong> 7.5% of your final course grade (60 of 800 points)</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Detail</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><strong>Evidence Provided</strong></td><td>Disk image &bull; Memory dump &bull; PCAP capture &bull; System/application log files</td></tr>
+<tr><td><strong>Primary Deliverable</strong></td><td>Professional forensic investigation report (written)</td></tr>
+<tr><td><strong>Secondary Deliverable</strong></td><td>Oral case presentation (Week 17)</td></tr>
+<tr><td><strong>Due Date</strong></td><td>End of Week 17</td></tr>
+<tr><td><strong>CSLO Alignment</strong></td><td>CSLO 1, CSLO 2, CSLO 3, CSLO 4</td></tr>
+</tbody>
+</table>
+</div>
+<p style="margin:0.75rem 0 0; font-size:0.9rem;">This capstone integrates every major skill you have developed across Weeks 1–15: evidence handling, multi-platform analysis, timeline reconstruction, and professional reporting.</p>
+</div>
+</section>
+
+<!-- ====== SECTION 2: SCENARIO ====== -->
+<section id="scenario">
+<h2>Project Description &amp; Your Role</h2>
+
+<h3>The Scenario</h3>
+<p>You are a <strong>digital forensic examiner</strong> engaged by a mid-size organization ("Meridian Health Systems") that has experienced a confirmed security incident. The organization's internal incident response team has already:</p>
+<ul>
+<li>Detected anomalous network activity and confirmed unauthorized access.</li>
+<li>Performed initial containment (isolated affected hosts, preserved volatile evidence).</li>
+<li>Collected forensic evidence packages and delivered them to you for analysis.</li>
+</ul>
+
+<h3>Your Mission</h3>
+<p>Using the four evidence packages provided (disk image, memory dump, PCAP, and log files), you must:</p>
+<ol>
+<li>Analyze all evidence sources using appropriate forensic tools and methodology.</li>
+<li>Reconstruct the full incident timeline from initial compromise through attacker activity.</li>
+<li>Produce a professional forensic report suitable for legal counsel and executive leadership.</li>
+<li>Present your findings orally to a simulated audience of technical and non-technical stakeholders.</li>
+</ol>
+
+<h3>Six Core Investigation Questions</h3>
+<p>Your analysis must answer each of the following:</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>#</th><th>Investigation Question</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>Initial Access:</strong> How did the attacker gain entry to the environment? What vulnerability or vector was exploited?</td></tr>
+<tr><td>2</td><td><strong>Attacker Actions:</strong> What did the attacker do on the initially compromised host? What tools or commands were executed?</td></tr>
+<tr><td>3</td><td><strong>Lateral Movement:</strong> Did the attacker move to other systems? What evidence supports (or refutes) lateral movement?</td></tr>
+<tr><td>4</td><td><strong>Data Compromise:</strong> Was any sensitive data accessed, exfiltrated, or destroyed? What evidence supports your conclusion?</td></tr>
+<tr><td>5</td><td><strong>Persistence:</strong> Did the attacker establish mechanisms for continued access? Identify all persistence artifacts found.</td></tr>
+<tr><td>6</td><td><strong>Recommendations:</strong> Based on your findings, what specific remediation and hardening actions should the organization take?</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ====== SECTION 3: DELIVERABLES ====== -->
+<section id="deliverables">
+<h2>Deliverables &amp; Requirements</h2>
+
+<h3>A. Forensic Report (Primary Deliverable)</h3>
+<p>Your written report must follow the professional report structure introduced in Week 14:</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Report Section</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>Executive Summary</td><td>1–2 page high-level overview of key findings and conclusions for non-technical readers</td></tr>
+<tr><td>Scope &amp; Objectives</td><td>What was requested, what evidence was examined, what limitations existed</td></tr>
+<tr><td>Methodology</td><td>Tools used (with versions), forensic process followed, chain of custody reference</td></tr>
+<tr><td>Findings</td><td>Organized by investigation question; each finding supported by evidence artifacts</td></tr>
+<tr><td>Timeline Reconstruction</td><td>Chronological event sequence across all evidence sources with timestamps (UTC)</td></tr>
+<tr><td>Conclusions</td><td>Summary of opinions clearly distinguished from facts; answers to all six questions</td></tr>
+<tr><td>Recommendations</td><td>Actionable remediation and hardening steps tied to specific findings</td></tr>
+<tr><td>Appendices</td><td>Chain of custody form, hash values, tool output excerpts, full timeline export, glossary</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Format Requirements</h3>
+<ul>
+<li><strong>Length:</strong> 12–20 pages (excluding appendices)</li>
+<li><strong>Format:</strong> PDF submission</li>
+<li><strong>Evidence support:</strong> Every factual claim must reference a specific artifact (exhibit number, file path, hash, or screenshot)</li>
+<li><strong>Chain of custody:</strong> Include a completed chain of custody form documenting your receipt and handling of evidence</li>
+<li><strong>Language:</strong> Professional, objective, factual — avoid speculation not supported by evidence</li>
+</ul>
+
+<h3>B. Oral Presentation (Secondary Deliverable — Week 17)</h3>
+<ul>
+<li><strong>Duration:</strong> 10–12 minutes</li>
+<li><strong>Audience:</strong> Simulated mix of technical staff and executive leadership</li>
+<li><strong>Format:</strong> Slide-based presentation (tool of your choice)</li>
+<li><strong>Q&amp;A:</strong> 3–5 minutes of audience questions following your presentation</li>
+<li><strong>Focus:</strong> Summarize the incident narrative, key evidence, impact, and recommendations — do not simply read your report aloud</li>
+</ul>
+</section>
+
+<!-- ====== SECTION 4: RUBRIC ====== -->
+<section id="rubric">
+<h2>Evaluation Rubric</h2>
+<p>Your capstone will be evaluated across six criteria totaling 60 points:</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Criterion</th><th>Points</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><strong>Technical Accuracy</strong></td><td>15</td><td>Correct identification and interpretation of artifacts; accurate use of tools; valid conclusions supported by evidence</td></tr>
+<tr><td><strong>Methodology</strong></td><td>12</td><td>Clear, repeatable forensic process; appropriate tool selection; logical analysis order; adherence to forensic principles</td></tr>
+<tr><td><strong>Evidence Documentation</strong></td><td>10</td><td>Proper chain of custody; hash verification; artifact citations; screenshots with annotations; exhibit numbering</td></tr>
+<tr><td><strong>Report Quality</strong></td><td>10</td><td>Professional formatting; clear writing; appropriate audience awareness; complete sections; proper grammar and terminology</td></tr>
+<tr><td><strong>Timeline Reconstruction</strong></td><td>8</td><td>Accurate chronological sequencing; correlation across evidence sources; UTC timestamps; identification of key events</td></tr>
+<tr><td><strong>Presentation</strong></td><td>5</td><td>Clear oral delivery; effective visual aids; appropriate time management; ability to answer questions</td></tr>
+</tbody>
+<tfoot><tr><td><strong>TOTAL</strong></td><td><strong>60</strong></td><td></td></tr></tfoot>
+</table>
+</div>
+<div class="callout callout-success" role="note">
+<p class="callout-title">Rubric Tip</p>
+<p style="margin:0;">Technical Accuracy carries the highest weight (25% of the project grade). Prioritize getting your forensic analysis <em>right</em> — unsupported or incorrect conclusions will have the greatest impact on your score.</p>
+</div>
+</section>
+
+<!-- ====== SECTION 5: TIMELINE ====== -->
+<section id="timeline">
+<h2>Timeline &amp; Milestones</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Week</th><th>Phase</th><th>Key Activities</th></tr></thead>
+<tbody>
+<tr><td><strong>Week 15</strong></td><td>Launch &amp; Planning</td><td>Receive scenario and evidence; review requirements; complete analysis plan; set up forensic environment; begin initial triage</td></tr>
+<tr><td><strong>Week 16</strong></td><td>Primary Analysis</td><td>Conduct full analysis of all evidence sources; build timeline; correlate findings across artifacts; draft report sections</td></tr>
+<tr><td><strong>Week 17</strong></td><td>Submission &amp; Presentation</td><td>Finalize and submit written report; prepare and deliver oral presentation; respond to Q&amp;A</td></tr>
+</tbody>
+</table>
+</div>
+<div class="callout callout-warning" role="note">
+<p class="callout-title"><span class="callout-badge callout-badge-warning">IMPORTANT</span> Start Now</p>
+<p style="margin:0;">Do not wait until Week 16 to begin analysis. Use the remaining time in Week 15 to read the scenario thoroughly, inventory the evidence, and build your analysis plan. Students who start early consistently produce stronger reports.</p>
+</div>
+</section>
+
+<!-- ====== SECTION 6: ANALYSIS PLAN ====== -->
+<section id="plan">
+<h2>Getting Started: Analysis Plan Template</h2>
+<p>Use this interactive template to organize your initial approach. This is for <strong>your personal planning only</strong> — it is not submitted or graded. You may print this page or copy your entries into a separate document.</p>
+
+<div class="form-section">
+<h3>Evidence Inventory</h3>
+<p style="font-size:0.88rem; color:var(--neutral-600);">List each evidence item you have received. Record its filename, type, hash value (once verified), and any initial observations.</p>
+<div class="table-wrap">
+<table class="evidence-table" aria-label="Evidence inventory form">
+<thead><tr><th style="width:5%">#</th><th style="width:22%">Filename</th><th style="width:15%">Type</th><th style="width:28%">Hash (SHA-256)</th><th style="width:30%">Initial Observations</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><input type="text" aria-label="Evidence 1 filename"></td><td><input type="text" aria-label="Evidence 1 type"></td><td><input type="text" aria-label="Evidence 1 hash"></td><td><input type="text" aria-label="Evidence 1 observations"></td></tr>
+<tr><td>2</td><td><input type="text" aria-label="Evidence 2 filename"></td><td><input type="text" aria-label="Evidence 2 type"></td><td><input type="text" aria-label="Evidence 2 hash"></td><td><input type="text" aria-label="Evidence 2 observations"></td></tr>
+<tr><td>3</td><td><input type="text" aria-label="Evidence 3 filename"></td><td><input type="text" aria-label="Evidence 3 type"></td><td><input type="text" aria-label="Evidence 3 hash"></td><td><input type="text" aria-label="Evidence 3 observations"></td></tr>
+<tr><td>4</td><td><input type="text" aria-label="Evidence 4 filename"></td><td><input type="text" aria-label="Evidence 4 type"></td><td><input type="text" aria-label="Evidence 4 hash"></td><td><input type="text" aria-label="Evidence 4 observations"></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="form-section">
+<h3>Analysis Order &amp; Justification</h3>
+<p style="font-size:0.88rem; color:var(--neutral-600);">Determine the order in which you will analyze each evidence source. Justify your sequencing (consider volatility, likely information yield, and dependencies between sources).</p>
+<div class="form-group">
+<label for="order1">1st Evidence Source &amp; Justification</label>
+<input type="text" id="order1" placeholder="e.g., Memory dump — most volatile; may reveal running processes and network connections">
+</div>
+<div class="form-group">
+<label for="order2">2nd Evidence Source &amp; Justification</label>
+<input type="text" id="order2" placeholder="e.g., PCAP — correlate network activity with memory findings">
+</div>
+<div class="form-group">
+<label for="order3">3rd Evidence Source &amp; Justification</label>
+<input type="text" id="order3" placeholder="e.g., Log files — establish authentication and system events timeline">
+</div>
+<div class="form-group">
+<label for="order4">4th Evidence Source &amp; Justification</label>
+<input type="text" id="order4" placeholder="e.g., Disk image — deep-dive into file system artifacts and persistence">
+</div>
+</div>
+
+<div class="form-section">
+<h3>Key Questions Checklist</h3>
+<p style="font-size:0.88rem; color:var(--neutral-600);">Check each question as you identify which evidence source(s) are most likely to answer it.</p>
+<div class="checklist-item"><input type="checkbox" id="q1"><label for="q1">Initial Access — How did the attacker get in?</label></div>
+<div class="checklist-item"><input type="checkbox" id="q2"><label for="q2">Attacker Actions — What did they do on the first host?</label></div>
+<div class="checklist-item"><input type="checkbox" id="q3"><label for="q3">Lateral Movement — Did they move to other systems?</label></div>
+<div class="checklist-item"><input type="checkbox" id="q4"><label for="q4">Data Compromise — Was data accessed or exfiltrated?</label></div>
+<div class="checklist-item"><input type="checkbox" id="q5"><label for="q5">Persistence — Did they establish ongoing access?</label></div>
+<div class="checklist-item"><input type="checkbox" id="q6"><label for="q6">Recommendations — What should the organization do?</label></div>
+</div>
+
+<div class="form-section">
+<h3>Tools &amp; Environment Checklist</h3>
+<p style="font-size:0.88rem; color:var(--neutral-600);">Confirm your forensic workstation is ready. Check each item as you verify availability.</p>
+<div class="form-row">
+<div>
+<div class="checklist-item"><input type="checkbox" id="t1"><label for="t1">Autopsy / Sleuth Kit installed</label></div>
+<div class="checklist-item"><input type="checkbox" id="t2"><label for="t2">Volatility Framework installed</label></div>
+<div class="checklist-item"><input type="checkbox" id="t3"><label for="t3">Wireshark installed</label></div>
+<div class="checklist-item"><input type="checkbox" id="t4"><label for="t4">FTK Imager available</label></div>
+<div class="checklist-item"><input type="checkbox" id="t5"><label for="t5">Eric Zimmerman Tools / RegRipper</label></div>
+</div>
+<div>
+<div class="checklist-item"><input type="checkbox" id="t6"><label for="t6">Log analysis tools (e.g., Timeline Explorer, grep)</label></div>
+<div class="checklist-item"><input type="checkbox" id="t7"><label for="t7">Sufficient disk space for evidence</label></div>
+<div class="checklist-item"><input type="checkbox" id="t8"><label for="t8">Report template prepared</label></div>
+<div class="checklist-item"><input type="checkbox" id="t9"><label for="t9">Chain of custody form ready</label></div>
+<div class="checklist-item"><input type="checkbox" id="t10"><label for="t10">Screenshot/annotation tool ready</label></div>
+</div>
+</div>
+<div class="form-group" style="margin-top:1rem;">
+<label for="addtools">Additional tools or notes:</label>
+<textarea id="addtools" rows="3" placeholder="List any other tools you plan to use or environment setup tasks remaining..."></textarea>
+</div>
+</div>
+</section>
+
+<!-- ====== SECTION 7: PITFALLS ====== -->
+<section id="pitfalls">
+<h2>Common Pitfalls &amp; How to Avoid Them</h2>
+<p>Students in prior semesters have encountered these challenges. Awareness now will save you time and points later.</p>
+<div class="pitfall-grid">
+<div class="pitfall-card">
+<p class="pitfall-title">1. Starting Without a Plan</p>
+<p class="pitfall-fix"><strong>Fix:</strong> Complete the analysis plan above before opening any evidence files. Know what you are looking for and in what order.</p>
+</div>
+<div class="pitfall-card">
+<p class="pitfall-title">2. Focusing on One Evidence Source</p>
+<p class="pitfall-fix"><strong>Fix:</strong> All four evidence types are provided for a reason. Cross-correlate findings across memory, disk, network, and logs to build a complete picture.</p>
+</div>
+<div class="pitfall-card">
+<p class="pitfall-title">3. Reporting Tool Output Without Interpretation</p>
+<p class="pitfall-fix"><strong>Fix:</strong> Raw output is evidence, not analysis. Always explain <em>what</em> the artifact means, <em>why</em> it matters, and <em>how</em> it connects to the incident narrative.</p>
+</div>
+<div class="pitfall-card">
+<p class="pitfall-title">4. Missing the "So What?"</p>
+<p class="pitfall-fix"><strong>Fix:</strong> For every finding, ask: "What does this mean for the organization?" Connect technical artifacts to business impact and investigation questions.</p>
+</div>
+<div class="pitfall-card">
+<p class="pitfall-title">5. Delaying Report Writing</p>
+<p class="pitfall-fix"><strong>Fix:</strong> Write as you analyze. Draft findings sections during Week 16 — do not leave all writing for the final days of Week 17.</p>
+</div>
+<div class="pitfall-card">
+<p class="pitfall-title">6. Neglecting Chain of Custody</p>
+<p class="pitfall-fix"><strong>Fix:</strong> Document evidence receipt and every handling action from the moment you access the files. A missing chain of custody form costs points and undermines credibility.</p>
+</div>
+</div>
+</section>
+
+<!-- ====== SECTION 8: KNOWLEDGE CHECK ====== -->
+<section id="knowledge-check">
+<h2>Knowledge Check</h2>
+<p>These questions are <strong>ungraded</strong> and designed to confirm your understanding of project expectations before you begin.</p>
+
+<!-- Question 1 -->
+<div class="kc-question" id="kc1">
+<p class="kc-prompt">Question 1: Before you open any evidence files for analysis, what steps should you complete first?</p>
+<ul class="kc-options">
+<li><label><input type="radio" name="kc1" value="a"> Begin analyzing the disk image immediately to save time</label></li>
+<li><label><input type="radio" name="kc1" value="b"> Verify hash values of all evidence files, complete the chain of custody form, and develop an analysis plan</label></li>
+<li><label><input type="radio" name="kc1" value="c"> Install as many forensic tools as possible and run them all simultaneously</label></li>
+<li><label><input type="radio" name="kc1" value="d"> Write the executive summary of your report based on the scenario description</label></li>
+</ul>
+<button class="kc-btn" onclick="checkKC('kc1','b')" aria-label="Check answer for question 1">Check Answer</button>
+<div class="kc-feedback" id="kc1-correct" aria-live="polite">
+<strong>Correct!</strong> Before any analysis begins, you must verify evidence integrity (hash comparison), document receipt on your chain of custody form, and create a structured analysis plan. This ensures your work is forensically sound and defensible — and it directly supports the Methodology and Evidence Documentation rubric criteria (22 combined points).
+</div>
+<div class="kc-feedback" id="kc1-incorrect" aria-live="polite">
+<strong>Not quite.</strong> The correct answer is <strong>B</strong>. Before opening evidence, you must: (1) verify hash values to confirm evidence integrity, (2) complete the chain of custody form documenting your receipt, and (3) develop an analysis plan. Skipping these steps compromises forensic soundness and costs you points on the Methodology (12 pts) and Evidence Documentation (10 pts) rubric criteria.
+</div>
+</div>
+
+<!-- Question 2 -->
+<div class="kc-question" id="kc2">
+<p class="kc-prompt">Question 2: A student's report contains technically accurate findings (full 15 pts for Technical Accuracy) but receives only 3 of 8 points for Timeline Reconstruction. Which of the following most likely explains the low timeline score?</p>
+<ul class="kc-options">
+<li><label><input type="radio" name="kc2" value="a"> The student used incorrect forensic tools</label></li>
+<li><label><input type="radio" name="kc2" value="b"> The student presented findings organized by evidence source rather than in chronological order with correlated timestamps across sources</label></li>
+<li><label><input type="radio" name="kc2" value="c"> The student forgot to include an executive summary</label></li>
+<li><label><input type="radio" name="kc2" value="d"> The student's report was too short</label></li>
+</ul>
+<button class="kc-btn" onclick="checkKC('kc2','b')" aria-label="Check answer for question 2">Check Answer</button>
+<div class="kc-feedback" id="kc2-correct" aria-live="polite">
+<strong>Correct!</strong> Timeline Reconstruction (8 pts) specifically evaluates your ability to present events in chronological sequence with UTC timestamps and cross-source correlation. A report can be technically accurate yet still fail to reconstruct the narrative timeline if findings are siloed by evidence type rather than woven into a coherent chronological story.
+</div>
+<div class="kc-feedback" id="kc2-incorrect" aria-live="polite">
+<strong>Not quite.</strong> The correct answer is <strong>B</strong>. The Timeline Reconstruction criterion evaluates chronological sequencing and cross-source correlation — not tool choice, report length, or section completeness. If findings are presented per evidence source without merging them into a unified timeline, the student loses most timeline points even if the underlying analysis is correct.
+</div>
+</div>
+</section>
+
+</main>
+
+<script>
+function checkKC(qId, correctVal) {
+var radios = document.querySelectorAll('input[name="' + qId + '"]');
+var selected = null;
+for (var i = 0; i < radios.length; i++) {
+if (radios[i].checked) { selected = radios[i].value; break; }
+}
+if (!selected) return;
+var correctEl = document.getElementById(qId + '-correct');
+var incorrectEl = document.getElementById(qId + '-incorrect');
+correctEl.className = 'kc-feedback';
+incorrectEl.className = 'kc-feedback';
+if (selected === correctVal) {
+correctEl.className = 'kc-feedback correct';
+correctEl.style.display = 'block';
+incorrectEl.style.display = 'none';
+} else {
+incorrectEl.className = 'kc-feedback incorrect';
+incorrectEl.style.display = 'block';
+correctEl.style.display = 'none';
+}
+}
+</script>
+</body>
+</html>

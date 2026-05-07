@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 15.4 – Lab 14: Incident Response Tabletop and Triage Exercise | CSC 156</title>
+<style>
+:root {
+--primary-dark: #1a2332;
+--primary-medium: #2c3e50;
+--primary-light: #34495e;
+--accent-blue: #2980b9;
+--accent-blue-light: #3498db;
+--accent-green: #27ae60;
+--accent-orange: #e67e22;
+--accent-red: #c0392b;
+--accent-purple: #8e44ad;
+--bg-light: #f8f9fa;
+--bg-white: #ffffff;
+--text-dark: #2c3e50;
+--text-medium: #555555;
+--text-light: #777777;
+--border-light: #e0e0e0;
+--border-medium: #ccc;
+--shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+--shadow-md: 0 3px 8px rgba(0,0,0,0.12);
+--shadow-lg: 0 5px 15px rgba(0,0,0,0.15);
+--radius-sm: 4px;
+--radius-md: 8px;
+--radius-lg: 12px;
+--font-main: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+--font-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
+--nav-height: 56px;
+}
+
+*,*::before,*::after{box-sizing:border-box;}
+
+body{
+margin:0;padding:0;
+font-family:var(--font-main);
+font-size:16px;line-height:1.7;
+color:var(--text-dark);
+background:var(--bg-light);
+}
+
+/* NAV BAR */
+.nav-bar{
+position:sticky;top:0;z-index:1000;
+background:var(--primary-dark);
+padding:0 1.5rem;
+height:var(--nav-height);
+display:flex;align-items:center;gap:0.25rem;
+box-shadow:var(--shadow-md);
+overflow-x:auto;
+}
+.nav-bar a{
+color:#ecf0f1;text-decoration:none;
+font-size:0.82rem;font-weight:500;
+padding:0.4rem 0.7rem;border-radius:var(--radius-sm);
+white-space:nowrap;
+transition:background 0.2s,outline 0.2s;
+}
+.nav-bar a:hover,.nav-bar a:focus{
+background:var(--accent-blue);outline:none;
+}
+.nav-bar a:focus-visible{
+outline:2px solid #f1c40f;outline-offset:2px;
+}
+
+/* SCROLL OFFSET */
+section[id]{scroll-margin-top:calc(var(--nav-height) + 1rem);}
+
+/* CONTAINER */
+.container{
+max-width:960px;margin:0 auto;
+padding:2rem 1.5rem 4rem;
+}
+
+/* HEADINGS */
+h1{font-size:1.8rem;color:var(--primary-dark);margin:0 0 0.5rem;line-height:1.3;}
+h2{font-size:1.4rem;color:var(--primary-medium);margin:2.5rem 0 1rem;padding-bottom:0.4rem;border-bottom:3px solid var(--accent-blue);}
+h3{font-size:1.15rem;color:var(--primary-light);margin:1.5rem 0 0.75rem;}
+
+.module-label{
+font-size:0.85rem;font-weight:600;text-transform:uppercase;
+letter-spacing:0.05em;color:var(--accent-blue);margin-bottom:0.25rem;
+}
+
+/* CALLOUT BOXES */
+.callout{
+border-radius:var(--radius-md);padding:1.25rem 1.5rem;
+margin:1.5rem 0;box-shadow:var(--shadow-sm);
+}
+.callout-assessment{
+background:linear-gradient(135deg,#fef9e7 0%,#fdebd0 100%);
+border-left:5px solid var(--accent-orange);
+}
+.callout-info{
+background:linear-gradient(135deg,#eaf2f8 0%,#d6eaf8 100%);
+border-left:5px solid var(--accent-blue);
+}
+.callout-tip{
+background:linear-gradient(135deg,#eafaf1 0%,#d5f5e3 100%);
+border-left:5px solid var(--accent-green);
+}
+.callout-connection{
+background:linear-gradient(135deg,#f4ecf7 0%,#e8daef 100%);
+border-left:5px solid var(--accent-purple);
+}
+.callout-title{
+font-weight:700;font-size:1.05rem;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.5rem;
+}
+.callout-assessment .callout-title{color:#d35400;}
+.callout-info .callout-title{color:var(--accent-blue);}
+.callout-tip .callout-title{color:#1e8449;}
+.callout-connection .callout-title{color:var(--accent-purple);}
+
+/* BADGE */
+.badge{
+display:inline-block;font-size:0.75rem;font-weight:700;
+padding:0.2rem 0.6rem;border-radius:3px;text-transform:uppercase;
+letter-spacing:0.03em;
+}
+.badge-pts{background:#e67e22;color:#fff;}
+.badge-format{background:var(--accent-blue);color:#fff;}
+.badge-due{background:var(--accent-red);color:#fff;}
+
+/* TASK CARDS */
+.task-card{
+background:var(--bg-white);border:1px solid var(--border-light);
+border-radius:var(--radius-md);padding:1.25rem 1.5rem;
+margin:1rem 0;box-shadow:var(--shadow-sm);
+transition:box-shadow 0.2s;
+}
+.task-card:hover{box-shadow:var(--shadow-md);}
+.task-card-header{
+display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;
+margin-bottom:0.5rem;
+}
+.task-card-header h3{margin:0;font-size:1.05rem;}
+.task-pts{
+font-size:0.8rem;font-weight:700;color:#fff;
+background:var(--accent-blue);padding:0.2rem 0.6rem;border-radius:3px;
+}
+
+/* CHECKLIST */
+.checklist{list-style:none;padding:0;margin:1rem 0;}
+.checklist li{
+display:flex;align-items:flex-start;gap:0.75rem;
+padding:0.6rem 0;border-bottom:1px solid var(--border-light);
+}
+.checklist li:last-child{border-bottom:none;}
+.checklist input[type="checkbox"]{
+width:1.2rem;height:1.2rem;margin-top:0.2rem;
+accent-color:var(--accent-green);cursor:pointer;flex-shrink:0;
+}
+.checklist label{cursor:pointer;flex:1;}
+
+/* TIPS LIST */
+.tips-list{padding-left:1.25rem;}
+.tips-list li{margin-bottom:0.6rem;}
+.tips-list li strong{color:var(--primary-medium);}
+
+/* SELF-ASSESSMENT */
+.self-assess-card{
+background:var(--bg-white);border:1px solid var(--border-light);
+border-radius:var(--radius-md);padding:1.25rem 1.5rem;
+margin:1rem 0;box-shadow:var(--shadow-sm);
+}
+.self-assess-card h4{margin:0 0 0.75rem;font-size:1rem;color:var(--primary-medium);}
+.likert-group{display:flex;gap:0.5rem;flex-wrap:wrap;margin:0.5rem 0;}
+.likert-btn{
+border:2px solid var(--border-medium);background:var(--bg-white);
+border-radius:var(--radius-sm);padding:0.35rem 0.9rem;
+font-size:0.85rem;cursor:pointer;transition:all 0.2s;
+}
+.likert-btn:hover,.likert-btn:focus{border-color:var(--accent-blue);background:#eaf2f8;outline:none;}
+.likert-btn:focus-visible{outline:2px solid #f1c40f;outline-offset:2px;}
+.likert-btn[aria-pressed="true"]{
+background:var(--accent-blue);color:#fff;border-color:var(--accent-blue);
+}
+.reflect-prompt{
+margin-top:0.75rem;padding:0.75rem 1rem;
+background:var(--bg-light);border-radius:var(--radius-sm);
+font-size:0.9rem;color:var(--text-medium);
+display:none;
+}
+.reflect-prompt.visible{display:block;}
+
+/* UTILITIES */
+.text-muted{color:var(--text-light);font-size:0.9rem;}
+.mt-0{margin-top:0;}
+.mb-0{margin-bottom:0;}
+
+/* RESPONSIVE */
+@media(max-width:600px){
+.nav-bar{padding:0 0.75rem;}
+.nav-bar a{font-size:0.75rem;padding:0.35rem 0.5rem;}
+.container{padding:1.5rem 1rem 3rem;}
+h1{font-size:1.5rem;}
+h2{font-size:1.25rem;}
+.task-card-header{flex-direction:column;align-items:flex-start;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<nav class="nav-bar" aria-label="Module sections">
+<a href="#overview">Assessment Overview</a>
+<a href="#format">Tabletop Format</a>
+<a href="#checklist">Pre-Lab Checklist</a>
+<a href="#tasks">Task Preview</a>
+<a href="#tips">Tips for Success</a>
+<a href="#capstone">Capstone Connection</a>
+<a href="#readiness">Readiness Check</a>
+</nav>
+
+<main class="container">
+
+<!-- MODULE HEADER -->
+<p class="module-label">Module 15.4 &bull; Week 15</p>
+<h1>Lab 14: Incident Response Tabletop and Triage Exercise</h1>
+<p>This page prepares you for Lab 14 — the week's primary graded assessment. Read through each section below before opening the lab itself. Estimated preparation time: 20–30 minutes.</p>
+
+<!-- SECTION 1: ASSESSMENT OVERVIEW -->
+<section id="overview">
+<h2>Lab 14 Assessment Overview</h2>
+
+<div class="callout callout-assessment" role="region" aria-label="Assessment details">
+<p class="callout-title">&#9888;&#65039; Graded Assessment — Lab 14</p>
+<p style="margin:0.75rem 0;">
+<span class="badge badge-pts">30 Points</span>
+<span class="badge badge-format">Tabletop Exercise</span>
+<span class="badge badge-due">Due: End of Week 15</span>
+</p>
+<ul style="margin:0.75rem 0 0;padding-left:1.25rem;">
+<li><strong>Format:</strong> Scenario-based tabletop exercise with written responses</li>
+<li><strong>Weight:</strong> 3.75% of your final course grade</li>
+<li><strong>Deliverable:</strong> Completed lab worksheet — IR phase identification, forensic action plan, triage prioritization, and IR plan outline</li>
+<li><strong>Objectives Assessed:</strong> Week 15 Objectives 1–6 (all content objectives)</li>
+<li><strong>CSLOs:</strong> CSLO 1 (Tools &amp; Techniques), CSLO 2 (Evidence &amp; Analysis), CSLO 3 (Legal &amp; Ethical), CSLO 4 (Reporting &amp; Communication)</li>
+</ul>
+</div>
+
+<p>Lab 14 is unlike the hands-on tool labs you completed in Weeks 7–13. Instead of executing commands or analyzing a single artifact type, you will work through a <strong>multi-phase incident scenario</strong> and provide structured written responses at each decision point. The lab tests your ability to <em>orchestrate</em> multiple forensic skills within a structured incident response process.</p>
+</section>
+
+<!-- SECTION 2: WHY TABLETOP FORMAT -->
+<section id="format">
+<h2>Why a Tabletop Format?</h2>
+
+<div class="callout callout-info">
+<p class="callout-title">&#128161; Understanding the Assessment Design</p>
+<p>Tabletop exercises are a standard professional practice in Digital Forensics and Incident Response (DFIR). This format was chosen deliberately to assess higher-order thinking skills that tool-based labs cannot measure.</p>
+</div>
+
+<h3>Professional Relevance</h3>
+<p>In real-world DFIR practice, tabletop exercises serve critical functions:</p>
+<ul>
+<li><strong>Team readiness testing</strong> — Organizations run tabletops to validate their IR plans before real incidents occur.</li>
+<li><strong>Decision-making under ambiguity</strong> — Real incidents rarely present clean, obvious paths. Tabletops train practitioners to reason through incomplete information.</li>
+<li><strong>Interview preparation</strong> — DFIR job interviews frequently present candidates with scenario-based questions: "You receive an alert that… What do you do first? Why?"</li>
+</ul>
+
+<h3>Higher-Order Thinking Skills Assessed</h3>
+<p>Lab 14 moves beyond recall and application into <strong>analysis, evaluation, and synthesis</strong>:</p>
+<ul>
+<li><strong>Analysis</strong> — Breaking the scenario into phases and identifying what type of IR activity is occurring at each stage.</li>
+<li><strong>Evaluation</strong> — Judging which forensic actions are appropriate (and which are not) given the current phase, available resources, and time constraints.</li>
+<li><strong>Synthesis</strong> — Constructing an original IR plan outline that integrates multiple forensic techniques into a coherent, sequenced strategy.</li>
+</ul>
+
+<h3>What This Means for You</h3>
+<p>There is no single "correct answer" for every decision point. Your responses will be evaluated on the <strong>quality of your reasoning</strong>, your use of <strong>precise framework terminology</strong>, and how well you <strong>justify your choices</strong> using concepts from Modules 15.1–15.3.</p>
+</section>
+
+<!-- SECTION 3: PRE-LAB CHECKLIST -->
+<section id="checklist">
+<h2>Pre-Lab Preparation Checklist</h2>
+
+<div class="callout callout-tip">
+<p class="callout-title">&#9989; Complete These Before Starting Lab 14</p>
+<p>Lab 14 builds directly on the content from Modules 15.1, 15.2, and 15.3. Attempting the lab without completing these modules will significantly impact your performance.</p>
+</div>
+
+<ul class="checklist" role="list" aria-label="Pre-lab preparation checklist">
+<li>
+<input type="checkbox" id="chk1" aria-label="Module 15.1 complete">
+<label for="chk1"><strong>Module 15.1 — Incident Response Lifecycle Frameworks</strong><br><span class="text-muted">You can name and describe the phases of both NIST SP 800-61 and SANS PICERL models, and explain how they map to each other.</span></label>
+</li>
+<li>
+<input type="checkbox" id="chk2" aria-label="Module 15.2 complete">
+<label for="chk2"><strong>Module 15.2 — Forensic Techniques Mapped to IR Phases</strong><br><span class="text-muted">You can identify which forensic tools and techniques (from Weeks 2–14) apply to each IR phase, and explain the forensic examiner's role within the team.</span></label>
+</li>
+<li>
+<input type="checkbox" id="chk3" aria-label="Module 15.3 complete">
+<label for="chk3"><strong>Module 15.3 — Triage, Prioritization, and IR Planning</strong><br><span class="text-muted">You can apply the order of volatility, use a severity × scope × volatility prioritization matrix, and construct an IR plan outline with standard components.</span></label>
+</li>
+<li>
+<input type="checkbox" id="chk4" aria-label="Review key concepts">
+<label for="chk4"><strong>Reviewed Key Concepts</strong><br><span class="text-muted">You have reviewed the order of volatility (RFC 3227), triage artifact lists by platform, IR plan components, and the MedTech Health Systems scenario thread from earlier modules.</span></label>
+</li>
+<li>
+<input type="checkbox" id="chk5" aria-label="Materials ready">
+<label for="chk5"><strong>Materials Ready</strong><br><span class="text-muted">You have your notes from Modules 15.1–15.3 accessible for reference during the lab (this is an open-notes assessment).</span></label>
+</li>
+</ul>
+</section>
+
+<!-- SECTION 4: TASK PREVIEW -->
+<section id="tasks">
+<h2>Task Preview</h2>
+<p>Lab 14 consists of four tasks. Each task builds on the previous one, progressing from identification through planning — mirroring how a forensic examiner moves through an actual incident engagement.</p>
+
+<div class="task-card">
+<div class="task-card-header">
+<h3>Task 1: IR Phase Identification</h3>
+<span class="task-pts">7 points</span>
+</div>
+<p>You will be presented with a series of scenario snapshots describing activities occurring during an incident. For each snapshot, you must <strong>identify the current IR phase</strong> (using NIST or SANS terminology) and <strong>provide a brief justification</strong> explaining why the described activity belongs to that phase.</p>
+<p class="text-muted"><strong>Prepare by:</strong> Ensuring you can clearly distinguish between Detection &amp; Analysis, Containment, Eradication, and Recovery activities — especially the boundary cases where phases overlap.</p>
+</div>
+
+<div class="task-card">
+<div class="task-card-header">
+<h3>Task 2: Forensic Action Selection</h3>
+<span class="task-pts">8 points</span>
+</div>
+<p>At several decision points in the scenario, you must <strong>select appropriate forensic actions</strong> from a set of options and explain your reasoning. This tests your ability to match specific tools and techniques (from Weeks 2–14) to the current IR phase, available evidence sources, and scenario constraints.</p>
+<p class="text-muted"><strong>Prepare by:</strong> Reviewing the technique-to-phase mapping from Module 15.2. Know which tools apply to which evidence types and which phase they belong in.</p>
+</div>
+
+<div class="task-card">
+<div class="task-card-header">
+<h3>Task 3: Triage Prioritization</h3>
+<span class="task-pts">7 points</span>
+</div>
+<p>Given a list of available evidence sources and a time constraint, you must <strong>rank the evidence in collection priority order</strong> and <strong>justify your ranking</strong> using the order of volatility, severity/scope analysis, and business impact considerations from Module 15.3.</p>
+<p class="text-muted"><strong>Prepare by:</strong> Practicing the prioritization decision matrix (severity × scope × volatility). Be ready to explain why memory comes before disk, and why some disk artifacts might leapfrog others based on scenario context.</p>
+</div>
+
+<div class="task-card">
+<div class="task-card-header">
+<h3>Task 4: IR Plan Outline</h3>
+<span class="task-pts">8 points</span>
+</div>
+<p>You will <strong>develop a structured IR plan outline</strong> for the scenario organization. The plan must include: roles and responsibilities, communication procedures, forensic acquisition sequence, escalation criteria, and evidence handling procedures. This is a synthesis task requiring you to integrate everything from Modules 15.1–15.3.</p>
+<p class="text-muted"><strong>Prepare by:</strong> Reviewing the IR plan components from Module 15.3 (Section 5.1 of the detailed outline). Your plan should be realistic for the scenario organization — consider their size, industry, and regulatory requirements.</p>
+</div>
+
+<p style="margin-top:1.25rem;"><strong>Total: 30 points</strong> — Note how point values increase slightly for tasks requiring greater synthesis and original thinking.</p>
+</section>
+
+<!-- SECTION 5: TIPS FOR SUCCESS -->
+<section id="tips">
+<h2>Tips for Success</h2>
+
+<div class="callout callout-tip">
+<p class="callout-title">&#128640; Maximize Your Lab 14 Score</p>
+<p>These strategies reflect what distinguishes strong responses from average ones in professional DFIR tabletop exercises — and in this lab's rubric.</p>
+</div>
+
+<ol class="tips-list">
+<li><strong>Use precise framework terminology.</strong> Say "Containment phase (NIST)" or "Identification phase (SANS PICERL)" — not "the part where you stop the attack." Graders look for correct, specific phase names.</li>
+<li><strong>Reference specific tools and artifact paths.</strong> Instead of "collect logs," write "collect Windows Security Event Logs (Security.evtx) using KAPE" or "capture volatile memory with FTK Imager before network isolation." Specificity demonstrates competence.</li>
+<li><strong>Justify every prioritization decision.</strong> Don't just list a collection order — explain <em>why</em>. Reference volatility (RFC 3227), relevance to the specific attack type, or regulatory requirements that create deadlines.</li>
+<li><strong>Make your IR plan realistic for the scenario organization.</strong> A 50-person healthcare company has different resources than a Fortune 500 firm. Tailor roles, escalation paths, and external contacts to the scenario's organizational context.</li>
+<li><strong>Address forensic considerations at phase boundaries.</strong> The strongest responses identify what must happen forensically <em>before</em> transitioning between phases (e.g., "capture memory before containment isolation cuts network access").</li>
+<li><strong>Write clearly and concisely.</strong> This is a written assessment. Organize your responses with headings, bullet points, or numbered steps. Graders should not have to hunt for your reasoning.</li>
+</ol>
+</section>
+
+<!-- SECTION 6: CAPSTONE CONNECTION -->
+<section id="capstone">
+<h2>Connection to the Final Project</h2>
+
+<div class="callout callout-connection">
+<p class="callout-title">&#128279; Lab 14 → Final Capstone Project</p>
+<p>The structured thinking you demonstrate in Lab 14 is the <strong>same methodology you must apply at greater scale and depth</strong> in the Final Project (capstone).</p>
+</div>
+
+<p>Consider Lab 14 a <strong>rehearsal at reduced scope</strong> for the capstone:</p>
+
+<table style="width:100%;border-collapse:collapse;margin:1rem 0;font-size:0.92rem;">
+<thead>
+<tr style="background:var(--primary-dark);color:#fff;">
+<th style="padding:0.6rem 1rem;text-align:left;border-radius:var(--radius-sm) 0 0 0;">Skill Area</th>
+<th style="padding:0.6rem 1rem;text-align:left;">Lab 14 (This Week)</th>
+<th style="padding:0.6rem 1rem;text-align:left;border-radius:0 var(--radius-sm) 0 0;">Capstone (Weeks 15–17)</th>
+</tr>
+</thead>
+<tbody>
+<tr style="border-bottom:1px solid var(--border-light);">
+<td style="padding:0.5rem 1rem;font-weight:600;">Phase identification</td>
+<td style="padding:0.5rem 1rem;">Identify phases from scenario snapshots</td>
+<td style="padding:0.5rem 1rem;">Structure your entire report methodology around IR phases</td>
+</tr>
+<tr style="border-bottom:1px solid var(--border-light);background:#f9f9f9;">
+<td style="padding:0.5rem 1rem;font-weight:600;">Action selection</td>
+<td style="padding:0.5rem 1rem;">Choose appropriate actions at decision points</td>
+<td style="padding:0.5rem 1rem;">Execute those actions on real evidence (disk image, memory dump, PCAP)</td>
+</tr>
+<tr style="border-bottom:1px solid var(--border-light);">
+<td style="padding:0.5rem 1rem;font-weight:600;">Triage</td>
+<td style="padding:0.5rem 1rem;">Rank evidence sources by priority</td>
+<td style="padding:0.5rem 1rem;">Demonstrate prioritized analysis in your investigation narrative</td>
+</tr>
+<tr style="background:#f9f9f9;">
+<td style="padding:0.5rem 1rem;font-weight:600;">IR planning</td>
+<td style="padding:0.5rem 1rem;">Outline an IR plan for the scenario</td>
+<td style="padding:0.5rem 1rem;">Produce a full forensic report with methodology, findings, and recommendations</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>Key takeaway:</strong> If you perform well on Lab 14, you have the process-level thinking needed for the capstone. If you struggle with Lab 14, use the feedback to identify gaps <em>before</em> the capstone submission in Week 17.</p>
+</section>
+
+<!-- SECTION 7: READINESS SELF-ASSESSMENT -->
+<section id="readiness">
+<h2>Readiness Self-Assessment</h2>
+
+<div class="callout callout-info">
+<p class="callout-title">&#128203; Ungraded — For Your Preparation Only</p>
+<p>Rate your confidence on the key skill areas tested in Lab 14. This is not submitted and has no impact on your grade. Use your responses to identify what to review before starting the lab.</p>
+</div>
+
+<div class="self-assess-card" id="sa1">
+<h4>1. IR Phase Identification</h4>
+<p>How confident are you that you can correctly identify the IR phase (NIST or SANS) from a description of incident activities and justify your classification?</p>
+<div class="likert-group" role="group" aria-label="Confidence rating for IR Phase Identification">
+<button class="likert-btn" role="button" aria-pressed="false" data-group="sa1" data-value="1">1 – Not Ready</button>
+<button class="likert-btn" role="button" aria-pressed="false" data-group="sa1" data-value="2">2 – Somewhat Unsure</button>
+<button class="likert-btn" role="button" aria-pressed="false" data-group="sa1" data-value="3">3 – Mostly Confident</button>
+<button class="likert-btn" role="button" aria-pressed="false" data-group="sa1" data-value="4">4 – Fully Ready</button>
+</div>
+<div class="reflect-prompt" id="reflect-sa1-low" aria-live="polite">
+<strong>Reflection:</strong> Consider revisiting Module 15.1, particularly the phase comparison table between NIST and SANS. Focus on the distinguishing characteristics of each phase — what makes Containment different from Eradication? What signals the transition from Detection &amp; Analysis to Containment?
+</div>
+<div class="reflect-prompt" id="reflect-sa1-high" aria-live="polite">
+<strong>Reflection:</strong> You feel ready for this task. As a stretch challenge, consider whether you can identify phase <em>transitions</em> — the moments where one phase ends and another begins — since these boundary cases often appear in tabletop scenarios.
+</div>
+</div>
+
+<div class="self-assess-card" id="sa2">
+<h4>2. Forensic Technique Mapping &amp; Triage</h4>
+<p>How confident are you that you can select the right forensic tools/techniques for a given IR phase and prioritize evidence collection using the order of volatility and a severity/scope/volatility matrix?</p>
+<div class="likert-group" role="group" aria-label="Confidence rating for Technique Mapping and Triage">
+<button class="likert-btn" role="button" aria-pressed="false" data-group="sa2" data-value="1">1 – Not Ready</button>
+<button class="likert-btn" role="button" aria-pressed="false" data-group="sa2" data-value="2">2 – Somewhat Unsure</button>
+<button class="likert-btn" role="button" aria-pressed="false" data-group="sa2" data-value="3">3 – Mostly Confident</button>
+<button class="likert-btn" role="button" aria-pressed="false" data-group="sa2" data-value="4">4 – Fully Ready</button>
+</div>
+<div class="reflect-prompt" id="reflect-sa2-low" aria-live="polite">
+<strong>Reflection:</strong> Review Module 15.2's technique-to-phase mapping and Module 15.3's triage artifact lists by platform. Key question to test yourself: "If I have 30 minutes before a system is isolated from the network, what do I collect first and why?"
+</div>
+<div class="reflect-prompt" id="reflect-sa2-high" aria-live="polite">
+<strong>Reflection:</strong> Strong preparation. Push yourself further: can you explain why the "standard" order of volatility might be <em>overridden</em> in specific scenarios (e.g., when the most volatile evidence isn't the most relevant to the specific attack type)?
+</div>
+</div>
+
+<div class="self-assess-card" id="sa3">
+<h4>3. IR Plan Development</h4>
+<p>How confident are you that you can construct a realistic IR plan outline — including roles, communication paths, forensic procedures, escalation criteria, and evidence handling — tailored to a specific organizational scenario?</p>
+<div class="likert-group" role="group" aria-label="Confidence rating for IR Plan Development">
+<button class="likert-btn" role="button" aria-pressed="false" data-group="sa3" data-value="1">1 – Not Ready</button>
+<button class="likert-btn" role="button" aria-pressed="false" data-group="sa3" data-value="2">2 – Somewhat Unsure</button>
+<button class="likert-btn" role="button" aria-pressed="false" data-group="sa3" data-value="3">3 – Mostly Confident</button>
+<button class="likert-btn" role="button" aria-pressed="false" data-group="sa3" data-value="4">4 – Fully Ready</button>
+</div>
+<div class="reflect-prompt" id="reflect-sa3-low" aria-live="polite">
+<strong>Reflection:</strong> Revisit Module 15.3's IR plan components section. Focus on the seven required components (purpose/scope, roles, classification, communication, forensic procedures, escalation, evidence handling). Try sketching a plan outline for a hypothetical small healthcare organization before attempting Lab 14.
+</div>
+<div class="reflect-prompt" id="reflect-sa3-high" aria-live="polite">
+<strong>Reflection:</strong> Excellent. For Task 4, remember that the strongest IR plans demonstrate awareness of the organization's constraints — staffing, budget, regulatory environment, and existing infrastructure. Generic plans score lower than scenario-tailored ones.
+</div>
+</div>
+
+</section>
+
+</main>
+
+<script>
+(function(){
+// Likert button interaction
+document.querySelectorAll('.likert-btn').forEach(function(btn){
+btn.addEventListener('click',function(){
+var group=this.getAttribute('data-group');
+var value=parseInt(this.getAttribute('data-value'));
+// Deselect others in group
+document.querySelectorAll('.likert-btn[data-group="'+group+'"]').forEach(function(b){
+b.setAttribute('aria-pressed','false');
+});
+// Select this one
+this.setAttribute('aria-pressed','true');
+// Show appropriate reflection
+var lowEl=document.getElementById('reflect-'+group+'-low');
+var highEl=document.getElementById('reflect-'+group+'-high');
+if(value<=2){
+lowEl.classList.add('visible');
+highEl.classList.remove('visible');
+}else{
+highEl.classList.add('visible');
+lowEl.classList.remove('visible');
+}
+});
+btn.addEventListener('keydown',function(e){
+if(e.key==='Enter'||e.key===' '){
+e.preventDefault();
+this.click();
+}
+});
+});
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 15.2 – Mapping Forensic Techniques to IR Phases | CSC 156</title>
+<style>
+:root {
+  --primary: #1a5276;
+  --primary-light: #2980b9;
+  --primary-dark: #0e2f44;
+  --accent: #e67e22;
+  --accent-light: #f39c12;
+  --success: #27ae60;
+  --danger: #c0392b;
+  --warning: #f39c12;
+  --info: #2980b9;
+  --bg: #f8f9fa;
+  --surface: #ffffff;
+  --text: #2c3e50;
+  --text-light: #5d6d7e;
+  --border: #d5dbdb;
+  --phase-prep: #8e44ad;
+  --phase-detect: #2980b9;
+  --phase-contain: #d35400;
+  --phase-erad: #c0392b;
+  --phase-recover: #27ae60;
+  --phase-lessons: #16a085;
+  --nav-height: 56px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+}
+
+/* Sticky Nav */
+.top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: var(--primary-dark);
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+  height: var(--nav-height);
+  overflow-x: auto;
+  gap: 0.25rem;
+}
+.top-nav a {
+  color: #ecf0f1;
+  text-decoration: none;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.top-nav a:hover, .top-nav a:focus {
+  background: var(--primary-light);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Scroll offset for anchors */
+[id] { scroll-margin-top: calc(var(--nav-height) + 16px); }
+
+/* Container */
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 4rem;
+}
+
+/* Module Header */
+.module-header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: #fff;
+  padding: 2rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+.module-header .module-id {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  opacity: 0.85;
+  margin-bottom: 0.25rem;
+}
+.module-header h1 {
+  font-size: 1.6rem;
+  line-height: 1.3;
+  margin-bottom: 0.5rem;
+}
+.module-header .meta {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+/* Section Headings */
+h2 {
+  font-size: 1.35rem;
+  color: var(--primary);
+  margin: 2rem 0 0.75rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 3px solid var(--accent);
+}
+h3 {
+  font-size: 1.1rem;
+  color: var(--primary-dark);
+  margin: 1.25rem 0 0.5rem;
+}
+
+p, li { margin-bottom: 0.6rem; }
+ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+
+/* Callout Boxes */
+.callout {
+  border-left: 4px solid var(--info);
+  background: #eaf2f8;
+  padding: 1rem 1.25rem;
+  border-radius: 0 6px 6px 0;
+  margin: 1.25rem 0;
+}
+.callout.scenario {
+  border-left-color: var(--accent);
+  background: #fef5e7;
+}
+.callout.warning {
+  border-left-color: var(--danger);
+  background: #fdedec;
+}
+.callout.success {
+  border-left-color: var(--success);
+  background: #eafaf1;
+}
+.callout.tip {
+  border-left-color: var(--phase-prep);
+  background: #f4ecf7;
+}
+.callout-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.4rem;
+}
+
+/* Phase Badge */
+.phase-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 3px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 0.4rem;
+}
+.phase-badge.prep { background: var(--phase-prep); }
+.phase-badge.detect { background: var(--phase-detect); }
+.phase-badge.contain { background: var(--phase-contain); }
+.phase-badge.erad { background: var(--phase-erad); }
+.phase-badge.recover { background: var(--phase-recover); }
+.phase-badge.lessons { background: var(--phase-lessons); }
+
+/* Collapsible Sections */
+.collapsible {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin: 1rem 0;
+  overflow: hidden;
+}
+.collapsible-header {
+  background: var(--surface);
+  padding: 0.9rem 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 600;
+  font-size: 1rem;
+  border: none;
+  width: 100%;
+  text-align: left;
+  color: var(--text);
+  transition: background 0.2s;
+}
+.collapsible-header:hover { background: #f0f3f5; }
+.collapsible-header:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.collapsible-header .chevron {
+  transition: transform 0.25s;
+  font-size: 0.8rem;
+}
+.collapsible-header[aria-expanded="true"] .chevron {
+  transform: rotate(90deg);
+}
+.collapsible-body {
+  display: none;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.collapsible-body.open { display: block; }
+
+/* Reference Table */
+.ref-table-wrapper {
+  overflow-x: auto;
+  margin: 1.25rem 0;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+table.ref-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  min-width: 700px;
+}
+table.ref-table thead {
+  background: var(--primary-dark);
+  color: #fff;
+}
+table.ref-table th, table.ref-table td {
+  padding: 0.6rem 0.8rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+table.ref-table tbody tr:nth-child(even) { background: #f8f9fa; }
+table.ref-table tbody tr:hover { background: #eaf2f8; }
+
+/* Knowledge Check */
+.kc-question {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.25rem;
+  margin: 1rem 0;
+}
+.kc-question h4 {
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+  color: var(--primary);
+}
+.kc-options { list-style: none; padding: 0; }
+.kc-options li {
+  margin-bottom: 0.4rem;
+}
+.kc-options label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+.kc-options label:hover { background: #f0f3f5; }
+.kc-options input[type="radio"] { margin-top: 0.25rem; }
+.kc-feedback {
+  display: none;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+.kc-feedback.correct {
+  background: #eafaf1;
+  border: 1px solid var(--success);
+  color: #1e7e34;
+}
+.kc-feedback.incorrect {
+  background: #fdedec;
+  border: 1px solid var(--danger);
+  color: #922b21;
+}
+.kc-btn {
+  margin-top: 0.75rem;
+  padding: 0.5rem 1.25rem;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.kc-btn:hover { background: var(--primary-light); }
+.kc-btn:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Week Reference Tags */
+.week-ref {
+  display: inline-block;
+  background: #eaf2f8;
+  border: 1px solid #aed6f1;
+  padding: 0.1rem 0.45rem;
+  border-radius: 3px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--primary);
+  white-space: nowrap;
+}
+
+/* Emphasis Box */
+.emphasis-box {
+  background: linear-gradient(135deg, #fef9e7 0%, #fdebd0 100%);
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  margin: 1.5rem 0;
+}
+.emphasis-box h3 {
+  color: var(--accent);
+  margin-top: 0;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .module-header h1 { font-size: 1.3rem; }
+  .top-nav a { font-size: 0.75rem; padding: 0.35rem 0.5rem; }
+  .container { padding: 1rem 0.75rem 3rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Sticky Navigation -->
+<nav class="top-nav" aria-label="Module section navigation">
+  <a href="#scenario">Scenario</a>
+  <a href="#preparation">Preparation</a>
+  <a href="#detection">Detection</a>
+  <a href="#containment">Containment</a>
+  <a href="#eradication">Eradication</a>
+  <a href="#recovery">Recovery &amp; Post-Incident</a>
+  <a href="#reference-card">Reference Card</a>
+  <a href="#knowledge-check">Knowledge Check</a>
+</nav>
+
+<div class="container">
+
+<!-- Module Header -->
+<header class="module-header">
+  <div class="module-id">Module 15.2</div>
+  <h1>Connecting the Dots: Mapping 14 Weeks of Forensic Skills to the Incident Response Lifecycle</h1>
+  <div class="meta">CSC 156 – Digital Forensic Fundamentals &nbsp;|&nbsp; Week 15 &nbsp;|&nbsp; Estimated Time: 2.0–2.5 hours</div>
+</header>
+
+<!-- Objectives -->
+<div class="callout tip">
+  <div class="callout-title">Module Objectives</div>
+  <ul style="margin-bottom:0;">
+    <li><strong>Objective 3:</strong> Map specific forensic techniques learned in Weeks 2–14 to appropriate IR lifecycle phases.</li>
+    <li><strong>Objective 4:</strong> Differentiate between containment, eradication, and recovery activities and identify forensic considerations for each.</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION: SCENARIO CONTINUATION -->
+<!-- ============================================================ -->
+<section id="scenario">
+<h2>Scenario Continuation: MedTech Incident Escalates</h2>
+
+<div class="callout scenario">
+  <div class="callout-title">🏥 MedTech Health Systems — Severity: HIGH</div>
+  <p>It has been four hours since the initial SOC alert. The IR Manager has just upgraded the incident to <strong>HIGH severity</strong>. Threat intelligence confirms the external IP belongs to a known APT group targeting healthcare organizations. Lateral movement indicators have been found on two additional servers — the Active Directory domain controller and a file server containing PHI (Protected Health Information).</p>
+  <p>As the forensic examiner, the IR Manager turns to you and asks: <em>"Walk me through exactly what you need to do at each phase of this response. Which of your skills apply, and when?"</em></p>
+  <p>This module answers that question. You will systematically connect every major forensic technique from this course to the IR lifecycle phase where it belongs — building a comprehensive forensic examiner's playbook organized by <strong>process</strong> rather than by technology domain.</p>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION: PREPARATION PHASE -->
+<!-- ============================================================ -->
+<section id="preparation">
+<h2><span class="phase-badge prep">Preparation</span> Forensic Readiness Activities</h2>
+
+<p>The Preparation phase happens <strong>before</strong> an incident occurs. For a forensic examiner, preparation means ensuring you can acquire, preserve, and analyze evidence <em>quickly</em> when the call comes at 3:47 AM.</p>
+
+<div class="collapsible">
+  <button class="collapsible-header" aria-expanded="true" aria-controls="prep-body">
+    <span class="chevron">▶</span> Forensic Readiness: What We Do Before the Incident
+  </button>
+  <div class="collapsible-body open" id="prep-body">
+    <h3>Key Forensic Activities</h3>
+    <ul>
+      <li><strong>Evidence source inventory:</strong> Document all systems, their logging configurations, and where evidence resides (endpoints, servers, network devices, cloud services).</li>
+      <li><strong>Tool validation and kit readiness:</strong> Maintain a forensic workstation with validated tools — write blockers tested, imaging software current, Volatility profiles built for organizational OS versions. <span class="week-ref">Week 4</span> <span class="week-ref">Week 6</span></li>
+      <li><strong>Baseline documentation:</strong> Capture known-good states — registry hive baselines, normal network traffic patterns, authorized scheduled tasks, expected services. <span class="week-ref">Week 7</span> <span class="week-ref">Week 9</span></li>
+      <li><strong>Hash libraries:</strong> Maintain known-good hash sets (NSRL) and known-bad hash sets (malware repositories) for rapid triage. <span class="week-ref">Week 5</span></li>
+      <li><strong>Chain of custody templates:</strong> Pre-built documentation forms ready for immediate use. <span class="week-ref">Week 3</span></li>
+      <li><strong>Legal authority clarification:</strong> Understand organizational authority to image systems, capture memory, and monitor network traffic — <em>before</em> an incident. <span class="week-ref">Week 3</span></li>
+    </ul>
+
+    <div class="callout">
+      <div class="callout-title">MedTech Application</div>
+      <p>If MedTech had maintained forensic readiness, they would already have: centralized logging enabled on all servers, a pre-built Volatility profile for their Windows Server 2019 environment, and documented legal authority for the forensic examiner to capture memory from production systems without additional approvals.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION: DETECTION & IDENTIFICATION -->
+<!-- ============================================================ -->
+<section id="detection">
+<h2><span class="phase-badge detect">Detection &amp; Identification</span> How Forensic Engagement Begins</h2>
+
+<p>Detection is when the organization first recognizes that something is wrong. The forensic examiner's initial role is to help <strong>confirm</strong> whether a true incident has occurred and begin scoping its extent.</p>
+
+<div class="collapsible">
+  <button class="collapsible-header" aria-expanded="true" aria-controls="detect-body">
+    <span class="chevron">▶</span> Forensic Techniques for Detection &amp; Identification
+  </button>
+  <div class="collapsible-body open" id="detect-body">
+    <h3>Network-Based Detection</h3>
+    <ul>
+      <li><strong>PCAP analysis with Wireshark:</strong> Examine captured traffic for C2 beaconing patterns, unusual protocols, data exfiltration signatures. <span class="week-ref">Week 12</span></li>
+      <li><strong>IDS/Firewall log review:</strong> Correlate alerts with network flow data to identify scope of compromise. <span class="week-ref">Week 12</span></li>
+      <li><strong>DNS query log analysis:</strong> Detect domain generation algorithms (DGA) or known malicious domains. <span class="week-ref">Week 12</span></li>
+    </ul>
+
+    <h3>Host-Based Detection</h3>
+    <ul>
+      <li><strong>Windows Event Log analysis:</strong> Look for failed logon bursts (Event ID 4625), new service installations (7045), cleared logs (1102). <span class="week-ref">Week 7</span> <span class="week-ref">Week 8</span></li>
+      <li><strong>Linux log review:</strong> Check <code>/var/log/auth.log</code>, <code>/var/log/syslog</code>, and application logs for unauthorized access. <span class="week-ref">Week 9</span></li>
+      <li><strong>File system anomalies:</strong> Recently modified system files, unexpected executables in temp directories. <span class="week-ref">Week 7</span></li>
+    </ul>
+
+    <h3>Memory-Based Detection</h3>
+    <ul>
+      <li><strong>Volatility process analysis:</strong> Identify suspicious processes, injected code, hidden processes via DKOM. <span class="week-ref">Week 11</span></li>
+      <li><strong>Network connection enumeration:</strong> Use <code>netscan</code> to find active C2 connections in memory. <span class="week-ref">Week 11</span></li>
+    </ul>
+
+    <h3>Malware IOC Matching</h3>
+    <ul>
+      <li><strong>Hash comparison:</strong> Compare suspicious files against known-malware hash databases. <span class="week-ref">Week 5</span> <span class="week-ref">Week 13</span></li>
+      <li><strong>YARA rule scanning:</strong> Apply YARA rules to disk and memory to detect malware signatures. <span class="week-ref">Week 13</span></li>
+      <li><strong>Static analysis indicators:</strong> Strings, imports, packer signatures on suspicious binaries. <span class="week-ref">Week 13</span></li>
+    </ul>
+
+    <div class="callout">
+      <div class="callout-title">MedTech Application</div>
+      <p>The SOC detected outbound connections via firewall logs <span class="week-ref">Week 12</span>. As the forensic examiner, your first step is to confirm the compromise by checking memory on the database server for active C2 connections <span class="week-ref">Week 11</span> and correlating with Windows Event Logs for unauthorized authentication events <span class="week-ref">Week 7</span>.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION: CONTAINMENT -->
+<!-- ============================================================ -->
+<section id="containment">
+<h2><span class="phase-badge contain">Containment</span> Preserve Evidence Before Containment Actions</h2>
+
+<div class="emphasis-box">
+  <h3>⚠️ Critical Principle: Evidence Before Containment</h3>
+  <p>Containment actions (isolating systems, blocking IPs, disabling accounts) can <strong>destroy volatile evidence</strong>. The forensic examiner's most urgent responsibility is to <strong>capture volatile evidence before containment actions alter or destroy it</strong>. This is the single most important procedural principle in IR forensics.</p>
+</div>
+
+<div class="collapsible">
+  <button class="collapsible-header" aria-expanded="true" aria-controls="contain-body">
+    <span class="chevron">▶</span> Evidence Preservation During Containment
+  </button>
+  <div class="collapsible-body open" id="contain-body">
+
+    <h3>Order of Volatility (RFC 3227)</h3>
+    <p>Capture evidence in order from <strong>most volatile</strong> to <strong>least volatile</strong>:</p>
+    <ol>
+      <li><strong>CPU registers and cache</strong> — lost in microseconds (generally not capturable in practice)</li>
+      <li><strong>Memory (RAM)</strong> — lost on power-off or reboot <span class="week-ref">Week 11</span></li>
+      <li><strong>Network state</strong> — active connections, routing tables, ARP cache <span class="week-ref">Week 12</span></li>
+      <li><strong>Running processes</strong> — process list, open files, loaded DLLs <span class="week-ref">Week 11</span></li>
+      <li><strong>Disk contents</strong> — file system, swap/pagefile <span class="week-ref">Week 6</span> <span class="week-ref">Week 7</span></li>
+      <li><strong>Removable media</strong> — USB drives, external storage <span class="week-ref">Week 6</span></li>
+      <li><strong>Backup/archival data</strong> — tape, off-site backups</li>
+    </ol>
+
+    <div class="callout warning">
+      <div class="callout-title">🚫 Common Forensic Mistakes During Containment</div>
+      <ul>
+        <li><strong>Rebooting a compromised system before capturing memory:</strong> Destroys all volatile evidence — running malware, active C2 connections, injected code, decrypted data in RAM. This is the #1 forensic mistake in IR.</li>
+        <li><strong>Pulling the network cable before capturing network state:</strong> Loses active connection information and may trigger malware self-destruct routines.</li>
+        <li><strong>Running antivirus scans before imaging:</strong> Modifies file timestamps, quarantines evidence files, and alters the file system state.</li>
+        <li><strong>Logging into the system with a domain admin account:</strong> Creates authentication artifacts that contaminate evidence and may alert the attacker.</li>
+        <li><strong>Shutting down Linux systems with <code>shutdown</code> instead of capturing memory first:</strong> Loses process state, tmpfs contents, and active network connections.</li>
+      </ul>
+    </div>
+
+    <h3>Short-Term vs. Long-Term Containment</h3>
+    <table class="ref-table" style="min-width:500px;">
+      <thead>
+        <tr><th>Aspect</th><th>Short-Term Containment</th><th>Long-Term Containment</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Goal</strong></td><td>Stop immediate damage/spread</td><td>Maintain containment while investigation continues</td></tr>
+        <tr><td><strong>Timeline</strong></td><td>Minutes to hours</td><td>Days to weeks</td></tr>
+        <tr><td><strong>Actions</strong></td><td>Network isolation, account disable, firewall block</td><td>Rebuild with monitoring, VLAN segmentation, enhanced logging</td></tr>
+        <tr><td><strong>Forensic priority</strong></td><td>Capture memory + live state BEFORE isolating</td><td>Full disk imaging of contained systems</td></tr>
+        <tr><td><strong>Relevant skills</strong></td><td><span class="week-ref">Week 11</span> Memory acquisition<br><span class="week-ref">Week 12</span> Network state capture</td><td><span class="week-ref">Week 6</span> Forensic imaging<br><span class="week-ref">Week 5</span> Hash verification</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Forensic Acquisition Sequence During Containment</h3>
+    <ol>
+      <li><strong>Capture volatile memory</strong> using validated tools (FTK Imager, DumpIt, LiME for Linux) <span class="week-ref">Week 11</span></li>
+      <li><strong>Document network connections</strong> — <code>netstat</code>, active sessions, ARP table <span class="week-ref">Week 12</span></li>
+      <li><strong>Capture running process state</strong> — process list, open handles, loaded modules <span class="week-ref">Week 11</span></li>
+      <li><strong>Implement network isolation</strong> (now safe to disconnect)</li>
+      <li><strong>Create forensic disk image</strong> with write blocker <span class="week-ref">Week 6</span></li>
+      <li><strong>Verify image integrity</strong> with cryptographic hash <span class="week-ref">Week 5</span></li>
+      <li><strong>Document chain of custody</strong> for all acquired evidence <span class="week-ref">Week 3</span></li>
+    </ol>
+
+    <div class="callout">
+      <div class="callout-title">MedTech Application</div>
+      <p>The IR Manager wants to immediately isolate the database server by pulling its network cable. You <strong>must</strong> intervene: "Before we isolate, I need 10 minutes to capture a memory dump and document active connections. Once we pull that cable, we lose the C2 session data and any decrypted credentials the malware is holding in RAM." After memory capture, you give the go-ahead for network isolation, then proceed with forensic imaging.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION: ERADICATION -->
+<!-- ============================================================ -->
+<section id="eradication">
+<h2><span class="phase-badge erad">Eradication</span> Finding Every Attacker Foothold</h2>
+
+<p>Eradication is where the forensic examiner's deep technical analysis directly drives operational decisions. The goal: identify <strong>every</strong> persistence mechanism, backdoor, and compromised credential so the attacker cannot return after recovery.</p>
+
+<div class="collapsible">
+  <button class="collapsible-header" aria-expanded="true" aria-controls="erad-body">
+    <span class="chevron">▶</span> Windows Persistence Mechanisms
+  </button>
+  <div class="collapsible-body open" id="erad-body">
+    <p>The forensic examiner must check all common Windows persistence locations: <span class="week-ref">Week 7</span> <span class="week-ref">Week 8</span></p>
+    <ul>
+      <li><strong>Registry Run/RunOnce keys:</strong> <code>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run</code> and user-level equivalents</li>
+      <li><strong>Scheduled Tasks:</strong> <code>C:\Windows\System32\Tasks\</code> and <code>schtasks</code> entries</li>
+      <li><strong>Windows Services:</strong> New or modified service entries (Event ID 7045)</li>
+      <li><strong>Startup folders:</strong> <code>%AppData%\Microsoft\Windows\Start Menu\Programs\Startup</code></li>
+      <li><strong>WMI Event Subscriptions:</strong> Persistent WMI consumers that survive reboot</li>
+      <li><strong>DLL search order hijacking:</strong> Malicious DLLs in application directories</li>
+      <li><strong>COM object hijacking:</strong> Modified CLSID registry entries</li>
+    </ul>
+  </div>
+</div>
+
+<div class="collapsible">
+  <button class="collapsible-header" aria-expanded="false" aria-controls="erad-linux-body">
+    <span class="chevron">▶</span> Linux Persistence Mechanisms
+  </button>
+  <div class="collapsible-body" id="erad-linux-body">
+    <p>Linux systems have their own set of persistence vectors: <span class="week-ref">Week 9</span></p>
+    <ul>
+      <li><strong>Cron jobs:</strong> <code>/etc/crontab</code>, <code>/etc/cron.d/</code>, user crontabs (<code>crontab -l</code>)</li>
+      <li><strong>Systemd units:</strong> Malicious <code>.service</code> or <code>.timer</code> files in <code>/etc/systemd/system/</code></li>
+      <li><strong>SSH authorized_keys:</strong> Attacker-added public keys in <code>~/.ssh/authorized_keys</code></li>
+      <li><strong>SUID/SGID binaries:</strong> Legitimate binaries given SUID bit, or attacker binaries with SUID</li>
+      <li><strong>Shell profile scripts:</strong> <code>.bashrc</code>, <code>.profile</code>, <code>/etc/profile.d/</code> modifications</li>
+      <li><strong>LD_PRELOAD / shared library injection:</strong> <code>/etc/ld.so.preload</code> or environment variable persistence</li>
+      <li><strong>Modified PAM modules:</strong> Backdoored authentication modules</li>
+      <li><strong>Kernel modules:</strong> Loadable kernel module rootkits (<code>/etc/modules-load.d/</code>)</li>
+    </ul>
+  </div>
+</div>
+
+<div class="collapsible">
+  <button class="collapsible-header" aria-expanded="false" aria-controls="erad-verify-body">
+    <span class="chevron">▶</span> Malware Indicator Verification &amp; Root Cause Identification
+  </button>
+  <div class="collapsible-body" id="erad-verify-body">
+    <h3>Verification Techniques</h3>
+    <ul>
+      <li><strong>Hash all suspicious files</strong> and compare against threat intelligence feeds <span class="week-ref">Week 5</span> <span class="week-ref">Week 13</span></li>
+      <li><strong>YARA rule scanning</strong> across all affected systems to find additional malware variants <span class="week-ref">Week 13</span></li>
+      <li><strong>Memory analysis for injected code:</strong> Use Volatility <code>malfind</code> plugin to detect process injection <span class="week-ref">Week 11</span></li>
+      <li><strong>Timeline analysis:</strong> Correlate file creation timestamps with known attack timeline to find all dropped files <span class="week-ref">Week 7</span> <span class="week-ref">Week 8</span></li>
+      <li><strong>Network IOC sweep:</strong> Search all logs for communication with identified C2 infrastructure <span class="week-ref">Week 12</span></li>
+    </ul>
+
+    <h3>Root Cause Identification</h3>
+    <p>The forensic examiner must determine <strong>how the attacker got in</strong> (initial access vector) to prevent recurrence:</p>
+    <ul>
+      <li><strong>Web server logs:</strong> Exploitation of web application vulnerabilities <span class="week-ref">Week 12</span></li>
+      <li><strong>Email artifacts:</strong> Phishing email delivery and user interaction</li>
+      <li><strong>Authentication logs:</strong> Brute force, credential stuffing, or stolen credentials <span class="week-ref">Week 7</span> <span class="week-ref">Week 9</span></li>
+      <li><strong>Vulnerability correlation:</strong> Match exploited software versions with known CVEs</li>
+    </ul>
+
+    <div class="callout">
+      <div class="callout-title">MedTech Application</div>
+      <p>Your memory analysis <span class="week-ref">Week 11</span> reveals a process injected into <code>svchost.exe</code>. You extract the injected code, hash it, and match it to a known RAT variant <span class="week-ref">Week 13</span>. Timeline analysis shows the malware was first written to disk 12 days ago via a scheduled task created through a compromised service account. You check all three affected servers for the same persistence mechanism — finding it on the domain controller but not the file server (which was compromised via lateral movement using harvested credentials).</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION: RECOVERY & POST-INCIDENT -->
+<!-- ============================================================ -->
+<section id="recovery">
+<h2><span class="phase-badge recover">Recovery</span> &amp; <span class="phase-badge lessons">Post-Incident</span> Verification and Lessons Learned</h2>
+
+<div class="collapsible">
+  <button class="collapsible-header" aria-expanded="true" aria-controls="recover-body">
+    <span class="chevron">▶</span> Recovery Phase: Forensic Validation
+  </button>
+  <div class="collapsible-body open" id="recover-body">
+    <p>During recovery, systems are restored to operational status. The forensic examiner's role shifts to <strong>verification</strong>:</p>
+    <ul>
+      <li><strong>Validate restored systems:</strong> Compare restored system state against known-good baselines to confirm no attacker artifacts remain <span class="week-ref">Week 5</span> <span class="week-ref">Week 7</span></li>
+      <li><strong>Monitor for re-compromise:</strong> Enhanced logging and network monitoring on recovered systems <span class="week-ref">Week 12</span></li>
+      <li><strong>Verify eradication completeness:</strong> Run IOC scans on restored systems; check that all identified persistence mechanisms are absent <span class="week-ref">Week 13</span></li>
+      <li><strong>Credential verification:</strong> Confirm all compromised credentials have been rotated</li>
+      <li><strong>Forensic imaging of recovered state:</strong> Capture a new baseline image post-recovery for future comparison <span class="week-ref">Week 6</span></li>
+    </ul>
+  </div>
+</div>
+
+<div class="collapsible">
+  <button class="collapsible-header" aria-expanded="false" aria-controls="lessons-body">
+    <span class="chevron">▶</span> Post-Incident / Lessons Learned: The Forensic Report as Foundation
+  </button>
+  <div class="collapsible-body" id="lessons-body">
+    <p>The forensic report you produce becomes the <strong>authoritative record</strong> of what happened and drives organizational improvement: <span class="week-ref">Week 14</span></p>
+    <ul>
+      <li><strong>Complete timeline reconstruction:</strong> Merge evidence from disk, memory, network, and logs into a unified attack narrative <span class="week-ref">Week 7–12</span></li>
+      <li><strong>Root cause documentation:</strong> Clearly identify the initial access vector and contributing factors</li>
+      <li><strong>Impact assessment:</strong> Document what data was accessed, exfiltrated, or destroyed</li>
+      <li><strong>Recommendations:</strong> Specific, actionable security improvements based on findings</li>
+      <li><strong>IR process improvements:</strong> What worked well? What slowed the response? What evidence was unavailable due to insufficient logging?</li>
+      <li><strong>Legal and regulatory deliverables:</strong> Breach notification content, law enforcement reports, regulatory filings <span class="week-ref">Week 3</span> <span class="week-ref">Week 14</span></li>
+    </ul>
+
+    <div class="callout success">
+      <div class="callout-title">Key Insight</div>
+      <p>The forensic report (Module 14 / Week 14) is not just a technical document — it is the <strong>primary deliverable of the entire IR engagement</strong>. Every technique you applied during Detection, Containment, and Eradication feeds into this report. This is exactly what you will produce for the Final Capstone Project.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION: REFERENCE CARD -->
+<!-- ============================================================ -->
+<section id="reference-card">
+<h2>Complete Technique-to-Phase Reference Card</h2>
+
+<p>Use this table during Lab 14 and the Final Capstone Project. It maps every major forensic technique from this course to the IR phase(s) where it applies.</p>
+
+<div class="ref-table-wrapper">
+<table class="ref-table">
+  <thead>
+    <tr>
+      <th>Forensic Technique / Tool</th>
+      <th>Source Week</th>
+      <th>Prep</th>
+      <th>Detect</th>
+      <th>Contain</th>
+      <th>Erad</th>
+      <th>Recover</th>
+      <th>Lessons</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Legal authority &amp; chain of custody</td>
+      <td>Week 3</td>
+      <td>✓</td><td></td><td>✓</td><td></td><td></td><td>✓</td>
+    </tr>
+    <tr>
+      <td>Forensic tool validation &amp; readiness</td>
+      <td>Week 4</td>
+      <td>✓</td><td></td><td></td><td></td><td></td><td></td>
+    </tr>
+    <tr>
+      <td>Cryptographic hashing (MD5/SHA-256)</td>
+      <td>Week 5</td>
+      <td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td></td>
+    </tr>
+    <tr>
+      <td>Forensic imaging (dd, FTK Imager)</td>
+      <td>Week 6</td>
+      <td></td><td></td><td>✓</td><td></td><td>✓</td><td></td>
+    </tr>
+    <tr>
+      <td>Order of volatility / acquisition methodology</td>
+      <td>Week 6</td>
+      <td>✓</td><td></td><td>✓</td><td></td><td></td><td></td>
+    </tr>
+    <tr>
+      <td>Windows Registry analysis</td>
+      <td>Week 7</td>
+      <td></td><td>✓</td><td></td><td>✓</td><td>✓</td><td>✓</td>
+    </tr>
+    <tr>
+      <td>Windows Event Log analysis</td>
+      <td>Week 7–8</td>
+      <td></td><td>✓</td><td></td><td>✓</td><td></td><td>✓</td>
+    </tr>
+    <tr>
+      <td>Windows file system artifacts (Prefetch, MFT, LNK)</td>
+      <td>Week 8</td>
+      <td></td><td>✓</td><td></td><td>✓</td><td></td><td>✓</td>
+    </tr>
+    <tr>
+      <td>Linux log analysis (/var/log/*)</td>
+      <td>Week 9</td>
+      <td></td><td>✓</td><td></td><td>✓</td><td></td><td>✓</td>
+    </tr>
+    <tr>
+      <td>Linux persistence (cron, systemd, SSH keys, SUID)</td>
+      <td>Week 9</td>
+      <td></td><td></td><td></td><td>✓</td><td>✓</td><td></td>
+    </tr>
+    <tr>
+      <td>Memory acquisition (FTK Imager, LiME, DumpIt)</td>
+      <td>Week 11</td>
+      <td>✓</td><td></td><td>✓</td><td></td><td></td><td></td>
+    </tr>
+    <tr>
+      <td>Volatility process/network/injection analysis</td>
+      <td>Week 11</td>
+      <td></td><td>✓</td><td>✓</td><td>✓</td><td></td><td>✓</td>
+    </tr>
+    <tr>
+      <td>Wireshark / PCAP analysis</td>
+      <td>Week 12</td>
+      <td></td><td>✓</td><td>✓</td><td></td><td>✓</td><td>✓</td>
+    </tr>
+    <tr>
+      <td>IDS / Firewall / DNS log analysis</td>
+      <td>Week 12</td>
+      <td></td><td>✓</td><td></td><td>✓</td><td>✓</td><td>✓</td>
+    </tr>
+    <tr>
+      <td>Malware static analysis (strings, hashes, PE headers)</td>
+      <td>Week 13</td>
+      <td></td><td>✓</td><td></td><td>✓</td><td></td><td>✓</td>
+    </tr>
+    <tr>
+      <td>Malware dynamic analysis (behavioral indicators)</td>
+      <td>Week 13</td>
+      <td></td><td></td><td></td><td>✓</td><td></td><td>✓</td>
+    </tr>
+    <tr>
+      <td>YARA rule scanning</td>
+      <td>Week 13</td>
+      <td>✓</td><td>✓</td><td></td><td>✓</td><td>✓</td><td></td>
+    </tr>
+    <tr>
+      <td>Forensic report writing</td>
+      <td>Week 14</td>
+      <td></td><td></td><td></td><td></td><td></td><td>✓</td>
+    </tr>
+    <tr>
+      <td>Timeline reconstruction (multi-source)</td>
+      <td>Week 14</td>
+      <td></td><td></td><td></td><td></td><td></td><td>✓</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout tip">
+  <div class="callout-title">How to Use This Table</div>
+  <p>During Lab 14, you will be given an incident scenario and asked to identify which techniques to apply at each phase. Use this reference card to quickly locate relevant skills. During the Final Capstone Project, use this table to ensure your analysis plan covers all applicable techniques for the evidence types provided.</p>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION: KNOWLEDGE CHECK -->
+<!-- ============================================================ -->
+<section id="knowledge-check">
+<h2>Knowledge Check (Ungraded)</h2>
+<p>Test your understanding of technique-to-phase mapping with these scenario-based questions. Select your answer and check your reasoning against the provided feedback.</p>
+
+<!-- Question 1 -->
+<div class="kc-question" id="kc1">
+  <h4>Question 1: Consequences of Lost Evidence</h4>
+  <p>During the MedTech incident, a well-meaning system administrator reboots the compromised database server before the forensic examiner arrives, believing it will "clear the malware." Which of the following evidence types is <strong>permanently lost</strong> as a result?</p>
+  <ul class="kc-options">
+    <li><label><input type="radio" name="q1" value="a"> A. The forensic disk image — all file system data is destroyed on reboot.</label></li>
+    <li><label><input type="radio" name="q1" value="b"> B. Active memory contents — including running malware code, decrypted C2 communications, and injected process artifacts.</label></li>
+    <li><label><input type="radio" name="q1" value="c"> C. Windows Event Logs — all log entries are cleared when a system reboots.</label></li>
+    <li><label><input type="radio" name="q1" value="d"> D. The network PCAP — all previously captured packet data is deleted.</label></li>
+  </ul>
+  <button class="kc-btn" onclick="checkAnswer('kc1','b')">Check Answer</button>
+  <div class="kc-feedback correct" id="kc1-correct">
+    <strong>✓ Correct!</strong> Memory (RAM) is the most volatile evidence type. On reboot, all contents are lost: running processes, injected malware code, active network connections, decrypted data, and credentials held in memory. This is why the order of volatility (RFC 3227, Week 6) places memory capture as the highest priority, and why "capture memory before any containment action" is the cardinal rule of IR forensics. File system data (A) persists on disk. Event Logs (C) are stored on disk and survive reboot. Network PCAPs (D) are stored on the capture system, not the compromised host.
+  </div>
+  <div class="kc-feedback incorrect" id="kc1-incorrect">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>B</strong>. Memory (RAM) is the most volatile evidence type — it is completely lost on reboot. This includes running malware, active C2 sessions, injected code, and decrypted credentials. Disk-based evidence (file system, Event Logs) survives a reboot, and network PCAPs are stored on separate capture systems. This is precisely why the order of volatility (RFC 3227) prioritizes memory capture above all other evidence types.
+  </div>
+</div>
+
+<!-- Question 2 -->
+<div class="kc-question" id="kc2">
+  <h4>Question 2: Phase Identification During Active Eradication</h4>
+  <p>The MedTech forensic examiner discovers a malicious scheduled task on the domain controller that executes a PowerShell script every 6 hours, re-establishing a reverse shell to the attacker's C2 server. The examiner documents the task, captures the script, hashes both artifacts, and then coordinates with the system administrator to remove the task and block the C2 IP at the firewall. Which IR phase is this activity <strong>primarily</strong> part of?</p>
+  <ul class="kc-options">
+    <li><label><input type="radio" name="q2" value="a"> A. Detection &amp; Identification — because the examiner is finding new indicators of compromise.</label></li>
+    <li><label><input type="radio" name="q2" value="b"> B. Containment — because the firewall rule blocks attacker communication.</label></li>
+    <li><label><input type="radio" name="q2" value="c"> C. Eradication — because the examiner is identifying and removing attacker persistence mechanisms.</label></li>
+    <li><label><input type="radio" name="q2" value="d"> D. Recovery — because the system is being restored to a clean state.</label></li>
+  </ul>
+  <button class="kc-btn" onclick="checkAnswer('kc2','c')">Check Answer</button>
+  <div class="kc-feedback correct" id="kc2-correct">
+    <strong>✓ Correct!</strong> This is Eradication. The defining activity of the Eradication phase is identifying and removing all attacker footholds — persistence mechanisms, backdoors, and malware. While the discovery of the scheduled task involves "finding" something (which sounds like Detection), the context matters: the incident has already been detected and contained. The examiner is now systematically hunting for all persistence mechanisms to ensure the attacker cannot return. The firewall block is a supporting containment measure, but the primary activity — finding and removing the scheduled task — is eradication.
+  </div>
+  <div class="kc-feedback incorrect" id="kc2-incorrect">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>C — Eradication</strong>. The key distinction: during Eradication, the examiner systematically identifies and removes all attacker persistence mechanisms (scheduled tasks, registry keys, malicious services, SSH keys, etc.). While the activity involves "finding" artifacts, the incident has already been detected and contained — this is now the methodical removal of attacker footholds. The firewall block supports containment, but the primary action (removing the scheduled task and verifying no other persistence exists) defines Eradication.
+  </div>
+</div>
+
+<!-- Question 3 -->
+<div class="kc-question" id="kc3">
+  <h4>Question 3: Technique Mapping Exercise</h4>
+  <p>You are planning your forensic analysis for the MedTech incident. You need to determine whether the attacker exfiltrated patient data from the database server. Which <strong>combination</strong> of techniques and their source weeks would be MOST appropriate for this specific investigative question?</p>
+  <ul class="kc-options">
+    <li><label><input type="radio" name="q3" value="a"> A. Registry analysis (Week 7) + Forensic imaging (Week 6) + YARA scanning (Week 13)</label></li>
+    <li><label><input type="radio" name="q3" value="b"> B. PCAP/Wireshark analysis for outbound data transfers (Week 12) + Memory analysis for network connections (Week 11) + Windows Event Logs for process execution (Week 7–8)</label></li>
+    <li><label><input type="radio" name="q3" value="c"> C. Linux log analysis (Week 9) + Chain of custody documentation (Week 3) + Malware dynamic analysis (Week 13)</label></li>
+    <li><label><input type="radio" name="q3" value="d"> D. Forensic report writing (Week 14) + Hash verification (Week 5) + Tool validation (Week 4)</label></li>
+  </ul>
+  <button class="kc-btn" onclick="checkAnswer('kc3','b')">Check Answer</button>
+  <div class="kc-feedback correct" id="kc3-correct">
+    <strong>✓ Correct!</strong> To determine if data was exfiltrated, you need to examine: (1) <strong>Network traffic</strong> — Wireshark/PCAP analysis (Week 12) to identify large outbound transfers, unusual protocols, or connections to known-bad IPs; (2) <strong>Memory</strong> — Volatility network connection analysis (Week 11) to find active or recent connections the malware used for exfiltration; (3) <strong>Host logs</strong> — Windows Event Logs (Week 7–8) to identify what processes accessed the database and initiated network connections. This combination directly addresses the exfiltration question by examining both the network path and the host-level evidence of data access.
+  </div>
+  <div class="kc-feedback incorrect" id="kc3-incorrect">
+    <strong>✗ Not quite.</strong> The correct answer is <strong>B</strong>. To investigate data exfiltration, you need techniques that reveal: (1) what left the network (PCAP analysis, Week 12), (2) what connections existed in memory (Volatility, Week 11), and (3) what processes accessed the data (Event Logs, Week 7–8). Option A focuses on persistence/malware identification rather than exfiltration. Option C applies Linux tools to a Windows server scenario. Option D lists supporting activities, not analytical techniques for answering the exfiltration question.
+  </div>
+</div>
+
+</section>
+
+<!-- Closing -->
+<div class="callout success" style="margin-top:2rem;">
+  <div class="callout-title">What's Next</div>
+  <p>You now have a comprehensive map connecting your 14 weeks of forensic skills to the IR lifecycle. In <strong>Module 15.3</strong>, you will apply triage and prioritization principles to determine which artifacts to examine first when time is limited. Then in <strong>Lab 14</strong>, you will put this entire framework into practice with a tabletop exercise that requires you to make real-time forensic decisions at each IR phase.</p>
+</div>
+
+</div><!-- end container -->
+
+<script>
+// Collapsible sections
+document.querySelectorAll('.collapsible-header').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var expanded = this.getAttribute('aria-expanded') === 'true';
+    this.setAttribute('aria-expanded', String(!expanded));
+    var body = this.nextElementSibling;
+    if (expanded) {
+      body.classList.remove('open');
+    } else {
+      body.classList.add('open');
+    }
+  });
+  btn.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      this.click();
+    }
+  });
+});
+
+// Knowledge check
+function checkAnswer(questionId, correctValue) {
+  var container = document.getElementById(questionId);
+  var selected = container.querySelector('input[name]:checked');
+  var correctFb = document.getElementById(questionId + '-correct');
+  var incorrectFb = document.getElementById(questionId + '-incorrect');
+
+  // Hide both first
+  correctFb.style.display = 'none';
+  incorrectFb.style.display = 'none';
+
+  if (!selected) {
+    alert('Please select an answer before checking.');
+    return;
+  }
+
+  if (selected.value === correctValue) {
+    correctFb.style.display = 'block';
+  } else {
+    incorrectFb.style.display = 'block';
+  }
+}
+</script>
+</body>
+</html>
