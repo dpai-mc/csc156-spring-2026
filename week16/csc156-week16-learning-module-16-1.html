@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 16.1 – Investigation Planning and Methodology Application</title>
+<style>
+:root{
+--primary:#1a3a5c;
+--primary-light:#2c5282;
+--accent:#e8a838;
+--accent-dark:#c78c2e;
+--bg:#f7f9fc;
+--surface:#ffffff;
+--text:#1e293b;
+--text-muted:#475569;
+--border:#cbd5e1;
+--info-bg:#eff6ff;
+--info-border:#3b82f6;
+--info-icon:#2563eb;
+--warn-bg:#fffbeb;
+--warn-border:#f59e0b;
+--warn-icon:#d97706;
+--tip-bg:#ecfdf5;
+--tip-border:#10b981;
+--tip-icon:#059669;
+--success:#16a34a;
+--error:#dc2626;
+--radius:8px;
+--shadow:0 1px 3px rgba(0,0,0,.1);
+--nav-h:56px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--nav-h) + 16px);}
+body{font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:1rem;line-height:1.6;color:var(--text);background:var(--bg);}
+a{color:var(--primary-light);text-decoration:underline;}
+a:focus-visible,button:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:3px;}
+
+/* NAV */
+.nav-bar{position:sticky;top:0;z-index:100;background:var(--primary);padding:0 1rem;display:flex;align-items:center;height:var(--nav-h);box-shadow:0 2px 4px rgba(0,0,0,.15);overflow-x:auto;}
+.nav-bar a{color:#fff;text-decoration:none;font-size:.85rem;padding:.4rem .7rem;border-radius:4px;white-space:nowrap;margin-right:.25rem;}
+.nav-bar a:hover,.nav-bar a:focus-visible{background:rgba(255,255,255,.15);outline-color:#fff;}
+
+/* LAYOUT */
+.container{max-width:960px;margin:0 auto;padding:1.5rem 1rem 3rem;}
+h1{font-size:1.75rem;color:var(--primary);margin-bottom:.25rem;}
+h2{font-size:1.4rem;color:var(--primary);margin:2rem 0 .75rem;padding-bottom:.35rem;border-bottom:3px solid var(--accent);}
+h3{font-size:1.15rem;color:var(--primary-light);margin:1.25rem 0 .5rem;}
+p,li{margin-bottom:.5rem;}
+ul,ol{padding-left:1.5rem;}
+.subtitle{color:var(--text-muted);font-size:1rem;margin-bottom:1.5rem;}
+
+/* CALLOUTS */
+.callout{border-left:5px solid;border-radius:var(--radius);padding:1rem 1.25rem;margin:1.25rem 0;position:relative;}
+.callout-title{font-weight:700;margin-bottom:.35rem;display:flex;align-items:center;gap:.4rem;}
+.callout.info{background:var(--info-bg);border-color:var(--info-border);}
+.callout.info .callout-title{color:var(--info-icon);}
+.callout.warn{background:var(--warn-bg);border-color:var(--warn-border);}
+.callout.warn .callout-title{color:var(--warn-icon);}
+.callout.tip{background:var(--tip-bg);border-color:var(--tip-border);}
+.callout.tip .callout-title{color:var(--tip-icon);}
+
+/* ACCORDION */
+details{border:1px solid var(--border);border-radius:var(--radius);margin:.75rem 0;background:var(--surface);}
+details summary{cursor:pointer;padding:.75rem 1rem;font-weight:600;list-style:none;display:flex;align-items:center;gap:.5rem;}
+details summary::before{content:'▶';font-size:.7rem;transition:transform .2s;}
+details[open] summary::before{transform:rotate(90deg);}
+details .detail-body{padding:0 1rem 1rem;}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;margin:1rem 0;}
+table{width:100%;border-collapse:collapse;font-size:.9rem;}
+th,td{border:1px solid var(--border);padding:.55rem .75rem;text-align:left;}
+th{background:var(--primary);color:#fff;font-weight:600;}
+tr:nth-child(even){background:#f1f5f9;}
+
+/* TEMPLATE BOX */
+.template-box{background:var(--surface);border:2px dashed var(--border);border-radius:var(--radius);padding:1.25rem;margin:1rem 0;font-family:'Courier New',monospace;font-size:.88rem;white-space:pre-wrap;line-height:1.5;}
+
+/* QUIZ */
+.quiz-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin:1rem 0;}
+.quiz-q{margin-bottom:1.25rem;}
+.quiz-q p.q-stem{font-weight:600;margin-bottom:.5rem;}
+.quiz-q label{display:block;padding:.3rem .5rem;border-radius:4px;cursor:pointer;margin-bottom:.2rem;}
+.quiz-q label:hover{background:#f1f5f9;}
+.quiz-q input[type="radio"]{margin-right:.5rem;}
+.feedback{display:none;padding:.6rem .85rem;border-radius:4px;margin-top:.5rem;font-size:.9rem;}
+.feedback.correct{background:#dcfce7;border:1px solid var(--success);color:#166534;}
+.feedback.incorrect{background:#fee2e2;border:1px solid var(--error);color:#991b1b;}
+.btn{display:inline-block;background:var(--primary);color:#fff;border:none;padding:.55rem 1.2rem;border-radius:4px;font-size:.9rem;cursor:pointer;margin-top:.5rem;}
+.btn:hover{background:var(--primary-light);}
+
+/* PHASE BADGES */
+.phase-list{counter-reset:phase;}
+.phase-item{position:relative;padding-left:3rem;margin-bottom:1rem;}
+.phase-item::before{counter-increment:phase;content:counter(phase);position:absolute;left:0;top:0;width:2rem;height:2rem;background:var(--primary);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;}
+
+/* SCENARIO CARDS */
+.scenario-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;margin:.75rem 0;box-shadow:var(--shadow);}
+.scenario-card h4{color:var(--primary-light);margin-bottom:.35rem;}
+
+/* RESPONSIVE */
+@media(max-width:600px){
+.nav-bar{height:auto;flex-wrap:wrap;padding:.5rem;}
+.nav-bar a{font-size:.8rem;padding:.35rem .5rem;}
+h1{font-size:1.4rem;}
+h2{font-size:1.2rem;}
+}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+.mt-section{margin-top:2rem;}
+fieldset.quiz-q{border:none;padding:0;margin:0 0 1.25rem;}
+legend.q-stem{font-weight:600;margin-bottom:.5rem;padding:0;float:none;width:100%;}
+</style>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<nav class="nav-bar" aria-label="Module section navigation">
+<a href="#status-check">Status Check</a>
+<a href="#lifecycle">Lifecycle</a>
+<a href="#evidence-domains">Evidence Domains</a>
+<a href="#investigation-plan">Plan Template</a>
+<a href="#chain-of-custody">Chain of Custody</a>
+<a href="#ethics">Ethics</a>
+<a href="#knowledge-check">Knowledge Check</a>
+</nav>
+
+<div class="container">
+
+<h1>Module 16.1 – Investigation Planning &amp; Methodology Application</h1>
+<p class="subtitle">Week 16 · CSC 156 – Digital Forensic Fundamentals</p>
+
+<!-- ===== SECTION 1: STATUS CHECK ===== -->
+<section id="status-check">
+<h2 class="sr-only">Capstone Status Check</h2>
+<div class="callout warn">
+<p class="callout-title">⚠️ Capstone Status Check — Where You Should Be Right Now</p>
+<p>Your capstone project spans <strong>Weeks 15 → 16 → 17</strong>. Here is the expected progression:</p>
+<ul>
+<li><strong>Week 15 (Completed):</strong> You received your capstone scenario, identified the incident type, and began preliminary research on applicable tools and techniques.</li>
+<li><strong>Week 16 (This Week):</strong> You will build a <em>formal investigation plan</em>, map evidence domains, establish chain-of-custody documentation, and begin structured evidence acquisition and analysis.</li>
+<li><strong>Week 17 (Next Week):</strong> You will finalize analysis, compile your forensic report, and present findings.</li>
+</ul>
+<p><strong>By the end of this module</strong>, you should have a written investigation plan ready to guide your hands-on work in Modules 16.2–16.4.</p>
+</div>
+</section>
+
+<!-- ===== SECTION 2: INVESTIGATION LIFECYCLE ===== -->
+<section id="lifecycle">
+<h2>1. Investigation Lifecycle Review — The 7-Phase Model</h2>
+<p>Throughout this course you have learned a structured, repeatable investigation methodology. The seven phases below are your roadmap from incident notification to case closure. In Week 16, you are primarily operating in <strong>Phases 2–4</strong>, with planning hooks into Phases 5–7.</p>
+
+<div class="phase-list">
+<div class="phase-item">
+<strong>Identification &amp; Notification</strong> — Recognize that an incident has occurred; receive authorization to investigate.<br>
+<em>Week 16 focus:</em> Your capstone scenario provides this. Confirm you understand the incident type and scope.
+</div>
+<div class="phase-item">
+<strong>Planning &amp; Preparation</strong> — Define objectives, scope, legal authority, team roles, and resource requirements.<br>
+<em>Week 16 focus:</em> <strong>Primary activity this module.</strong> You will produce a written investigation plan.
+</div>
+<div class="phase-item">
+<strong>Evidence Acquisition</strong> — Create forensically sound images/copies; document chain of custody.<br>
+<em>Week 16 focus:</em> Covered in Module 16.2. Your plan must specify <em>what</em> to acquire and <em>how</em>.
+</div>
+<div class="phase-item">
+<strong>Examination &amp; Analysis</strong> — Apply tools and techniques to extract and interpret artifacts.<br>
+<em>Week 16 focus:</em> Covered in Modules 16.3–16.4. Your plan identifies which analysis techniques apply.
+</div>
+<div class="phase-item">
+<strong>Documentation &amp; Reporting</strong> — Record findings in a structured forensic report; maintain contemporaneous notes.<br>
+<em>Week 16 focus:</em> Begins now (your plan is a living document) and culminates in Week 17.
+</div>
+<div class="phase-item">
+<strong>Presentation</strong> — Communicate findings to stakeholders (legal, management, jury) clearly and defensibly.<br>
+<em>Week 16 focus:</em> Plan your report audience and format now; deliver in Week 17.
+</div>
+<div class="phase-item">
+<strong>Case Closure &amp; Lessons Learned</strong> — Archive evidence, document lessons learned, recommend preventive controls.<br>
+<em>Week 16 focus:</em> Note recommendations as you analyze; finalize in Week 17.
+</div>
+</div>
+
+<details>
+<summary>Deeper Dive: How the Phases Map to Professional Standards</summary>
+<div class="detail-body">
+<p>The 7-phase model synthesizes guidance from multiple professional frameworks:</p>
+<ul>
+<li><strong>NIST SP 800-86</strong> — Collection → Examination → Analysis → Reporting</li>
+<li><strong>SWGDE/ISO 27037</strong> — Identification → Collection → Acquisition → Preservation</li>
+<li><strong>ACPO Good Practice Guide</strong> — Four principles of digital evidence handling</li>
+</ul>
+<p>Your capstone report should reference at least one of these frameworks to demonstrate professional alignment.</p>
+</div>
+</details>
+
+<div class="callout tip">
+<p class="callout-title">💡 Tip</p>
+<p>The phases are iterative, not strictly linear. During analysis (Phase 4) you may discover new evidence sources, sending you back to Phase 3. Your plan should anticipate this by including a "scope change" procedure.</p>
+</div>
+</section>
+
+<!-- ===== SECTION 3: EVIDENCE DOMAINS ===== -->
+<section id="evidence-domains">
+<h2>2. Mapping Your Scenario to Evidence Domains</h2>
+<p>Every capstone scenario involves multiple <em>evidence domains</em> — categories of digital artifacts that reside in different locations and require different tools. Use the reference table below to identify which domains are relevant to <strong>your</strong> scenario.</p>
+
+<h3>Self-Assessment: Which Domains Apply?</h3>
+<p>Read through the table. For each row, ask: <em>"Does my scenario likely contain artifacts in this domain?"</em> Mark those rows as part of your investigation plan.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Evidence Domain</th>
+<th>Course Week(s)</th>
+<th>Key Tools</th>
+<th>Example Artifacts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Disk / File System</td>
+<td>5–6</td>
+<td>Autopsy, FTK Imager, Sleuth Kit</td>
+<td>Deleted files, slack space, MFT entries, timestamps</td>
+</tr>
+<tr>
+<td>Windows OS Artifacts</td>
+<td>7–8</td>
+<td>RegRipper, Registry Explorer, Eric Zimmerman Tools</td>
+<td>Registry hives, Event Logs, Prefetch, USB history, shellbags, browser history, email artifacts</td>
+</tr>
+<tr>
+<td>Linux OS Artifacts</td>
+<td>9</td>
+<td>Autopsy, Sleuth Kit, grep</td>
+<td>ext4 artifacts, /var/log entries, bash_history, /etc/passwd, cron jobs</td>
+</tr>
+<tr>
+<td>Memory (RAM)</td>
+<td>11</td>
+<td>Volatility</td>
+<td>Running processes, open network connections, encryption keys, injected code</td>
+</tr>
+<tr>
+<td>Network Traffic</td>
+<td>12</td>
+<td>Wireshark, NetworkMiner, Zeek</td>
+<td>Packet captures, DNS queries, HTTP sessions, C2 traffic</td>
+</tr>
+<tr>
+<td>Malware &amp; Anti-Forensics Indicators</td>
+<td>13</td>
+<td>strings, PEStudio, Volatility</td>
+<td>IOCs, behavior indicators, timestomping, obfuscated code, hidden data</td>
+</tr>
+<tr>
+<td>Log Analysis (OS/App)</td>
+<td>7–9, 12</td>
+<td>Event Viewer, grep, text editor</td>
+<td>Windows Event Logs, /var/log entries, firewall/IDS logs, authentication records</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<details>
+<summary>Guided Example: Insider Data Theft Scenario</summary>
+<div class="detail-body">
+<p><strong>Scenario:</strong> An employee is suspected of exfiltrating proprietary design files before resigning.</p>
+<p><strong>Relevant domains:</strong></p>
+<ul>
+<li><strong>Disk/File System</strong> — Look for recently deleted files, USB device artifacts, large file copies.</li>
+<li><strong>Windows OS Artifacts</strong> — USB history (USBSTOR), shellbags showing folder access, browser history revealing cloud storage uploads, email application artifacts (local mailbox files, webmail session data).</li>
+<li><strong>Log Analysis</strong> — File server access logs, VPN connection times, print logs.</li>
+</ul>
+<p><strong>Less relevant (but don't ignore):</strong> Memory (unless a live capture was taken), Network traffic (unless packet capture was running).</p>
+</div>
+</details>
+
+<div class="callout info">
+<p class="callout-title">ℹ️ Important</p>
+<p>You do <strong>not</strong> need to use every domain. A focused, well-justified selection of 3–5 domains with thorough analysis is stronger than a shallow pass across all seven. Your plan should explain <em>why</em> you included or excluded each domain.</p>
+</div>
+</section>
+
+<!-- ===== SECTION 4: INVESTIGATION PLAN ===== -->
+<section id="investigation-plan">
+<h2>3. Creating Your Investigation Plan</h2>
+<p>The investigation plan is your operational blueprint. It ensures your work is <strong>systematic</strong>, <strong>defensible</strong>, and <strong>repeatable</strong>. Use the template below as a starting framework — adapt it to your specific scenario.</p>
+
+<h3>Plan Components</h3>
+<ol>
+<li><strong>Case Header</strong> — Case ID, examiner name, date initiated, authorization reference.</li>
+<li><strong>Incident Summary</strong> — What happened? When was it reported? Who is involved?</li>
+<li><strong>Investigation Objectives</strong> — What questions must you answer? (Be specific.)</li>
+<li><strong>Scope &amp; Boundaries</strong> — What systems/data are in scope? What is explicitly out of scope?</li>
+<li><strong>Evidence Sources</strong> — List each evidence item with domain, location, and acquisition method.</li>
+<li><strong>Tool Selection &amp; Justification</strong> — Which tools will you use and why?</li>
+<li><strong>Analysis Approach</strong> — Ordered steps for each evidence source.</li>
+<li><strong>Timeline</strong> — Target milestones mapped to Week 16 modules and Week 17 deliverable.</li>
+<li><strong>Legal/Ethical Considerations</strong> — Authority, privacy boundaries, escalation triggers.</li>
+<li><strong>Risk &amp; Contingency</strong> — What could go wrong? What is your fallback?</li>
+</ol>
+
+<details>
+<summary>📋 Investigation Plan Template (Copy and Complete)</summary>
+<div class="detail-body">
+<div class="template-box" role="document" aria-label="Investigation plan template">
+═══════════════════════════════════════════════════
+         DIGITAL FORENSIC INVESTIGATION PLAN
+═══════════════════════════════════════════════════
+
+CASE HEADER
+───────────────────────────────────────────────────
+Case ID        : [CSC156-SP26-YourInitials-##]
+Examiner       : [Your Name]
+Date Initiated : [YYYY-MM-DD]
+Authorization  : [Reference capstone scenario document]
+
+1. INCIDENT SUMMARY
+───────────────────────────────────────────────────
+Incident Type  : [e.g., Insider Threat / Malware /
+                  Unauthorized Access / Data Breach]
+Date Reported  : [YYYY-MM-DD]
+Reported By    : [Role/Name from scenario]
+Brief Narrative:
+[2–3 sentences describing what occurred]
+
+2. INVESTIGATION OBJECTIVES
+───────────────────────────────────────────────────
+Q1: [Primary question to answer]
+Q2: [Secondary question]
+Q3: [Additional question if applicable]
+
+3. SCOPE & BOUNDARIES
+───────────────────────────────────────────────────
+In Scope:
+  • [System/device 1]
+  • [System/device 2]
+  • [Date range: YYYY-MM-DD to YYYY-MM-DD]
+
+Out of Scope:
+  • [Item and justification for exclusion]
+
+4. EVIDENCE SOURCES
+───────────────────────────────────────────────────
+# | Source         | Domain      | Acquisition Method
+──┼────────────────┼─────────────┼───────────────────
+1 | [e.g., Workstation HD] | Disk | [dd / FTK Imager]
+2 | [e.g., RAM dump]       | Memory | [Volatility]
+3 | [e.g., Firewall logs]  | Logs   | [Export/Copy]
+
+5. TOOL SELECTION & JUSTIFICATION
+───────────────────────────────────────────────────
+Tool            | Purpose           | Justification
+────────────────┼───────────────────┼──────────────
+[Autopsy]       | [File analysis]   | [Open source,
+                |                   |  court-accepted]
+
+6. ANALYSIS APPROACH (Ordered Steps)
+───────────────────────────────────────────────────
+Step 1: [Verify image integrity — hash comparison]
+Step 2: [File system analysis — deleted files,
+         timeline generation]
+Step 3: [Registry analysis — USB, user activity]
+Step 4: [Correlate findings across sources]
+Step 5: [Build event timeline]
+
+7. TIMELINE / MILESTONES
+───────────────────────────────────────────────────
+Module 16.2 : Evidence acquisition complete
+Module 16.3 : Primary analysis complete
+Module 16.4 : Correlation & timeline built
+Week 17     : Report drafted & presented
+
+8. LEGAL / ETHICAL CONSIDERATIONS
+───────────────────────────────────────────────────
+• Authority basis: [Employment agreement / Court
+  order / Consent / Policy]
+• Privacy boundaries: [What you will NOT examine]
+• Escalation triggers: [Conditions that require
+  supervisor/legal notification]
+
+9. RISK & CONTINGENCY
+───────────────────────────────────────────────────
+Risk                  | Mitigation
+──────────────────────┼─────────────────────────
+[Corrupted image]     | [Re-acquire; verify hash]
+[Encrypted volume]    | [Document; note in report]
+[Scope expansion]     | [Get written approval
+                      |  before proceeding]
+
+═══════════════════════════════════════════════════
+</div>
+</div>
+</details>
+
+<div class="callout tip">
+<p class="callout-title">💡 Tip: Objectives Drive Everything</p>
+<p>Write your investigation objectives as <strong>specific, answerable questions</strong>. Compare:</p>
+<ul>
+<li>❌ Weak: "Find out what happened."</li>
+<li>✅ Strong: "Determine whether User X copied files from the R&amp;D share to a USB device between March 1–15, 2026."</li>
+</ul>
+<p>Specific objectives keep your analysis focused and make your report conclusions directly traceable.</p>
+</div>
+</section>
+
+<!-- ===== SECTION 5: CHAIN OF CUSTODY ===== -->
+<section id="chain-of-custody">
+<h2>4. Chain of Custody &amp; Evidence Integrity</h2>
+<p>No matter how brilliant your analysis, findings are worthless if you cannot demonstrate that evidence was handled properly. Chain of custody (CoC) documentation proves that evidence has not been altered, tampered with, or mishandled from acquisition through presentation.</p>
+
+<h3>Core Principles (Review)</h3>
+<ul>
+<li><strong>Integrity:</strong> Hash values (MD5 + SHA-256 minimum) computed at acquisition and verified at every transfer.</li>
+<li><strong>Continuity:</strong> Every person who handles evidence is logged with date, time, and purpose.</li>
+<li><strong>Accountability:</strong> Evidence is stored securely; access is controlled and logged.</li>
+<li><strong>Documentation:</strong> Contemporaneous notes — record actions <em>as they happen</em>, not from memory later.</li>
+</ul>
+
+<details>
+<summary>📋 Chain of Custody Log Entry Template</summary>
+<div class="detail-body">
+<div class="template-box" role="document" aria-label="Chain of custody log entry template">
+═══════════════════════════════════════════════════
+         CHAIN OF CUSTODY LOG ENTRY
+═══════════════════════════════════════════════════
+
+Evidence Item ID : [E-001]
+Description      : [e.g., Forensic image of
+                    Workstation HD, S/N: WD-12345]
+Date/Time        : [YYYY-MM-DD HH:MM (timezone)]
+Action           : [Acquired / Transferred /
+                    Analyzed / Returned / Stored]
+From             : [Name, Role]
+To               : [Name, Role]
+Location         : [Physical or logical location]
+Hash (MD5)       : [32-character hash]
+Hash (SHA-256)   : [64-character hash]
+Condition/Notes  : [Any observations — sealed,
+                    intact, damage noted, etc.]
+Signature        : [Examiner name — typed for
+                    capstone purposes]
+
+═══════════════════════════════════════════════════
+</div>
+</div>
+</details>
+
+<div class="callout warn">
+<p class="callout-title">⚠️ Common Capstone Mistake</p>
+<p>Students often create a single CoC entry at the start and never update it. Your capstone report should include <strong>at minimum</strong>:</p>
+<ul>
+<li>An entry when evidence is first acquired (image created)</li>
+<li>An entry when you begin analysis on the image</li>
+<li>A verification entry confirming hash match before drawing conclusions</li>
+</ul>
+</div>
+
+<h3>Hash Verification — Why Both MD5 and SHA-256?</h3>
+<p>MD5 is fast and widely supported by legacy tools, but it is cryptographically broken (collisions are feasible). SHA-256 provides collision resistance suitable for legal proceedings. Using both provides backward compatibility <em>and</em> cryptographic assurance.</p>
+
+<details>
+<summary>Deeper Dive: What Breaks Chain of Custody?</summary>
+<div class="detail-body">
+<p>In professional practice and courtroom settings, the following can invalidate evidence:</p>
+<ul>
+<li>Gaps in the log (unaccounted time periods)</li>
+<li>Missing or mismatched hash values</li>
+<li>Analysis performed on original media instead of a forensic copy</li>
+<li>Unauthorized personnel accessing evidence</li>
+<li>Improper storage (unlocked room, unencrypted digital storage)</li>
+</ul>
+<p>For your capstone: treat your forensic images as if they would be presented in court. Document accordingly.</p>
+</div>
+</details>
+</section>
+
+<!-- ===== SECTION 6: ETHICS ===== -->
+<section id="ethics">
+<h2>5. Ethical Decision-Making in Digital Forensics</h2>
+<p>Digital forensic examiners regularly encounter data that is sensitive, unexpected, or outside the investigation scope. You need a <strong>consistent decision framework</strong> to handle these situations professionally.</p>
+
+<h3>The Document → Do Not Analyze → Escalate → Note Framework</h3>
+<div class="callout info">
+<p class="callout-title">ℹ️ Framework Steps</p>
+<ol>
+<li><strong>Document</strong> — Record that you encountered the material (type, location, timestamp). Do not describe content in detail.</li>
+<li><strong>Do Not Analyze</strong> — Stop examining that specific data. Do not open, copy, or extract it beyond what was necessary to identify it.</li>
+<li><strong>Escalate</strong> — Immediately notify the appropriate authority (supervisor, legal counsel, law enforcement if required).</li>
+<li><strong>Note</strong> — Add a note to your case file that you followed this procedure, including who you notified and when.</li>
+</ol>
+</div>
+
+<h3>Practice Scenarios</h3>
+<p>For each scenario below, consider how you would apply the framework. Expand to see the recommended response.</p>
+
+<div class="scenario-card">
+<h4>Scenario A: Personal Medical Records</h4>
+<p>While examining a suspect's workstation for evidence of intellectual property theft, you discover a folder containing the suspect's personal medical records (doctor's notes, prescriptions, lab results). These are clearly unrelated to your investigation scope.</p>
+</div>
+<details>
+<summary>Recommended Response — Scenario A</summary>
+<div class="detail-body">
+<ul>
+<li><strong>Document:</strong> Note the folder path, that it contains personal medical information, and the timestamp of discovery.</li>
+<li><strong>Do Not Analyze:</strong> Do not read, copy, or include any medical content in your report.</li>
+<li><strong>Escalate:</strong> Not typically required unless your authorization is ambiguous — confirm with case lead that personal medical data is out of scope.</li>
+<li><strong>Note:</strong> Record in your case notes that the folder was identified and excluded from analysis per scope boundaries and privacy considerations.</li>
+</ul>
+</div>
+</details>
+
+<div class="scenario-card">
+<h4>Scenario B: Possible Child Exploitation Material</h4>
+<p>During a network intrusion investigation, you encounter image thumbnails in an unallocated space recovery that appear to depict child sexual abuse material (CSAM).</p>
+</div>
+<details>
+<summary>Recommended Response — Scenario B</summary>
+<div class="detail-body">
+<ul>
+<li><strong>Document:</strong> Record the exact location (sector/offset), timestamp, and that the material appears to be CSAM. Do NOT describe images in detail.</li>
+<li><strong>Do Not Analyze:</strong> Immediately stop examining that data. Do not open full-size images, do not copy them to separate media.</li>
+<li><strong>Escalate:</strong> <strong>Mandatory and immediate.</strong> Notify your supervisor and legal counsel. In the United States, this triggers mandatory reporting to law enforcement (and potentially NCMEC). You may have legal obligations as a mandatory reporter.</li>
+<li><strong>Note:</strong> Document the exact time you stopped, who you contacted, and preserve the evidence in its current state for law enforcement.</li>
+</ul>
+<p><strong>Key point:</strong> This is the highest-priority escalation scenario. Your legal and ethical obligation overrides the original investigation scope.</p>
+</div>
+</details>
+
+<div class="scenario-card">
+<h4>Scenario C: Evidence of a Different Crime</h4>
+<p>You are investigating unauthorized access to a database. While reviewing browser history, you find evidence suggesting the suspect is conducting an illegal gambling operation from their work computer.</p>
+</div>
+<details>
+<summary>Recommended Response — Scenario C</summary>
+<div class="detail-body">
+<ul>
+<li><strong>Document:</strong> Record the artifact location, type (browser history entries), and general nature (apparent illegal gambling activity).</li>
+<li><strong>Do Not Analyze:</strong> Do not pivot your investigation to the gambling activity. It is outside your authorized scope.</li>
+<li><strong>Escalate:</strong> Notify your supervisor and/or legal counsel. They will determine whether to expand the investigation scope (requiring new authorization) or refer to a separate investigation.</li>
+<li><strong>Note:</strong> Record that you identified potentially relevant information outside scope and escalated appropriately. Continue your original authorized investigation.</li>
+</ul>
+<p><strong>Key point:</strong> "Plain view" doctrine may apply in law enforcement contexts, but as a forensic examiner you should never unilaterally expand scope. Always get authorization.</p>
+</div>
+</details>
+
+<div class="callout tip">
+<p class="callout-title">💡 Capstone Application</p>
+<p>In your capstone report, include a brief "Ethical Considerations" section. Even if your scenario does not trigger the framework, state what you would do <em>if</em> you encountered out-of-scope sensitive material. This demonstrates professional awareness.</p>
+</div>
+</section>
+
+<!-- ===== SECTION 7: KNOWLEDGE CHECK ===== -->
+<section id="knowledge-check">
+<h2>6. Knowledge Check (Ungraded)</h2>
+<p>Test your understanding of this module's key concepts. Select an answer for each question and click "Check Answer" for immediate feedback.</p>
+
+<div class="quiz-section">
+
+<!-- Question 1 -->
+<fieldset class="quiz-q" id="q1">
+<legend class="q-stem">1. During which phase of the 7-phase investigation lifecycle should you define your investigation objectives and identify evidence sources?</legend>
+<label><input type="radio" name="q1" value="a"> Phase 1 – Identification &amp; Notification</label>
+<label><input type="radio" name="q1" value="b"> Phase 2 – Planning &amp; Preparation</label>
+<label><input type="radio" name="q1" value="c"> Phase 3 – Evidence Acquisition</label>
+<label><input type="radio" name="q1" value="d"> Phase 4 – Examination &amp; Analysis</label>
+<button class="btn" type="button" onclick="checkAnswer('q1','b')" aria-label="Check answer for question 1">Check Answer</button>
+<div class="feedback correct" id="q1-correct" aria-live="polite">✓ Correct! Phase 2 (Planning &amp; Preparation) is where you define objectives, scope, evidence sources, and resource requirements <em>before</em> you begin acquiring or analyzing anything. This ensures your investigation is focused and authorized.</div>
+<div class="feedback incorrect" id="q1-incorrect" aria-live="polite">✗ Not quite. The correct answer is <strong>Phase 2 – Planning &amp; Preparation</strong>. Phase 1 is about recognizing an incident occurred. Phase 3 is the actual acquisition of evidence. Phase 4 is analysis. Planning must come before all of these to ensure a structured, authorized approach.</div>
+</fieldset>
+
+<!-- Question 2 -->
+<fieldset class="quiz-q" id="q2">
+<legend class="q-stem">2. You compute both MD5 and SHA-256 hashes when acquiring a forensic image. Why is using both considered best practice?</legend>
+<label><input type="radio" name="q2" value="a"> MD5 is more accurate than SHA-256 for large files</label>
+<label><input type="radio" name="q2" value="b"> SHA-256 is faster to compute, while MD5 provides better legal standing</label>
+<label><input type="radio" name="q2" value="c"> MD5 provides legacy tool compatibility, while SHA-256 provides collision resistance suitable for legal proceedings</label>
+<label><input type="radio" name="q2" value="d"> Both algorithms are equally secure, but courts require two different hashes</label>
+<button class="btn" type="button" onclick="checkAnswer('q2','c')" aria-label="Check answer for question 2">Check Answer</button>
+<div class="feedback correct" id="q2-correct" aria-live="polite">✓ Correct! MD5 is widely supported by older forensic tools and provides quick verification, but it is cryptographically broken (collisions can be engineered). SHA-256 remains collision-resistant and is appropriate for legal/evidentiary standards. Using both gives you compatibility and security.</div>
+<div class="feedback incorrect" id="q2-incorrect" aria-live="polite">✗ Not quite. The correct answer is <strong>C</strong>. MD5 is actually cryptographically broken — collisions are feasible — so it alone is insufficient for legal proceedings. SHA-256 provides the collision resistance needed. MD5 is retained for backward compatibility with legacy tools and workflows. Neither is "more accurate" for large files, and SHA-256 is actually slower (not faster) than MD5.</div>
+</fieldset>
+
+<!-- Question 3 -->
+<fieldset class="quiz-q" id="q3">
+<legend class="q-stem">3. While investigating a network intrusion, you discover browser history suggesting the suspect is involved in tax fraud — a crime unrelated to your authorized scope. What is the FIRST step in the ethical decision framework?</legend>
+<label><input type="radio" name="q3" value="a"> Expand your analysis to gather more evidence of the tax fraud</label>
+<label><input type="radio" name="q3" value="b"> Document the finding (location, type, timestamp) without detailed examination</label>
+<label><input type="radio" name="q3" value="c"> Delete the evidence to avoid scope complications</label>
+<label><input type="radio" name="q3" value="d"> Immediately contact law enforcement before documenting anything</label>
+<button class="btn" type="button" onclick="checkAnswer('q3','b')" aria-label="Check answer for question 3">Check Answer</button>
+<div class="feedback correct" id="q3-correct" aria-live="polite">✓ Correct! The first step in the Document → Do Not Analyze → Escalate → Note framework is to <strong>Document</strong> — record what you found, where, and when, without diving deeper into the out-of-scope material. Then stop analyzing it, escalate to your supervisor/legal counsel, and note your actions in the case file.</div>
+<div class="feedback incorrect" id="q3-incorrect" aria-live="polite">✗ Not quite. The correct answer is <strong>B — Document the finding</strong>. You should never expand scope without authorization (A), never delete evidence (C — that's destruction/spoliation), and while escalation is important, it comes <em>after</em> you document what you found (D puts the cart before the horse). The framework order is: Document → Do Not Analyze → Escalate → Note.</div>
+</fieldset>
+
+</div><!-- end quiz-section -->
+</section>
+
+<!-- CLOSING -->
+<div class="callout info mt-section">
+<p class="callout-title">ℹ️ Next Steps</p>
+<p><strong>After completing this module:</strong></p>
+<ol>
+<li>Draft your investigation plan using the template above (or your own adaptation of it).</li>
+<li>Identify 3–5 evidence domains relevant to your capstone scenario.</li>
+<li>Prepare your chain of custody log template for use during acquisition.</li>
+<li>Proceed to <strong>Module 16.2 – Multi-Domain Evidence Integration and Timeline Construction</strong> where you will execute the acquisition phase of your plan.</li>
+</ol>
+</div>
+
+</div><!-- end container -->
+
+<script>
+function checkAnswer(qId, correctVal){
+var radios=document.getElementsByName(qId);
+var selected=null;
+for(var i=0;i<radios.length;i++){
+if(radios[i].checked){selected=radios[i].value;break;}
+}
+var correctEl=document.getElementById(qId+'-correct');
+var incorrectEl=document.getElementById(qId+'-incorrect');
+correctEl.style.display='none';
+incorrectEl.style.display='none';
+if(selected===null){return;}
+if(selected===correctVal){
+correctEl.style.display='block';
+incorrectEl.style.display='none';
+}else{
+incorrectEl.style.display='block';
+correctEl.style.display='none';
+}
+}
+</script>
+</body>
+</html>

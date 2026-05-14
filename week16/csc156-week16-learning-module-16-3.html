@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 16.3 – Quality Assurance, Verification, and Ethical Decision-Making | CSC 156</title>
+<style>
+:root{
+--primary:#1a5276;
+--primary-light:#2980b9;
+--accent:#e74c3c;
+--accent-light:#f5b7b1;
+--success:#27ae60;
+--success-light:#d5f5e3;
+--warning:#f39c12;
+--warning-light:#fef9e7;
+--neutral:#2c3e50;
+--neutral-light:#ecf0f1;
+--bg:#ffffff;
+--text:#2c3e50;
+--text-light:#5d6d7e;
+--border:#d5dbdb;
+--shadow:0 2px 6px rgba(0,0,0,0.08);
+--radius:6px;
+--nav-height:54px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--nav-height) + 16px);}
+body{
+font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+font-size:1rem;line-height:1.65;color:var(--text);
+background:var(--bg);margin:0;padding:0;
+}
+/* NAV */
+.nav-bar{
+position:sticky;top:0;z-index:1000;
+background:var(--primary);
+display:flex;flex-wrap:wrap;align-items:center;
+padding:0.5rem 1rem;gap:0.25rem 0.75rem;
+box-shadow:0 2px 4px rgba(0,0,0,0.15);
+}
+.nav-bar a{
+color:#fff;text-decoration:none;font-size:0.82rem;
+padding:0.35rem 0.6rem;border-radius:var(--radius);
+transition:background 0.2s;
+}
+.nav-bar a:hover,.nav-bar a:focus-visible{background:var(--primary-light);outline:none;}
+.nav-bar a:focus-visible{outline:2px solid #fff;outline-offset:2px;}
+/* LAYOUT */
+.container{max-width:960px;margin:0 auto;padding:1.5rem 1.25rem 3rem;}
+h1{font-size:1.6rem;color:var(--primary);margin:0.5rem 0 0.25rem;}
+h2{font-size:1.3rem;color:var(--primary);margin-top:2.25rem;border-bottom:2px solid var(--primary-light);padding-bottom:0.3rem;}
+h3{font-size:1.1rem;color:var(--neutral);margin-top:1.5rem;}
+p,li{margin-bottom:0.5rem;}
+ul,ol{padding-left:1.4rem;}
+strong{color:var(--neutral);}
+/* CALLOUT BOXES */
+.callout{
+border-left:4px solid var(--primary-light);
+background:var(--neutral-light);
+padding:0.9rem 1rem;margin:1.25rem 0;border-radius:var(--radius);
+}
+.callout.key{border-left-color:var(--accent);background:#fdf2f2;}
+.callout.ethics{border-left-color:var(--warning);background:var(--warning-light);}
+.callout.success{border-left-color:var(--success);background:var(--success-light);}
+.callout .callout-title{font-weight:700;margin-bottom:0.3rem;font-size:0.95rem;}
+/* TABLE */
+table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:0.92rem;}
+th,td{border:1px solid var(--border);padding:0.55rem 0.7rem;text-align:left;}
+th{background:var(--primary);color:#fff;font-weight:600;}
+tr:nth-child(even){background:var(--neutral-light);}
+/* COLLAPSIBLE */
+details{
+border:1px solid var(--border);border-radius:var(--radius);
+margin:0.6rem 0;background:#fff;
+}
+details[open]{box-shadow:var(--shadow);}
+summary{
+cursor:pointer;padding:0.7rem 1rem;font-weight:600;
+background:var(--neutral-light);border-radius:var(--radius);
+list-style:none;position:relative;padding-left:1.6rem;
+}
+summary::-webkit-details-marker{display:none;}
+summary::before{
+content:'▶';position:absolute;left:0.7rem;top:0.7rem;
+font-size:0.75rem;transition:transform 0.2s;
+}
+details[open] summary::before{transform:rotate(90deg);}
+summary:focus-visible{outline:2px solid var(--primary-light);outline-offset:2px;}
+.details-body{padding:0.75rem 1rem 1rem;}
+/* CHECKLIST */
+.checklist-item{
+display:flex;align-items:flex-start;gap:0.6rem;
+padding:0.45rem 0;border-bottom:1px dashed var(--border);
+}
+.checklist-item:last-child{border-bottom:none;}
+.checklist-item input[type="checkbox"]{
+margin-top:0.25rem;width:1.1rem;height:1.1rem;accent-color:var(--success);cursor:pointer;
+}
+.checklist-item label{cursor:pointer;flex:1;}
+/* SCENARIO CARDS */
+.scenario-card{
+border:1px solid var(--border);border-radius:var(--radius);
+margin:1rem 0;overflow:hidden;
+}
+.scenario-header{
+background:var(--primary);color:#fff;padding:0.7rem 1rem;font-weight:600;font-size:0.95rem;
+}
+.scenario-body{padding:1rem;}
+.scenario-body .reveal-btn{
+background:var(--primary-light);color:#fff;border:none;
+padding:0.5rem 1rem;border-radius:var(--radius);cursor:pointer;
+font-size:0.88rem;margin-top:0.75rem;transition:background 0.2s;
+}
+.scenario-body .reveal-btn:hover,.scenario-body .reveal-btn:focus-visible{background:var(--primary);}
+.scenario-body .reveal-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.scenario-answer{
+margin-top:0.75rem;padding:0.75rem;
+border-left:3px solid var(--success);background:var(--success-light);
+border-radius:var(--radius);display:none;
+}
+.scenario-answer.visible{display:block;}
+/* KNOWLEDGE CHECK */
+.kc-question{
+border:1px solid var(--border);border-radius:var(--radius);
+padding:1rem;margin:1rem 0;background:#fff;
+}
+.kc-question p.q-text{font-weight:600;margin-bottom:0.6rem;}
+.kc-options label{display:block;padding:0.3rem 0;cursor:pointer;}
+.kc-options input[type="radio"]{margin-right:0.5rem;accent-color:var(--primary);}
+.kc-feedback{
+margin-top:0.6rem;padding:0.6rem;border-radius:var(--radius);
+font-size:0.9rem;display:none;
+}
+.kc-feedback.correct{background:var(--success-light);border-left:3px solid var(--success);}
+.kc-feedback.incorrect{background:#fdf2f2;border-left:3px solid var(--accent);}
+.kc-submit{
+background:var(--primary);color:#fff;border:none;
+padding:0.45rem 1rem;border-radius:var(--radius);cursor:pointer;
+font-size:0.88rem;margin-top:0.5rem;transition:background 0.2s;
+}
+.kc-submit:hover,.kc-submit:focus-visible{background:var(--primary-light);}
+.kc-submit:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+/* PROGRESS */
+.progress-bar{
+width:100%;background:var(--neutral-light);border-radius:10px;
+height:8px;margin:0.5rem 0 1.5rem;overflow:hidden;
+}
+.progress-bar .fill{height:100%;background:var(--success);width:0%;transition:width 0.4s;}
+/* META */
+.module-meta{font-size:0.85rem;color:var(--text-light);margin-bottom:1.5rem;}
+.module-meta span{margin-right:1.25rem;}
+/* RESPONSIVE */
+@media(max-width:600px){
+.nav-bar{padding:0.4rem 0.5rem;}
+.nav-bar a{font-size:0.75rem;padding:0.3rem 0.45rem;}
+.container{padding:1rem 0.75rem 2rem;}
+h1{font-size:1.35rem;}
+h2{font-size:1.15rem;}
+table{font-size:0.82rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<nav class="nav-bar" aria-label="Module section navigation">
+<a href="#continuous-verification">Verification</a>
+<a href="#confirmation-bias">Confirmation Bias</a>
+<a href="#self-review-checklist">Self-Review Checklist</a>
+<a href="#ethical-scenarios">Ethical Scenarios</a>
+<a href="#peer-review-prep">Peer Review Prep</a>
+<a href="#knowledge-check">Knowledge Check</a>
+</nav>
+
+<main class="container">
+
+<!-- HEADER -->
+<h1>Module 16.3 – Quality Assurance, Verification, and Ethical Decision-Making</h1>
+<div class="module-meta">
+<span><strong>Week 16</strong> – Capstone Project Work and Course Integration</span>
+<span><strong>Est. Time:</strong> 1.0–1.5 hours</span>
+</div>
+
+<p>Welcome to Module 16.3. You have planned your investigation (Module 16.1) and begun integrating evidence across domains (Module 16.2). Before you begin drafting your formal report (Module 16.4), you need a structured way to <em>verify</em> your own work, <em>challenge</em> your assumptions, and <em>decide ethically</em> when the evidence surprises you.</p>
+
+<div class="callout key">
+<div class="callout-title">Central Principle</div>
+Quality assurance is a <strong>continuous practice throughout</strong> an investigation — not a checkbox you complete at the end. Every phase of your capstone should include built-in verification steps.
+</div>
+
+<p><strong>Module Objectives (Week 16 Objectives 16.3, 16.5, 16.6):</strong></p>
+<ul>
+<li>Maintain a complete, court-admissible chain of custody and evidence log throughout the capstone investigation. <em>(Obj 16.3)</em></li>
+<li>Apply structured quality-assurance review to your own work and provide constructive peer feedback on another student's methodology. <em>(Obj 16.5)</em></li>
+<li>Demonstrate ethical decision-making when encountering ambiguous or sensitive evidence during an investigation. <em>(Obj 16.6)</em></li>
+</ul>
+
+<p><strong>CSLO Alignment:</strong></p>
+<ul>
+<li><strong>CSLO 1:</strong> Explain legal and ethical considerations in digital forensics, including laws, regulations, and professional standards.</li>
+<li><strong>CSLO 4:</strong> Document and present digital forensic findings in a manner suitable for legal and organizational proceedings.</li>
+<li><strong>CSLO 5:</strong> Analyze case scenarios to determine appropriate forensic methodologies and investigative approaches.</li>
+</ul>
+
+<!-- ============================================================ -->
+<!-- SECTION 1: CONTINUOUS VERIFICATION -->
+<!-- ============================================================ -->
+<h2 id="continuous-verification">1. Continuous Verification — Building QA Into Every Phase</h2>
+
+<p>Many students treat quality assurance as something that happens after the analysis is done — a final proofread. In professional forensics, that approach is dangerous. If you discover an integrity failure at the end of your investigation, you may need to repeat hours (or days) of work. Worse, you may not discover the failure at all, and your report becomes indefensible in court.</p>
+
+<h3>1.1 The Cost of Late-Stage QA Failures</h3>
+<p>Consider this scenario: You complete your capstone analysis, draft your report, and then realize you never re-verified the hash of your working copy after extracting files. Can you prove the evidence was unaltered during your analysis? If the answer is "no," every finding you derived from that evidence is potentially inadmissible.</p>
+
+<div class="callout">
+<div class="callout-title">Professional Standard</div>
+The Scientific Working Group on Digital Evidence (SWGDE) requires that "the integrity of digital evidence shall be maintained throughout its lifecycle." This means verification at <em>every transition point</em>, not just at acquisition.
+</div>
+
+<h3>1.2 Verification Checkpoints Table</h3>
+<p>Use this table as a reference for <strong>when</strong>, <strong>what</strong>, and <strong>how</strong> to verify during your capstone investigation:</p>
+
+<table>
+<thead>
+<tr><th>When (Phase)</th><th>What to Verify</th><th>How to Verify</th></tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Evidence Receipt</strong></td>
+<td>Evidence description matches documentation; physical condition noted</td>
+<td>Compare evidence items against case assignment; photograph; document serial numbers</td>
+</tr>
+<tr>
+<td><strong>Acquisition</strong></td>
+<td>Forensic image integrity; write-protection confirmed</td>
+<td>Generate SHA-256 hash of source and image; confirm match; log write-blocker use</td>
+</tr>
+<tr>
+<td><strong>Working Copy Creation</strong></td>
+<td>Working copy matches original image</td>
+<td>Hash working copy; compare to acquisition hash; document in case notes</td>
+</tr>
+<tr>
+<td><strong>During Analysis</strong></td>
+<td>Tool outputs are consistent; no accidental modification of evidence</td>
+<td>Periodically re-hash working copy; cross-check tool results with a second tool when possible</td>
+</tr>
+<tr>
+<td><strong>Finding Documentation</strong></td>
+<td>Each finding references specific evidence (path, offset, hash)</td>
+<td>Verify that cited exhibit numbers, file paths, and timestamps match actual evidence</td>
+</tr>
+<tr>
+<td><strong>Timeline Construction</strong></td>
+<td>Timestamps are consistent; timezone normalization applied correctly</td>
+<td>Spot-check 3–5 timeline entries against raw evidence; confirm UTC conversion</td>
+</tr>
+<tr>
+<td><strong>Pre-Report Draft</strong></td>
+<td>Conclusions are supported by documented findings; no unsupported inferences</td>
+<td>For each conclusion, trace back to at least one specific finding with exhibit reference</td>
+</tr>
+<tr>
+<td><strong>Final Report Review</strong></td>
+<td>Report is internally consistent; hash values in appendix match body references</td>
+<td>Self-review checklist (Section 3 below); peer review (Discussion 16)</td>
+</tr>
+</tbody>
+</table>
+
+<div class="callout key">
+<div class="callout-title">Key Principle: Verify at Every Transition</div>
+Any time evidence moves from one state to another — acquired to copied, copied to analyzed, analyzed to reported — that transition is a verification checkpoint. Document what you verified, when, and the result.
+</div>
+
+<h3>1.3 Applying This to Your Capstone</h3>
+<p>Right now, take 60 seconds and ask yourself:</p>
+<ul>
+<li>Have I re-verified my evidence hash since I began analysis?</li>
+<li>Can I trace every finding in my notes back to a specific evidence artifact?</li>
+<li>Have I documented my tool versions and settings?</li>
+</ul>
+<p>If you answered "no" to any of these, address it <em>before</em> continuing your analysis — not after you start writing your report.</p>
+
+<!-- ============================================================ -->
+<!-- SECTION 2: CONFIRMATION BIAS -->
+<!-- ============================================================ -->
+<h2 id="confirmation-bias">2. Confirmation Bias in Forensic Analysis</h2>
+
+<h3>2.1 Definition</h3>
+<p><strong>Confirmation bias</strong> is the tendency to search for, interpret, and recall information in a way that confirms your pre-existing beliefs or hypotheses, while giving disproportionately less attention to information that contradicts them.</p>
+
+<p>In forensic investigation, confirmation bias is not just an academic concept — it is a <em>professional risk</em> that has contributed to wrongful convictions and flawed investigations in both physical and digital forensics.</p>
+
+<div class="callout">
+<div class="callout-title">Why This Matters for You</div>
+You received a capstone scenario with a narrative. That narrative likely suggests a suspect or a type of incident. Your brain <em>wants</em> to find evidence that confirms the narrative. A professional examiner actively resists this tendency.
+</div>
+
+<h3>2.2 How Confirmation Bias Manifests in Student Work</h3>
+<p>Based on common patterns in forensic coursework, here are specific ways confirmation bias appears:</p>
+
+<table>
+<thead>
+<tr><th>Manifestation</th><th>Example</th><th>Risk</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>Selective reporting</td>
+<td>Reporting only artifacts that support the "guilty" hypothesis; ignoring artifacts that suggest innocence or alternative explanations</td>
+<td>Incomplete and potentially misleading report</td>
+</tr>
+<tr>
+<td>Premature conclusion</td>
+<td>Deciding the suspect is responsible after finding one incriminating artifact, then stopping analysis</td>
+<td>Missing exculpatory evidence or additional actors</td>
+</tr>
+<tr>
+<td>Interpretation stretching</td>
+<td>Interpreting ambiguous timestamps or artifacts in the way that supports your hypothesis without acknowledging alternative interpretations</td>
+<td>Conclusions not supported by evidence; vulnerable to cross-examination</td>
+</tr>
+<tr>
+<td>Tool tunnel vision</td>
+<td>Using only one tool and accepting its output without cross-verification, especially when the output "looks right"</td>
+<td>Tool errors or misconfigurations go undetected</td>
+</tr>
+<tr>
+<td>Narrative anchoring</td>
+<td>Structuring your report around the scenario narrative rather than around what the evidence actually shows</td>
+<td>Report tells a story rather than presenting objective findings</td>
+</tr>
+</tbody>
+</table>
+
+<h3>2.3 Three Countermeasures</h3>
+
+<p>Professional forensic examiners use deliberate strategies to counteract confirmation bias. Apply these three countermeasures during your capstone work:</p>
+
+<details>
+<summary>Countermeasure 1: Actively Seek Disconfirming Evidence</summary>
+<div class="details-body">
+<p>After forming a hypothesis, deliberately ask: <em>"What evidence would prove this hypothesis wrong?"</em> Then look for that evidence with the same rigor you applied to your original search.</p>
+<p><strong>Practical application for your capstone:</strong></p>
+<ul>
+<li>If you believe User A performed the suspicious activity, search for evidence that User B (or an automated process) could have done it instead.</li>
+<li>If you believe a file was accessed at a specific time, look for contradicting timestamps in other artifact sources.</li>
+<li>Document what you searched for and did <em>not</em> find — negative findings are findings.</li>
+</ul>
+</div>
+</details>
+
+<details>
+<summary>Countermeasure 2: Use the "Devil's Advocate" Technique</summary>
+<div class="details-body">
+<p>Before finalizing any conclusion, write one paragraph arguing the <em>opposite</em> position. If you cannot effectively argue against your own conclusion, that is a good sign. If you <em>can</em> construct a reasonable counter-argument, you need to address it in your report.</p>
+<p><strong>Practical application for your capstone:</strong></p>
+<ul>
+<li>For each major finding, write 1–2 sentences describing an alternative explanation.</li>
+<li>In your report, acknowledge alternative interpretations and explain why the evidence favors your conclusion over the alternative.</li>
+<li>This practice also prepares you for cross-examination in a courtroom setting (Week 14 connection).</li>
+</ul>
+</div>
+</details>
+
+<details>
+<summary>Countermeasure 3: Peer Verification (Discussion 16)</summary>
+<div class="details-body">
+<p>A second set of eyes catches what yours miss. This is why professional forensic labs require peer review before reports are issued. Discussion 16 serves as your peer review checkpoint.</p>
+<p><strong>Practical application for your capstone:</strong></p>
+<ul>
+<li>When you share your methodology in Discussion 16, explicitly invite your peer to challenge your assumptions.</li>
+<li>When reviewing a classmate's work, look for signs of confirmation bias (selective reporting, unsupported conclusions, missing alternative hypotheses).</li>
+<li>Frame feedback constructively: "Have you considered…?" rather than "You're wrong about…"</li>
+</ul>
+</div>
+</details>
+
+<!-- ============================================================ -->
+<!-- SECTION 3: SELF-REVIEW CHECKLIST -->
+<!-- ============================================================ -->
+<h2 id="self-review-checklist">3. Self-Review Checklist</h2>
+
+<p>Use this interactive checklist to systematically review your capstone work. Work through each category <strong>before</strong> you begin your formal report draft (Module 16.4) and <strong>before</strong> you post to Discussion 16. Check items as you confirm them — this is for your own tracking.</p>
+
+<div class="callout success">
+<div class="callout-title">How to Use This Checklist</div>
+Go through each section honestly. Any unchecked item represents a gap you should address before proceeding. You do not need to submit this checklist — it is a self-assessment tool.
+</div>
+
+<div id="checklist-progress">
+<strong>Progress: <span id="cl-count">0</span> / <span id="cl-total">0</span> items checked</strong>
+<div class="progress-bar"><div class="fill" id="cl-bar"></div></div>
+</div>
+
+<!-- Category A -->
+<details open>
+<summary>A. Evidence Handling &amp; Integrity (5 items)</summary>
+<div class="details-body">
+<div class="checklist-item"><input type="checkbox" id="a1" class="cl-box"><label for="a1">All evidence items are documented with description, serial number (if applicable), and source.</label></div>
+<div class="checklist-item"><input type="checkbox" id="a2" class="cl-box"><label for="a2">Forensic image hash (SHA-256) was generated at acquisition and recorded in case notes.</label></div>
+<div class="checklist-item"><input type="checkbox" id="a3" class="cl-box"><label for="a3">Working copy hash was verified against original image hash before analysis began.</label></div>
+<div class="checklist-item"><input type="checkbox" id="a4" class="cl-box"><label for="a4">Write-protection method is documented (hardware write-blocker, software method, or read-only mount).</label></div>
+<div class="checklist-item"><input type="checkbox" id="a5" class="cl-box"><label for="a5">Chain of custody log is current and complete from receipt through current analysis stage.</label></div>
+</div>
+</details>
+
+<!-- Category B -->
+<details>
+<summary>B. Analysis Completeness (5 items)</summary>
+<div class="details-body">
+<div class="checklist-item"><input type="checkbox" id="b1" class="cl-box"><label for="b1">All evidence sources assigned in the capstone scenario have been examined (not just the "easy" ones).</label></div>
+<div class="checklist-item"><input type="checkbox" id="b2" class="cl-box"><label for="b2">Cross-source correlation attempted: findings from one source are corroborated (or contradicted) by another.</label></div>
+<div class="checklist-item"><input type="checkbox" id="b3" class="cl-box"><label for="b3">Timeline includes events from multiple evidence sources with consistent timezone normalization.</label></div>
+<div class="checklist-item"><input type="checkbox" id="b4" class="cl-box"><label for="b4">Alternative hypotheses have been considered and documented (Devil's Advocate technique applied).</label></div>
+<div class="checklist-item"><input type="checkbox" id="b5" class="cl-box"><label for="b5">Negative findings are documented (what was searched for but not found, and why that matters).</label></div>
+</div>
+</details>
+
+<!-- Category C -->
+<details>
+<summary>C. Methodology Documentation (5 items)</summary>
+<div class="details-body">
+<div class="checklist-item"><input type="checkbox" id="c1" class="cl-box"><label for="c1">All tools used are identified by name and version number.</label></div>
+<div class="checklist-item"><input type="checkbox" id="c2" class="cl-box"><label for="c2">Tool settings and configurations relevant to results are documented.</label></div>
+<div class="checklist-item"><input type="checkbox" id="c3" class="cl-box"><label for="c3">Steps taken during analysis are documented in sufficient detail for another examiner to reproduce.</label></div>
+<div class="checklist-item"><input type="checkbox" id="c4" class="cl-box"><label for="c4">Any deviations from standard procedure are noted and justified.</label></div>
+<div class="checklist-item"><input type="checkbox" id="c5" class="cl-box"><label for="c5">Limitations of tools or methods are acknowledged (e.g., "Tool X does not parse artifact Y; manual verification performed").</label></div>
+</div>
+</details>
+
+<!-- Category D -->
+<details>
+<summary>D. Report Quality (5 items)</summary>
+<div class="details-body">
+<div class="checklist-item"><input type="checkbox" id="d1" class="cl-box"><label for="d1">Every conclusion is traceable to at least one specific, cited finding (exhibit number, file path, hash).</label></div>
+<div class="checklist-item"><input type="checkbox" id="d2" class="cl-box"><label for="d2">Facts, opinions, and interpretations are clearly distinguished in the writing.</label></div>
+<div class="checklist-item"><input type="checkbox" id="d3" class="cl-box"><label for="d3">Technical jargon is defined or explained for non-technical readers.</label></div>
+<div class="checklist-item"><input type="checkbox" id="d4" class="cl-box"><label for="d4">Report sections follow a logical structure (methodology → findings → analysis → conclusions).</label></div>
+<div class="checklist-item"><input type="checkbox" id="d5" class="cl-box"><label for="d5">Appendices include hash verification logs, tool output excerpts, and timeline exports as supporting exhibits.</label></div>
+</div>
+</details>
+
+<!-- Category E -->
+<details>
+<summary>E. Ethical Compliance (4 items)</summary>
+<div class="details-body">
+<div class="checklist-item"><input type="checkbox" id="e1" class="cl-box"><label for="e1">Investigation stayed within the authorized scope defined in the capstone scenario.</label></div>
+<div class="checklist-item"><input type="checkbox" id="e2" class="cl-box"><label for="e2">Any out-of-scope or unexpected evidence encountered is documented with the action taken (see Section 4 below).</label></div>
+<div class="checklist-item"><input type="checkbox" id="e3" class="cl-box"><label for="e3">Exculpatory evidence (evidence that tends to clear the subject) is reported, not suppressed.</label></div>
+<div class="checklist-item"><input type="checkbox" id="e4" class="cl-box"><label for="e4">Personal opinions and speculation are excluded from the findings section; only evidence-based statements are included.</label></div>
+</div>
+</details>
+
+<!-- ============================================================ -->
+<!-- SECTION 4: ETHICAL SCENARIOS -->
+<!-- ============================================================ -->
+<h2 id="ethical-scenarios">4. Ethical Scenarios — What Would You Do?</h2>
+
+<p>The following three scenarios present ethical dilemmas that forensic examiners encounter in practice. For each scenario, read the situation, think about what you would do, and then reveal the professional standard. Use these as preparation for Discussion 16 — ethical awareness strengthens both your own work and your peer feedback.</p>
+
+<div class="callout ethics">
+<div class="callout-title">Reflection First</div>
+Before revealing the professional standard, pause and formulate your own answer. The goal is not to "get it right" on the first try — it is to develop the habit of recognizing ethical decision points during an investigation.
+</div>
+
+<!-- Scenario 1 -->
+<div class="scenario-card">
+<div class="scenario-header">Scenario 1: Unexpected Evidence — Out of Scope</div>
+<div class="scenario-body">
+<p><strong>Situation:</strong> You are investigating a corporate employee suspected of stealing trade secrets. Your authorized scope is limited to examining the employee's work laptop for evidence of unauthorized file transfers. During your analysis, you discover a folder containing what appears to be evidence of tax fraud committed by the company's CFO — a completely different person and a completely different issue.</p>
+<p><strong>Your reflection:</strong> What do you do with this discovery? Do you analyze it further? Report it? Ignore it?</p>
+<button class="reveal-btn" aria-expanded="false" onclick="toggleAnswer(this)">Reveal Professional Standard</button>
+<div class="scenario-answer" role="region" aria-live="polite">
+<p><strong>Professional Standard:</strong></p>
+<ol>
+<li><strong>Stop.</strong> Do not analyze the out-of-scope evidence further. Continued examination without authorization could violate privacy laws and taint the evidence.</li>
+<li><strong>Document.</strong> Record what you encountered, where (file path, timestamp), and that you did not examine it further. Note the exact point at which you stopped.</li>
+<li><strong>Escalate.</strong> Immediately notify the authorizing party (typically legal counsel or the case manager) and describe what you found without providing detailed analysis.</li>
+<li><strong>Await direction.</strong> The authorizing party will determine whether to expand your scope, engage a separate examiner, or refer the matter to appropriate authorities.</li>
+<li><strong>Do NOT ignore it.</strong> Pretending you did not see it is ethically indefensible and may constitute obstruction depending on the jurisdiction and evidence type.</li>
+</ol>
+<p><em>Key principle: Your scope is your authorization. Exceeding it without permission is as problematic as ignoring relevant evidence.</em></p>
+</div>
+</div>
+</div>
+
+<!-- Scenario 2 -->
+<div class="scenario-card">
+<div class="scenario-header">Scenario 2: Exculpatory Evidence</div>
+<div class="scenario-body">
+<p><strong>Situation:</strong> You are examining a disk image from an employee accused of downloading prohibited material during work hours. Your analysis of browser artifacts shows the downloads occurred at 2:15 PM on March 12. However, you also discover Windows Event Log entries (Event ID 4624, Logon Type 10) showing that an external IP address established an RDP session to this workstation at 2:10 PM on March 12 — suggesting someone else may have remotely controlled the machine during the relevant time period.</p>
+<p><strong>Your reflection:</strong> The RDP evidence potentially clears the employee. Your client (the employer) is expecting you to confirm the employee's guilt. What do you do?</p>
+<button class="reveal-btn" aria-expanded="false" onclick="toggleAnswer(this)">Reveal Professional Standard</button>
+<div class="scenario-answer" role="region" aria-live="polite">
+<p><strong>Professional Standard:</strong></p>
+<ol>
+<li><strong>Report ALL relevant findings</strong> — both inculpatory and exculpatory. You are an objective examiner, not an advocate for either party.</li>
+<li><strong>Document the RDP session finding</strong> with the same rigor as any other finding: Event IDs, timestamps, source IP, and correlation with the browser activity timeline.</li>
+<li><strong>Present alternative hypotheses:</strong> Your report should note that the downloads could have been performed by the local user OR by the remote session user, and explain the evidence supporting each possibility.</li>
+<li><strong>Do NOT suppress the finding</strong> because it contradicts the client's expectations. Suppressing exculpatory evidence violates professional ethics codes (IACIS, SWGDE) and may violate legal obligations depending on the proceeding type.</li>
+<li><strong>Let the trier of fact decide.</strong> Your job is to present what the evidence shows — not to determine guilt or innocence.</li>
+</ol>
+<p><em>Key principle: An examiner who only reports findings favorable to the retaining party is not a forensic professional — they are an advocate. Courts and ethics boards treat this as a serious violation.</em></p>
+</div>
+</div>
+</div>
+
+<!-- Scenario 3 -->
+<div class="scenario-card">
+<div class="scenario-header">Scenario 3: Ambiguous Findings</div>
+<div class="scenario-body">
+<p><strong>Situation:</strong> Your capstone analysis reveals that a suspicious file was created on the subject's system at 11:42 PM. However, you find conflicting timestamp evidence: the NTFS $MFT shows a Created timestamp of 11:42 PM, but the $UsnJrnl shows a file rename operation at 11:42 PM with an earlier creation time of 3:15 PM. The $MFT timestamp may have been manipulated using a timestomping tool (an anti-forensic technique from Week 13). You cannot definitively determine which timestamp is accurate.</p>
+<p><strong>Your reflection:</strong> How do you handle this ambiguity in your report? Do you pick the timestamp that fits your narrative? Do you omit the finding entirely?</p>
+<button class="reveal-btn" aria-expanded="false" onclick="toggleAnswer(this)">Reveal Professional Standard</button>
+<div class="scenario-answer" role="region" aria-live="polite">
+<p><strong>Professional Standard:</strong></p>
+<ol>
+<li><strong>Report the conflict transparently.</strong> Present both timestamps, identify the source of each, and explain the discrepancy.</li>
+<li><strong>Explain the technical basis</strong> for why the timestamps differ (possible timestomping, file system behavior, timezone issues, etc.).</li>
+<li><strong>State your professional opinion</strong> — if you believe timestomping occurred, say so, explain the indicators that support that conclusion, and clearly label it as an opinion rather than a fact.</li>
+<li><strong>Acknowledge uncertainty.</strong> Use language like: "The evidence is consistent with timestamp manipulation, however, the examiner cannot conclusively exclude alternative explanations such as [X]."</li>
+<li><strong>Do NOT cherry-pick</strong> the timestamp that supports your hypothesis while omitting the conflicting one. This is a form of confirmation bias (Section 2) and is ethically indefensible.</li>
+</ol>
+<p><em>Key principle: Ambiguity is not a weakness in your report — it is intellectual honesty. Courts respect examiners who acknowledge limitations. They distrust examiners who claim certainty where none exists.</em></p>
+</div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 5: PEER REVIEW PREP -->
+<!-- ============================================================ -->
+<h2 id="peer-review-prep">5. Preparing for Peer Review — Discussion 16</h2>
+
+<p>Discussion 16 is your peer methodology review checkpoint. It serves two purposes: (1) you receive a second set of eyes on your approach before finalizing your report, and (2) you practice the professional skill of peer review — a standard quality-assurance practice in forensic labs.</p>
+
+<h3>5.1 What to Share in Your Discussion 16 Post</h3>
+<p>Your initial post should include the following elements (refer to the Discussion 16 prompt for specific requirements):</p>
+
+<ol>
+<li><strong>Brief case summary</strong> (2–3 sentences): What is the scenario, and what were you asked to determine?</li>
+<li><strong>Evidence sources examined:</strong> List the evidence types you analyzed (disk image, PCAP, logs, mobile extraction, etc.).</li>
+<li><strong>Methodology overview:</strong> Briefly describe your investigative approach — what tools you used, what order you followed, and why.</li>
+<li><strong>Key finding (one):</strong> Share one significant finding and how you verified it (cross-source correlation, hash verification, etc.).</li>
+<li><strong>Challenge or uncertainty:</strong> Describe one area where you encountered difficulty, ambiguity, or where you are unsure of your interpretation. This is where peer feedback is most valuable.</li>
+<li><strong>Specific feedback request:</strong> Ask your peer a specific question (e.g., "Does my timeline logic hold?" or "Can you think of an alternative explanation for this artifact?").</li>
+</ol>
+
+<div class="callout">
+<div class="callout-title">What NOT to Share</div>
+Do not post your entire report draft or all of your findings. The discussion is about <em>methodology review</em>, not wholesale sharing of conclusions. Keep your post focused and concise.
+</div>
+
+<h3>5.2 How to Give Constructive Peer Feedback</h3>
+<p>When responding to a classmate's post, use this framework:</p>
+
+<table>
+<thead>
+<tr><th>Feedback Element</th><th>What to Do</th><th>Example Phrases</th></tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Acknowledge strengths</strong></td>
+<td>Identify something the peer did well — a solid verification step, good tool choice, or clear documentation</td>
+<td>"Your cross-verification of the hash at the working-copy stage is a strong practice."</td>
+</tr>
+<tr>
+<td><strong>Ask clarifying questions</strong></td>
+<td>If something is unclear, ask rather than assume</td>
+<td>"When you say you correlated the timestamps — did you normalize to UTC first?"</td>
+</tr>
+<tr>
+<td><strong>Suggest alternatives</strong></td>
+<td>Offer a different interpretation or approach the peer may not have considered</td>
+<td>"Have you considered that the file could have been created by a scheduled task rather than user action?"</td>
+</tr>
+<tr>
+<td><strong>Check for bias indicators</strong></td>
+<td>Gently note if the peer appears to have confirmation bias (selective reporting, unsupported conclusions)</td>
+<td>"I notice your findings all point toward one conclusion — did you find any evidence that contradicts this hypothesis?"</td>
+</tr>
+<tr>
+<td><strong>Respond to their specific question</strong></td>
+<td>Address the feedback they explicitly requested</td>
+<td>"Regarding your timeline question — the gap between 2:15 and 3:40 could be explained by…"</td>
+</tr>
+</tbody>
+</table>
+
+<div class="callout success">
+<div class="callout-title">The Professional Peer Review Mindset</div>
+Peer review is not about finding fault — it is about making the work stronger. In a forensic lab, a peer reviewer who catches an error before the report is issued has <em>saved</em> the examiner from a courtroom challenge. Approach Discussion 16 with that collaborative mindset.
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 6: KNOWLEDGE CHECK -->
+<!-- ============================================================ -->
+<h2 id="knowledge-check">6. Knowledge Check</h2>
+
+<p>Answer the following three questions to test your understanding of this module's concepts. These are ungraded — use them to identify areas where you may need to review before proceeding to Module 16.4.</p>
+
+<!-- Question 1 -->
+<div class="kc-question" id="kc1">
+<p class="q-text">1. A forensic examiner completes their analysis and then verifies the hash of their working copy for the first time since acquisition. They discover the hash does NOT match. Which of the following best describes the professional consequence?</p>
+<div class="kc-options">
+<label><input type="radio" name="q1" value="a"> a) No consequence — hash mismatches are common and expected during analysis.</label>
+<label><input type="radio" name="q1" value="b"> b) The examiner should simply re-acquire the evidence and repeat the analysis.</label>
+<label><input type="radio" name="q1" value="c"> c) All findings derived from the working copy are potentially compromised, and the examiner cannot prove the evidence was unaltered during analysis.</label>
+<label><input type="radio" name="q1" value="d"> d) The examiner should change the hash in their notes to match the current value.</label>
+</div>
+<button class="kc-submit" onclick="checkAnswer('kc1','c')">Check Answer</button>
+<div class="kc-feedback" id="kc1-feedback"></div>
+</div>
+
+<!-- Question 2 -->
+<div class="kc-question" id="kc2">
+<p class="q-text">2. During a corporate investigation, you find evidence that strongly suggests the accused employee did NOT commit the suspected action. Your client (the employer) hired you expecting confirmation of guilt. What is the ethically correct course of action?</p>
+<div class="kc-options">
+<label><input type="radio" name="q2" value="a"> a) Omit the exculpatory finding from your report since it was not what the client requested.</label>
+<label><input type="radio" name="q2" value="b"> b) Report all findings — both inculpatory and exculpatory — with equal rigor and objectivity.</label>
+<label><input type="radio" name="q2" value="c"> c) Inform the client verbally but leave it out of the written report.</label>
+<label><input type="radio" name="q2" value="d"> d) Reinterpret the exculpatory evidence to make it appear less significant.</label>
+</div>
+<button class="kc-submit" onclick="checkAnswer('kc2','b')">Check Answer</button>
+<div class="kc-feedback" id="kc2-feedback"></div>
+</div>
+
+<!-- Question 3 -->
+<div class="kc-question" id="kc3">
+<p class="q-text">3. Which of the following is the BEST countermeasure against confirmation bias during a forensic investigation?</p>
+<div class="kc-options">
+<label><input type="radio" name="q3" value="a"> a) Using only one forensic tool to maintain consistency.</label>
+<label><input type="radio" name="q3" value="b"> b) Deliberately searching for evidence that would disprove your current hypothesis.</label>
+<label><input type="radio" name="q3" value="c"> c) Forming your conclusion early so you know what evidence to look for.</label>
+<label><input type="radio" name="q3" value="d"> d) Avoiding peer review to prevent outside influence on your analysis.</label>
+</div>
+<button class="kc-submit" onclick="checkAnswer('kc3','b')">Check Answer</button>
+<div class="kc-feedback" id="kc3-feedback"></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- CLOSING -->
+<!-- ============================================================ -->
+<h2>Next Steps</h2>
+<div class="callout success">
+<div class="callout-title">Before You Move On</div>
+<ol>
+<li><strong>Complete the self-review checklist</strong> (Section 3) for your current capstone work.</li>
+<li><strong>Address any gaps</strong> identified by the checklist before beginning your report draft.</li>
+<li><strong>Post to Discussion 16</strong> using the structure described in Section 5.</li>
+<li><strong>Proceed to Module 16.4</strong> (Professional Report Drafting) once your self-review is complete and your Discussion 16 post is submitted.</li>
+</ol>
+</div>
+
+<p style="font-size:0.85rem;color:var(--text-light);margin-top:2rem;border-top:1px solid var(--border);padding-top:1rem;">
+<strong>Module 16.3</strong> – Quality Assurance, Verification, and Ethical Decision-Making<br>
+CSC 156 – Digital Forensic Fundamentals | Mendocino College<br>
+Week 16: Capstone Project Work and Course Integration
+</p>
+
+</main>
+
+<script>
+// Checklist progress tracking
+(function(){
+const boxes=document.querySelectorAll('.cl-box');
+const countEl=document.getElementById('cl-count');
+const totalEl=document.getElementById('cl-total');
+const bar=document.getElementById('cl-bar');
+totalEl.textContent=boxes.length;
+function update(){
+let checked=0;
+boxes.forEach(function(b){if(b.checked)checked++;});
+countEl.textContent=checked;
+bar.style.width=Math.round((checked/boxes.length)*100)+'%';
+}
+boxes.forEach(function(b){b.addEventListener('change',update);});
+update();
+})();
+
+// Scenario reveal
+function toggleAnswer(btn){
+const answer=btn.nextElementSibling;
+const visible=answer.classList.toggle('visible');
+btn.setAttribute('aria-expanded',visible);
+btn.textContent=visible?'Hide Professional Standard':'Reveal Professional Standard';
+}
+
+// Knowledge check
+var kcFeedback={
+kc1:{
+c:{correct:true,text:'Correct. A hash mismatch means the examiner cannot demonstrate that the evidence was unaltered during analysis. All findings derived from that working copy are potentially inadmissible because the integrity chain is broken. This is precisely why continuous verification (checking the hash at multiple checkpoints, not just at the end) is critical.'},
+a:{correct:false,text:'Incorrect. Hash mismatches are NOT expected during analysis of a forensic working copy. A properly handled working copy should maintain its hash throughout analysis because the examiner works on a copy and does not modify the evidence. A mismatch indicates the evidence may have been altered.'},
+b:{correct:false,text:'Incorrect. While re-acquisition may be necessary, "simply repeating" the analysis does not address the fundamental problem: the examiner cannot explain what happened to the first working copy, and any findings already reported from it are compromised. The correct concern is the integrity failure itself.'},
+d:{correct:false,text:'Incorrect. Altering documentation to match current evidence state is falsification of records — a serious ethical and potentially criminal violation. The hash discrepancy must be documented and reported, not concealed.'}
+},
+kc2:{
+b:{correct:true,text:'Correct. Professional ethics codes (IACIS, SWGDE, ASTM E2763) require forensic examiners to report all relevant findings objectively, regardless of who retained them. Suppressing exculpatory evidence violates professional standards and may violate legal obligations. The examiner is an objective fact-finder, not an advocate.'},
+a:{correct:false,text:'Incorrect. Omitting relevant findings because they are unfavorable to the client violates professional ethics. The examiner\'s obligation is to the truth and to the evidence, not to the client\'s desired outcome.'},
+c:{correct:false,text:'Incorrect. Verbal-only disclosure while omitting findings from the written report creates a misleading official record. The report must reflect all relevant findings. Selective written reporting is a form of evidence suppression.'},
+d:{correct:false,text:'Incorrect. Reinterpreting evidence to minimize its significance is a form of confirmation bias and intellectual dishonesty. Findings should be presented objectively and let the trier of fact assess their significance.'}
+},
+kc3:{
+b:{correct:true,text:'Correct. Actively seeking disconfirming evidence is the most effective countermeasure against confirmation bias. By deliberately looking for evidence that would disprove your hypothesis, you force yourself to consider alternative explanations and avoid the natural tendency to see only what confirms your expectations.'},
+a:{correct:false,text:'Incorrect. Using only one tool actually increases risk — it creates "tool tunnel vision" where you accept a single tool\'s output without cross-verification. Using multiple tools is a better practice for both accuracy and bias reduction.'},
+c:{correct:false,text:'Incorrect. Forming conclusions early and then looking for supporting evidence is the definition of confirmation bias, not a countermeasure against it. Conclusions should follow from evidence, not precede it.'},
+d:{correct:false,text:'Incorrect. Peer review is one of the strongest countermeasures against confirmation bias. A second examiner brings fresh perspective and is more likely to notice selective reporting or unsupported inferences. Avoiding peer review removes a critical quality-assurance safeguard.'}
+}
+};
+
+function checkAnswer(qId,correctVal){
+var radios=document.querySelectorAll('input[name="'+qId.replace('kc','q')+'"]');
+var selected=null;
+radios.forEach(function(r){if(r.checked)selected=r.value;});
+var fb=document.getElementById(qId+'-feedback');
+if(!selected){fb.textContent='Please select an answer.';fb.className='kc-feedback incorrect';fb.style.display='block';return;}
+var data=kcFeedback[qId][selected];
+fb.textContent=data.text;
+fb.className='kc-feedback '+(data.correct?'correct':'incorrect');
+fb.style.display='block';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 16.2 – Multi-Domain Evidence Integration and Timeline Construction</title>
+<style>
+:root {
+--primary: #1a365d;
+--primary-light: #2c5282;
+--accent: #2b6cb0;
+--accent-light: #ebf4ff;
+--success: #276749;
+--success-light: #f0fff4;
+--warning: #744210;
+--warning-light: #fefcbf;
+--danger: #9b2c2c;
+--danger-light: #fff5f5;
+--neutral: #2d3748;
+--neutral-light: #f7fafc;
+--border: #e2e8f0;
+--text: #1a202c;
+--text-muted: #4a5568;
+--white: #ffffff;
+--shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06);
+--shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+--radius: 8px;
+--nav-height: 56px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+font-size: 16px;
+line-height: 1.7;
+color: var(--text);
+background: var(--neutral-light);
+margin: 0;
+padding: 0;
+}
+
+/* Navigation */
+.nav-bar {
+position: sticky;
+top: 0;
+z-index: 1000;
+background: var(--primary);
+padding: 0 1rem;
+height: var(--nav-height);
+display: flex;
+align-items: center;
+gap: 0.25rem;
+overflow-x: auto;
+box-shadow: var(--shadow-md);
+}
+.nav-bar a {
+color: var(--white);
+text-decoration: none;
+font-size: 0.82rem;
+font-weight: 500;
+padding: 0.4rem 0.7rem;
+border-radius: 4px;
+white-space: nowrap;
+transition: background 0.2s;
+}
+.nav-bar a:hover, .nav-bar a:focus {
+background: var(--primary-light);
+outline: 2px solid #90cdf4;
+outline-offset: 2px;
+}
+
+/* Main container */
+.container {
+max-width: 960px;
+margin: 0 auto;
+padding: 2rem 1.5rem 4rem;
+}
+
+/* Scroll offset for anchors */
+[id] {
+scroll-margin-top: calc(var(--nav-height) + 16px);
+}
+
+/* Typography */
+h1 { font-size: 1.85rem; color: var(--primary); margin: 0 0 0.5rem; line-height: 1.25; }
+h2 { font-size: 1.45rem; color: var(--primary); margin: 2.5rem 0 0.75rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border); }
+h3 { font-size: 1.15rem; color: var(--primary-light); margin: 1.75rem 0 0.5rem; }
+h4 { font-size: 1rem; color: var(--neutral); margin: 1.25rem 0 0.4rem; }
+p { margin: 0 0 1rem; }
+ul, ol { margin: 0 0 1rem; padding-left: 1.5rem; }
+li { margin-bottom: 0.35rem; }
+strong { color: var(--neutral); }
+
+/* Module header */
+.module-header {
+background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+color: var(--white);
+padding: 2rem 2rem 1.75rem;
+border-radius: var(--radius);
+margin-bottom: 2rem;
+}
+.module-header h1 { color: var(--white); margin-bottom: 0.25rem; }
+.module-header .subtitle { font-size: 1.05rem; opacity: 0.92; margin-bottom: 1rem; }
+.module-meta {
+display: flex;
+flex-wrap: wrap;
+gap: 1.25rem;
+font-size: 0.85rem;
+opacity: 0.9;
+}
+.module-meta span { display: flex; align-items: center; gap: 0.3rem; }
+
+/* Callout boxes */
+.callout {
+border-left: 4px solid var(--accent);
+background: var(--accent-light);
+padding: 1rem 1.25rem;
+border-radius: 0 var(--radius) var(--radius) 0;
+margin: 1.25rem 0;
+}
+.callout.success { border-color: var(--success); background: var(--success-light); }
+.callout.warning { border-color: var(--warning); background: var(--warning-light); }
+.callout.danger { border-color: var(--danger); background: var(--danger-light); }
+.callout-title {
+font-weight: 700;
+font-size: 0.9rem;
+text-transform: uppercase;
+letter-spacing: 0.03em;
+margin-bottom: 0.4rem;
+}
+.callout.success .callout-title { color: var(--success); }
+.callout.warning .callout-title { color: var(--warning); }
+.callout.danger .callout-title { color: var(--danger); }
+.callout p:last-child { margin-bottom: 0; }
+
+/* Tables */
+table {
+width: 100%;
+border-collapse: collapse;
+margin: 1rem 0 1.5rem;
+font-size: 0.92rem;
+}
+th, td {
+padding: 0.6rem 0.8rem;
+border: 1px solid var(--border);
+text-align: left;
+vertical-align: top;
+}
+th {
+background: var(--primary);
+color: var(--white);
+font-weight: 600;
+font-size: 0.85rem;
+}
+tr:nth-child(even) { background: var(--neutral-light); }
+
+/* Code */
+code {
+background: #edf2f7;
+padding: 0.15rem 0.4rem;
+border-radius: 3px;
+font-size: 0.88rem;
+font-family: "SF Mono", "Fira Code", Consolas, monospace;
+}
+pre {
+background: #1a202c;
+color: #e2e8f0;
+padding: 1rem 1.25rem;
+border-radius: var(--radius);
+overflow-x: auto;
+font-size: 0.85rem;
+line-height: 1.6;
+margin: 1rem 0 1.5rem;
+}
+pre code { background: none; padding: 0; color: inherit; }
+
+/* Collapsible sections */
+details {
+border: 1px solid var(--border);
+border-radius: var(--radius);
+margin: 1rem 0;
+background: var(--white);
+box-shadow: var(--shadow);
+}
+details[open] { box-shadow: var(--shadow-md); }
+summary {
+padding: 0.85rem 1.1rem;
+font-weight: 600;
+cursor: pointer;
+list-style: none;
+display: flex;
+align-items: center;
+gap: 0.5rem;
+color: var(--primary-light);
+transition: background 0.2s;
+}
+summary::-webkit-details-marker { display: none; }
+summary::before {
+content: "▶";
+font-size: 0.7rem;
+transition: transform 0.2s;
+}
+details[open] summary::before { transform: rotate(90deg); }
+summary:hover { background: var(--accent-light); }
+summary:focus { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--radius); }
+.details-content { padding: 0.5rem 1.25rem 1.25rem; }
+
+/* Tabs */
+.tabs {
+margin: 1.5rem 0;
+}
+.tab-buttons {
+display: flex;
+flex-wrap: wrap;
+gap: 2px;
+border-bottom: 2px solid var(--border);
+margin-bottom: 0;
+}
+.tab-btn {
+padding: 0.6rem 1.1rem;
+background: var(--neutral-light);
+border: 1px solid var(--border);
+border-bottom: none;
+border-radius: var(--radius) var(--radius) 0 0;
+font-size: 0.88rem;
+font-weight: 600;
+color: var(--text-muted);
+cursor: pointer;
+transition: background 0.2s, color 0.2s;
+}
+.tab-btn:hover { background: var(--accent-light); color: var(--accent); }
+.tab-btn:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+.tab-btn.active {
+background: var(--white);
+color: var(--primary);
+border-color: var(--border);
+border-bottom: 2px solid var(--white);
+margin-bottom: -2px;
+}
+.tab-panel {
+display: none;
+padding: 1.25rem;
+border: 1px solid var(--border);
+border-top: none;
+border-radius: 0 0 var(--radius) var(--radius);
+background: var(--white);
+}
+.tab-panel.active { display: block; }
+
+/* Timeline visualization */
+.timeline {
+position: relative;
+padding-left: 2rem;
+margin: 1.5rem 0;
+}
+.timeline::before {
+content: "";
+position: absolute;
+left: 0.6rem;
+top: 0;
+bottom: 0;
+width: 3px;
+background: var(--accent);
+border-radius: 2px;
+}
+.timeline-event {
+position: relative;
+margin-bottom: 1.25rem;
+padding: 0.75rem 1rem;
+background: var(--white);
+border: 1px solid var(--border);
+border-radius: var(--radius);
+box-shadow: var(--shadow);
+}
+.timeline-event::before {
+content: "";
+position: absolute;
+left: -1.65rem;
+top: 1rem;
+width: 12px;
+height: 12px;
+border-radius: 50%;
+background: var(--accent);
+border: 2px solid var(--white);
+box-shadow: 0 0 0 2px var(--accent);
+}
+.timeline-event.disk::before { background: #d69e2e; box-shadow: 0 0 0 2px #d69e2e; }
+.timeline-event.network::before { background: #38a169; box-shadow: 0 0 0 2px #38a169; }
+.timeline-event.memory::before { background: #805ad5; box-shadow: 0 0 0 2px #805ad5; }
+.timeline-event.mobile::before { background: #e53e3e; box-shadow: 0 0 0 2px #e53e3e; }
+.timeline-event.log::before { background: #3182ce; box-shadow: 0 0 0 2px #3182ce; }
+.timeline-time {
+font-size: 0.8rem;
+font-weight: 700;
+color: var(--text-muted);
+font-family: "SF Mono", Consolas, monospace;
+}
+.timeline-source {
+display: inline-block;
+font-size: 0.72rem;
+font-weight: 600;
+padding: 0.1rem 0.5rem;
+border-radius: 3px;
+margin-left: 0.5rem;
+text-transform: uppercase;
+}
+.source-disk { background: #fefcbf; color: #744210; }
+.source-network { background: #c6f6d5; color: #22543d; }
+.source-memory { background: #e9d8fd; color: #44337a; }
+.source-mobile { background: #fed7d7; color: #742a2a; }
+.source-log { background: #bee3f8; color: #2a4365; }
+
+/* Interactive exercise */
+.exercise {
+background: var(--white);
+border: 2px solid var(--accent);
+border-radius: var(--radius);
+padding: 1.5rem;
+margin: 1.5rem 0;
+}
+.exercise-title {
+font-weight: 700;
+font-size: 1rem;
+color: var(--primary);
+margin-bottom: 0.75rem;
+}
+.exercise .scenario {
+background: var(--neutral-light);
+padding: 0.75rem 1rem;
+border-radius: var(--radius);
+margin-bottom: 1rem;
+font-size: 0.92rem;
+}
+.choice-btn {
+display: block;
+width: 100%;
+text-align: left;
+padding: 0.7rem 1rem;
+margin: 0.4rem 0;
+border: 1px solid var(--border);
+border-radius: var(--radius);
+background: var(--white);
+cursor: pointer;
+font-size: 0.9rem;
+transition: border-color 0.2s, background 0.2s;
+}
+.choice-btn:hover { border-color: var(--accent); background: var(--accent-light); }
+.choice-btn:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+.choice-btn.correct { border-color: var(--success); background: var(--success-light); }
+.choice-btn.incorrect { border-color: var(--danger); background: var(--danger-light); }
+.feedback {
+display: none;
+margin-top: 0.75rem;
+padding: 0.75rem 1rem;
+border-radius: var(--radius);
+font-size: 0.9rem;
+}
+.feedback.show { display: block; }
+.feedback.correct { background: var(--success-light); border-left: 4px solid var(--success); }
+.feedback.incorrect { background: var(--danger-light); border-left: 4px solid var(--danger); }
+
+/* Knowledge check */
+.kc-question {
+background: var(--white);
+border: 1px solid var(--border);
+border-radius: var(--radius);
+padding: 1.25rem;
+margin: 1rem 0;
+box-shadow: var(--shadow);
+}
+.kc-question h4 { margin-top: 0; }
+.kc-options label {
+display: block;
+padding: 0.5rem 0.75rem;
+margin: 0.3rem 0;
+border-radius: 4px;
+cursor: pointer;
+font-size: 0.92rem;
+transition: background 0.15s;
+}
+.kc-options label:hover { background: var(--accent-light); }
+.kc-options input[type="radio"] { margin-right: 0.5rem; }
+.kc-submit {
+margin-top: 0.75rem;
+padding: 0.5rem 1.25rem;
+background: var(--accent);
+color: var(--white);
+border: none;
+border-radius: 4px;
+font-weight: 600;
+cursor: pointer;
+font-size: 0.9rem;
+}
+.kc-submit:hover { background: var(--primary-light); }
+.kc-submit:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+.kc-feedback {
+display: none;
+margin-top: 0.75rem;
+padding: 0.75rem 1rem;
+border-radius: var(--radius);
+font-size: 0.9rem;
+line-height: 1.5;
+}
+
+/* Utility */
+.visually-hidden {
+position: absolute;
+width: 1px;
+height: 1px;
+padding: 0;
+margin: -1px;
+overflow: hidden;
+clip: rect(0,0,0,0);
+border: 0;
+}
+.badge {
+display: inline-block;
+font-size: 0.72rem;
+font-weight: 700;
+padding: 0.15rem 0.5rem;
+border-radius: 3px;
+text-transform: uppercase;
+letter-spacing: 0.02em;
+}
+.badge-cslo { background: #ebf4ff; color: #2b6cb0; }
+
+@media (max-width: 640px) {
+.container { padding: 1rem; }
+.module-header { padding: 1.25rem; }
+h1 { font-size: 1.5rem; }
+h2 { font-size: 1.25rem; }
+.nav-bar { gap: 0; }
+.nav-bar a { font-size: 0.75rem; padding: 0.35rem 0.5rem; }
+.tab-buttons { flex-direction: column; gap: 0; }
+.tab-btn { border-radius: 0; border-bottom: 1px solid var(--border); }
+}
+</style>
+</head>
+<body>
+
+<!-- Navigation Bar -->
+<nav class="nav-bar" role="navigation" aria-label="Module sections">
+<a href="#integration-challenge">Integration Challenge</a>
+<a href="#unified-timeline">Unified Timeline</a>
+<a href="#timestamp-resolution">Timestamps</a>
+<a href="#corroboration">Corroboration</a>
+<a href="#strategies">Strategies</a>
+<a href="#knowledge-check">Knowledge Check</a>
+</nav>
+
+<main class="container" role="main">
+
+<!-- Module Header -->
+<div class="module-header">
+<h1>Module 16.2 – Multi-Domain Evidence Integration and Timeline Construction</h1>
+<p class="subtitle">Connecting the Dots: From Siloed Findings to a Unified Evidentiary Narrative</p>
+<div class="module-meta">
+<span>⏱ Estimated Time: 1.5–2.0 hours</span>
+<span>📅 Week 16 of 17</span>
+<span>📋 Ungraded – Supports Final Project</span>
+</div>
+</div>
+
+<!-- CSLO Alignment -->
+<div class="callout">
+<div class="callout-title">CSLO Alignment</div>
+<p><span class="badge badge-cslo">CSLO 2</span> Identify and describe the function of digital forensic tools and techniques used in evidence acquisition and analysis.<br>
+<span class="badge badge-cslo">CSLO 3</span> Perform forensic acquisition and examination of digital media using industry-standard tools and procedures.<br>
+<span class="badge badge-cslo">CSLO 5</span> Analyze case scenarios to determine appropriate forensic methodologies and investigative approaches.</p>
+</div>
+
+<p>This module addresses the most intellectually challenging aspect of your capstone investigation: <strong>synthesizing findings from multiple, heterogeneous evidence sources into a single coherent narrative</strong>. You have spent the semester developing domain-specific skills—disk analysis, memory forensics, network capture interpretation, mobile extraction, log parsing. Now you must weave those separate threads into one story that answers the investigative questions.</p>
+
+<div class="callout warning">
+<div class="callout-title">Prerequisite</div>
+<p>Complete Module 16.1 (Investigation Planning and Methodology Review) before this module. You should have your investigation plan and evidence inventory in hand before attempting integration work.</p>
+</div>
+
+<!-- ===== SECTION 1 ===== -->
+<h2 id="integration-challenge">1. The Integration Challenge</h2>
+
+<h3>Siloed Analysis vs. Integrated Investigation</h3>
+<p>Most forensic training (including this course) teaches skills one domain at a time: Week 7 covered Windows Registry, Week 11 covered memory, Week 12 covered network captures. This is pedagogically necessary—but it creates a dangerous habit:</p>
+
+<div class="callout danger">
+<div class="callout-title">The Silo Trap</div>
+<p><strong>Siloed analysis</strong> means examining each evidence source independently and reporting findings as disconnected lists. The result is a report that says "the disk shows X" and "the network shows Y" without ever explaining how X and Y relate to the same attacker action at the same moment in time.</p>
+</div>
+
+<p><strong>Integrated investigation</strong> treats all evidence sources as fragments of a single story. The examiner's job is reconstruction—assembling those fragments into a narrative that answers: <em>Who did what, when, how, and what was the impact?</em></p>
+
+<h3>Why Corroboration Matters</h3>
+<p>In legal and organizational proceedings, findings supported by multiple independent evidence sources carry dramatically more weight than single-source findings. Consider:</p>
+<ul>
+<li><strong>Single source:</strong> "A file named <code>exfil.zip</code> was created on the suspect's workstation at 14:32 UTC." — Useful, but an opposing expert could argue timestamp manipulation.</li>
+<li><strong>Corroborated:</strong> "A file named <code>exfil.zip</code> was created at 14:32 UTC (NTFS $MFT), the same file's hash appears in an outbound FTP transfer at 14:33 UTC (PCAP), and the firewall log shows an ALLOW decision for that FTP session at 14:33 UTC." — Three independent sources confirm the same event. Timestamp manipulation across all three simultaneously is implausible.</li>
+</ul>
+
+<p>Integration transforms individual artifacts into <strong>evidence chains</strong> that are far more defensible in court, more convincing to executives, and more resistant to alternative explanations.</p>
+
+<details>
+<summary>The Cost of Failing to Integrate — Real-World Consequences</summary>
+<div class="details-content">
+<ul>
+<li><strong>Missed connections:</strong> A malware indicator in memory may only make sense when correlated with a phishing email artifact on disk and a DNS query in the network log. Examined in isolation, each artifact might seem benign.</li>
+<li><strong>Contradictory findings:</strong> Without integration, your report might inadvertently contain findings from one source that contradict findings from another—destroying credibility.</li>
+<li><strong>Incomplete timelines:</strong> No single evidence source captures every action. Disk images miss network-only activity; PCAPs miss local file operations. Only integration reveals the complete sequence.</li>
+<li><strong>Vulnerability to cross-examination:</strong> An opposing expert will ask "Did you verify this finding against any other evidence source?" If the answer is "no," the finding's weight diminishes.</li>
+</ul>
+</div>
+</details>
+
+<!-- ===== SECTION 2 ===== -->
+<h2 id="unified-timeline">2. Building a Unified Timeline</h2>
+
+<p>The unified timeline is the primary deliverable of evidence integration. It arranges events from <em>all</em> evidence sources into a single chronological sequence, showing how actions on one system or network correspond to actions elsewhere.</p>
+
+<h3>Four-Step Methodology</h3>
+
+<details>
+<summary>Step 1: Extract Domain-Specific Timelines</summary>
+<div class="details-content">
+<p>Before you can integrate, you need clean per-source timelines. For each evidence source in your investigation:</p>
+<ol>
+<li>Identify all timestamped artifacts (file MAC times, log entries, packet timestamps, call records, etc.).</li>
+<li>Export them into a structured format (spreadsheet, CSV, or tool-native timeline).</li>
+<li>Record the <strong>time source</strong> for each artifact: which clock generated this timestamp?</li>
+<li>Note the <strong>timestamp resolution</strong>: seconds? milliseconds? minutes only?</li>
+</ol>
+<p><strong>Tools that help:</strong> Plaso/log2timeline (disk images), Wireshark export (PCAPs), Volatility timeliner plugin (memory), manual extraction from mobile reports.</p>
+<h4>Example — Extracting from a Disk Image</h4>
+<pre><code># Using log2timeline/plaso to generate a super-timeline from a disk image
+log2timeline.py --storage-file case42.plaso /evidence/disk.E01
+
+# Filter to the relevant time window
+psort.py --output-time-zone UTC \
+  -w case42_timeline.csv \
+  case42.plaso "date > '2026-03-15 02:00:00' AND date < '2026-03-15 03:00:00'"</code></pre>
+</div>
+</details>
+
+<details>
+<summary>Step 2: Normalize Timestamps</summary>
+<div class="details-content">
+<p>Different evidence sources often use different time zones, different clock sources, and different levels of precision. Before merging, you must normalize:</p>
+<ol>
+<li><strong>Convert all timestamps to a single reference timezone</strong> — UTC is the forensic standard.</li>
+<li><strong>Document each source's original timezone</strong> in your case notes.</li>
+<li><strong>Assess clock accuracy</strong> — Was the system clock synchronized via NTP? Was the mobile device on carrier time? Was the PCAP captured by a sensor with a known-good clock?</li>
+<li><strong>Calculate and document clock skew</strong> if present (see Section 3 below).</li>
+</ol>
+<div class="callout">
+<div class="callout-title">Key Principle</div>
+<p>Never assume two clocks agree. A 3-minute skew between a workstation clock and a network sensor clock can make events appear out of order—or worse, make corroboration appear to fail when it should succeed.</p>
+</div>
+</div>
+</details>
+
+<details>
+<summary>Step 3: Merge into a Single Chronological Sequence</summary>
+<div class="details-content">
+<p>With normalized timestamps, merge all domain timelines into one master timeline. For each entry, record:</p>
+<table>
+<tr><th>Field</th><th>Description</th></tr>
+<tr><td>Timestamp (UTC)</td><td>Normalized event time</td></tr>
+<tr><td>Source</td><td>Evidence source (e.g., "Disk Image — workstation01.E01")</td></tr>
+<tr><td>Domain</td><td>Forensic domain (Disk, Network, Memory, Mobile, Log)</td></tr>
+<tr><td>Artifact</td><td>Specific artifact type (e.g., "$MFT entry", "PCAP frame #4821")</td></tr>
+<tr><td>Description</td><td>What happened — factual, objective language</td></tr>
+<tr><td>Corroboration Status</td><td>Corroborated / Single-source / Contradicted / Inferred (see Section 4)</td></tr>
+<tr><td>Confidence Note</td><td>Any caveats (clock skew applied, low-resolution timestamp, etc.)</td></tr>
+</table>
+<p><strong>Practical tip:</strong> Use a spreadsheet for your master timeline. Sort by timestamp. Color-code rows by domain for visual scanning. This becomes an appendix in your final report.</p>
+</div>
+</details>
+
+<details>
+<summary>Step 4: Identify Patterns, Gaps, and Conflicts</summary>
+<div class="details-content">
+<p>Once merged, review the unified timeline for:</p>
+<ul>
+<li><strong>Corroborated clusters:</strong> Multiple sources confirming the same event within a narrow time window. These are your strongest findings.</li>
+<li><strong>Temporal gaps:</strong> Periods where no evidence exists. Document these—they may indicate anti-forensics, evidence destruction, or simply limitations of your sources.</li>
+<li><strong>Conflicts:</strong> Two sources that appear to contradict each other (e.g., a file creation timestamp that precedes the network session that delivered the file). These require the resolution techniques in Section 3.</li>
+<li><strong>Causal sequences:</strong> Events that logically depend on prior events (e.g., malware execution must follow malware delivery). Verify that your timeline preserves causal ordering.</li>
+</ul>
+</div>
+</details>
+
+<h3>Worked Example — Unified Timeline (2-Minute Window)</h3>
+<p>The following sanitized example shows how five evidence sources corroborate a data exfiltration event within a 2-minute window. All timestamps are normalized to UTC.</p>
+
+<div class="timeline" role="list" aria-label="Unified timeline example showing corroborated events">
+<div class="timeline-event log" role="listitem">
+<span class="timeline-time">2026-03-15 02:31:04 UTC</span>
+<span class="timeline-source source-log">Firewall Log</span>
+<p>ALLOW TCP 10.1.4.22:49812 → 198.51.100.77:21 (FTP control channel opened)</p>
+</div>
+<div class="timeline-event network" role="listitem">
+<span class="timeline-time">2026-03-15 02:31:05 UTC</span>
+<span class="timeline-source source-network">PCAP (Sensor)</span>
+<p>FTP session initiated: USER anonymous / PASS exfil@temp.com — server responds 230 Login successful</p>
+</div>
+<div class="timeline-event disk" role="listitem">
+<span class="timeline-time">2026-03-15 02:31:12 UTC</span>
+<span class="timeline-source source-disk">Disk Image ($MFT)</span>
+<p>File <code>C:\Users\jdoe\AppData\Local\Temp\exfil_2026Q1.zip</code> last accessed (NTFS $STANDARD_INFORMATION)</p>
+</div>
+<div class="timeline-event memory" role="listitem">
+<span class="timeline-time">2026-03-15 02:31:14 UTC</span>
+<span class="timeline-source source-memory">Memory Dump</span>
+<p>Process <code>ftp.exe</code> (PID 6284) — open handle to <code>exfil_2026Q1.zip</code>; netscan shows ESTABLISHED connection to 198.51.100.77:21</p>
+</div>
+<div class="timeline-event network" role="listitem">
+<span class="timeline-time">2026-03-15 02:31:15–02:32:48 UTC</span>
+<span class="timeline-source source-network">PCAP (Sensor)</span>
+<p>FTP STOR command; 14.2 MB data transferred on passive data channel (port 49813 → 198.51.100.77:32001)</p>
+</div>
+<div class="timeline-event log" role="listitem">
+<span class="timeline-time">2026-03-15 02:32:49 UTC</span>
+<span class="timeline-source source-log">Firewall Log</span>
+<p>Session closed: 10.1.4.22:49812 → 198.51.100.77:21 — bytes out: 14,892,032</p>
+</div>
+<div class="timeline-event mobile" role="listitem">
+<span class="timeline-time">2026-03-15 02:33:01 UTC</span>
+<span class="timeline-source source-mobile">Mobile (SMS)</span>
+<p>Outbound SMS from suspect's device to +1-555-0199: "package sent check drop"</p>
+</div>
+</div>
+
+<div class="callout success">
+<div class="callout-title">Integration Insight</div>
+<p>No single source tells the full story. The firewall log confirms the connection was allowed. The PCAP reveals the credentials and data volume. The disk image shows which file was exfiltrated. Memory confirms the responsible process. The mobile SMS suggests coordination with an accomplice. Together, they form an evidence chain that is extremely difficult to refute.</p>
+</div>
+
+<!-- ===== SECTION 3 ===== -->
+<h2 id="timestamp-resolution">3. Timestamp Conflict Resolution</h2>
+
+<p>When merging timelines from heterogeneous sources, timestamp conflicts are <em>expected</em>, not exceptional. A conflict occurs when two or more sources present information that appears temporally inconsistent. Your job is to determine the cause and document your resolution.</p>
+
+<h3>Common Causes of Timestamp Conflicts</h3>
+
+<table>
+<tr><th>Cause</th><th>Description</th><th>Typical Magnitude</th><th>Detection Method</th></tr>
+<tr><td><strong>Clock Skew</strong></td><td>System clock drifted from true time (no NTP sync, dead CMOS battery)</td><td>Seconds to minutes</td><td>Compare system clock to NTP server logs or known-accurate source</td></tr>
+<tr><td><strong>Timezone Misconfiguration</strong></td><td>System configured for wrong timezone; timestamps recorded in local time without offset indicator</td><td>Hours (exact multiples)</td><td>Offset is exactly 1–12 hours; correlate with known events</td></tr>
+<tr><td><strong>Timestomping</strong></td><td>Deliberate modification of file timestamps by attacker (anti-forensics)</td><td>Variable — often years</td><td>Compare $STANDARD_INFORMATION vs. $FILE_NAME in MFT; check $UsnJrnl</td></tr>
+<tr><td><strong>Resolution Mismatch</strong></td><td>One source records seconds, another only minutes; apparent 0–59 second discrepancy</td><td>Up to 59 seconds</td><td>Check artifact documentation for timestamp granularity</td></tr>
+<tr><td><strong>Evidence Source Latency</strong></td><td>Log aggregation delay; SIEM ingestion lag; mobile carrier timestamp vs. device timestamp</td><td>Seconds to minutes</td><td>Compare direct-source timestamps to aggregated timestamps</td></tr>
+</table>
+
+<h3>Decision Framework for Resolving Conflicts</h3>
+
+<details>
+<summary>Step-by-Step Resolution Process</summary>
+<div class="details-content">
+<ol>
+<li><strong>Identify the conflict:</strong> Two or more sources show the same event at different times, or show a causal sequence in the wrong order.</li>
+<li><strong>Determine each source's clock authority:</strong>
+<ul>
+<li>Was the system NTP-synchronized? (Check registry keys on Windows: <code>HKLM\SYSTEM\CurrentControlSet\Services\W32Time</code>; check <code>/var/log/syslog</code> for ntpd on Linux)</li>
+<li>Was the PCAP sensor using a GPS-synchronized clock?</li>
+<li>Was the mobile device on automatic carrier time?</li>
+</ul>
+</li>
+<li><strong>Calculate the skew:</strong> If you can identify a common event visible in both sources (e.g., the same TCP SYN), measure the time difference. This is your skew offset.</li>
+<li><strong>Apply the correction:</strong> Adjust the less-authoritative source by the calculated skew. Document the adjustment in your timeline notes.</li>
+<li><strong>If no correction is possible:</strong> Document the conflict, state which source you consider more authoritative and why, and note the uncertainty range in your findings.</li>
+</ol>
+
+<h4>Worked Example — Resolving a 47-Second Skew</h4>
+<p>A Windows workstation shows a file creation at <code>02:31:12 UTC</code>. The network sensor (GPS-synchronized) shows the FTP transfer of that file beginning at <code>02:30:25 UTC</code>. The file cannot have been transferred before it was created—so either the disk timestamp is wrong, or the network timestamp is wrong.</p>
+<p><strong>Resolution:</strong> The network sensor uses a GPS clock (authoritative). The workstation's last NTP sync was 6 days ago. Checking a known shared event (a DNS query visible in both the workstation's DNS client log and the PCAP), we find the workstation clock is <strong>47 seconds ahead</strong> of true time. Applying a −47s correction to the disk timestamp gives <code>02:30:25 UTC</code> — the file creation and FTP transfer now align correctly.</p>
+<p><strong>Documentation:</strong> "Workstation clock skew of +47 seconds determined by comparing DNS query for update.microsoft.com at PCAP timestamp 02:28:03 UTC with Windows DNS Client Event ID 3008 at system time 02:28:50. All workstation timestamps adjusted by −47s in this report."</p>
+</div>
+</details>
+
+<details>
+<summary>Detecting Timestomping</summary>
+<div class="details-content">
+<p>Timestomping is the deliberate modification of file timestamps to mislead investigators. On NTFS:</p>
+<ul>
+<li>The <code>$STANDARD_INFORMATION</code> attribute (easily modified by user-level tools like Timestomp) stores the timestamps visible in Windows Explorer.</li>
+<li>The <code>$FILE_NAME</code> attribute (requires kernel-level access to modify) stores a separate set of timestamps.</li>
+<li><strong>Detection:</strong> If <code>$SI</code> created/modified dates are <em>earlier</em> than <code>$FN</code> created dates, timestomping is indicated — because the $FN created date reflects when the MFT entry was allocated, which cannot legitimately precede the file's creation.</li>
+<li><strong>Additional check:</strong> The <code>$UsnJrnl</code> (Update Sequence Number Journal) records file operations with its own timestamps. A file showing a 2020 $SI timestamp but a 2026 $UsnJrnl entry for its creation is clearly timestomped.</li>
+</ul>
+<p>When timestomping is detected, use the $FN and $UsnJrnl timestamps as the authoritative source, and document the discrepancy as evidence of anti-forensic activity.</p>
+</div>
+</details>
+
+<div class="callout warning">
+<div class="callout-title">Report Writing Tip</div>
+<p>Always document timestamp conflicts and their resolutions in your report's methodology section. Never silently adjust timestamps. Transparency about uncertainty strengthens—not weakens—your credibility.</p>
+</div>
+
+<!-- ===== SECTION 4 ===== -->
+<h2 id="corroboration">4. Corroboration Classification System</h2>
+
+<p>Every finding in your integrated timeline should be classified by its level of evidentiary support. This classification drives how you present findings in your report and how much weight they should carry in conclusions.</p>
+
+<table>
+<tr><th>Classification</th><th>Definition</th><th>Minimum Criteria</th><th>Report Language Guidance</th></tr>
+<tr>
+<td><strong>Corroborated</strong></td>
+<td>Finding confirmed by two or more independent evidence sources within a consistent time window</td>
+<td>≥2 sources, same event, timestamps consistent after normalization</td>
+<td>"The evidence establishes that…" / "Multiple sources confirm…"</td>
+</tr>
+<tr>
+<td><strong>Single-Source</strong></td>
+<td>Finding supported by only one evidence source; no contradicting evidence exists</td>
+<td>1 source only; no conflicting data from other sources</td>
+<td>"Analysis of [source] indicates that…" / "Based on [artifact]…"</td>
+</tr>
+<tr>
+<td><strong>Contradicted</strong></td>
+<td>Finding from one source is contradicted by another source; conflict unresolved</td>
+<td>2+ sources with irreconcilable information after resolution attempts</td>
+<td>"[Source A] indicates X; however, [Source B] indicates Y. This discrepancy could not be resolved because…"</td>
+</tr>
+<tr>
+<td><strong>Inferred</strong></td>
+<td>Finding not directly observed in any source but logically deduced from other established facts</td>
+<td>Logical necessity based on corroborated findings + documented reasoning</td>
+<td>"Based on the established sequence of events, it can be inferred that…" / "The evidence is consistent with…"</td>
+</tr>
+</table>
+
+<h3>Applying the Classification — Guidance</h3>
+
+<details>
+<summary>When to Use Each Classification</summary>
+<div class="details-content">
+<h4>Corroborated — Your Strongest Findings</h4>
+<ul>
+<li>Use for key findings that support your conclusions.</li>
+<li>In the worked timeline above, the FTP exfiltration is corroborated: firewall log + PCAP + disk artifact + memory artifact all confirm the same event.</li>
+<li>These findings can support definitive language in your conclusions.</li>
+</ul>
+<h4>Single-Source — Valid but Weaker</h4>
+<ul>
+<li>Common for artifacts where only one evidence type captures the activity (e.g., a registry key change visible only in the disk image).</li>
+<li>Still reportable and valuable—but acknowledge the limitation.</li>
+<li>Ask yourself: "Is there another source that <em>should</em> show this event? If so, why doesn't it?" Document the answer.</li>
+</ul>
+<h4>Contradicted — Requires Transparency</h4>
+<ul>
+<li>Do not hide contradictions. They damage credibility if discovered by opposing counsel.</li>
+<li>Present both sides, explain your resolution attempt, and state which source you find more reliable and why.</li>
+<li>If you cannot resolve the contradiction, say so explicitly.</li>
+</ul>
+<h4>Inferred — Use Sparingly and Label Clearly</h4>
+<ul>
+<li>Inference is necessary when evidence is incomplete (it almost always is).</li>
+<li>Always state the logical basis: "Because A is established and B is established, C necessarily follows."</li>
+<li>Never present inferences as directly observed facts.</li>
+</ul>
+</div>
+</details>
+
+<!-- Interactive Classification Exercise -->
+<div class="exercise" id="classification-exercise">
+<div class="exercise-title">🎯 Practice: Classify the Finding</div>
+<p>For each scenario below, select the appropriate corroboration classification.</p>
+
+<div class="scenario">
+<strong>Scenario A:</strong> Your disk image shows a file <code>backdoor.exe</code> created at 14:05 UTC. Your PCAP shows an HTTP download of a file with the same SHA-256 hash at 14:04 UTC from a known-malicious IP. Your IDS log shows an alert for "known malware download" at 14:04 UTC from the same IP.
+</div>
+<div id="ex-a" data-correct="0">
+<button class="choice-btn" onclick="checkClassification('ex-a', 0)">Corroborated</button>
+<button class="choice-btn" onclick="checkClassification('ex-a', 1)">Single-Source</button>
+<button class="choice-btn" onclick="checkClassification('ex-a', 2)">Contradicted</button>
+<button class="choice-btn" onclick="checkClassification('ex-a', 3)">Inferred</button>
+<div class="feedback" id="ex-a-feedback"></div>
+</div>
+
+<div class="scenario" style="margin-top:1.25rem;">
+<strong>Scenario B:</strong> A Windows Prefetch file shows that <code>wce.exe</code> (a credential-dumping tool) was executed at 15:22 UTC. No other evidence source (PCAP, memory, logs) contains any reference to this tool or activity at that time.
+</div>
+<div id="ex-b" data-correct="1">
+<button class="choice-btn" onclick="checkClassification('ex-b', 0)">Corroborated</button>
+<button class="choice-btn" onclick="checkClassification('ex-b', 1)">Single-Source</button>
+<button class="choice-btn" onclick="checkClassification('ex-b', 2)">Contradicted</button>
+<button class="choice-btn" onclick="checkClassification('ex-b', 3)">Inferred</button>
+<div class="feedback" id="ex-b-feedback"></div>
+</div>
+
+<div class="scenario" style="margin-top:1.25rem;">
+<strong>Scenario C:</strong> The suspect's mobile phone shows no outbound communication between 02:00–03:00 UTC. However, the corporate proxy log shows web browsing from the suspect's authenticated account during that same window. The suspect claims they were asleep and their phone was off.
+</div>
+<div id="ex-c" data-correct="2">
+<button class="choice-btn" onclick="checkClassification('ex-c', 0)">Corroborated</button>
+<button class="choice-btn" onclick="checkClassification('ex-c', 1)">Single-Source</button>
+<button class="choice-btn" onclick="checkClassification('ex-c', 2)">Contradicted</button>
+<button class="choice-btn" onclick="checkClassification('ex-c', 3)">Inferred</button>
+<div class="feedback" id="ex-c-feedback"></div>
+</div>
+
+<div class="scenario" style="margin-top:1.25rem;">
+<strong>Scenario D:</strong> You have established (corroborated) that the attacker gained RDP access at 01:15 UTC and that sensitive files were exfiltrated at 02:31 UTC. Between those times, a credential-dumping tool was executed (single-source: Prefetch only). You conclude the attacker used the stolen credentials to access the file server where the exfiltrated files resided — but no direct evidence of this lateral movement exists.
+</div>
+<div id="ex-d" data-correct="3">
+<button class="choice-btn" onclick="checkClassification('ex-d', 0)">Corroborated</button>
+<button class="choice-btn" onclick="checkClassification('ex-d', 1)">Single-Source</button>
+<button class="choice-btn" onclick="checkClassification('ex-d', 2)">Contradicted</button>
+<button class="choice-btn" onclick="checkClassification('ex-d', 3)">Inferred</button>
+<div class="feedback" id="ex-d-feedback"></div>
+</div>
+</div>
+
+<!-- ===== SECTION 5 ===== -->
+<h2 id="strategies">5. Practical Integration Strategies by Scenario Type</h2>
+
+<p>Different investigation types emphasize different evidence-domain pairings. Use the tabs below to explore integration strategies for common capstone scenario patterns.</p>
+
+<div class="tabs">
+<div class="tab-buttons" role="tablist">
+<button class="tab-btn active" role="tab" aria-selected="true" aria-controls="tab-intrusion" id="btn-intrusion" onclick="switchTab('intrusion')">Network Intrusion</button>
+<button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-malware" id="btn-malware" onclick="switchTab('malware')">Malware Incident</button>
+<button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-insider" id="btn-insider" onclick="switchTab('insider')">Insider Threat</button>
+<button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-mobile" id="btn-mobile" onclick="switchTab('mobile')">Mobile + Computer</button>
+</div>
+
+<div class="tab-panel active" role="tabpanel" id="tab-intrusion" aria-labelledby="btn-intrusion">
+<h4>Network Intrusion + Disk Forensics</h4>
+<p><strong>Primary pairing:</strong> PCAP / Network Logs ↔ Disk Image (file system + OS artifacts)</p>
+<table>
+<tr><th>Network Evidence</th><th>Corroborating Disk Evidence</th><th>Integration Point</th></tr>
+<tr><td>HTTP exploit payload in PCAP</td><td>Web shell file on disk with matching creation time</td><td>Confirms exploitation → persistence</td></tr>
+<tr><td>C2 beaconing to external IP</td><td>Scheduled task or registry Run key launching beacon binary</td><td>Confirms persistence mechanism + C2 channel</td></tr>
+<tr><td>Data exfiltration volume in firewall log</td><td>Staging directory with compressed files, matching byte count</td><td>Confirms what was stolen and how</td></tr>
+<tr><td>Lateral movement (SMB to file server)</td><td>Windows Security Event 4624 Type 3 on target</td><td>Confirms attacker accessed the second system</td></tr>
+</table>
+<p><strong>Key timeline anchors:</strong> Initial exploitation timestamp (PCAP) → first persistence artifact (disk) → lateral movement (network + target logs) → exfiltration (PCAP + firewall + source disk).</p>
+</div>
+
+<div class="tab-panel" role="tabpanel" id="tab-malware" aria-labelledby="btn-malware">
+<h4>Malware Incident + Memory Forensics</h4>
+<p><strong>Primary pairing:</strong> Memory Dump ↔ Disk Image + Network Capture</p>
+<table>
+<tr><th>Memory Evidence</th><th>Corroborating Source</th><th>Integration Point</th></tr>
+<tr><td>Injected code in svchost.exe (malfind)</td><td>Malware binary on disk with matching code sections</td><td>Confirms which file is responsible for injection</td></tr>
+<tr><td>Network connection to C2 IP (netscan)</td><td>Same C2 IP in PCAP with beaconing pattern</td><td>Confirms active C2 communication at time of capture</td></tr>
+<tr><td>Suspicious process with anomalous parent</td><td>Prefetch file showing execution time; Event Log 4688 (process creation)</td><td>Corroborates execution timeline</td></tr>
+<tr><td>Decrypted strings in memory (API calls, URLs)</td><td>Encrypted/packed binary on disk (static analysis shows packer)</td><td>Memory reveals runtime behavior hidden by packing</td></tr>
+</table>
+<p><strong>Key insight:</strong> Memory captures the <em>runtime state</em> that disk and network cannot. A packed malware binary on disk reveals little during static analysis—but memory shows the unpacked code, active connections, and injected processes.</p>
+</div>
+
+<div class="tab-panel" role="tabpanel" id="tab-insider" aria-labelledby="btn-insider">
+<h4>Insider Threat + Network/Log Correlation</h4>
+<p><strong>Primary pairing:</strong> Disk Image (user artifacts) ↔ Network Logs ↔ Authentication Logs</p>
+<table>
+<tr><th>Disk/User Evidence</th><th>Network/Log Evidence</th><th>Integration Point</th></tr>
+<tr><td>USB device connection (registry USBSTOR key)</td><td>DLP alert for large file copy to removable media</td><td>Confirms data theft method</td></tr>
+<tr><td>Browser history showing cloud storage upload</td><td>Proxy log showing POST to drive.google.com with large payload</td><td>Corroborates exfiltration via cloud</td></tr>
+<tr><td>File access timestamps on sensitive documents</td><td>Windows Security Event 4663 (object access audit)</td><td>Two sources confirm which files were accessed and when</td></tr>
+<tr><td>Email drafts or sent items with attachments</td><td>SMTP log showing outbound email with matching size</td><td>Confirms data left via email</td></tr>
+</table>
+<p><strong>Key insight:</strong> Insider threat cases often hinge on proving <em>intent</em> and <em>action sequence</em>. Integration shows not just that files were accessed, but that they were staged, compressed, and transmitted—a pattern inconsistent with normal work activity.</p>
+</div>
+
+<div class="tab-panel" role="tabpanel" id="tab-mobile" aria-labelledby="btn-mobile">
+<h4>Mobile Device + Computer Forensics</h4>
+<p><strong>Primary pairing:</strong> Mobile Extraction ↔ Computer Disk Image ↔ Network Logs</p>
+<table>
+<tr><th>Mobile Evidence</th><th>Computer/Network Evidence</th><th>Integration Point</th></tr>
+<tr><td>SMS/messaging app communication with timestamps</td><td>Computer activity at same timestamps (file access, logins)</td><td>Establishes coordination or confirms suspect was active</td></tr>
+<tr><td>Photos with EXIF GPS coordinates + timestamps</td><td>Badge access logs or VPN connection logs</td><td>Places suspect at a location at a specific time</td></tr>
+<tr><td>App installation (e.g., secure messaging) timestamp</td><td>Web browser search history for that app on computer</td><td>Shows premeditation / research before action</td></tr>
+<tr><td>Call records during incident window</td><td>No computer activity during call duration</td><td>May confirm or refute suspect's alibi</td></tr>
+</table>
+<p><strong>Key insight:</strong> Mobile evidence excels at establishing <em>human context</em>—who the suspect communicated with, where they were, and what they knew. Computer evidence shows <em>what happened on the system</em>. Together, they connect the human to the machine activity.</p>
+</div>
+</div>
+
+<!-- ===== SECTION 6 ===== -->
+<h2 id="knowledge-check">6. Knowledge Check</h2>
+
+<p>Answer the following questions to verify your understanding. These are ungraded—use them to identify areas for review before applying these concepts in your capstone project.</p>
+
+<div class="kc-question" id="kc1">
+<h4>Question 1</h4>
+<p>During your capstone investigation, you discover that a workstation's system clock was 2 minutes and 13 seconds ahead of the network sensor's GPS-synchronized clock. How should you handle this in your unified timeline?</p>
+<div class="kc-options">
+<label><input type="radio" name="kc1" value="a"> Discard all timestamps from the workstation since they are inaccurate.</label>
+<label><input type="radio" name="kc1" value="b"> Adjust all workstation timestamps by subtracting 2 minutes 13 seconds, document the skew calculation method, and note the adjustment in your methodology section.</label>
+<label><input type="radio" name="kc1" value="c"> Use the workstation timestamps as-is and note in the report that they may be slightly off.</label>
+<label><input type="radio" name="kc1" value="d"> Average the two timestamps for each shared event to find the "true" time.</label>
+</div>
+<button class="kc-submit" onclick="checkKC('kc1','b')">Check Answer</button>
+<div class="kc-feedback" id="kc1-feedback"></div>
+</div>
+
+<div class="kc-question" id="kc2">
+<h4>Question 2</h4>
+<p>You find a deleted file on a disk image with an NTFS <code>$STANDARD_INFORMATION</code> creation timestamp of 2024-01-15, but the <code>$FILE_NAME</code> creation timestamp is 2026-03-15, and the <code>$UsnJrnl</code> shows the file was created on 2026-03-15. What is the most likely explanation, and how should this finding be classified?</p>
+<div class="kc-options">
+<label><input type="radio" name="kc2" value="a"> The file was legitimately created in 2024 and the $FILE_NAME timestamp is corrupted. Classify as Single-Source.</label>
+<label><input type="radio" name="kc2" value="b"> The $STANDARD_INFORMATION timestamp was deliberately modified (timestomped) to appear older. The $FILE_NAME and $UsnJrnl corroborate the true creation date. Classify the timestomping as Corroborated evidence of anti-forensic activity.</label>
+<label><input type="radio" name="kc2" value="c"> This is a timezone conflict. Classify as Contradicted until resolved.</label>
+<label><input type="radio" name="kc2" value="d"> The file was copied from a 2024 backup, preserving the original timestamp. Classify as Inferred.</label>
+</div>
+<button class="kc-submit" onclick="checkKC('kc2','b')">Check Answer</button>
+<div class="kc-feedback" id="kc2-feedback"></div>
+</div>
+
+<div class="kc-question" id="kc3">
+<h4>Question 3</h4>
+<p>Your investigation has established (corroborated) that an attacker downloaded a RAR archive at 09:14 UTC and that sensitive database records were exfiltrated at 09:47 UTC. You find no direct evidence of how the attacker moved from the web server (where the download occurred) to the database server. However, the RAR archive contained a known SQL exploitation tool. Which classification applies to the conclusion "the attacker used the SQL tool to access the database server"?</p>
+<div class="kc-options">
+<label><input type="radio" name="kc3" value="a"> Corroborated — multiple sources confirm it.</label>
+<label><input type="radio" name="kc3" value="b"> Single-Source — only the RAR contents support it.</label>
+<label><input type="radio" name="kc3" value="c"> Inferred — logically deduced from established facts but not directly observed.</label>
+<label><input type="radio" name="kc3" value="d"> Contradicted — the lack of direct evidence contradicts the conclusion.</label>
+</div>
+<button class="kc-submit" onclick="checkKC('kc3','c')">Check Answer</button>
+<div class="kc-feedback" id="kc3-feedback"></div>
+</div>
+
+<!-- Wrap-up -->
+<div class="callout success" style="margin-top: 2.5rem;">
+<div class="callout-title">What's Next</div>
+<p><strong>Apply this module immediately.</strong> As you conduct your capstone analysis, build your unified timeline in real time — don't wait until you're writing the report. Use the corroboration classification for every finding you document. When you encounter timestamp conflicts, resolve them using the decision framework and document your reasoning.</p>
+<p>Proceed to <strong>Module 16.3 – Quality Assurance and Verification</strong> once your analysis is substantially complete (≥75% of findings documented). Module 16.3 provides the self-review checklists and peer-review methodology you'll use to validate your integrated findings before drafting your final report.</p>
+</div>
+
+</main>
+
+<script>
+// Classification exercise logic
+const classLabels = ['Corroborated', 'Single-Source', 'Contradicted', 'Inferred'];
+const classExplanations = {
+'ex-a': [
+'Correct! Three independent sources (disk $MFT, PCAP with matching hash, IDS alert) all confirm the same malware download event within a 1-second window. This is a textbook corroborated finding.',
+'Incorrect. Three independent sources confirm this event: the disk shows the file, the PCAP shows the download with matching hash, and the IDS independently alerted. That is corroboration, not single-source.',
+'Incorrect. There is no contradiction here — all three sources agree. Contradicted means sources present conflicting information.',
+'Incorrect. This finding is directly observed in multiple sources, not logically deduced from other facts. Inferred applies when no source directly shows the event.'
+],
+'ex-b': [
+'Incorrect. Only one evidence source (Prefetch) supports this finding. Corroboration requires two or more independent sources.',
+'Correct! Only the Prefetch file supports this finding. No contradicting evidence exists, but no corroborating evidence exists either. In your report, you would write: "Analysis of the Prefetch file indicates that wce.exe was executed at 15:22 UTC." You should also note which sources you checked that did not contain corroborating evidence.',
+'Incorrect. Contradicted requires another source that presents conflicting information. Absence of evidence in other sources does not constitute contradiction.',
+'Incorrect. The Prefetch file directly records this execution — it is observed, not inferred. Inferred applies when the event itself is not directly captured by any source.'
+],
+'ex-c': [
+'Incorrect. The mobile and proxy log do not confirm the same event — they contradict each other regarding the suspect\'s activity state during that window.',
+'Incorrect. Two sources are involved, and they present conflicting information. This is not a single-source situation.',
+'Correct! The mobile evidence (no activity, device apparently off) contradicts the proxy log (authenticated browsing activity). This requires investigation: Was someone else using the suspect\'s credentials? Was the mobile device actually off or just not transmitting? In your report, present both findings, explain the conflict, and discuss possible explanations without speculating beyond the evidence.',
+'Incorrect. Both sources directly present observable data — this is a direct conflict between sources, not a logical deduction.'
+],
+'ex-d': [
+'Incorrect. No direct evidence of the lateral movement exists — you cannot corroborate something that no source directly captured.',
+'Incorrect. No single source directly shows this lateral movement either. The conclusion is derived from reasoning about other established facts.',
+'Incorrect. No source contradicts this conclusion — it is simply not directly observed.',
+'Correct! The lateral movement is not directly observed in any evidence source, but it is logically necessary to explain how the attacker moved from RDP access (corroborated) to file exfiltration (corroborated) with credential dumping in between (single-source). In your report: "Based on the established RDP access at 01:15 UTC, the execution of credential-dumping tool wce.exe at 01:22 UTC, and the subsequent exfiltration from the file server at 02:31 UTC, it can be inferred that the attacker used harvested credentials to access the file server."'
+]
+};
+
+function checkClassification(exerciseId, choiceIndex) {
+const container = document.getElementById(exerciseId);
+const correct = parseInt(container.dataset.correct);
+const buttons = container.querySelectorAll('.choice-btn');
+const feedbackEl = document.getElementById(exerciseId + '-feedback');
+
+// Reset
+buttons.forEach(b => { b.classList.remove('correct','incorrect'); b.disabled = true; });
+
+if (choiceIndex === correct) {
+buttons[choiceIndex].classList.add('correct');
+feedbackEl.className = 'feedback show correct';
+} else {
+buttons[choiceIndex].classList.add('incorrect');
+buttons[correct].classList.add('correct');
+feedbackEl.className = 'feedback show incorrect';
+}
+feedbackEl.innerHTML = '<strong>' + classLabels[choiceIndex] + (choiceIndex === correct ? ' — Correct!</strong> ' : ' — Not quite.</strong> ') + classExplanations[exerciseId][choiceIndex];
+}
+
+// Knowledge check logic
+const kcExplanations = {
+'kc1': {
+'b': {correct: true, text: '<strong>Correct.</strong> When clock skew is identified and quantifiable, you apply a correction to the less-authoritative source (the workstation) and thoroughly document: (1) how you determined the skew (shared event comparison), (2) the magnitude and direction of the correction, and (3) where in the report this is noted. Discarding timestamps (option A) wastes valuable evidence. Using them as-is (option C) introduces errors. Averaging (option D) has no forensic basis and reduces accuracy for both sources.'},
+'a': {correct: false, text: '<strong>Incorrect.</strong> Discarding all workstation timestamps would eliminate a major evidence source. Clock skew does not make timestamps useless — it makes them require correction. A known, consistent skew is easily compensated.'},
+'c': {correct: false, text: '<strong>Incorrect.</strong> A 2-minute-13-second skew is significant enough to disrupt event ordering and break corroboration. "Slightly off" understates the problem. The correct approach is to calculate and apply the correction.'},
+'d': {correct: false, text: '<strong>Incorrect.</strong> Averaging timestamps has no forensic validity. When one clock is authoritative (GPS-synchronized sensor) and the other is not, you trust the authoritative source and adjust the other — you do not split the difference.'}
+},
+'kc2': {
+'b': {correct: true, text: '<strong>Correct.</strong> When $STANDARD_INFORMATION shows a creation date years earlier than $FILE_NAME and $UsnJrnl, timestomping is the most likely explanation. The $FN attribute requires kernel-level access to modify (making it far more reliable), and the $UsnJrnl independently records the file operation. Two sources ($FN + $UsnJrnl) corroborate the true date, while the $SI discrepancy constitutes evidence of deliberate anti-forensic activity — itself a corroborated finding.'},
+'a': {correct: false, text: '<strong>Incorrect.</strong> $FILE_NAME corruption is extremely rare and would not produce a clean, plausible date. The $UsnJrnl independently confirms the 2026 date, making corruption an implausible explanation.'},
+'c': {correct: false, text: '<strong>Incorrect.</strong> A timezone conflict would produce an offset of exact hours (1-12), not a discrepancy of nearly two years. This pattern is characteristic of timestomping, not timezone misconfiguration.'},
+'d': {correct: false, text: '<strong>Incorrect.</strong> While file copying can preserve original timestamps in $SI, the $FILE_NAME attribute would still reflect the MFT entry allocation time (2026), which it does. However, the scenario states the file was "created" per $UsnJrnl on 2026-03-15 — and the 2024 date is nearly two years earlier with no evidence of a backup restoration. The most parsimonious explanation is timestomping, not backup restoration. Additionally, the question asks about classification — even if backup were possible, you would need evidence of that backup to support the claim.'}
+},
+'kc3': {
+'c': {correct: true, text: '<strong>Correct.</strong> The conclusion that the attacker used the SQL tool to access the database is logically reasonable — the tool was available (in the RAR), the attacker had access to the web server, and the database was subsequently compromised. However, no evidence source directly shows the tool being executed against the database. This is an inference: a logical deduction from established facts. In your report, clearly label it as such and explain your reasoning chain.'},
+'a': {correct: false, text: '<strong>Incorrect.</strong> Corroboration requires direct observation from multiple sources. No source directly shows the SQL tool being used against the database server. The RAR contents show the tool existed; the exfiltration shows the database was accessed — but the connection between them is inferred, not observed.'},
+'b': {correct: false, text: '<strong>Incorrect.</strong> Single-source means one evidence source directly shows the event. No source directly shows the lateral movement or tool execution against the database. The RAR contents show the tool was available, but not that it was used for this specific action.'},
+'d': {correct: false, text: '<strong>Incorrect.</strong> "Contradicted" requires a source that presents conflicting information. Absence of direct evidence is not contradiction — it is simply a gap. The available evidence is consistent with (not contradictory to) the inference.'}
+}
+};
+
+function checkKC(qId, correctAnswer) {
+const selected = document.querySelector('input[name="' + qId + '"]:checked');
+const feedbackEl = document.getElementById(qId + '-feedback');
+if (!selected) {
+feedbackEl.style.display = 'block';
+feedbackEl.style.background = '#fefcbf';
+feedbackEl.style.borderLeft = '4px solid #d69e2e';
+feedbackEl.innerHTML = 'Please select an answer before checking.';
+return;
+}
+const val = selected.value;
+const data = kcExplanations[qId][val];
+if (data.correct) {
+feedbackEl.className = 'kc-feedback';
+feedbackEl.style.display = 'block';
+feedbackEl.style.background = '#f0fff4';
+feedbackEl.style.borderLeft = '4px solid #276749';
+} else {
+feedbackEl.className = 'kc-feedback';
+feedbackEl.style.display = 'block';
+feedbackEl.style.background = '#fff5f5';
+feedbackEl.style.borderLeft = '4px solid #9b2c2c';
+}
+feedbackEl.innerHTML = data.text;
+// Disable inputs after answering
+document.querySelectorAll('input[name="' + qId + '"]').forEach(function(inp) { inp.disabled = true; });
+}
+
+// Tabs logic
+function switchTab(tabName) {
+document.querySelectorAll('.tab-btn').forEach(function(btn) {
+btn.classList.remove('active');
+btn.setAttribute('aria-selected', 'false');
+});
+document.querySelectorAll('.tab-panel').forEach(function(panel) {
+panel.classList.remove('active');
+});
+document.getElementById('btn-' + tabName).classList.add('active');
+document.getElementById('btn-' + tabName).setAttribute('aria-selected', 'true');
+document.getElementById('tab-' + tabName).classList.add('active');
+}
+
+// Keyboard support for tabs
+document.addEventListener('DOMContentLoaded', function() {
+var tabBtns = document.querySelectorAll('.tab-btn');
+tabBtns.forEach(function(btn) {
+btn.addEventListener('keydown', function(e) {
+var tabs = Array.from(tabBtns);
+var idx = tabs.indexOf(e.target);
+if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+e.preventDefault();
+var next = tabs[(idx + 1) % tabs.length];
+next.focus();
+next.click();
+} else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+e.preventDefault();
+var prev = tabs[(idx - 1 + tabs.length) % tabs.length];
+prev.focus();
+prev.click();
+}
+});
+});
+});
+</script>
+
+</body>
+</html>
